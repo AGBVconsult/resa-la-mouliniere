@@ -1,0 +1,133 @@
+{
+  "common": {
+    "loading": "Caricamento...",
+    "error": "Si è verificato un errore",
+    "retry": "Riprova",
+    "cancel": "Annulla",
+    "confirm": "Conferma",
+    "save": "Salva",
+    "back": "Indietro",
+    "next": "Avanti",
+    "close": "Chiudi",
+    "yes": "Sì",
+    "no": "No"
+  },
+  "widget": {
+    "title": "Prenota un tavolo",
+    "step1": {
+      "title": "Scegli una data",
+      "selectDate": "Seleziona una data"
+    },
+    "step2": {
+      "title": "Scegli un orario",
+      "lunch": "Pranzo",
+      "dinner": "Cena",
+      "noSlots": "Nessun orario disponibile",
+      "selectTime": "Seleziona un orario"
+    },
+    "step3": {
+      "title": "Numero di ospiti",
+      "adults": "Adulti",
+      "children": "Bambini (3-12 anni)",
+      "babies": "Neonati (0-2 anni)",
+      "total": "Totale"
+    },
+    "step4": {
+      "title": "I tuoi dati",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "Email",
+      "phone": "Telefono",
+      "notes": "Note (opzionale)",
+      "notesPlaceholder": "Allergie, occasione speciale..."
+    },
+    "step5": {
+      "title": "Conferma",
+      "summary": "Riepilogo",
+      "date": "Data",
+      "time": "Ora",
+      "guests": "Ospiti",
+      "service": "Servizio",
+      "termsLabel": "Accetto i termini e condizioni",
+      "privacyLabel": "Accetto la privacy policy",
+      "submit": "Conferma prenotazione"
+    },
+    "success": {
+      "title": "Prenotazione confermata!",
+      "message": "Riceverai un'email di conferma.",
+      "pending": "La tua richiesta è in attesa di approvazione.",
+      "backToSite": "Torna al sito"
+    }
+  },
+  "reservation": {
+    "title": "La mia prenotazione",
+    "status": {
+      "pending": "In attesa",
+      "confirmed": "Confermata",
+      "seated": "Al tavolo",
+      "completed": "Completata",
+      "noshow": "Non presentato",
+      "cancelled": "Annullata",
+      "refused": "Rifiutata"
+    },
+    "details": {
+      "date": "Data",
+      "time": "Ora",
+      "guests": "Numero di ospiti",
+      "name": "Nome",
+      "email": "Email",
+      "phone": "Telefono",
+      "notes": "Note"
+    },
+    "actions": {
+      "cancel": "Annulla prenotazione",
+      "cancelConfirm": "Sei sicuro di voler annullare?",
+      "cancelled": "Prenotazione annullata"
+    },
+    "expired": "Questo link è scaduto",
+    "notFound": "Prenotazione non trovata"
+  },
+  "error": {
+    "slotTaken": "Questo orario non è più disponibile",
+    "insufficientCapacity": "Capacità insufficiente per questo orario",
+    "invalidInput": "Dati non validi",
+    "turnstileFailed": "Verifica anti-spam fallita",
+    "rateLimited": "Troppi tentativi, riprova più tardi",
+    "tokenInvalid": "Link non valido",
+    "tokenExpired": "Questo link è scaduto",
+    "notFound": "Non trovato",
+    "forbidden": "Accesso negato",
+    "versionConflict": "La prenotazione è stata modificata, aggiorna la pagina",
+    "sameTypeOverlap": "Sovrapposizione con un periodo esistente"
+  },
+  "validation": {
+    "required": "Questo campo è obbligatorio",
+    "email": "Email non valida",
+    "phone": "Numero di telefono non valido",
+    "minLength": "Minimo {min} caratteri",
+    "maxLength": "Massimo {max} caratteri"
+  },
+  "days": {
+    "monday": "Lunedì",
+    "tuesday": "Martedì",
+    "wednesday": "Mercoledì",
+    "thursday": "Giovedì",
+    "friday": "Venerdì",
+    "saturday": "Sabato",
+    "sunday": "Domenica"
+  },
+  "months": {
+    "january": "Gennaio",
+    "february": "Febbraio",
+    "march": "Marzo",
+    "april": "Aprile",
+    "may": "Maggio",
+    "june": "Giugno",
+    "july": "Luglio",
+    "august": "Agosto",
+    "september": "Settembre",
+    "october": "Ottobre",
+    "november": "Novembre",
+    "december": "Dicembre"
+  }
+}

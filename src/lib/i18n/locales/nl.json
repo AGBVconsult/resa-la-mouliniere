@@ -1,0 +1,133 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "error": "Er is een fout opgetreden",
+    "retry": "Opnieuw proberen",
+    "cancel": "Annuleren",
+    "confirm": "Bevestigen",
+    "save": "Opslaan",
+    "back": "Terug",
+    "next": "Volgende",
+    "close": "Sluiten",
+    "yes": "Ja",
+    "no": "Nee"
+  },
+  "widget": {
+    "title": "Reserveer een tafel",
+    "step1": {
+      "title": "Kies een datum",
+      "selectDate": "Selecteer een datum"
+    },
+    "step2": {
+      "title": "Kies een tijdslot",
+      "lunch": "Lunch",
+      "dinner": "Diner",
+      "noSlots": "Geen beschikbare tijdslots",
+      "selectTime": "Selecteer een tijd"
+    },
+    "step3": {
+      "title": "Aantal personen",
+      "adults": "Volwassenen",
+      "children": "Kinderen (3-12 jaar)",
+      "babies": "Baby's (0-2 jaar)",
+      "total": "Totaal"
+    },
+    "step4": {
+      "title": "Uw gegevens",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "email": "E-mail",
+      "phone": "Telefoon",
+      "notes": "Opmerkingen (optioneel)",
+      "notesPlaceholder": "Allergieën, speciale gelegenheid..."
+    },
+    "step5": {
+      "title": "Bevestiging",
+      "summary": "Samenvatting",
+      "date": "Datum",
+      "time": "Tijd",
+      "guests": "Gasten",
+      "service": "Service",
+      "termsLabel": "Ik accepteer de algemene voorwaarden",
+      "privacyLabel": "Ik accepteer het privacybeleid",
+      "submit": "Reservering bevestigen"
+    },
+    "success": {
+      "title": "Reservering bevestigd!",
+      "message": "U ontvangt een bevestigingsmail.",
+      "pending": "Uw aanvraag wacht op goedkeuring.",
+      "backToSite": "Terug naar site"
+    }
+  },
+  "reservation": {
+    "title": "Mijn reservering",
+    "status": {
+      "pending": "In afwachting",
+      "confirmed": "Bevestigd",
+      "seated": "Aan tafel",
+      "completed": "Voltooid",
+      "noshow": "Niet verschenen",
+      "cancelled": "Geannuleerd",
+      "refused": "Geweigerd"
+    },
+    "details": {
+      "date": "Datum",
+      "time": "Tijd",
+      "guests": "Aantal personen",
+      "name": "Naam",
+      "email": "E-mail",
+      "phone": "Telefoon",
+      "notes": "Opmerkingen"
+    },
+    "actions": {
+      "cancel": "Reservering annuleren",
+      "cancelConfirm": "Weet u zeker dat u wilt annuleren?",
+      "cancelled": "Reservering geannuleerd"
+    },
+    "expired": "Deze link is verlopen",
+    "notFound": "Reservering niet gevonden"
+  },
+  "error": {
+    "slotTaken": "Dit tijdslot is niet meer beschikbaar",
+    "insufficientCapacity": "Onvoldoende capaciteit voor dit tijdslot",
+    "invalidInput": "Ongeldige gegevens",
+    "turnstileFailed": "Anti-spam verificatie mislukt",
+    "rateLimited": "Te veel pogingen, probeer het later opnieuw",
+    "tokenInvalid": "Ongeldige link",
+    "tokenExpired": "Deze link is verlopen",
+    "notFound": "Niet gevonden",
+    "forbidden": "Toegang geweigerd",
+    "versionConflict": "De reservering is gewijzigd, vernieuw de pagina",
+    "sameTypeOverlap": "Overlap met een bestaande periode"
+  },
+  "validation": {
+    "required": "Dit veld is verplicht",
+    "email": "Ongeldig e-mailadres",
+    "phone": "Ongeldig telefoonnummer",
+    "minLength": "Minimaal {min} tekens",
+    "maxLength": "Maximaal {max} tekens"
+  },
+  "days": {
+    "monday": "Maandag",
+    "tuesday": "Dinsdag",
+    "wednesday": "Woensdag",
+    "thursday": "Donderdag",
+    "friday": "Vrijdag",
+    "saturday": "Zaterdag",
+    "sunday": "Zondag"
+  },
+  "months": {
+    "january": "Januari",
+    "february": "Februari",
+    "march": "Maart",
+    "april": "April",
+    "may": "Mei",
+    "june": "Juni",
+    "july": "Juli",
+    "august": "Augustus",
+    "september": "September",
+    "october": "Oktober",
+    "november": "November",
+    "december": "December"
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "error": "Ein Fehler ist aufgetreten",
+    "retry": "Erneut versuchen",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "back": "Zurück",
+    "next": "Weiter",
+    "close": "Schließen",
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "widget": {
+    "title": "Tisch reservieren",
+    "step1": {
+      "title": "Datum wählen",
+      "selectDate": "Datum auswählen"
+    },
+    "step2": {
+      "title": "Zeitfenster wählen",
+      "lunch": "Mittagessen",
+      "dinner": "Abendessen",
+      "noSlots": "Keine verfügbaren Zeitfenster",
+      "selectTime": "Zeit auswählen"
+    },
+    "step3": {
+      "title": "Anzahl der Gäste",
+      "adults": "Erwachsene",
+      "children": "Kinder (3-12 Jahre)",
+      "babies": "Babys (0-2 Jahre)",
+      "total": "Gesamt"
+    },
+    "step4": {
+      "title": "Ihre Daten",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "notes": "Anmerkungen (optional)",
+      "notesPlaceholder": "Allergien, besonderer Anlass..."
+    },
+    "step5": {
+      "title": "Bestätigung",
+      "summary": "Zusammenfassung",
+      "date": "Datum",
+      "time": "Uhrzeit",
+      "guests": "Gäste",
+      "service": "Service",
+      "termsLabel": "Ich akzeptiere die AGB",
+      "privacyLabel": "Ich akzeptiere die Datenschutzerklärung",
+      "submit": "Reservierung bestätigen"
+    },
+    "success": {
+      "title": "Reservierung bestätigt!",
+      "message": "Sie erhalten eine Bestätigungs-E-Mail.",
+      "pending": "Ihre Anfrage wartet auf Genehmigung.",
+      "backToSite": "Zurück zur Website"
+    }
+  },
+  "reservation": {
+    "title": "Meine Reservierung",
+    "status": {
+      "pending": "Ausstehend",
+      "confirmed": "Bestätigt",
+      "seated": "Am Tisch",
+      "completed": "Abgeschlossen",
+      "noshow": "Nicht erschienen",
+      "cancelled": "Storniert",
+      "refused": "Abgelehnt"
+    },
+    "details": {
+      "date": "Datum",
+      "time": "Uhrzeit",
+      "guests": "Anzahl der Gäste",
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "notes": "Anmerkungen"
+    },
+    "actions": {
+      "cancel": "Reservierung stornieren",
+      "cancelConfirm": "Sind Sie sicher, dass Sie stornieren möchten?",
+      "cancelled": "Reservierung storniert"
+    },
+    "expired": "Dieser Link ist abgelaufen",
+    "notFound": "Reservierung nicht gefunden"
+  },
+  "error": {
+    "slotTaken": "Dieses Zeitfenster ist nicht mehr verfügbar",
+    "insufficientCapacity": "Unzureichende Kapazität für dieses Zeitfenster",
+    "invalidInput": "Ungültige Daten",
+    "turnstileFailed": "Anti-Spam-Überprüfung fehlgeschlagen",
+    "rateLimited": "Zu viele Versuche, bitte später erneut versuchen",
+    "tokenInvalid": "Ungültiger Link",
+    "tokenExpired": "Dieser Link ist abgelaufen",
+    "notFound": "Nicht gefunden",
+    "forbidden": "Zugriff verweigert",
+    "versionConflict": "Die Reservierung wurde geändert, bitte aktualisieren",
+    "sameTypeOverlap": "Überschneidung mit einer bestehenden Periode"
+  },
+  "validation": {
+    "required": "Dieses Feld ist erforderlich",
+    "email": "Ungültige E-Mail",
+    "phone": "Ungültige Telefonnummer",
+    "minLength": "Mindestens {min} Zeichen",
+    "maxLength": "Maximal {max} Zeichen"
+  },
+  "days": {
+    "monday": "Montag",
+    "tuesday": "Dienstag",
+    "wednesday": "Mittwoch",
+    "thursday": "Donnerstag",
+    "friday": "Freitag",
+    "saturday": "Samstag",
+    "sunday": "Sonntag"
+  },
+  "months": {
+    "january": "Januar",
+    "february": "Februar",
+    "march": "März",
+    "april": "April",
+    "may": "Mai",
+    "june": "Juni",
+    "july": "Juli",
+    "august": "August",
+    "september": "September",
+    "october": "Oktober",
+    "november": "November",
+    "december": "Dezember"
+  }
+}

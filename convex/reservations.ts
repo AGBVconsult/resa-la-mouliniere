@@ -1,0 +1,737 @@
+import { query, mutation, action, internalMutation, internalQuery } from "./_generated/server";
+import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import { Errors } from "./lib/errors";
+import {
+  makeSlotKey,
+  computePartySize,
+  computeEffectiveOpen,
+  type Service,
+  type Language,
+  type ReservationStatus,
+} from "../spec/contracts.generated";
+import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./lib/tokens";
+import { verifyTurnstile } from "./lib/turnstile";
+import { computeRequestHash } from "./lib/idempotency";
+
+/**
+ * Build ReservationAdmin DTO from DB document.
+ * Pure helper, testable.
+ */
+function buildReservationAdmin(doc: {
+  _id: Id<"reservations">;
+  restaurantId: Id<"restaurants">;
+  dateKey: string;
+  service: "lunch" | "dinner";
+  timeKey: string;
+  slotKey: string;
+  adults: number;
+  childrenCount: number;
+  babyCount: number;
+  partySize: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  language: "fr" | "nl" | "en" | "de" | "it";
+  status: string;
+  source: "online" | "admin" | "phone" | "walkin";
+  tableIds: Id<"tables">[];
+  version: number;
+  createdAt: number;
+  updatedAt: number;
+  cancelledAt: number | null;
+  refusedAt: number | null;
+  seatedAt: number | null;
+  completedAt: number | null;
+  noshowAt: number | null;
+}) {
+  return {
+    _id: doc._id,
+    restaurantId: doc.restaurantId,
+    dateKey: doc.dateKey,
+    service: doc.service,
+    timeKey: doc.timeKey,
+    slotKey: doc.slotKey,
+    adults: doc.adults,
+    childrenCount: doc.childrenCount,
+    babyCount: doc.babyCount,
+    partySize: doc.partySize,
+    firstName: doc.firstName,
+    lastName: doc.lastName,
+    email: doc.email,
+    phone: doc.phone,
+    language: doc.language,
+    status: doc.status as ReservationStatus,
+    source: doc.source,
+    tableIds: doc.tableIds,
+    version: doc.version,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    cancelledAt: doc.cancelledAt,
+    refusedAt: doc.refusedAt,
+    seatedAt: doc.seatedAt,
+    completedAt: doc.completedAt,
+    noshowAt: doc.noshowAt,
+  };
+}
+
+/**
+ * Check if a reservation status allows cancellation.
+ * Pure helper, testable.
+ */
+export function canCancel(status: string): boolean {
+  return status === "pending" || status === "confirmed";
+}
+
+export const getByToken = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    const now = Date.now();
+
+    // Lookup token via index
+    const tokenDoc = await ctx.db
+      .query("reservationTokens")
+      .withIndex("by_token", (q) => q.eq("token", token))
+      .unique();
+
+    // Token not found
+    if (!tokenDoc) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    // Token already used
+    if (tokenDoc.usedAt !== null) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    // Token expired
+    if (tokenDoc.expiresAt <= now) {
+      throw Errors.TOKEN_EXPIRED();
+    }
+
+    // Load reservation
+    const reservation = await ctx.db.get(tokenDoc.reservationId);
+    if (!reservation) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    // Return ReservationView shape
+    return {
+      reservation: buildReservationAdmin(reservation),
+      token: {
+        token: tokenDoc.token,
+        expiresAt: tokenDoc.expiresAt,
+      },
+    };
+  },
+});
+
+export const listByService = query({
+  args: { dateKey: v.string(), service: v.union(v.literal("lunch"), v.literal("dinner")) },
+  handler: async () => {
+    return null as any;
+  },
+});
+
+export const listPending = query({
+  args: { dateKey: v.optional(v.string()) },
+  handler: async () => {
+    return null as any;
+  },
+});
+
+export const getAdmin = query({
+  args: { reservationId: v.string() },
+  handler: async () => {
+    return null as any;
+  },
+});
+
+export const getStaff = query({
+  args: { reservationId: v.string() },
+  handler: async () => {
+    return null as any;
+  },
+});
+
+export const _create = internalMutation({
+  args: {
+    restaurantId: v.id("restaurants"),
+    dateKey: v.string(),
+    service: v.union(v.literal("lunch"), v.literal("dinner")),
+    timeKey: v.string(),
+    adults: v.number(),
+    childrenCount: v.number(),
+    babyCount: v.number(),
+    firstName: v.string(),
+    lastName: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    language: v.union(
+      v.literal("fr"),
+      v.literal("nl"),
+      v.literal("en"),
+      v.literal("de"),
+      v.literal("it")
+    ),
+    source: v.union(v.literal("online"), v.literal("admin"), v.literal("phone"), v.literal("walkin")),
+    manageTokenExpireBeforeSlotMs: v.number(),
+    timezone: v.string(),
+    appUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const slotKey = makeSlotKey({
+      dateKey: args.dateKey,
+      service: args.service as Service,
+      timeKey: args.timeKey,
+    });
+
+    // Load slot via index
+    const slot = await ctx.db
+      .query("slots")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", args.restaurantId).eq("slotKey", slotKey)
+      )
+      .unique();
+
+    if (!slot) {
+      throw Errors.SLOT_NOT_FOUND(slotKey);
+    }
+
+    // Check effectiveOpen
+    const effectiveOpen = computeEffectiveOpen(slot.isOpen, slot.capacity);
+    if (!effectiveOpen) {
+      throw Errors.SLOT_TAKEN(slotKey, "closed");
+    }
+
+    // Compute partySize
+    const partySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
+
+    // Check maxGroupSize
+    if (slot.maxGroupSize !== null && partySize > slot.maxGroupSize) {
+      throw Errors.SLOT_TAKEN(slotKey, "taken");
+    }
+
+    // Calculate used capacity (pending | confirmed | seated)
+    const existingReservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", args.restaurantId).eq("slotKey", slotKey)
+      )
+      .collect();
+
+    const usedCapacity = existingReservations
+      .filter((r) => r.status === "pending" || r.status === "confirmed" || r.status === "seated")
+      .reduce((sum, r) => sum + r.partySize, 0);
+
+    const remainingCapacity = slot.capacity - usedCapacity;
+
+    if (partySize > remainingCapacity) {
+      throw Errors.INSUFFICIENT_CAPACITY(slotKey, partySize, remainingCapacity);
+    }
+
+    // Determine initial status based on partySize
+    const status: ReservationStatus = partySize <= 4 ? "confirmed" : "pending";
+
+    const now = Date.now();
+
+    // Insert reservation
+    const reservationId = await ctx.db.insert("reservations", {
+      restaurantId: args.restaurantId,
+      dateKey: args.dateKey,
+      service: args.service,
+      timeKey: args.timeKey,
+      slotKey,
+      adults: args.adults,
+      childrenCount: args.childrenCount,
+      babyCount: args.babyCount,
+      partySize,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      email: args.email,
+      phone: args.phone,
+      language: args.language,
+      status,
+      source: args.source,
+      tableIds: [],
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+      cancelledAt: null,
+      refusedAt: null,
+      seatedAt: null,
+      completedAt: null,
+      noshowAt: null,
+    });
+
+    // Compute token expiry
+    const slotStartAt = computeSlotStartAt(args.dateKey, args.timeKey, args.timezone);
+    const tokenExpiresAt = computeTokenExpiry(slotStartAt, args.manageTokenExpireBeforeSlotMs);
+
+    // Check if token already exists (idempotent: return existing, no rotation)
+    const existingToken = await ctx.db
+      .query("reservationTokens")
+      .withIndex("by_reservation_type", (q) =>
+        q.eq("reservationId", reservationId).eq("type", "manage")
+      )
+      .unique();
+
+    let manageToken: string;
+    let finalTokenExpiresAt: number;
+
+    if (existingToken) {
+      // Return existing token (no rotation on retry)
+      manageToken = existingToken.token;
+      finalTokenExpiresAt = existingToken.expiresAt;
+    } else {
+      // Create new token
+      manageToken = generateSecureToken();
+      finalTokenExpiresAt = tokenExpiresAt;
+      await ctx.db.insert("reservationTokens", {
+        reservationId,
+        token: manageToken,
+        type: "manage",
+        expiresAt: finalTokenExpiresAt,
+        usedAt: null,
+        rotatedAt: null,
+        createdAt: now,
+      });
+    }
+
+    // Log without PII
+    console.log("Reservation created", { reservationId, slotKey, status, partySize });
+
+    // Enqueue email job based on status
+    const emailType = status === "confirmed" 
+      ? "reservation.confirmed" 
+      : "reservation.pending";
+    
+    await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
+      restaurantId: args.restaurantId,
+      type: emailType,
+      to: args.email,
+      subjectKey: `email.${emailType}.subject`,
+      templateKey: emailType,
+      templateData: {
+        firstName: args.firstName,
+        lastName: args.lastName,
+        dateKey: args.dateKey,
+        timeKey: args.timeKey,
+        service: args.service,
+        partySize,
+        language: args.language,
+        manageUrl: `${args.appUrl}/reservation/${manageToken}`,
+        editUrl: `${args.appUrl}/reservation/${manageToken}/edit`,
+        cancelUrl: `${args.appUrl}/reservation/${manageToken}/cancel`,
+      },
+      dedupeKey: `email:${emailType}:${reservationId}:1`,
+    });
+
+    return {
+      reservationId,
+      status,
+      manageToken,
+      tokenExpiresAt: finalTokenExpiresAt,
+    };
+  },
+});
+
+export const _cancel = internalMutation({
+  args: {
+    reservationId: v.id("reservations"),
+    cancelledBy: v.union(v.literal("token"), v.literal("admin")),
+    now: v.number(),
+    expectedVersion: v.number(),
+  },
+  handler: async (ctx, { reservationId, cancelledBy, now, expectedVersion }) => {
+    const reservation = await ctx.db.get(reservationId);
+    if (!reservation) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    // Check version
+    if (reservation.version !== expectedVersion) {
+      throw Errors.VERSION_CONFLICT(expectedVersion, reservation.version);
+    }
+
+    // Check status is cancellable
+    if (!canCancel(reservation.status)) {
+      throw Errors.INVALID_INPUT("status", "Reservation cannot be cancelled");
+    }
+
+    // Update reservation
+    const newVersion = reservation.version + 1;
+    await ctx.db.patch(reservationId, {
+      status: "cancelled",
+      cancelledAt: now,
+      updatedAt: now,
+      version: newVersion,
+    });
+
+    // Log without PII
+    console.log("Reservation cancelled", { reservationId, cancelledBy, newVersion });
+
+    return { reservationId, newVersion };
+  },
+});
+
+/**
+ * Internal query to get token by value.
+ * Used by cancelByToken action.
+ */
+export const _getTokenByValue = internalQuery({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    return await ctx.db
+      .query("reservationTokens")
+      .withIndex("by_token", (q) => q.eq("token", token))
+      .unique();
+  },
+});
+
+/**
+ * Internal query to get reservation by ID.
+ * Used by cancelByToken action.
+ */
+export const _getById = internalQuery({
+  args: { reservationId: v.id("reservations") },
+  handler: async (ctx, { reservationId }) => {
+    return await ctx.db.get(reservationId);
+  },
+});
+
+/**
+ * Internal mutation to mark token as used.
+ * Used by cancelByToken action.
+ */
+export const _markTokenUsed = internalMutation({
+  args: { tokenId: v.id("reservationTokens"), usedAt: v.number() },
+  handler: async (ctx, { tokenId, usedAt }) => {
+    await ctx.db.patch(tokenId, { usedAt });
+  },
+});
+
+export const adminConfirm = mutation({
+  args: { reservationId: v.string(), expectedVersion: v.number() },
+  handler: async () => {
+    return null as any;
+  },
+});
+
+export const adminRefuse = mutation({
+  args: { reservationId: v.string(), reasonKey: v.string(), expectedVersion: v.number() },
+  handler: async () => {
+    return null as any;
+  },
+});
+
+export const adminCancel = mutation({
+  args: { reservationId: v.string(), expectedVersion: v.number(), now: v.number() },
+  handler: async () => {
+    return null as any;
+  },
+});
+
+export const checkIn = mutation({
+  args: { reservationId: v.string(), expectedVersion: v.number() },
+  handler: async () => {
+    return null as any;
+  },
+});
+
+export const checkOut = mutation({
+  args: { reservationId: v.string(), expectedVersion: v.number() },
+  handler: async () => {
+    return null as any;
+  },
+});
+
+const payloadSchema = {
+  dateKey: v.string(),
+  service: v.union(v.literal("lunch"), v.literal("dinner")),
+  timeKey: v.string(),
+  adults: v.number(),
+  childrenCount: v.number(),
+  babyCount: v.number(),
+  firstName: v.string(),
+  lastName: v.string(),
+  email: v.string(),
+  phone: v.string(),
+  language: v.union(
+    v.literal("fr"),
+    v.literal("nl"),
+    v.literal("en"),
+    v.literal("de"),
+    v.literal("it")
+  ),
+};
+
+type ReservationCreateResult =
+  | { kind: "reservation"; reservationId: Id<"reservations">; status: ReservationStatus; manageUrlPath: string }
+  | { kind: "groupRequest"; groupRequestId: Id<"groupRequests"> };
+
+type IdempotencyCheckResult =
+  | { found: false }
+  | { found: true; hashMismatch: true }
+  | { found: true; hashMismatch: false; resultData: unknown };
+
+type SettingsInternal = {
+  restaurantId: Id<"restaurants">;
+  timezone: string;
+  appUrl: string;
+  turnstileSecretKey: string;
+  manageTokenExpireBeforeSlotMs: number;
+  rateLimit: { windowMs: number; maxRequests: number };
+} | null;
+
+type CreateMutationResult = {
+  reservationId: Id<"reservations">;
+  status: ReservationStatus;
+  manageToken: string;
+  tokenExpiresAt: number;
+};
+
+export const create = action({
+  args: {
+    payload: v.object(payloadSchema),
+    turnstileToken: v.string(),
+    idemKey: v.string(),
+  },
+  handler: async (ctx, args): Promise<ReservationCreateResult> => {
+    const { payload, turnstileToken, idemKey } = args;
+
+    // Validate dateKey format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.dateKey)) {
+      throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
+    }
+
+    // Validate timeKey format
+    if (!/^\d{2}:\d{2}$/.test(payload.timeKey)) {
+      throw Errors.INVALID_INPUT("timeKey", "Format HH:MM requis");
+    }
+
+    // Validate adults >= 1
+    if (payload.adults < 1) {
+      throw Errors.INVALID_INPUT("adults", "Doit être >= 1");
+    }
+
+    // Compute partySize for routing
+    const partySize = computePartySize(payload.adults, payload.childrenCount, payload.babyCount);
+
+    // Compute request hash for idempotency
+    const requestHash = computeRequestHash({
+      ...payload,
+      partySize,
+    });
+
+    // Check idempotency
+    const idemCheck: IdempotencyCheckResult = await ctx.runQuery(internal.lib.idempotency.check, {
+      key: idemKey,
+      requestHash,
+    });
+
+    if (idemCheck.found) {
+      if (idemCheck.hashMismatch) {
+        throw Errors.INVALID_INPUT("idemKey", "Idempotency key already used with different payload");
+      }
+      // Return cached result
+      return idemCheck.resultData as ReservationCreateResult;
+    }
+
+    // Load settings (including secrets) via internal mutation
+    const settings: SettingsInternal = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+
+    if (!settings) {
+      throw Errors.SETTINGS_NOT_FOUND();
+    }
+
+    // Verify Turnstile
+    const turnstileResult = await verifyTurnstile(turnstileToken, settings.turnstileSecretKey);
+    if (!turnstileResult.success) {
+      throw Errors.TURNSTILE_FAILED({
+        errorCodes: turnstileResult.errorCodes,
+        reason: turnstileResult.reason,
+      });
+    }
+
+    // Route to groupRequest if partySize >= 16
+    if (partySize >= 16) {
+      const groupRequestId: Id<"groupRequests"> = await ctx.runMutation(internal.groupRequests._insert, {
+        restaurantId: settings.restaurantId,
+        partySize,
+        preferredDateKey: payload.dateKey,
+        preferredService: payload.service,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        email: payload.email,
+        phone: payload.phone,
+        message: "",
+        language: payload.language,
+        now: Date.now(),
+      });
+
+      const result: ReservationCreateResult = { kind: "groupRequest", groupRequestId };
+
+      // Store idempotency result
+      await ctx.runMutation(internal.lib.idempotency.store, {
+        key: idemKey,
+        action: "reservations.create",
+        requestHash,
+        resultData: result,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
+      });
+
+      return result;
+    }
+
+    // Create reservation via internal mutation
+    const createResult: CreateMutationResult = await ctx.runMutation(internal.reservations._create, {
+      restaurantId: settings.restaurantId,
+      dateKey: payload.dateKey,
+      service: payload.service,
+      timeKey: payload.timeKey,
+      adults: payload.adults,
+      childrenCount: payload.childrenCount,
+      babyCount: payload.babyCount,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      email: payload.email,
+      phone: payload.phone,
+      language: payload.language,
+      source: "online",
+      manageTokenExpireBeforeSlotMs: settings.manageTokenExpireBeforeSlotMs,
+      timezone: settings.timezone,
+      appUrl: settings.appUrl,
+    });
+
+    const result: ReservationCreateResult = {
+      kind: "reservation",
+      reservationId: createResult.reservationId,
+      status: createResult.status,
+      manageUrlPath: `/reservation/${createResult.manageToken}`,
+    };
+
+    // Store idempotency result
+    await ctx.runMutation(internal.lib.idempotency.store, {
+      key: idemKey,
+      action: "reservations.create",
+      requestHash,
+      resultData: result,
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
+    });
+
+    // Email is now enqueued in _create mutation
+
+    return result;
+  },
+});
+
+type CancelByTokenResult = { reservationId: Id<"reservations"> };
+
+export const cancelByToken = action({
+  args: { token: v.string(), idemKey: v.string() },
+  handler: async (ctx, { token, idemKey }): Promise<CancelByTokenResult> => {
+    const now = Date.now();
+
+    // Compute request hash for idempotency (token is the only input)
+    const requestHash = computeRequestHash({ token });
+
+    // Check idempotency
+    const idemCheck: IdempotencyCheckResult = await ctx.runQuery(internal.lib.idempotency.check, {
+      key: idemKey,
+      requestHash,
+    });
+
+    if (idemCheck.found) {
+      if (idemCheck.hashMismatch) {
+        throw Errors.INVALID_INPUT("idemKey", "Idempotency key already used with different payload");
+      }
+      // Return cached result
+      return idemCheck.resultData as CancelByTokenResult;
+    }
+
+    // Lookup token via internal query
+    const tokenDoc = await ctx.runQuery(internal.reservations._getTokenByValue, { token });
+
+    // Token not found
+    if (!tokenDoc) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    // Token already used
+    if (tokenDoc.usedAt !== null) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    // Token expired
+    if (tokenDoc.expiresAt <= now) {
+      throw Errors.TOKEN_EXPIRED();
+    }
+
+    // Load reservation to get current version and status
+    const reservation = await ctx.runQuery(internal.reservations._getById, {
+      reservationId: tokenDoc.reservationId,
+    });
+
+    if (!reservation) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    // Check if cancellable
+    if (!canCancel(reservation.status)) {
+      throw Errors.INVALID_INPUT("status", "Reservation cannot be cancelled");
+    }
+
+    // Call _cancel internal mutation
+    await ctx.runMutation(internal.reservations._cancel, {
+      reservationId: tokenDoc.reservationId,
+      cancelledBy: "token",
+      now,
+      expectedVersion: reservation.version,
+    });
+
+    // Invalidate token (mark as used)
+    await ctx.runMutation(internal.reservations._markTokenUsed, {
+      tokenId: tokenDoc._id,
+      usedAt: now,
+    });
+
+    const result: CancelByTokenResult = { reservationId: tokenDoc.reservationId };
+
+    // Store idempotency result
+    await ctx.runMutation(internal.lib.idempotency.store, {
+      key: idemKey,
+      action: "reservations.cancelByToken",
+      requestHash,
+      resultData: result,
+      expiresAt: now + 24 * 60 * 60 * 1000, // 24h
+    });
+
+    // Enqueue cancellation email
+    // Need to get restaurant settings for email
+    const settings = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+    if (settings) {
+      await ctx.runMutation(internal.emails.enqueue, {
+        restaurantId: settings.restaurantId,
+        type: "reservation.cancelled",
+        to: reservation.email,
+        subjectKey: "email.reservation.cancelled.subject",
+        templateKey: "reservation.cancelled",
+        templateData: {
+          firstName: reservation.firstName,
+          lastName: reservation.lastName,
+          dateKey: reservation.dateKey,
+          timeKey: reservation.timeKey,
+          service: reservation.service,
+          partySize: reservation.partySize,
+          language: reservation.language,
+        },
+        dedupeKey: `email:reservation.cancelled:${tokenDoc.reservationId}:${reservation.version + 1}`,
+      });
+    }
+
+    return result;
+  },
+});

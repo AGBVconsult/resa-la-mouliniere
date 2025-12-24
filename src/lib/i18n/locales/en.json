@@ -1,0 +1,133 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "widget": {
+    "title": "Book a table",
+    "step1": {
+      "title": "Choose a date",
+      "selectDate": "Select a date"
+    },
+    "step2": {
+      "title": "Choose a time slot",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "noSlots": "No available time slots",
+      "selectTime": "Select a time"
+    },
+    "step3": {
+      "title": "Number of guests",
+      "adults": "Adults",
+      "children": "Children (3-12 years)",
+      "babies": "Babies (0-2 years)",
+      "total": "Total"
+    },
+    "step4": {
+      "title": "Your details",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone",
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Allergies, special occasion..."
+    },
+    "step5": {
+      "title": "Confirmation",
+      "summary": "Summary",
+      "date": "Date",
+      "time": "Time",
+      "guests": "Guests",
+      "service": "Service",
+      "termsLabel": "I accept the terms and conditions",
+      "privacyLabel": "I accept the privacy policy",
+      "submit": "Confirm reservation"
+    },
+    "success": {
+      "title": "Reservation confirmed!",
+      "message": "You will receive a confirmation email.",
+      "pending": "Your request is pending approval.",
+      "backToSite": "Back to site"
+    }
+  },
+  "reservation": {
+    "title": "My reservation",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "seated": "Seated",
+      "completed": "Completed",
+      "noshow": "No show",
+      "cancelled": "Cancelled",
+      "refused": "Refused"
+    },
+    "details": {
+      "date": "Date",
+      "time": "Time",
+      "guests": "Number of guests",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "notes": "Notes"
+    },
+    "actions": {
+      "cancel": "Cancel reservation",
+      "cancelConfirm": "Are you sure you want to cancel?",
+      "cancelled": "Reservation cancelled"
+    },
+    "expired": "This link has expired",
+    "notFound": "Reservation not found"
+  },
+  "error": {
+    "slotTaken": "This time slot is no longer available",
+    "insufficientCapacity": "Insufficient capacity for this time slot",
+    "invalidInput": "Invalid data",
+    "turnstileFailed": "Anti-spam verification failed",
+    "rateLimited": "Too many attempts, please try again later",
+    "tokenInvalid": "Invalid link",
+    "tokenExpired": "This link has expired",
+    "notFound": "Not found",
+    "forbidden": "Access denied",
+    "versionConflict": "The reservation has been modified, please refresh",
+    "sameTypeOverlap": "Overlap with an existing period"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Invalid email",
+    "phone": "Invalid phone number",
+    "minLength": "Minimum {min} characters",
+    "maxLength": "Maximum {max} characters"
+  },
+  "days": {
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday"
+  },
+  "months": {
+    "january": "January",
+    "february": "February",
+    "march": "March",
+    "april": "April",
+    "may": "May",
+    "june": "June",
+    "july": "July",
+    "august": "August",
+    "september": "September",
+    "october": "October",
+    "november": "November",
+    "december": "December"
+  }
+}
