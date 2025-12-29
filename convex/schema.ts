@@ -121,6 +121,9 @@ export default defineSchema({
     email: v.string(),
     phone: v.string(),
     language,
+    
+    note: v.optional(v.string()),
+    options: v.optional(v.array(v.string())),
 
     status: reservationStatus,
     source: reservationSource,

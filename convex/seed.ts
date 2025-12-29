@@ -317,6 +317,206 @@ export const updateSecrets = internalMutation({
  * Enqueue a test email (internal only, for testing).
  * Use this via CLI: npx convex run seed:testEmail --args '{"to":"test@example.com"}'
  */
+/**
+ * Seed weekly templates for La Moulinière.
+ * Configuration: Vendredi soir, Samedi midi+soir, Dimanche midi+soir
+ * Use this via CLI: npx convex run seed:seedWeeklyTemplates
+ */
+export const seedWeeklyTemplates = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      throw new Error("No active restaurant found");
+    }
+
+    const restaurant = activeRestaurants[0];
+    const restaurantId = restaurant._id;
+    const now = Date.now();
+    const updatedBy = "seed";
+
+    // Configuration La Moulinière :
+    // Midi : Samedi, Dimanche → 12:00, 12:30, 13:00
+    // Soir : Vendredi, Samedi, Dimanche → 18:00, 18:30, 19:00
+    // Capacité : 8 personnes par créneau
+    const lunchSlots = [
+      { timeKey: "12:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
+      { timeKey: "12:30", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
+      { timeKey: "13:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
+    ];
+
+    const dinnerSlots = [
+      { timeKey: "18:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
+      { timeKey: "18:30", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
+      { timeKey: "19:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
+    ];
+
+    // La Moulinière schedule:
+    // dayOfWeek: 1=Monday, 2=Tuesday, ..., 5=Friday, 6=Saturday, 7=Sunday
+    // - Friday (5): dinner only
+    // - Saturday (6): lunch + dinner
+    // - Sunday (7): lunch + dinner
+    // - Mon-Thu (1-4): closed
+
+    const templates = [
+      // Monday-Thursday: closed
+      { dayOfWeek: 1, service: "lunch" as const, isOpen: false, slots: lunchSlots },
+      { dayOfWeek: 1, service: "dinner" as const, isOpen: false, slots: dinnerSlots },
+      { dayOfWeek: 2, service: "lunch" as const, isOpen: false, slots: lunchSlots },
+      { dayOfWeek: 2, service: "dinner" as const, isOpen: false, slots: dinnerSlots },
+      { dayOfWeek: 3, service: "lunch" as const, isOpen: false, slots: lunchSlots },
+      { dayOfWeek: 3, service: "dinner" as const, isOpen: false, slots: dinnerSlots },
+      { dayOfWeek: 4, service: "lunch" as const, isOpen: false, slots: lunchSlots },
+      { dayOfWeek: 4, service: "dinner" as const, isOpen: false, slots: dinnerSlots },
+      // Friday: dinner only
+      { dayOfWeek: 5, service: "lunch" as const, isOpen: false, slots: lunchSlots },
+      { dayOfWeek: 5, service: "dinner" as const, isOpen: true, slots: dinnerSlots },
+      // Saturday: lunch + dinner
+      { dayOfWeek: 6, service: "lunch" as const, isOpen: true, slots: lunchSlots },
+      { dayOfWeek: 6, service: "dinner" as const, isOpen: true, slots: dinnerSlots },
+      // Sunday: lunch + dinner
+      { dayOfWeek: 7, service: "lunch" as const, isOpen: true, slots: lunchSlots },
+      { dayOfWeek: 7, service: "dinner" as const, isOpen: true, slots: dinnerSlots },
+    ];
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const template of templates) {
+      // Check if exists
+      const existing = await ctx.db
+        .query("weeklyTemplates")
+        .withIndex("by_restaurant_day_service", (q) =>
+          q.eq("restaurantId", restaurantId).eq("dayOfWeek", template.dayOfWeek).eq("service", template.service)
+        )
+        .unique();
+
+      if (existing) {
+        skipped++;
+        continue;
+      }
+
+      await ctx.db.insert("weeklyTemplates", {
+        restaurantId,
+        dayOfWeek: template.dayOfWeek,
+        service: template.service,
+        isOpen: template.isOpen,
+        slots: template.slots,
+        updatedAt: now,
+        updatedBy,
+      });
+      created++;
+    }
+
+    console.log(`✅ Weekly templates seeded: ${created} created, ${skipped} skipped`);
+    return { created, skipped };
+  },
+});
+
+/**
+ * Generate slots from weekly templates for the next N days.
+ * Use this via CLI: npx convex run seed:generateSlots '{"daysAhead": 60}'
+ */
+export const generateSlots = internalMutation({
+  args: {
+    daysAhead: v.optional(v.number()),
+  },
+  handler: async (ctx, { daysAhead = 60 }) => {
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      throw new Error("No active restaurant found");
+    }
+
+    const restaurant = activeRestaurants[0];
+    const restaurantId = restaurant._id;
+    const now = Date.now();
+
+    // Get today
+    const today = new Date();
+    let created = 0;
+    let skipped = 0;
+
+    // For each day in range
+    for (let i = 0; i <= daysAhead; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + i);
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const dateKey = `${year}-${month}-${day}`;
+
+      // ISO weekday: 1=Monday, 7=Sunday
+      const jsDay = date.getDay();
+      const dayOfWeek = jsDay === 0 ? 7 : jsDay;
+
+      // For each service
+      for (const service of ["lunch", "dinner"] as const) {
+        // Get template
+        const template = await ctx.db
+          .query("weeklyTemplates")
+          .withIndex("by_restaurant_day_service", (q) =>
+            q.eq("restaurantId", restaurantId).eq("dayOfWeek", dayOfWeek).eq("service", service)
+          )
+          .unique();
+
+        if (!template || !template.isOpen) {
+          continue;
+        }
+
+        // For each active slot in template
+        for (const templateSlot of template.slots) {
+          if (!templateSlot.isActive) {
+            continue;
+          }
+
+          const slotKey = `${dateKey}#${service}#${templateSlot.timeKey}`;
+
+          // Check if slot already exists
+          const existingSlot = await ctx.db
+            .query("slots")
+            .withIndex("by_restaurant_slotKey", (q) =>
+              q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
+            )
+            .unique();
+
+          if (existingSlot) {
+            skipped++;
+            continue;
+          }
+
+          // Create slot
+          await ctx.db.insert("slots", {
+            restaurantId,
+            dateKey,
+            service,
+            timeKey: templateSlot.timeKey,
+            slotKey,
+            isOpen: true,
+            capacity: templateSlot.capacity,
+            maxGroupSize: templateSlot.maxGroupSize,
+            largeTableAllowed: templateSlot.largeTableAllowed,
+            updatedAt: now,
+          });
+
+          created++;
+        }
+      }
+    }
+
+    console.log(`✅ Slots generated: ${created} created, ${skipped} skipped (${daysAhead} days ahead)`);
+    return { created, skipped, daysAhead };
+  },
+});
+
 export const testEmail = internalMutation({
   args: {
     to: v.string(),

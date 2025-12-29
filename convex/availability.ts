@@ -156,8 +156,155 @@ export const getDay = query({
 
 export const getMonth = query({
   args: { year: v.number(), month: v.number(), partySize: v.number() },
-  handler: async () => {
-    return null as any;
+  handler: async (ctx, { year, month, partySize }) => {
+    if (month < 1 || month > 12) {
+      throw Errors.INVALID_INPUT("month", "Doit être entre 1 et 12");
+    }
+    if (partySize < 1) {
+      throw Errors.INVALID_INPUT("partySize", "Doit être >= 1");
+    }
+
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+    if (activeRestaurants.length > 1) {
+      throw Errors.MULTIPLE_ACTIVE_RESTAURANTS(activeRestaurants.length);
+    }
+
+    const restaurant = activeRestaurants[0];
+
+    // Générer les bornes du mois
+    const lastDay = new Date(year, month, 0).getDate();
+    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+    const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+
+    // 1. Récupérer tous les slots ouverts du mois
+    const slots = await ctx.db
+      .query("slots")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurant._id)
+      )
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("dateKey"), startDate),
+          q.lte(q.field("dateKey"), endDate),
+          q.eq(q.field("isOpen"), true)
+        )
+      )
+      .collect();
+
+    // 2. Récupérer les réservations actives du mois (pending, confirmed, seated)
+    const reservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurant._id)
+      )
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("dateKey"), startDate),
+          q.lte(q.field("dateKey"), endDate),
+          q.or(
+            q.eq(q.field("status"), "pending"),
+            q.eq(q.field("status"), "confirmed"),
+            q.eq(q.field("status"), "seated")
+          )
+        )
+      )
+      .collect();
+
+    // 3. Load overrides for all slots (§5.12 priority: MANUAL > PERIOD > SLOT)
+    const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number; maxGroupSize?: number | null }>();
+    
+    for (const slot of slots) {
+      const overrides = await ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_slotKey", (q) =>
+          q.eq("restaurantId", restaurant._id).eq("slotKey", slot.slotKey)
+        )
+        .collect();
+      
+      const manual = overrides.find((o) => o.origin === "manual");
+      const period = overrides.find((o) => o.origin === "period");
+      const override = manual ?? period;
+      
+      if (override) {
+        overridesMap.set(slot.slotKey, override.patch);
+      }
+    }
+
+    // Apply overrides to slots
+    const effectiveSlots = slots.map((slot) => {
+      const override = overridesMap.get(slot.slotKey);
+      if (!override) return slot;
+      return {
+        ...slot,
+        isOpen: override.isOpen ?? slot.isOpen,
+        capacity: override.capacity ?? slot.capacity,
+        maxGroupSize: override.maxGroupSize !== undefined ? override.maxGroupSize : slot.maxGroupSize,
+      };
+    }).filter((slot) => slot.isOpen);
+
+    // 4. Calculer l'occupation par slotKey
+    const occupationBySlotKey = new Map<string, number>();
+    for (const resa of reservations) {
+      const current = occupationBySlotKey.get(resa.slotKey) || 0;
+      occupationBySlotKey.set(resa.slotKey, current + resa.partySize);
+    }
+
+    // 5. Grouper les slots par date et service
+    const slotsByDateService = new Map<string, { lunch: typeof effectiveSlots; dinner: typeof effectiveSlots }>();
+    
+    for (const slot of effectiveSlots) {
+      const key = slot.dateKey;
+      if (!slotsByDateService.has(key)) {
+        slotsByDateService.set(key, { lunch: [], dinner: [] });
+      }
+      const group = slotsByDateService.get(key)!;
+      if (slot.service === "lunch") {
+        group.lunch.push(slot);
+      } else if (slot.service === "dinner") {
+        group.dinner.push(slot);
+      }
+    }
+
+    // 6. Construire le résultat DayState[]
+    const result: Array<{
+      dateKey: string;
+      lunch: { isOpen: boolean };
+      dinner: { isOpen: boolean };
+    }> = [];
+
+    for (let day = 1; day <= lastDay; day++) {
+      const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const daySlots = slotsByDateService.get(dateKey) || { lunch: [], dinner: [] };
+
+      // Vérifier si au moins un slot lunch a de la capacité pour partySize
+      const lunchOpen = daySlots.lunch.some((slot) => {
+        const occupation = occupationBySlotKey.get(slot.slotKey) || 0;
+        const remaining = slot.capacity - occupation;
+        return remaining >= partySize;
+      });
+
+      // Vérifier si au moins un slot dinner a de la capacité pour partySize
+      const dinnerOpen = daySlots.dinner.some((slot) => {
+        const occupation = occupationBySlotKey.get(slot.slotKey) || 0;
+        const remaining = slot.capacity - occupation;
+        return remaining >= partySize;
+      });
+
+      result.push({
+        dateKey,
+        lunch: { isOpen: lunchOpen },
+        dinner: { isOpen: dinnerOpen },
+      });
+    }
+
+    return result;
   },
 });
 

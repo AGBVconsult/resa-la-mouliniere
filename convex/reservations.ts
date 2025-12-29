@@ -176,6 +176,8 @@ export const _create = internalMutation({
       v.literal("de"),
       v.literal("it")
     ),
+    note: v.optional(v.string()),
+    options: v.optional(v.array(v.string())),
     source: v.union(v.literal("online"), v.literal("admin"), v.literal("phone"), v.literal("walkin")),
     manageTokenExpireBeforeSlotMs: v.number(),
     timezone: v.string(),
@@ -253,6 +255,8 @@ export const _create = internalMutation({
       email: args.email,
       phone: args.phone,
       language: args.language,
+      note: args.note,
+      options: args.options,
       status,
       source: args.source,
       tableIds: [],
@@ -321,10 +325,15 @@ export const _create = internalMutation({
         timeKey: args.timeKey,
         service: args.service,
         partySize,
+        adults: args.adults,
+        childrenCount: args.childrenCount,
+        babyCount: args.babyCount,
         language: args.language,
         manageUrl: `${args.appUrl}/reservation/${manageToken}`,
         editUrl: `${args.appUrl}/reservation/${manageToken}/edit`,
         cancelUrl: `${args.appUrl}/reservation/${manageToken}/cancel`,
+        note: args.note ?? "",
+        options: args.options ?? [],
       },
       dedupeKey: `email:${emailType}:${reservationId}:1`,
     });
@@ -466,6 +475,8 @@ const payloadSchema = {
     v.literal("de"),
     v.literal("it")
   ),
+  note: v.optional(v.string()),
+  options: v.optional(v.array(v.string())),
 };
 
 type ReservationCreateResult =
@@ -600,6 +611,8 @@ export const create = action({
       email: payload.email,
       phone: payload.phone,
       language: payload.language,
+      note: payload.note,
+      options: payload.options,
       source: "online",
       manageTokenExpireBeforeSlotMs: settings.manageTokenExpireBeforeSlotMs,
       timezone: settings.timezone,

@@ -1,0 +1,424 @@
+import type { Language } from "../types";
+
+export const translations = {
+  fr: {
+    // Header
+    title: "Réserver une table",
+    
+    // Step 1
+    step1_title: "Qui sera présent ?",
+    step1_subtitle: "Sélectionnez le nombre de convives",
+    adults: "Adultes",
+    children: "Enfants",
+    children_age: "2-12 ans",
+    babies: "Bébés",
+    babies_age: "0-2 ans",
+    high_chair: "Chaise haute",
+    wheelchair: "Accès PMR",
+    dog: "Je viens avec mon chien",
+    convives: "convives",
+    convive: "convive",
+    
+    // Step 2
+    step2_title: "Quand souhaitez-vous venir ?",
+    step2_subtitle: "Choisissez une date",
+    step2_slots_subtitle: "Choisissez un créneau",
+    back_to_calendar: "Retour au calendrier",
+    lunch: "Midi",
+    dinner: "Soir",
+    no_slots: "Aucun créneau disponible pour cette date.",
+    choose_other_date: "Choisir une autre date",
+    show_monthly_calendar: "Afficher calendrier mensuel",
+    
+    // Step 3
+    step3_title: "Comment vous contacter ?",
+    step3_subtitle: "Pour confirmer votre réservation",
+    first_name: "Prénom",
+    last_name: "Nom",
+    email: "Email",
+    phone: "Téléphone",
+    message: "Message (optionnel)",
+    message_placeholder: "Allergies, occasion spéciale...",
+    
+    // Step 4
+    step4_title: "Dernière étape",
+    step4_subtitle: "Vérifiez et confirmez votre réservation",
+    summary: "Récapitulatif",
+    date: "Date",
+    time: "Heure",
+    guests: "Convives",
+    contact: "Contact",
+    options: "Options",
+    note: "Note",
+    accept_policy: "J'accepte la politique d'annulation",
+    accept_rules: "J'ai lu les informations pratiques",
+    confirm_booking: "Confirmer la réservation",
+    sending: "Envoi...",
+    
+    // Step 5
+    confirmed_title: "Merci !",
+    confirmed_subtitle: "Votre table est réservée",
+    pending_title: "Demande reçue",
+    pending_subtitle: "Votre demande est en attente de confirmation",
+    add_calendar: "Calendrier",
+    share: "Partager",
+    email_sent: "Un email de confirmation a été envoyé à",
+    
+    // Navigation
+    back: "Retour",
+    continue: "Continuer",
+    
+    // Calendar
+    months: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"],
+    days_short: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
+    
+    // Legend
+    legend: {
+      lunchAvailable: "Midi disponible",
+      dinnerAvailable: "Soir disponible",
+      unavailable: "Indisponible",
+      full: "Complet",
+    },
+    
+    // Validation
+    error_required: "Ce champ est requis",
+    error_email: "Email invalide",
+    error_phone: "Téléphone invalide (format: +32...)",
+    error_min_chars: "Minimum 2 caractères",
+    
+    // Persons
+    person: "personne",
+    persons: "personnes",
+  },
+  
+  nl: {
+    title: "Reserveer een tafel",
+    step1_title: "Wie zal aanwezig zijn?",
+    step1_subtitle: "Selecteer het aantal gasten",
+    adults: "Volwassenen",
+    children: "Kinderen",
+    children_age: "2-12 jaar",
+    babies: "Baby's",
+    babies_age: "0-2 jaar",
+    high_chair: "Kinderstoel",
+    wheelchair: "Rolstoeltoegankelijk",
+    dog: "Ik kom met mijn hond",
+    convives: "gasten",
+    convive: "gast",
+    step2_title: "Wanneer wilt u komen?",
+    step2_subtitle: "Kies een datum",
+    step2_slots_subtitle: "Kies een tijdslot",
+    back_to_calendar: "Terug naar kalender",
+    lunch: "Middag",
+    dinner: "Avond",
+    no_slots: "Geen beschikbare tijdslots voor deze datum.",
+    choose_other_date: "Kies een andere datum",
+    show_monthly_calendar: "Toon maandkalender",
+    step3_title: "Hoe kunnen we u bereiken?",
+    step3_subtitle: "Om uw reservering te bevestigen",
+    first_name: "Voornaam",
+    last_name: "Achternaam",
+    email: "E-mail",
+    phone: "Telefoon",
+    message: "Bericht (optioneel)",
+    message_placeholder: "Allergieën, speciale gelegenheid...",
+    step4_title: "Laatste stap",
+    step4_subtitle: "Controleer en bevestig uw reservering",
+    summary: "Samenvatting",
+    date: "Datum",
+    time: "Tijd",
+    guests: "Gasten",
+    contact: "Contact",
+    options: "Opties",
+    note: "Opmerking",
+    accept_policy: "Ik accepteer het annuleringsbeleid",
+    accept_rules: "Ik heb de praktische informatie gelezen",
+    confirm_booking: "Bevestig reservering",
+    sending: "Verzenden...",
+    confirmed_title: "Bedankt!",
+    confirmed_subtitle: "Uw tafel is gereserveerd",
+    pending_title: "Aanvraag ontvangen",
+    pending_subtitle: "Uw aanvraag wacht op bevestiging",
+    add_calendar: "Kalender",
+    share: "Delen",
+    email_sent: "Een bevestigingsmail is verzonden naar",
+    back: "Terug",
+    continue: "Doorgaan",
+    months: ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"],
+    days_short: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
+    legend: {
+      lunchAvailable: "Middag beschikbaar",
+      dinnerAvailable: "Avond beschikbaar",
+      unavailable: "Niet beschikbaar",
+      full: "Volzet",
+    },
+    error_required: "Dit veld is verplicht",
+    error_email: "Ongeldig e-mailadres",
+    error_phone: "Ongeldig telefoonnummer (formaat: +32...)",
+    error_min_chars: "Minimaal 2 karakters",
+    person: "persoon",
+    persons: "personen",
+  },
+  
+  en: {
+    title: "Book a table",
+    step1_title: "Who will be attending?",
+    step1_subtitle: "Select the number of guests",
+    adults: "Adults",
+    children: "Children",
+    children_age: "2-12 years",
+    babies: "Babies",
+    babies_age: "0-2 years",
+    high_chair: "High chair",
+    wheelchair: "Wheelchair access",
+    dog: "I'm coming with my dog",
+    convives: "guests",
+    convive: "guest",
+    step2_title: "When would you like to come?",
+    step2_subtitle: "Choose a date",
+    step2_slots_subtitle: "Choose a time slot",
+    back_to_calendar: "Back to calendar",
+    lunch: "Lunch",
+    dinner: "Dinner",
+    no_slots: "No available time slots for this date.",
+    choose_other_date: "Choose another date",
+    show_monthly_calendar: "Show monthly calendar",
+    step3_title: "How can we contact you?",
+    step3_subtitle: "To confirm your reservation",
+    first_name: "First name",
+    last_name: "Last name",
+    email: "Email",
+    phone: "Phone",
+    message: "Message (optional)",
+    message_placeholder: "Allergies, special occasion...",
+    step4_title: "Final step",
+    step4_subtitle: "Review and confirm your booking",
+    summary: "Summary",
+    date: "Date",
+    time: "Time",
+    guests: "Guests",
+    contact: "Contact",
+    options: "Options",
+    note: "Note",
+    accept_policy: "I accept the cancellation policy",
+    accept_rules: "I have read the practical information",
+    confirm_booking: "Confirm booking",
+    sending: "Sending...",
+    confirmed_title: "Thank you!",
+    confirmed_subtitle: "Your table is reserved",
+    pending_title: "Request received",
+    pending_subtitle: "Your request is pending confirmation",
+    add_calendar: "Calendar",
+    share: "Share",
+    email_sent: "A confirmation email has been sent to",
+    back: "Back",
+    continue: "Continue",
+    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    days_short: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    legend: {
+      lunchAvailable: "Lunch available",
+      dinnerAvailable: "Dinner available",
+      unavailable: "Unavailable",
+      full: "Full",
+    },
+    error_required: "This field is required",
+    error_email: "Invalid email",
+    error_phone: "Invalid phone (format: +32...)",
+    error_min_chars: "Minimum 2 characters",
+    person: "person",
+    persons: "persons",
+  },
+
+  de: {
+    // Header
+    title: "Tisch reservieren",
+    
+    // Step 1
+    step1_title: "Wer wird anwesend sein?",
+    step1_subtitle: "Wählen Sie die Anzahl der Gäste",
+    adults: "Erwachsene",
+    children: "Kinder",
+    children_age: "2-12 Jahre",
+    babies: "Babys",
+    babies_age: "0-2 Jahre",
+    high_chair: "Hochstuhl",
+    wheelchair: "Rollstuhlgerecht",
+    dog: "Ich komme mit meinem Hund",
+    convives: "Gäste",
+    convive: "Gast",
+    
+    // Step 2
+    step2_title: "Wann möchten Sie kommen?",
+    step2_subtitle: "Wählen Sie ein Datum und eine Uhrzeit",
+    step2_slots_subtitle: "Wählen Sie ein Zeitfenster",
+    back_to_calendar: "Zurück zum Kalender",
+    show_monthly_calendar: "Monatskalender anzeigen",
+    lunch: "Mittag",
+    dinner: "Abend",
+    no_slots: "Keine verfügbaren Zeitfenster für dieses Datum.",
+    choose_other_date: "Anderes Datum wählen",
+    
+    // Step 3
+    step3_title: "Wie können wir Sie erreichen?",
+    step3_subtitle: "Um Ihre Reservierung zu bestätigen",
+    first_name: "Vorname",
+    last_name: "Nachname",
+    email: "E-Mail",
+    phone: "Telefon",
+    message: "Nachricht (optional)",
+    message_placeholder: "Allergien, besonderer Anlass...",
+    
+    // Step 4
+    step4_title: "Letzter Schritt",
+    step4_subtitle: "Überprüfen und bestätigen Sie Ihre Reservierung",
+    summary: "Zusammenfassung",
+    date: "Datum",
+    time: "Uhrzeit",
+    guests: "Gäste",
+    contact: "Kontakt",
+    options: "Optionen",
+    note: "Anmerkung",
+    accept_policy: "Ich akzeptiere die Stornierungsbedingungen",
+    accept_rules: "Ich habe die praktischen Informationen gelesen",
+    confirm_booking: "Reservierung bestätigen",
+    sending: "Wird gesendet...",
+    
+    // Step 5
+    confirmed_title: "Vielen Dank!",
+    confirmed_subtitle: "Ihr Tisch ist reserviert",
+    pending_title: "Anfrage erhalten",
+    pending_subtitle: "Ihre Anfrage wartet auf Bestätigung",
+    add_calendar: "Kalender",
+    share: "Teilen",
+    email_sent: "Eine Bestätigungs-E-Mail wurde gesendet an",
+    
+    // Navigation
+    back: "Zurück",
+    continue: "Weiter",
+    
+    // Calendar
+    months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
+    days_short: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+    
+    // Legend
+    legend: {
+      lunchAvailable: "Mittag verfügbar",
+      dinnerAvailable: "Abend verfügbar",
+      unavailable: "Nicht verfügbar",
+      full: "Ausgebucht",
+    },
+    
+    // Validation
+    error_required: "Dieses Feld ist erforderlich",
+    error_email: "Ungültige E-Mail-Adresse",
+    error_phone: "Ungültige Telefonnummer (Format: +32...)",
+    error_min_chars: "Mindestens 2 Zeichen",
+    
+    // Persons
+    person: "Person",
+    persons: "Personen",
+  },
+
+  it: {
+    // Header
+    title: "Prenota un tavolo",
+    
+    // Step 1
+    step1_title: "Chi sarà presente?",
+    step1_subtitle: "Seleziona il numero di ospiti",
+    adults: "Adulti",
+    children: "Bambini",
+    children_age: "2-12 anni",
+    babies: "Neonati",
+    babies_age: "0-2 anni",
+    high_chair: "Seggiolone",
+    wheelchair: "Accesso disabili",
+    dog: "Vengo con il mio cane",
+    convives: "ospiti",
+    convive: "ospite",
+    
+    // Step 2
+    step2_title: "Quando vorresti venire?",
+    step2_subtitle: "Scegli una data e un orario",
+    step2_slots_subtitle: "Scegli una fascia oraria",
+    back_to_calendar: "Torna al calendario",
+    show_monthly_calendar: "Mostra calendario mensile",
+    lunch: "Pranzo",
+    dinner: "Cena",
+    no_slots: "Nessuna fascia oraria disponibile per questa data.",
+    choose_other_date: "Scegli un'altra data",
+    
+    // Step 3
+    step3_title: "Come possiamo contattarti?",
+    step3_subtitle: "Per confermare la tua prenotazione",
+    first_name: "Nome",
+    last_name: "Cognome",
+    email: "Email",
+    phone: "Telefono",
+    message: "Messaggio (facoltativo)",
+    message_placeholder: "Allergie, occasione speciale...",
+    
+    // Step 4
+    step4_title: "Ultimo passaggio",
+    step4_subtitle: "Verifica e conferma la tua prenotazione",
+    summary: "Riepilogo",
+    date: "Data",
+    time: "Ora",
+    guests: "Ospiti",
+    contact: "Contatto",
+    options: "Opzioni",
+    note: "Nota",
+    accept_policy: "Accetto la politica di cancellazione",
+    accept_rules: "Ho letto le informazioni pratiche",
+    confirm_booking: "Conferma prenotazione",
+    sending: "Invio in corso...",
+    
+    // Step 5
+    confirmed_title: "Grazie!",
+    confirmed_subtitle: "Il tuo tavolo è prenotato",
+    pending_title: "Richiesta ricevuta",
+    pending_subtitle: "La tua richiesta è in attesa di conferma",
+    add_calendar: "Calendario",
+    share: "Condividi",
+    email_sent: "Un'email di conferma è stata inviata a",
+    
+    // Navigation
+    back: "Indietro",
+    continue: "Continua",
+    
+    // Calendar
+    months: ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"],
+    days_short: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
+    
+    // Legend
+    legend: {
+      lunchAvailable: "Pranzo disponibile",
+      dinnerAvailable: "Cena disponibile",
+      unavailable: "Non disponibile",
+      full: "Completo",
+    },
+    
+    // Validation
+    error_required: "Questo campo è obbligatorio",
+    error_email: "Email non valida",
+    error_phone: "Telefono non valido (formato: +32...)",
+    error_min_chars: "Minimo 2 caratteri",
+    
+    // Persons
+    person: "persona",
+    persons: "persone",
+  },
+} as const;
+
+export type TranslationKey = keyof typeof translations.fr;
+
+export function useTranslation(lang: Language) {
+  const supportedLang = lang in translations ? lang as keyof typeof translations : "fr";
+  const t = translations[supportedLang];
+  return {
+    t,
+    months: t.months as readonly string[],
+    daysShort: t.days_short as readonly string[],
+    legend: t.legend,
+  };
+}
