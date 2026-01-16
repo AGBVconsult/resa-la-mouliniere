@@ -57,6 +57,20 @@
       "message": "U ontvangt een bevestigingsmail.",
       "pending": "Uw aanvraag wacht op goedkeuring.",
       "backToSite": "Terug naar site"
+    },
+    "guests": {
+      "adults": "Volwassenen",
+      "children": "Kinderen",
+      "childrenAge": "2-12 jaar",
+      "babies": "Baby's",
+      "babiesAge": "0-2 jaar",
+      "total": "Totaal",
+      "guests": "gasten"
+    },
+    "calendar": {
+      "lunch": "Lunch",
+      "dinner": "Diner",
+      "noAvailability": "Geen beschikbaarheid voor deze datum"
     }
   },
   "reservation": {
@@ -82,7 +96,20 @@
     "actions": {
       "cancel": "Reservering annuleren",
       "cancelConfirm": "Weet u zeker dat u wilt annuleren?",
-      "cancelled": "Reservering geannuleerd"
+      "cancelled": "Reservering geannuleerd",
+      "edit": "Reservering wijzigen"
+    },
+    "edit": {
+      "title": "Mijn reservering wijzigen",
+      "selectDate": "Selecteer een datum",
+      "service": "Service",
+      "save": "Wijzigingen opslaan",
+      "success": "Reservering gewijzigd",
+      "emailSent": "U heeft een bevestigingsmail ontvangen.",
+      "backToReservation": "Terug naar mijn reservering",
+      "cannotEdit": "Wijziging niet mogelijk",
+      "statusNotAllowed": "Deze reservering kan niet meer worden gewijzigd.",
+      "notePlaceholder": "Allergieën, speciale gelegenheid..."
     },
     "expired": "Deze link is verlopen",
     "notFound": "Reservering niet gevonden"

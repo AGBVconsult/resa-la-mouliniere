@@ -57,6 +57,20 @@
       "message": "You will receive a confirmation email.",
       "pending": "Your request is pending approval.",
       "backToSite": "Back to site"
+    },
+    "guests": {
+      "adults": "Adults",
+      "children": "Children",
+      "childrenAge": "2-12 years",
+      "babies": "Babies",
+      "babiesAge": "0-2 years",
+      "total": "Total",
+      "guests": "guests"
+    },
+    "calendar": {
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "noAvailability": "No availability for this date"
     }
   },
   "reservation": {
@@ -82,7 +96,20 @@
     "actions": {
       "cancel": "Cancel reservation",
       "cancelConfirm": "Are you sure you want to cancel?",
-      "cancelled": "Reservation cancelled"
+      "cancelled": "Reservation cancelled",
+      "edit": "Edit reservation"
+    },
+    "edit": {
+      "title": "Edit my reservation",
+      "selectDate": "Select a date",
+      "service": "Service",
+      "save": "Save changes",
+      "success": "Reservation updated",
+      "emailSent": "A confirmation email has been sent to you.",
+      "backToReservation": "Back to my reservation",
+      "cannotEdit": "Cannot edit",
+      "statusNotAllowed": "This reservation can no longer be modified.",
+      "notePlaceholder": "Allergies, special occasion..."
     },
     "expired": "This link has expired",
     "notFound": "Reservation not found"

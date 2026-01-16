@@ -57,6 +57,20 @@
       "message": "Riceverai un'email di conferma.",
       "pending": "La tua richiesta è in attesa di approvazione.",
       "backToSite": "Torna al sito"
+    },
+    "guests": {
+      "adults": "Adulti",
+      "children": "Bambini",
+      "childrenAge": "2-12 anni",
+      "babies": "Neonati",
+      "babiesAge": "0-2 anni",
+      "total": "Totale",
+      "guests": "ospiti"
+    },
+    "calendar": {
+      "lunch": "Pranzo",
+      "dinner": "Cena",
+      "noAvailability": "Nessuna disponibilità per questa data"
     }
   },
   "reservation": {
@@ -82,7 +96,20 @@
     "actions": {
       "cancel": "Annulla prenotazione",
       "cancelConfirm": "Sei sicuro di voler annullare?",
-      "cancelled": "Prenotazione annullata"
+      "cancelled": "Prenotazione annullata",
+      "edit": "Modifica prenotazione"
+    },
+    "edit": {
+      "title": "Modifica la mia prenotazione",
+      "selectDate": "Seleziona una data",
+      "service": "Servizio",
+      "save": "Salva modifiche",
+      "success": "Prenotazione aggiornata",
+      "emailSent": "Ti è stata inviata un'email di conferma.",
+      "backToReservation": "Torna alla mia prenotazione",
+      "cannotEdit": "Modifica non possibile",
+      "statusNotAllowed": "Questa prenotazione non può più essere modificata.",
+      "notePlaceholder": "Allergie, occasione speciale..."
     },
     "expired": "Questo link è scaduto",
     "notFound": "Prenotazione non trovata"

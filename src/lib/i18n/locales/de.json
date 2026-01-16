@@ -57,6 +57,20 @@
       "message": "Sie erhalten eine Bestätigungs-E-Mail.",
       "pending": "Ihre Anfrage wartet auf Genehmigung.",
       "backToSite": "Zurück zur Website"
+    },
+    "guests": {
+      "adults": "Erwachsene",
+      "children": "Kinder",
+      "childrenAge": "2-12 Jahre",
+      "babies": "Babys",
+      "babiesAge": "0-2 Jahre",
+      "total": "Gesamt",
+      "guests": "Gäste"
+    },
+    "calendar": {
+      "lunch": "Mittagessen",
+      "dinner": "Abendessen",
+      "noAvailability": "Keine Verfügbarkeit für dieses Datum"
     }
   },
   "reservation": {
@@ -82,7 +96,20 @@
     "actions": {
       "cancel": "Reservierung stornieren",
       "cancelConfirm": "Sind Sie sicher, dass Sie stornieren möchten?",
-      "cancelled": "Reservierung storniert"
+      "cancelled": "Reservierung storniert",
+      "edit": "Reservierung bearbeiten"
+    },
+    "edit": {
+      "title": "Meine Reservierung bearbeiten",
+      "selectDate": "Datum auswählen",
+      "service": "Service",
+      "save": "Änderungen speichern",
+      "success": "Reservierung aktualisiert",
+      "emailSent": "Eine Bestätigungsmail wurde an Sie gesendet.",
+      "backToReservation": "Zurück zu meiner Reservierung",
+      "cannotEdit": "Bearbeitung nicht möglich",
+      "statusNotAllowed": "Diese Reservierung kann nicht mehr geändert werden.",
+      "notePlaceholder": "Allergien, besonderer Anlass..."
     },
     "expired": "Dieser Link ist abgelaufen",
     "notFound": "Reservierung nicht gefunden"

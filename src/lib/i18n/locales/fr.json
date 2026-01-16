@@ -143,7 +143,20 @@
     "actions": {
       "cancel": "Annuler la réservation",
       "cancelConfirm": "Êtes-vous sûr de vouloir annuler ?",
-      "cancelled": "Réservation annulée"
+      "cancelled": "Réservation annulée",
+      "edit": "Modifier la réservation"
+    },
+    "edit": {
+      "title": "Modifier ma réservation",
+      "selectDate": "Sélectionner une date",
+      "service": "Service",
+      "save": "Enregistrer les modifications",
+      "success": "Réservation modifiée",
+      "emailSent": "Un email de confirmation vous a été envoyé.",
+      "backToReservation": "Retour à ma réservation",
+      "cannotEdit": "Modification impossible",
+      "statusNotAllowed": "Cette réservation ne peut plus être modifiée.",
+      "notePlaceholder": "Allergies, occasion spéciale..."
     },
     "expired": "Ce lien a expiré",
     "notFound": "Réservation introuvable"
