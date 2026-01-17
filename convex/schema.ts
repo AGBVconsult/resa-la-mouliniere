@@ -51,6 +51,7 @@ const groupRequestStatus = v.union(
 
 const idempotencyAction = v.union(
   v.literal("reservations.create"),
+  v.literal("reservations.updateByToken"),
   v.literal("reservations.cancelByToken"),
   v.literal("groupRequests.create")
 );

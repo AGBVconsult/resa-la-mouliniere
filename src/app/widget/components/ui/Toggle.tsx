@@ -36,18 +36,17 @@ export function Toggle({
   };
 
   return (
-    <div
+    <button
+      type="button"
       role="switch"
       aria-checked={checked}
-      tabIndex={0}
-      onClick={handleToggle}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleToggle();
-        }
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleToggle();
       }}
-      className={`flex items-center justify-between p-3 min-h-[44px] rounded-lg border cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${getContainerClasses()}`}
+      onMouseDown={(e) => e.preventDefault()}
+      className={`w-full flex items-center justify-between p-3 min-h-[44px] rounded-lg border cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${getContainerClasses()}`}
     >
       <div className="flex items-center gap-3">
         {Icon && (
@@ -63,6 +62,6 @@ export function Toggle({
       >
         {checked && <Check size={14} className="text-white" />}
       </div>
-    </div>
+    </button>
   );
 }

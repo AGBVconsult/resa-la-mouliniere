@@ -35,6 +35,8 @@ function buildReservationAdmin(doc: {
   email: string;
   phone: string;
   language: "fr" | "nl" | "en" | "de" | "it";
+  note?: string;
+  options?: string[];
   status: string;
   source: "online" | "admin" | "phone" | "walkin";
   tableIds: Id<"tables">[];
@@ -63,6 +65,8 @@ function buildReservationAdmin(doc: {
     email: doc.email,
     phone: doc.phone,
     language: doc.language,
+    note: doc.note,
+    options: doc.options,
     status: doc.status as ReservationStatus,
     source: doc.source,
     tableIds: doc.tableIds,
@@ -636,6 +640,292 @@ export const create = action({
     });
 
     // Email is now enqueued in _create mutation
+
+    return result;
+  },
+});
+
+/**
+ * Check if a reservation status allows modification.
+ * Pure helper, testable.
+ */
+export function canModify(status: string): boolean {
+  return status === "pending" || status === "confirmed";
+}
+
+export const _update = internalMutation({
+  args: {
+    reservationId: v.id("reservations"),
+    dateKey: v.string(),
+    service: v.union(v.literal("lunch"), v.literal("dinner")),
+    timeKey: v.string(),
+    adults: v.number(),
+    childrenCount: v.number(),
+    babyCount: v.number(),
+    note: v.optional(v.string()),
+    expectedVersion: v.number(),
+    now: v.number(),
+    timezone: v.string(),
+    appUrl: v.string(),
+    manageToken: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const reservation = await ctx.db.get(args.reservationId);
+    if (!reservation) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    // Check version for optimistic locking
+    if (reservation.version !== args.expectedVersion) {
+      throw Errors.VERSION_CONFLICT(args.expectedVersion, reservation.version);
+    }
+
+    // Check status allows modification
+    if (!canModify(reservation.status)) {
+      throw Errors.INVALID_INPUT("status", "Reservation cannot be modified");
+    }
+
+    // Build new slotKey
+    const newSlotKey = makeSlotKey({
+      dateKey: args.dateKey,
+      service: args.service as Service,
+      timeKey: args.timeKey,
+    });
+
+    // Load new slot
+    const newSlot = await ctx.db
+      .query("slots")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", reservation.restaurantId).eq("slotKey", newSlotKey)
+      )
+      .unique();
+
+    if (!newSlot) {
+      throw Errors.SLOT_NOT_FOUND(newSlotKey);
+    }
+
+    // Check effectiveOpen
+    const effectiveOpen = computeEffectiveOpen(newSlot.isOpen, newSlot.capacity);
+    if (!effectiveOpen) {
+      throw Errors.SLOT_TAKEN(newSlotKey, "closed");
+    }
+
+    // Compute new partySize
+    const newPartySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
+
+    // Check maxGroupSize
+    if (newSlot.maxGroupSize !== null && newPartySize > newSlot.maxGroupSize) {
+      throw Errors.SLOT_TAKEN(newSlotKey, "taken");
+    }
+
+    // Calculate used capacity (excluding current reservation)
+    const existingReservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", reservation.restaurantId).eq("slotKey", newSlotKey)
+      )
+      .collect();
+
+    const usedCapacity = existingReservations
+      .filter((r) =>
+        r._id !== args.reservationId &&
+        (r.status === "pending" || r.status === "confirmed" || r.status === "seated")
+      )
+      .reduce((sum, r) => sum + r.partySize, 0);
+
+    const remainingCapacity = newSlot.capacity - usedCapacity;
+
+    if (newPartySize > remainingCapacity) {
+      throw Errors.INSUFFICIENT_CAPACITY(newSlotKey, newPartySize, remainingCapacity);
+    }
+
+    // Determine new status based on partySize (same logic as create)
+    const newStatus: ReservationStatus = newPartySize <= 4 ? "confirmed" : "pending";
+
+    const newVersion = reservation.version + 1;
+
+    // Update reservation
+    await ctx.db.patch(args.reservationId, {
+      dateKey: args.dateKey,
+      service: args.service,
+      timeKey: args.timeKey,
+      slotKey: newSlotKey,
+      adults: args.adults,
+      childrenCount: args.childrenCount,
+      babyCount: args.babyCount,
+      partySize: newPartySize,
+      note: args.note,
+      status: newStatus,
+      updatedAt: args.now,
+      version: newVersion,
+    });
+
+    // Log without PII
+    console.log("Reservation updated", {
+      reservationId: args.reservationId,
+      oldSlotKey: reservation.slotKey,
+      newSlotKey,
+      newStatus,
+      newPartySize,
+      newVersion
+    });
+
+    // Enqueue confirmation email
+    const emailType = newStatus === "confirmed"
+      ? "reservation.confirmed"
+      : "reservation.pending";
+
+    await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
+      restaurantId: reservation.restaurantId,
+      type: emailType,
+      to: reservation.email,
+      subjectKey: `email.${emailType}.subject`,
+      templateKey: emailType,
+      templateData: {
+        firstName: reservation.firstName,
+        lastName: reservation.lastName,
+        dateKey: args.dateKey,
+        timeKey: args.timeKey,
+        service: args.service,
+        partySize: newPartySize,
+        adults: args.adults,
+        childrenCount: args.childrenCount,
+        babyCount: args.babyCount,
+        language: reservation.language,
+        manageUrl: `${args.appUrl}/reservation/${args.manageToken}`,
+        editUrl: `${args.appUrl}/reservation/${args.manageToken}/edit`,
+        cancelUrl: `${args.appUrl}/reservation/${args.manageToken}/cancel`,
+        note: args.note ?? "",
+        options: reservation.options ?? [],
+      },
+      dedupeKey: `email:${emailType}:${args.reservationId}:${newVersion}`,
+    });
+
+    return {
+      reservationId: args.reservationId,
+      status: newStatus,
+      newVersion,
+    };
+  },
+});
+
+type UpdateByTokenResult = {
+  reservationId: Id<"reservations">;
+  status: ReservationStatus;
+};
+
+export const updateByToken = action({
+  args: {
+    token: v.string(),
+    dateKey: v.string(),
+    service: v.union(v.literal("lunch"), v.literal("dinner")),
+    timeKey: v.string(),
+    adults: v.number(),
+    childrenCount: v.number(),
+    babyCount: v.number(),
+    note: v.optional(v.string()),
+    idemKey: v.string(),
+  },
+  handler: async (ctx, args): Promise<UpdateByTokenResult> => {
+    const { token, idemKey, ...updateData } = args;
+    const now = Date.now();
+
+    // Validate dateKey format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(updateData.dateKey)) {
+      throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
+    }
+
+    // Validate timeKey format
+    if (!/^\d{2}:\d{2}$/.test(updateData.timeKey)) {
+      throw Errors.INVALID_INPUT("timeKey", "Format HH:MM requis");
+    }
+
+    // Validate adults >= 1
+    if (updateData.adults < 1) {
+      throw Errors.INVALID_INPUT("adults", "Doit être >= 1");
+    }
+
+    // Compute request hash for idempotency
+    const requestHash = computeRequestHash({ token, ...updateData });
+
+    // Check idempotency
+    const idemCheck: IdempotencyCheckResult = await ctx.runQuery(internal.lib.idempotency.check, {
+      key: idemKey,
+      requestHash,
+    });
+
+    if (idemCheck.found) {
+      if (idemCheck.hashMismatch) {
+        throw Errors.INVALID_INPUT("idemKey", "Idempotency key already used with different payload");
+      }
+      return idemCheck.resultData as UpdateByTokenResult;
+    }
+
+    // Lookup token
+    const tokenDoc = await ctx.runQuery(internal.reservations._getTokenByValue, { token });
+
+    if (!tokenDoc) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    if (tokenDoc.usedAt !== null) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    if (tokenDoc.expiresAt <= now) {
+      throw Errors.TOKEN_EXPIRED();
+    }
+
+    // Load reservation
+    const reservation = await ctx.runQuery(internal.reservations._getById, {
+      reservationId: tokenDoc.reservationId,
+    });
+
+    if (!reservation) {
+      throw Errors.TOKEN_INVALID();
+    }
+
+    // Check if modifiable
+    if (!canModify(reservation.status)) {
+      throw Errors.INVALID_INPUT("status", "Reservation cannot be modified");
+    }
+
+    // Load settings for timezone and appUrl
+    const settings = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+    if (!settings) {
+      throw Errors.SETTINGS_NOT_FOUND();
+    }
+
+    // Call _update internal mutation
+    const updateResult = await ctx.runMutation(internal.reservations._update, {
+      reservationId: tokenDoc.reservationId,
+      dateKey: updateData.dateKey,
+      service: updateData.service,
+      timeKey: updateData.timeKey,
+      adults: updateData.adults,
+      childrenCount: updateData.childrenCount,
+      babyCount: updateData.babyCount,
+      note: updateData.note,
+      expectedVersion: reservation.version,
+      now,
+      timezone: settings.timezone,
+      appUrl: settings.appUrl,
+      manageToken: token,
+    });
+
+    const result: UpdateByTokenResult = {
+      reservationId: updateResult.reservationId,
+      status: updateResult.status,
+    };
+
+    // Store idempotency result
+    await ctx.runMutation(internal.lib.idempotency.store, {
+      key: idemKey,
+      action: "reservations.updateByToken",
+      requestHash,
+      resultData: result,
+      expiresAt: now + 24 * 60 * 60 * 1000,
+    });
 
     return result;
   },

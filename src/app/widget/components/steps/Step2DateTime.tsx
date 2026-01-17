@@ -150,7 +150,7 @@ export function Step2DateTime({
                 <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-amber-500" />
                   <span>{t.lunch}</span>
-                  <span className="font-normal text-slate-400">12h00 - 14h00</span>
+                  <span className="font-normal text-slate-400">{t.lunch_hours}</span>
                 </h3>
                 <TimeSlotGrid
                   slots={lunchSlots}
@@ -166,7 +166,7 @@ export function Step2DateTime({
                 <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-blue-500" />
                   <span>{t.dinner}</span>
-                  <span className="font-normal text-slate-400">18h00 - 21h00</span>
+                  <span className="font-normal text-slate-400">{t.dinner_hours}</span>
                 </h3>
                 <TimeSlotGrid
                   slots={dinnerSlots}

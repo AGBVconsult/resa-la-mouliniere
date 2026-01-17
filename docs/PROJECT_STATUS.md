@@ -1,9 +1,9 @@
 # Project Status — Resa La Moulinière
 
-**Dernière mise à jour :** 2026-01-08
+**Dernière mise à jour :** 2026-01-17
 **Version actuelle :** MVP en cours
 **Statut global :** 🟡 En cours
-**Progression estimée :** 65%
+**Progression estimée :** 70%
 
 ---
 
@@ -51,7 +51,8 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 | Turnstile CAPTCHA | ✅ | |
 | Page gestion réservation | ✅ | /reservation/[token] |
 | Annulation via token | ✅ | |
-| Modification réservation | ❌ | Page /edit manquante |
+| Modification réservation | ✅ | /reservation/[token]/edit |
+| Page annulation dédiée | ✅ | /reservation/[token]/cancel |
 | Routage groupe (>15) | ✅ | /widget/group-request |
 
 ### Frontend Admin — 🔴
@@ -88,7 +89,7 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 ## Prochaines Étapes (Priorité Haute)
 
 1. **Interface Admin Vue Service** — Estimation: 3-4 jours
-2. **Page modification réservation client** — Estimation: 0.5 jour
+2. ~~**Page modification réservation client**~~ ✅ Terminé
 3. **Emails admin (notification pending + triggers validated/refused)** — Estimation: 0.5 jour
 4. **Cron email review J+1** — Estimation: 0.5 jour
 5. **dailyFinalize (no-show auto)** — Estimation: 0.5 jour
@@ -110,3 +111,4 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 | Date | Version | Progression | Commit |
 |------|---------|-------------|--------|
 | 2026-01-08 | MVP | 65% | dd29fcd |
+| 2026-01-17 | MVP | 70% | - | Pages edit/cancel client terminées |

@@ -48,6 +48,7 @@ export const store = internalMutation({
     key: v.string(),
     action: v.union(
       v.literal("reservations.create"),
+      v.literal("reservations.updateByToken"),
       v.literal("reservations.cancelByToken"),
       v.literal("groupRequests.create")
     ),

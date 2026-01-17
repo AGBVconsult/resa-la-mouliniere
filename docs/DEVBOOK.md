@@ -3,8 +3,8 @@
 > Guide de développement complet avec tâches granulaires.
 > Utilisé par Windsurf et Claude pour recommander la prochaine tâche selon le temps disponible.
 
-**Dernière mise à jour :** 2026-01-08
-**Progression globale :** 65%
+**Dernière mise à jour :** 2026-01-17
+**Progression globale :** 70%
 
 ---
 
@@ -15,6 +15,8 @@
 | 1 | Backend Core | ✅ Terminé | 100% |
 | 2 | Widget Client | ✅ Terminé | 100% |
 | 3 | Emails & Crons | 🟡 En cours | 80% |
+| 3b | Page Modification Client | ✅ Terminé | 100% |
+| 3c | Page Annulation Client | ✅ Terminé | 100% |
 | 4 | Interface Admin | ❌ Non commencé | 0% |
 | 5 | Polish & Tests | ❌ Non commencé | 0% |
 
@@ -290,31 +292,35 @@ Créer l'interface admin complète (iPad-first) permettant la gestion quotidienn
 
 > Permettre au client de modifier sa réservation via lien email
 
-**Statut global :** ❌ Non commencé
+**Statut global :** ✅ Terminé
 **Effort total :** 0.5 jour
 **Priorité :** 🟡 Haute
 
 ### Tâches
 
 #### [TASK-301] — Page modification réservation
-- **Statut :** ❌
+- **Statut :** ✅ Terminé
 - **Durée :** ⏱️ 2h
 - **Dépendances :** 🔗 Aucune
 - **Fichiers :** 
-  - `src/app/reservation/[token]/edit/page.tsx` (créer)
-  - `convex/reservations.ts` (vérifier updateByToken existe)
+  - `src/app/reservation/[token]/edit/page.tsx` ✅
+  - `convex/reservations.ts` (updateByToken existe) ✅
 - **Description :** 
   - Page accessible via token (lien dans email)
   - Formulaire pré-rempli avec données actuelles
-  - Modification : date, heure, couverts, note
+  - Modification : date, heure, couverts, note, options
   - Vérification disponibilité avant validation
+  - Style graphique cohérent avec le widget client
+  - Multilingue (FR/NL/EN/DE/IT)
 - **Critères de validation :**
-  - [ ] Page accessible via token
-  - [ ] Modification fonctionne
-  - [ ] Email confirmation envoyé après modification
+  - [x] Page accessible via token
+  - [x] Modification fonctionne
+  - [x] Email confirmation envoyé après modification
+  - [x] Options (chaise haute, PMR, chien) pré-cochées
+  - [x] Calendrier mensuel intégré
 
 #### [TASK-302] — Lien modification dans emails
-- **Statut :** ❌
+- **Statut :** ✅ Terminé
 - **Durée :** ⏱️ 30min
 - **Dépendances :** 🔗 TASK-301
 - **Fichiers :** 
@@ -323,7 +329,26 @@ Créer l'interface admin complète (iPad-first) permettant la gestion quotidienn
   - Vérifier que editUrl pointe vers /reservation/[token]/edit
   - Tester tous les templates concernés
 - **Critères de validation :**
-  - [ ] Liens fonctionnels dans tous les emails
+  - [x] Liens fonctionnels dans tous les emails
+
+#### [TASK-303] — Page annulation réservation
+- **Statut :** ✅ Terminé
+- **Durée :** ⏱️ 1h
+- **Dépendances :** 🔗 Aucune
+- **Fichiers :** 
+  - `src/app/reservation/[token]/cancel/page.tsx` ✅
+- **Description :** 
+  - Page accessible via token (lien dans email)
+  - Affiche résumé de la réservation (date, heure, convives)
+  - Message d'avertissement (action irréversible)
+  - Bouton de confirmation d'annulation
+  - Style graphique cohérent avec le widget client
+  - Multilingue (FR/NL/EN/DE/IT)
+- **Critères de validation :**
+  - [x] Page accessible via token
+  - [x] Annulation fonctionne
+  - [x] Message de confirmation affiché
+  - [x] Traductions complètes
 
 ---
 
