@@ -641,8 +641,6 @@ export const create = action({
   },
 });
 
-type CancelByTokenResult = { reservationId: Id<"reservations"> };
-
 /**
  * Check if a reservation status allows modification.
  * Pure helper, testable.
