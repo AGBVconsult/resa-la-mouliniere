@@ -282,9 +282,53 @@ export const listReservations = query({
 });
 
 /**
+ * List all tables for the active restaurant.
+ * Used for table assignment in admin interface.
+ *
+ * Autorisation: admin|owner|staff
+ */
+export const listTables = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireRole(ctx, "staff");
+
+    // Get active restaurant
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+    if (activeRestaurants.length > 1) {
+      throw Errors.MULTIPLE_ACTIVE_RESTAURANTS(activeRestaurants.length);
+    }
+
+    const restaurant = activeRestaurants[0];
+
+    const tables = await ctx.db
+      .query("tables")
+      .withIndex("by_restaurant_isActive", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("isActive", true)
+      )
+      .collect();
+
+    return tables.map((t) => ({
+      _id: t._id,
+      name: t.name,
+      zone: t.zone,
+      capacity: t.capacity,
+      gridX: t.gridX,
+      gridY: t.gridY,
+    }));
+  },
+});
+
+/**
  * Get a single reservation by ID.
  * Contract: reservations.getAdmin
- * 
+ *
  * Autorisation: admin|owner
  */
 export const getReservation = query({
@@ -423,5 +467,248 @@ export const updateReservation = mutation({
       reservationId,
       newVersion: patch.version as number,
     };
+  },
+});
+
+/**
+ * Create a reservation from admin (phone, walk-in).
+ * Bypasses Turnstile validation.
+ * Status is always "confirmed" regardless of party size.
+ *
+ * Autorisation: admin|owner|staff
+ */
+export const createReservation = mutation({
+  args: {
+    dateKey: v.string(),
+    service: v.union(v.literal("lunch"), v.literal("dinner")),
+    timeKey: v.string(),
+    adults: v.number(),
+    childrenCount: v.number(),
+    babyCount: v.number(),
+    firstName: v.string(),
+    lastName: v.string(),
+    phone: v.string(),
+    email: v.optional(v.string()),
+    note: v.optional(v.string()),
+    source: v.union(v.literal("admin"), v.literal("phone"), v.literal("walkin")),
+    language: v.optional(v.union(
+      v.literal("fr"),
+      v.literal("nl"),
+      v.literal("en"),
+      v.literal("de"),
+      v.literal("it")
+    )),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, "staff");
+
+    // Get active restaurant
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+    if (activeRestaurants.length > 1) {
+      throw Errors.MULTIPLE_ACTIVE_RESTAURANTS(activeRestaurants.length);
+    }
+
+    const restaurant = activeRestaurants[0];
+
+    // Build slotKey
+    const slotKey = `${args.dateKey}#${args.service}#${args.timeKey}`;
+
+    // Load slot
+    const slot = await ctx.db
+      .query("slots")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
+      )
+      .unique();
+
+    if (!slot) {
+      throw Errors.SLOT_NOT_FOUND(slotKey);
+    }
+
+    // Check slot is open
+    if (!slot.isOpen || slot.capacity <= 0) {
+      throw Errors.SLOT_TAKEN(slotKey, "closed");
+    }
+
+    // Compute partySize
+    const partySize = args.adults + args.childrenCount + args.babyCount;
+
+    // Check capacity
+    const existingReservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
+      )
+      .collect();
+
+    const usedCapacity = existingReservations
+      .filter((r) => ["pending", "confirmed", "seated"].includes(r.status))
+      .reduce((sum, r) => sum + r.partySize, 0);
+
+    const remainingCapacity = slot.capacity - usedCapacity;
+
+    if (partySize > remainingCapacity) {
+      throw Errors.INSUFFICIENT_CAPACITY(slotKey, partySize, remainingCapacity);
+    }
+
+    const now = Date.now();
+    const language = args.language ?? "fr";
+
+    // Create reservation with status "confirmed" (admin bypass)
+    const reservationId = await ctx.db.insert("reservations", {
+      restaurantId: restaurant._id,
+      dateKey: args.dateKey,
+      service: args.service,
+      timeKey: args.timeKey,
+      slotKey,
+      adults: args.adults,
+      childrenCount: args.childrenCount,
+      babyCount: args.babyCount,
+      partySize,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      email: args.email ?? "",
+      phone: args.phone,
+      language,
+      note: args.note,
+      options: [],
+      status: "confirmed", // Always confirmed for admin
+      source: args.source,
+      tableIds: [],
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+      cancelledAt: null,
+      refusedAt: null,
+      seatedAt: null,
+      completedAt: null,
+      noshowAt: null,
+    });
+
+    // Log without PII
+    console.log("Admin reservation created", {
+      reservationId,
+      slotKey,
+      partySize,
+      source: args.source,
+    });
+
+    // TODO: Send confirmation email if email provided
+    // (would need to get settings and enqueue email)
+
+    return {
+      reservationId,
+      status: "confirmed" as const,
+    };
+  },
+});
+
+/**
+ * Search clients by name, email, or phone.
+ * Returns client info with reservation count and last visit.
+ *
+ * Autorisation: admin|owner|staff
+ */
+export const searchClients = query({
+  args: {
+    query: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { query: searchQuery, limit = 20 }) => {
+    await requireRole(ctx, "staff");
+
+    if (searchQuery.trim().length < 2) {
+      return [];
+    }
+
+    // Get active restaurant
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+    if (activeRestaurants.length > 1) {
+      throw Errors.MULTIPLE_ACTIVE_RESTAURANTS(activeRestaurants.length);
+    }
+
+    const restaurant = activeRestaurants[0];
+    const queryLower = searchQuery.toLowerCase().trim();
+
+    // Search all reservations and filter by name/email/phone
+    // Note: In production, you'd want a proper search index
+    const allReservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_status", (q) =>
+        q.eq("restaurantId", restaurant._id)
+      )
+      .collect();
+
+    // Group by client (email or phone as key)
+    const clientMap = new Map<
+      string,
+      {
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone: string;
+        reservationCount: number;
+        lastVisitDate: string | null;
+        lastVisitStatus: string | null;
+      }
+    >();
+
+    for (const res of allReservations) {
+      // Check if matches search query
+      const matchesName =
+        res.firstName.toLowerCase().includes(queryLower) ||
+        res.lastName.toLowerCase().includes(queryLower) ||
+        `${res.firstName} ${res.lastName}`.toLowerCase().includes(queryLower);
+      const matchesEmail = res.email.toLowerCase().includes(queryLower);
+      const matchesPhone = res.phone.includes(queryLower);
+
+      if (!matchesName && !matchesEmail && !matchesPhone) {
+        continue;
+      }
+
+      // Use email as primary key, fallback to phone
+      const clientKey = res.email || res.phone;
+
+      const existing = clientMap.get(clientKey);
+      if (existing) {
+        existing.reservationCount++;
+        // Update last visit if this is more recent
+        if (!existing.lastVisitDate || res.dateKey > existing.lastVisitDate) {
+          existing.lastVisitDate = res.dateKey;
+          existing.lastVisitStatus = res.status;
+        }
+      } else {
+        clientMap.set(clientKey, {
+          firstName: res.firstName,
+          lastName: res.lastName,
+          email: res.email,
+          phone: res.phone,
+          reservationCount: 1,
+          lastVisitDate: res.dateKey,
+          lastVisitStatus: res.status,
+        });
+      }
+    }
+
+    // Convert to array and sort by reservation count
+    const clients = Array.from(clientMap.values())
+      .sort((a, b) => b.reservationCount - a.reservationCount)
+      .slice(0, limit);
+
+    return clients;
   },
 });
