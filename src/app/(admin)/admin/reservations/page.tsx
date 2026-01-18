@@ -12,6 +12,7 @@ import {
   ReservationHeader,
   ReservationList,
   DatePickerCalendar,
+  CreateReservationModal,
   type Reservation,
 } from "./components";
 
@@ -25,6 +26,7 @@ export default function ReservationsPage() {
   const [showFloorPlan, setShowFloorPlan] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
 
@@ -79,6 +81,7 @@ export default function ReservationsPage() {
         onToggleFloorPlan={() => setShowFloorPlan(!showFloorPlan)}
         onOpenSettings={() => setShowSettings(true)}
         onOpenDatePicker={() => setShowDatePicker(true)}
+        onCreateReservation={() => setShowCreateModal(true)}
       />
 
       {/* Date Picker Overlay */}
@@ -189,6 +192,15 @@ export default function ReservationsPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Create Reservation Modal */}
+      {showCreateModal && (
+        <CreateReservationModal
+          dateKey={dateKey}
+          service={currentService}
+          onClose={() => setShowCreateModal(false)}
+        />
       )}
     </div>
   );

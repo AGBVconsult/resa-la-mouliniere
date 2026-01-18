@@ -7,6 +7,8 @@ import { requireRole } from "./lib/rbac";
 import { Errors } from "./lib/errors";
 import { isValidStatusTransition } from "./lib/stateMachine";
 import type { ReservationStatus } from "../spec/contracts.generated";
+import { makeSlotKey, computePartySize, computeEffectiveOpen } from "../spec/contracts.generated";
+import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./lib/tokens";
 
 export const getSettings = query({
   args: {},
@@ -645,6 +647,215 @@ export const updateReservation = mutation({
     return {
       reservationId,
       newVersion: patch.version as number,
+    };
+  },
+});
+
+/**
+ * Create a reservation from admin interface.
+ * - No Turnstile validation
+ * - Status is always "confirmed" (admin bypass pending)
+ * - Source is "admin", "phone", or "walkin"
+ */
+export const createReservation = mutation({
+  args: {
+    dateKey: v.string(),
+    service: v.union(v.literal("lunch"), v.literal("dinner")),
+    timeKey: v.string(),
+    adults: v.number(),
+    childrenCount: v.number(),
+    babyCount: v.number(),
+    firstName: v.string(),
+    lastName: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    language: v.union(
+      v.literal("fr"),
+      v.literal("nl"),
+      v.literal("en"),
+      v.literal("de"),
+      v.literal("it")
+    ),
+    note: v.optional(v.string()),
+    options: v.optional(v.array(v.string())),
+    source: v.union(v.literal("admin"), v.literal("phone"), v.literal("walkin")),
+    tableIds: v.optional(v.array(v.id("tables"))),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
+
+    // Get active restaurant
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(1);
+
+    if (activeRestaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+
+    const restaurant = activeRestaurants[0];
+
+    // Get settings for token expiry
+    const settings = await ctx.db
+      .query("settings")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", restaurant._id))
+      .unique();
+
+    if (!settings) {
+      throw Errors.SETTINGS_NOT_FOUND();
+    }
+
+    const slotKey = makeSlotKey({
+      dateKey: args.dateKey,
+      service: args.service,
+      timeKey: args.timeKey,
+    });
+
+    // Load slot
+    const slot = await ctx.db
+      .query("slots")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
+      )
+      .unique();
+
+    if (!slot) {
+      throw Errors.SLOT_NOT_FOUND(slotKey);
+    }
+
+    // Check effectiveOpen
+    const effectiveOpen = computeEffectiveOpen(slot.isOpen, slot.capacity);
+    if (!effectiveOpen) {
+      throw Errors.SLOT_TAKEN(slotKey, "closed");
+    }
+
+    // Compute partySize
+    const partySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
+
+    // Calculate used capacity
+    const existingReservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
+      )
+      .collect();
+
+    const usedCapacity = existingReservations
+      .filter((r) => r.status === "pending" || r.status === "confirmed" || r.status === "seated")
+      .reduce((sum, r) => sum + r.partySize, 0);
+
+    const remainingCapacity = slot.capacity - usedCapacity;
+
+    if (partySize > remainingCapacity) {
+      throw Errors.INSUFFICIENT_CAPACITY(slotKey, partySize, remainingCapacity);
+    }
+
+    const now = Date.now();
+
+    // Admin reservations are always confirmed
+    const status = "confirmed";
+
+    // Create reservation
+    const reservationId = await ctx.db.insert("reservations", {
+      restaurantId: restaurant._id,
+      dateKey: args.dateKey,
+      service: args.service,
+      timeKey: args.timeKey,
+      slotKey,
+      adults: args.adults,
+      childrenCount: args.childrenCount,
+      babyCount: args.babyCount,
+      partySize,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      email: args.email,
+      phone: args.phone,
+      language: args.language,
+      note: args.note,
+      options: args.options,
+      status,
+      source: args.source,
+      tableIds: args.tableIds ?? [],
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+      cancelledAt: null,
+      refusedAt: null,
+      seatedAt: null,
+      completedAt: null,
+      noshowAt: null,
+    });
+
+    // Create manage token
+    const manageToken = generateSecureToken();
+    const slotStartAt = computeSlotStartAt(
+      args.dateKey,
+      args.timeKey,
+      restaurant.timezone
+    );
+    const tokenExpiresAt = computeTokenExpiry(
+      slotStartAt,
+      settings.manageTokenExpireBeforeSlotMs
+    );
+
+    await ctx.db.insert("reservationTokens", {
+      reservationId,
+      token: manageToken,
+      type: "manage",
+      expiresAt: tokenExpiresAt,
+      usedAt: null,
+      rotatedAt: null,
+      createdAt: now,
+    });
+
+    // Log event
+    await ctx.db.insert("reservationEvents", {
+      reservationId,
+      restaurantId: restaurant._id,
+      eventType: "created",
+      fromStatus: undefined,
+      toStatus: status,
+      scheduledTime: args.timeKey,
+      actualTime: now,
+      performedBy: "admin",
+      metadata: { source: args.source },
+      createdAt: now,
+    });
+
+    // Enqueue confirmation email
+    await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
+      restaurantId: restaurant._id,
+      type: "reservation.confirmed",
+      to: args.email,
+      subjectKey: "email.reservation.confirmed.subject",
+      templateKey: "reservation.confirmed",
+      templateData: {
+        firstName: args.firstName,
+        lastName: args.lastName,
+        dateKey: args.dateKey,
+        timeKey: args.timeKey,
+        service: args.service,
+        partySize,
+        adults: args.adults,
+        childrenCount: args.childrenCount,
+        babyCount: args.babyCount,
+        language: args.language,
+        manageUrl: `${settings.appUrl ?? ""}/reservation/${manageToken}`,
+        editUrl: `${settings.appUrl ?? ""}/reservation/${manageToken}/edit`,
+        cancelUrl: `${settings.appUrl ?? ""}/reservation/${manageToken}/cancel`,
+        note: args.note ?? "",
+        options: args.options ?? [],
+      },
+      dedupeKey: `email:reservation.confirmed:${reservationId}:1`,
+    });
+
+    console.log("Admin reservation created", { reservationId, slotKey, status, partySize, source: args.source });
+
+    return {
+      reservationId,
+      status,
+      manageToken,
     };
   },
 });

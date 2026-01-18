@@ -2,7 +2,7 @@
 
 import { format, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Calendar, Settings, Map } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Settings, Map, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,7 @@ interface ReservationHeaderProps {
   onToggleFloorPlan: () => void;
   onOpenSettings: () => void;
   onOpenDatePicker: () => void;
+  onCreateReservation: () => void;
 }
 
 export function ReservationHeader({
@@ -26,6 +27,7 @@ export function ReservationHeader({
   onToggleFloorPlan,
   onOpenSettings,
   onOpenDatePicker,
+  onCreateReservation,
 }: ReservationHeaderProps) {
   const formattedDate = format(selectedDate, "EEEE d MMMM yyyy", { locale: fr });
 
@@ -70,6 +72,16 @@ export function ReservationHeader({
 
       {/* Service Toggle + Actions */}
       <div className="flex items-center gap-3">
+        {/* Create Reservation Button */}
+        <Button
+          variant="default"
+          className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-4 gap-2"
+          onClick={onCreateReservation}
+        >
+          <Plus className="h-5 w-5" />
+          Nouvelle
+        </Button>
+
         {/* Service Toggle */}
         <div className="bg-black p-1 rounded-full flex">
           <button
