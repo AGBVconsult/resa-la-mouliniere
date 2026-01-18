@@ -36,7 +36,7 @@ export const getSettings = query({
       throw Errors.SETTINGS_NOT_FOUND();
     }
 
-    // SettingsAdmin = SettingsPublic + { resendFromEmail, resendFromName, manageTokenExpireBeforeSlotMs, rateLimit }
+    // SettingsAdmin = SettingsPublic + { resendFromEmail, resendFromName, manageTokenExpireBeforeSlotMs, rateLimit, progressiveFilling }
     // MUST NOT return turnstileSecretKey (secrets handled via admin.updateSecrets).
     return {
       restaurantId: restaurant._id,
@@ -48,6 +48,12 @@ export const getSettings = query({
       resendFromName: settings.resendFromName,
       manageTokenExpireBeforeSlotMs: settings.manageTokenExpireBeforeSlotMs,
       rateLimit: settings.rateLimit,
+      progressiveFilling: settings.progressiveFilling ?? {
+        enabled: false,
+        lunchThreshold: "13:00",
+        dinnerThreshold: "19:00",
+        minFillPercent: 20,
+      },
     };
   },
 });
@@ -56,6 +62,64 @@ export const updateSettings = mutation({
   args: { patch: v.any() },
   handler: async () => {
     return { ok: true } as any;
+  },
+});
+
+export const updateProgressiveFilling = mutation({
+  args: {
+    enabled: v.boolean(),
+    lunchThreshold: v.string(),
+    dinnerThreshold: v.string(),
+    minFillPercent: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
+
+    // Validate thresholds format HH:MM
+    const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+    if (!timeRegex.test(args.lunchThreshold)) {
+      throw Errors.INVALID_INPUT("lunchThreshold", "Format HH:MM requis");
+    }
+    if (!timeRegex.test(args.dinnerThreshold)) {
+      throw Errors.INVALID_INPUT("dinnerThreshold", "Format HH:MM requis");
+    }
+    if (args.minFillPercent < 0 || args.minFillPercent > 100) {
+      throw Errors.INVALID_INPUT("minFillPercent", "Doit être entre 0 et 100");
+    }
+
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+    if (activeRestaurants.length > 1) {
+      throw Errors.MULTIPLE_ACTIVE_RESTAURANTS(activeRestaurants.length);
+    }
+
+    const restaurant = activeRestaurants[0];
+
+    const settings = await ctx.db
+      .query("settings")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", restaurant._id))
+      .unique();
+
+    if (!settings) {
+      throw Errors.SETTINGS_NOT_FOUND();
+    }
+
+    await ctx.db.patch(settings._id, {
+      progressiveFilling: {
+        enabled: args.enabled,
+        lunchThreshold: args.lunchThreshold,
+        dinnerThreshold: args.dinnerThreshold,
+        minFillPercent: args.minFillPercent,
+      },
+    });
+
+    return { ok: true };
   },
 });
 

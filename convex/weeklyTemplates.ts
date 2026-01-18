@@ -171,7 +171,7 @@ export const upsert = mutation({
     })),
   },
   handler: async (ctx, args) => {
-    await requireRole(ctx, "owner");
+    await requireRole(ctx, "admin");
 
     // Get user identity
     const identity = await ctx.auth.getUserIdentity();
@@ -268,7 +268,7 @@ export const addSlot = mutation({
     }),
   },
   handler: async (ctx, args) => {
-    await requireRole(ctx, "owner");
+    await requireRole(ctx, "admin");
 
     const identity = await ctx.auth.getUserIdentity();
     const updatedBy = identity?.subject ?? "unknown";
@@ -365,7 +365,7 @@ export const updateSlot = mutation({
     }),
   },
   handler: async (ctx, args) => {
-    await requireRole(ctx, "owner");
+    await requireRole(ctx, "admin");
 
     const identity = await ctx.auth.getUserIdentity();
     const updatedBy = identity?.subject ?? "unknown";
@@ -441,7 +441,7 @@ export const removeSlot = mutation({
     timeKey: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireRole(ctx, "owner");
+    await requireRole(ctx, "admin");
 
     const identity = await ctx.auth.getUserIdentity();
     const updatedBy = identity?.subject ?? "unknown";
@@ -507,7 +507,7 @@ export const toggleDay = mutation({
     isOpen: v.boolean(),
   },
   handler: async (ctx, args) => {
-    await requireRole(ctx, "owner");
+    await requireRole(ctx, "admin");
 
     const identity = await ctx.auth.getUserIdentity();
     const updatedBy = identity?.subject ?? "unknown";
@@ -574,7 +574,7 @@ export const toggleDay = mutation({
 export const seedDefaults = mutation({
   args: {},
   handler: async (ctx) => {
-    await requireRole(ctx, "owner");
+    await requireRole(ctx, "admin");
 
     const identity = await ctx.auth.getUserIdentity();
     const updatedBy = identity?.subject ?? "unknown";
@@ -624,6 +624,187 @@ export const seedDefaults = mutation({
     console.log("Weekly templates seeded", { created });
 
     return { created };
+  },
+});
+
+// ============================================================================
+// Sync slots with templates
+// ============================================================================
+
+/**
+ * Sync future slots with template changes.
+ * Called after template modifications to update existing slots.
+ */
+export const syncSlotsWithTemplate = mutation({
+  args: {
+    dayOfWeek: v.number(),
+    service: v.union(v.literal("lunch"), v.literal("dinner")),
+  },
+  handler: async (ctx, { dayOfWeek, service }) => {
+    await requireRole(ctx, "admin");
+
+    const restaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(1);
+
+    if (restaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+
+    const restaurantId = restaurants[0]._id;
+
+    // Get template
+    const template = await ctx.db
+      .query("weeklyTemplates")
+      .withIndex("by_restaurant_day_service", (q) =>
+        q.eq("restaurantId", restaurantId).eq("dayOfWeek", dayOfWeek).eq("service", service)
+      )
+      .unique();
+
+    if (!template) {
+      return { updated: 0, created: 0, deleted: 0 };
+    }
+
+    const now = Date.now();
+    const today = new Date();
+    const todayKey = formatDateKey(today);
+
+    let updated = 0;
+    let created = 0;
+    let deleted = 0;
+
+    // Get all future slots for this day of week and service
+    const allSlots = await ctx.db
+      .query("slots")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurantId)
+      )
+      .collect();
+
+    // Filter to future slots matching this dayOfWeek and service
+    const futureSlots = allSlots.filter((slot) => {
+      if (slot.dateKey < todayKey) return false;
+      if (slot.service !== service) return false;
+      const slotDate = new Date(slot.dateKey);
+      return getISOWeekday(slotDate) === dayOfWeek;
+    });
+
+    // Get reservations for these slots to check if they can be modified
+    const slotKeys = futureSlots.map((s) => s.slotKey);
+    const reservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_status", (q) => q.eq("restaurantId", restaurantId))
+      .collect();
+
+    const activeReservationsBySlot = new Map<string, number>();
+    for (const r of reservations) {
+      if (r.status === "pending" || r.status === "confirmed" || r.status === "seated") {
+        activeReservationsBySlot.set(r.slotKey, (activeReservationsBySlot.get(r.slotKey) ?? 0) + 1);
+      }
+    }
+
+    // Template slot timeKeys
+    const templateTimeKeys = new Set(template.slots.filter((s) => s.isActive).map((s) => s.timeKey));
+    const templateSlotMap = new Map(template.slots.map((s) => [s.timeKey, s]));
+
+    // Process each future date
+    const processedDates = new Set<string>();
+    for (const slot of futureSlots) {
+      processedDates.add(slot.dateKey);
+    }
+
+    // Also add dates for next 30 days that match this dayOfWeek
+    for (let i = 0; i <= 30; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + i);
+      if (getISOWeekday(date) === dayOfWeek) {
+        processedDates.add(formatDateKey(date));
+      }
+    }
+
+    for (const dateKey of processedDates) {
+      if (dateKey < todayKey) continue;
+
+      // If template is closed, mark all slots as closed
+      if (!template.isOpen) {
+        const slotsForDate = futureSlots.filter((s) => s.dateKey === dateKey);
+        for (const slot of slotsForDate) {
+          if (slot.isOpen) {
+            await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
+            updated++;
+          }
+        }
+        continue;
+      }
+
+      // Get existing slots for this date
+      const existingSlotsForDate = futureSlots.filter((s) => s.dateKey === dateKey);
+      const existingTimeKeys = new Set(existingSlotsForDate.map((s) => s.timeKey));
+
+      // Update or delete existing slots
+      for (const slot of existingSlotsForDate) {
+        const templateSlot = templateSlotMap.get(slot.timeKey);
+        const hasReservations = (activeReservationsBySlot.get(slot.slotKey) ?? 0) > 0;
+
+        if (!templateSlot || !templateSlot.isActive) {
+          // Slot should be removed/closed
+          if (!hasReservations) {
+            await ctx.db.delete(slot._id);
+            deleted++;
+          } else {
+            // Has reservations, just close it
+            if (slot.isOpen) {
+              await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
+              updated++;
+            }
+          }
+        } else {
+          // Update slot with template values
+          const needsUpdate =
+            slot.capacity !== templateSlot.capacity ||
+            slot.isOpen !== true ||
+            slot.maxGroupSize !== templateSlot.maxGroupSize ||
+            slot.largeTableAllowed !== templateSlot.largeTableAllowed;
+
+          if (needsUpdate) {
+            await ctx.db.patch(slot._id, {
+              capacity: templateSlot.capacity,
+              isOpen: true,
+              maxGroupSize: templateSlot.maxGroupSize,
+              largeTableAllowed: templateSlot.largeTableAllowed,
+              updatedAt: now,
+            });
+            updated++;
+          }
+        }
+      }
+
+      // Create missing slots
+      for (const templateSlot of template.slots) {
+        if (!templateSlot.isActive) continue;
+        if (existingTimeKeys.has(templateSlot.timeKey)) continue;
+
+        const slotKey = makeSlotKey({ dateKey, service, timeKey: templateSlot.timeKey });
+        await ctx.db.insert("slots", {
+          restaurantId,
+          dateKey,
+          service,
+          timeKey: templateSlot.timeKey,
+          slotKey,
+          isOpen: true,
+          capacity: templateSlot.capacity,
+          maxGroupSize: templateSlot.maxGroupSize,
+          largeTableAllowed: templateSlot.largeTableAllowed,
+          updatedAt: now,
+        });
+        created++;
+      }
+    }
+
+    console.log("Slots synced with template", { dayOfWeek, service, updated, created, deleted });
+
+    return { updated, created, deleted };
   },
 });
 

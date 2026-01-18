@@ -75,6 +75,13 @@ export default defineSchema({
     maxPartySizeWidget: v.number(),
     manageTokenExpireBeforeSlotMs: v.number(),
     rateLimit: v.object({ windowMs: v.number(), maxRequests: v.number() }),
+    // Progressive filling settings - slots after threshold are hidden until previous slot has min fill rate
+    progressiveFilling: v.optional(v.object({
+      enabled: v.boolean(),
+      lunchThreshold: v.string(), // HH:MM - slots >= this time require previous slot fill (e.g. "13:00")
+      dinnerThreshold: v.string(), // HH:MM - slots >= this time require previous slot fill (e.g. "19:00")
+      minFillPercent: v.number(), // 0-100 - minimum fill % of previous slot to show next (e.g. 20)
+    })),
   }).index("by_restaurantId", ["restaurantId"]),
 
   slots: defineTable({
@@ -88,9 +95,11 @@ export default defineSchema({
     maxGroupSize: v.union(v.null(), v.number()),
     largeTableAllowed: v.boolean(),
     updatedAt: v.number(),
+    createdByPeriodId: v.optional(v.id("specialPeriods")),
   })
     .index("by_restaurant_slotKey", ["restaurantId", "slotKey"])
-    .index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"]),
+    .index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"])
+    .index("by_createdByPeriodId", ["createdByPeriodId"]),
 
   tables: defineTable({
     restaurantId: v.id("restaurants"),
@@ -221,10 +230,42 @@ export default defineSchema({
       overrideCapacity: v.optional(v.number()),
       maxGroupSize: v.optional(v.union(v.number(), v.null())),
       largeTableAllowed: v.optional(v.boolean()),
+      // Slots configuration for exceptional openings (status=modified)
+      lunchSlots: v.optional(v.array(v.object({
+        timeKey: v.string(),
+        capacity: v.number(),
+        isActive: v.boolean(),
+        maxGroupSize: v.union(v.number(), v.null()),
+      }))),
+      dinnerSlots: v.optional(v.array(v.object({
+        timeKey: v.string(),
+        capacity: v.number(),
+        isActive: v.boolean(),
+        maxGroupSize: v.union(v.number(), v.null()),
+      }))),
+      lunchActiveDays: v.optional(v.array(v.number())), // Days for lunch service
+      dinnerActiveDays: v.optional(v.array(v.number())), // Days for dinner service
     }),
     createdBy: v.string(), // userId Clerk
     createdAt: v.number(),
     updatedAt: v.number(),
+    // Statistics fields for future analytics
+    stats: v.optional(v.object({
+      totalSlotsCreated: v.number(), // Number of slots created by this period
+      totalSlotsModified: v.number(), // Number of existing slots modified
+      totalDaysAffected: v.number(), // Number of days in the period
+      totalCapacity: v.number(), // Sum of all slot capacities
+      reservationsCount: v.optional(v.number()), // Reservations made during this period (updated async)
+      reservationsPartySize: v.optional(v.number()), // Total party size of reservations
+      revenue: v.optional(v.number()), // Revenue generated (if tracked)
+    })),
+    // Metadata for auditing
+    deletedAt: v.optional(v.number()), // Soft delete timestamp
+    deletedBy: v.optional(v.string()), // Who deleted it
+    notes: v.optional(v.string()), // Admin notes
+    tags: v.optional(v.array(v.string())), // Tags for categorization (e.g., "noel", "ete", "weekend")
+    isRecurring: v.optional(v.boolean()), // If this period should recur yearly
+    recurringSourceId: v.optional(v.id("specialPeriods")), // Reference to original period if copied
   })
     .index("by_restaurant", ["restaurantId"])
     .index("by_restaurant_type", ["restaurantId", "type"])

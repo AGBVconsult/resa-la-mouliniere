@@ -83,13 +83,25 @@ export function Step2DateTime({
 
   const lunchSlots = useMemo(() => {
     return dayData?.lunch?.filter(
-      (s: { isOpen: boolean; remainingCapacity: number }) => s.isOpen && s.remainingCapacity >= partySize
+      (s: { isOpen: boolean; remainingCapacity: number; maxGroupSize: number | null }) => {
+        if (!s.isOpen) return false;
+        if (s.remainingCapacity < partySize) return false;
+        // Vérifier la taille max du groupe (maxGroupSize = null signifie pas de limite)
+        if (s.maxGroupSize !== null && partySize > s.maxGroupSize) return false;
+        return true;
+      }
     ) || [];
   }, [dayData, partySize]);
 
   const dinnerSlots = useMemo(() => {
     return dayData?.dinner?.filter(
-      (s: { isOpen: boolean; remainingCapacity: number }) => s.isOpen && s.remainingCapacity >= partySize
+      (s: { isOpen: boolean; remainingCapacity: number; maxGroupSize: number | null }) => {
+        if (!s.isOpen) return false;
+        if (s.remainingCapacity < partySize) return false;
+        // Vérifier la taille max du groupe (maxGroupSize = null signifie pas de limite)
+        if (s.maxGroupSize !== null && partySize > s.maxGroupSize) return false;
+        return true;
+      }
     ) || [];
   }, [dayData, partySize]);
 

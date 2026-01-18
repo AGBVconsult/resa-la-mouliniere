@@ -306,6 +306,21 @@ export const create = mutation({
       overrideCapacity: v.optional(v.number()),
       maxGroupSize: v.optional(v.union(v.number(), v.null())),
       largeTableAllowed: v.optional(v.boolean()),
+      // Slots configuration for exceptional openings
+      lunchSlots: v.optional(v.array(v.object({
+        timeKey: v.string(),
+        capacity: v.number(),
+        isActive: v.boolean(),
+        maxGroupSize: v.union(v.number(), v.null()),
+      }))),
+      dinnerSlots: v.optional(v.array(v.object({
+        timeKey: v.string(),
+        capacity: v.number(),
+        isActive: v.boolean(),
+        maxGroupSize: v.union(v.number(), v.null()),
+      }))),
+      lunchActiveDays: v.optional(v.array(v.number())),
+      dinnerActiveDays: v.optional(v.array(v.number())),
     }),
   },
   handler: async (ctx, args) => {
@@ -368,7 +383,28 @@ export const create = mutation({
 
     const now = Date.now();
 
-    // Create period
+    // Calculate stats
+    const totalDaysAffected = daysBetween(args.startDate, args.endDate) + 1;
+    let totalCapacity = 0;
+    
+    if (args.applyRules.lunchSlots) {
+      const lunchDays = args.applyRules.lunchActiveDays?.length ?? args.applyRules.activeDays.length;
+      for (const slot of args.applyRules.lunchSlots) {
+        if (slot.isActive) {
+          totalCapacity += slot.capacity * lunchDays * totalDaysAffected / 7;
+        }
+      }
+    }
+    if (args.applyRules.dinnerSlots) {
+      const dinnerDays = args.applyRules.dinnerActiveDays?.length ?? args.applyRules.activeDays.length;
+      for (const slot of args.applyRules.dinnerSlots) {
+        if (slot.isActive) {
+          totalCapacity += slot.capacity * dinnerDays * totalDaysAffected / 7;
+        }
+      }
+    }
+
+    // Create period with initial stats
     const periodId = await ctx.db.insert("specialPeriods", {
       restaurantId,
       name: args.name,
@@ -379,11 +415,29 @@ export const create = mutation({
       createdBy,
       createdAt: now,
       updatedAt: now,
+      stats: {
+        totalSlotsCreated: 0,
+        totalSlotsModified: 0,
+        totalDaysAffected,
+        totalCapacity: Math.round(totalCapacity),
+      },
     });
 
-    // Generate overrides (if status != "open")
+    // Generate overrides (if status != "open") and update stats
     if (args.applyRules.status !== "open") {
-      await generateOverrides(ctx, restaurantId, periodId, args.startDate, args.endDate, args.applyRules as ApplyRules);
+      const result = await generateOverrides(ctx, restaurantId, periodId, args.startDate, args.endDate, args.applyRules as ExtendedApplyRules);
+      
+      // Update stats with actual counts
+      if (result) {
+        await ctx.db.patch(periodId, {
+          stats: {
+            totalSlotsCreated: result.slotsCreated,
+            totalSlotsModified: result.slotsModified,
+            totalDaysAffected,
+            totalCapacity: Math.round(totalCapacity),
+          },
+        });
+      }
     }
 
     console.log("Special period created", { periodId, name: args.name, type: args.type });
@@ -499,6 +553,9 @@ export const update = mutation({
 /**
  * Remove a special period.
  * §6.5
+ * Restores previous configuration by:
+ * - Deleting slots created by this period (for exceptional openings)
+ * - Deleting overrides created by this period (for closures)
  */
 export const remove = mutation({
   args: {
@@ -512,13 +569,27 @@ export const remove = mutation({
       throw Errors.NOT_FOUND("specialPeriods", periodId);
     }
 
-    // Delete overrides
+    // Delete slots created by this period (for exceptional openings)
+    const slotsCreatedByPeriod = await ctx.db
+      .query("slots")
+      .withIndex("by_createdByPeriodId", (q: any) => q.eq("createdByPeriodId", periodId))
+      .collect();
+    
+    for (const slot of slotsCreatedByPeriod) {
+      await ctx.db.delete(slot._id);
+    }
+
+    // Delete overrides created by this period (for closures)
     await deleteOverrides(ctx, periodId);
 
     // Delete period
     await ctx.db.delete(periodId);
 
-    console.log("Special period removed", { periodId, name: period.name });
+    console.log("Special period removed", { 
+      periodId, 
+      name: period.name, 
+      slotsDeleted: slotsCreatedByPeriod.length 
+    });
 
     return { ok: true };
   },
@@ -528,9 +599,23 @@ export const remove = mutation({
 // Internal helpers
 // ============================================================================
 
+// Extended ApplyRules with slots configuration
+interface ExtendedApplyRules extends ApplyRules {
+  lunchSlots?: Array<{ timeKey: string; capacity: number; isActive: boolean; maxGroupSize: number | null }>;
+  dinnerSlots?: Array<{ timeKey: string; capacity: number; isActive: boolean; maxGroupSize: number | null }>;
+  lunchActiveDays?: number[];
+  dinnerActiveDays?: number[];
+}
+
+interface GenerateOverridesResult {
+  slotsCreated: number;
+  slotsModified: number;
+}
+
 /**
  * Generate slot overrides for a period.
  * §5.12 materialization rules.
+ * For exceptional openings (status=modified with slots), creates new slots.
  */
 async function generateOverrides(
   ctx: any,
@@ -538,11 +623,22 @@ async function generateOverrides(
   periodId: Id<"specialPeriods">,
   startDate: string,
   endDate: string,
-  applyRules: ApplyRules
-): Promise<void> {
+  applyRules: ExtendedApplyRules
+): Promise<GenerateOverridesResult> {
   const now = Date.now();
+  let slotsCreated = 0;
+  let slotsModified = 0;
 
-  // Build patch based on status
+  // Check if this is an exceptional opening with custom slots
+  const hasCustomSlots = applyRules.lunchSlots || applyRules.dinnerSlots;
+
+  if (applyRules.status === "modified" && hasCustomSlots) {
+    // Exceptional opening: create slots for the period
+    const result = await generateExceptionalOpeningSlots(ctx, restaurantId, periodId, startDate, endDate, applyRules);
+    return result;
+  }
+
+  // Build patch based on status (for closures or simple modifications)
   const patch: {
     isOpen?: boolean;
     capacity?: number;
@@ -620,6 +716,7 @@ async function generateOverrides(
             patch,
             updatedAt: now,
           });
+          slotsModified++;
         } else {
           // Create new
           await ctx.db.insert("slotOverrides", {
@@ -631,10 +728,133 @@ async function generateOverrides(
             createdAt: now,
             updatedAt: now,
           });
+          slotsModified++;
         }
       }
     }
   }
+
+  return { slotsCreated, slotsModified };
+}
+
+/**
+ * Generate slots for exceptional openings.
+ * Creates new slots for dates that don't have them.
+ */
+async function generateExceptionalOpeningSlots(
+  ctx: any,
+  restaurantId: Id<"restaurants">,
+  periodId: Id<"specialPeriods">,
+  startDate: string,
+  endDate: string,
+  applyRules: ExtendedApplyRules
+): Promise<GenerateOverridesResult> {
+  const now = Date.now();
+  let slotsCreated = 0;
+  let slotsModified = 0;
+
+  // Iterate through date range
+  for (const dateKey of dateRange(startDate, endDate)) {
+    const date = parseDateKey(dateKey);
+    const weekday = getISOWeekday(date);
+
+    // Process lunch slots
+    if (applyRules.lunchSlots && applyRules.lunchSlots.length > 0) {
+      const lunchActiveDays = applyRules.lunchActiveDays ?? applyRules.activeDays;
+      if (lunchActiveDays.includes(weekday)) {
+        for (const slotConfig of applyRules.lunchSlots) {
+          if (!slotConfig.isActive) continue;
+          
+          const slotKey = `${dateKey}#lunch#${slotConfig.timeKey}`;
+          
+          // Check if slot already exists
+          const existingSlot = await ctx.db
+            .query("slots")
+            .withIndex("by_restaurant_slotKey", (q: any) =>
+              q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
+            )
+            .first();
+
+          if (!existingSlot) {
+            // Create new slot - mark it as created by this period
+            await ctx.db.insert("slots", {
+              restaurantId,
+              dateKey,
+              service: "lunch" as const,
+              timeKey: slotConfig.timeKey,
+              slotKey,
+              isOpen: true,
+              capacity: slotConfig.capacity,
+              maxGroupSize: slotConfig.maxGroupSize,
+              largeTableAllowed: false,
+              updatedAt: now,
+              createdByPeriodId: periodId,
+            });
+            slotsCreated++;
+          } else {
+            // Update existing slot to be open
+            await ctx.db.patch(existingSlot._id, {
+              isOpen: true,
+              capacity: slotConfig.capacity,
+              maxGroupSize: slotConfig.maxGroupSize,
+              updatedAt: now,
+            });
+            slotsModified++;
+          }
+        }
+      }
+    }
+
+    // Process dinner slots
+    if (applyRules.dinnerSlots && applyRules.dinnerSlots.length > 0) {
+      const dinnerActiveDays = applyRules.dinnerActiveDays ?? applyRules.activeDays;
+      if (dinnerActiveDays.includes(weekday)) {
+        for (const slotConfig of applyRules.dinnerSlots) {
+          if (!slotConfig.isActive) continue;
+          
+          const slotKey = `${dateKey}#dinner#${slotConfig.timeKey}`;
+          
+          // Check if slot already exists
+          const existingSlot = await ctx.db
+            .query("slots")
+            .withIndex("by_restaurant_slotKey", (q: any) =>
+              q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
+            )
+            .first();
+
+          if (!existingSlot) {
+            // Create new slot - mark it as created by this period
+            await ctx.db.insert("slots", {
+              restaurantId,
+              dateKey,
+              service: "dinner" as const,
+              timeKey: slotConfig.timeKey,
+              slotKey,
+              isOpen: true,
+              capacity: slotConfig.capacity,
+              maxGroupSize: slotConfig.maxGroupSize,
+              largeTableAllowed: false,
+              updatedAt: now,
+              createdByPeriodId: periodId,
+            });
+            slotsCreated++;
+          } else {
+            // Update existing slot to be open
+            await ctx.db.patch(existingSlot._id, {
+              isOpen: true,
+              capacity: slotConfig.capacity,
+              maxGroupSize: slotConfig.maxGroupSize,
+              updatedAt: now,
+            });
+            slotsModified++;
+          }
+        }
+      }
+    }
+  }
+
+  console.log("Exceptional opening slots generated", { periodId, startDate, endDate, slotsCreated, slotsModified });
+  return { slotsCreated, slotsModified };
 }
 
 /**

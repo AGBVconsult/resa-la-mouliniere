@@ -26,7 +26,18 @@ export function computeRemainingCapacityBySlotKey(args: {
   return remaining;
 }
 
-export function toSlotDto(args: { slot: SlotRow; remainingCapacity: number }) {
+type SlotDto = {
+  slotKey: string;
+  dateKey: string;
+  service: "lunch" | "dinner";
+  timeKey: string;
+  isOpen: boolean;
+  capacity: number;
+  remainingCapacity: number;
+  maxGroupSize: number | null;
+};
+
+export function toSlotDto(args: { slot: SlotRow; remainingCapacity: number }): SlotDto {
   return {
     slotKey: args.slot.slotKey,
     dateKey: args.slot.dateKey,
@@ -37,6 +48,59 @@ export function toSlotDto(args: { slot: SlotRow; remainingCapacity: number }) {
     remainingCapacity: args.remainingCapacity,
     maxGroupSize: args.slot.maxGroupSize,
   };
+}
+
+/**
+ * Filter slots based on progressive filling rules.
+ * Slots after threshold are hidden if previous slot doesn't meet min fill %.
+ */
+function applyProgressiveFilling(
+  slots: SlotDto[],
+  reservations: Array<{ slotKey: string; status: string; partySize: number }>,
+  threshold: string,
+  minFillPercent: number
+): SlotDto[] {
+  if (!threshold || slots.length === 0) return slots;
+
+  // Sort by timeKey
+  const sorted = [...slots].sort((a, b) => a.timeKey.localeCompare(b.timeKey));
+  
+  // Calculate fill rate per slot
+  const fillBySlotKey = new Map<string, number>();
+  for (const r of reservations) {
+    if (r.status === "pending" || r.status === "confirmed" || r.status === "seated") {
+      fillBySlotKey.set(r.slotKey, (fillBySlotKey.get(r.slotKey) ?? 0) + r.partySize);
+    }
+  }
+
+  const result: typeof slots = [];
+  let previousSlotMeetsFill = true;
+
+  for (let i = 0; i < sorted.length; i++) {
+    const slot = sorted[i];
+    const isAfterThreshold = slot.timeKey >= threshold;
+
+    if (!isAfterThreshold) {
+      // Before threshold: always show
+      result.push(slot);
+      // Update fill status for next iteration
+      const filled = fillBySlotKey.get(slot.slotKey) ?? 0;
+      const fillPercent = slot.capacity > 0 ? (filled / slot.capacity) * 100 : 0;
+      previousSlotMeetsFill = fillPercent >= minFillPercent;
+    } else {
+      // After threshold: only show if previous slot meets min fill %
+      if (previousSlotMeetsFill) {
+        result.push(slot);
+        // Update fill status for next iteration
+        const filled = fillBySlotKey.get(slot.slotKey) ?? 0;
+        const fillPercent = slot.capacity > 0 ? (filled / slot.capacity) * 100 : 0;
+        previousSlotMeetsFill = fillPercent >= minFillPercent;
+      }
+      // If previous doesn't meet fill, this and all subsequent are hidden
+    }
+  }
+
+  return result;
 }
 
 export const getDay = query({
@@ -62,6 +126,12 @@ export const getDay = query({
     }
 
     const restaurant = activeRestaurants[0];
+
+    // Load settings for progressive filling
+    const settings = await ctx.db
+      .query("settings")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", restaurant._id))
+      .unique();
 
     const [lunchSlots, dinnerSlots, lunchReservations, dinnerReservations] = await Promise.all([
       ctx.db
@@ -136,19 +206,36 @@ export const getDay = query({
       reservations: dinnerReservations,
     });
 
-    const lunch = effectiveLunchSlots
+    let lunch = effectiveLunchSlots
       .map((slot) => {
         const remainingCapacity = lunchRemaining.get(slot.slotKey) ?? slot.capacity;
         return toSlotDto({ slot, remainingCapacity });
       })
       .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
 
-    const dinner = effectiveDinnerSlots
+    let dinner = effectiveDinnerSlots
       .map((slot) => {
         const remainingCapacity = dinnerRemaining.get(slot.slotKey) ?? slot.capacity;
         return toSlotDto({ slot, remainingCapacity });
       })
       .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
+
+    // Apply progressive filling if enabled
+    const pf = settings?.progressiveFilling;
+    if (pf?.enabled) {
+      lunch = applyProgressiveFilling(
+        lunch,
+        lunchReservations,
+        pf.lunchThreshold,
+        pf.minFillPercent
+      );
+      dinner = applyProgressiveFilling(
+        dinner,
+        dinnerReservations,
+        pf.dinnerThreshold,
+        pf.minFillPercent
+      );
+    }
 
     return { dateKey, partySize, lunch, dinner };
   },
@@ -283,18 +370,24 @@ export const getMonth = query({
       const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       const daySlots = slotsByDateService.get(dateKey) || { lunch: [], dinner: [] };
 
-      // Vérifier si au moins un slot lunch a de la capacité pour partySize
+      // Vérifier si au moins un slot lunch a de la capacité pour partySize ET respecte maxGroupSize
       const lunchOpen = daySlots.lunch.some((slot) => {
         const occupation = occupationBySlotKey.get(slot.slotKey) || 0;
         const remaining = slot.capacity - occupation;
-        return remaining >= partySize;
+        if (remaining < partySize) return false;
+        // Vérifier maxGroupSize (null = pas de limite)
+        if (slot.maxGroupSize !== null && partySize > slot.maxGroupSize) return false;
+        return true;
       });
 
-      // Vérifier si au moins un slot dinner a de la capacité pour partySize
+      // Vérifier si au moins un slot dinner a de la capacité pour partySize ET respecte maxGroupSize
       const dinnerOpen = daySlots.dinner.some((slot) => {
         const occupation = occupationBySlotKey.get(slot.slotKey) || 0;
         const remaining = slot.capacity - occupation;
-        return remaining >= partySize;
+        if (remaining < partySize) return false;
+        // Vérifier maxGroupSize (null = pas de limite)
+        if (slot.maxGroupSize !== null && partySize > slot.maxGroupSize) return false;
+        return true;
       });
 
       result.push({
