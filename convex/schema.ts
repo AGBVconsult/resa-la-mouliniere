@@ -63,6 +63,87 @@ export default defineSchema({
     isActive: v.boolean(),
   }).index("by_isActive", ["isActive"]),
 
+  // PRD-012: Global Settings Singleton
+  globalSettings: defineTable({
+    key: v.literal("global"),
+
+    // Restaurant
+    restaurantName: v.string(),
+    address: v.string(),
+    phone: v.string(),
+    email: v.string(),
+    timezone: v.string(),
+
+    // Langues
+    widgetLanguages: v.array(v.string()),
+    widgetDefaultLanguage: v.string(),
+    adminLanguage: v.string(),
+
+    // Réservations
+    defaultSlotCapacity: v.number(),
+    defaultReservationDurationMinutes: v.number(),
+    minBookingDelayMinutes: v.number(),
+    maxBookingAdvanceMonths: v.number(),
+    pendingThreshold: v.number(),
+    largeGroupThreshold: v.number(),
+    contactUsThreshold: v.number(),
+
+    // CRM
+    vipThreshold: v.number(),
+    regularThreshold: v.number(),
+    badGuestThreshold: v.number(),
+    dataRetentionYears: v.number(),
+
+    // No-Show
+    noShowDelayMinutes: v.number(),
+    noShowAlertThreshold: v.number(),
+
+    // Emails
+    senderEmail: v.string(),
+    senderName: v.string(),
+    reminderTimeMidi: v.string(),
+    reminderTimeSoir: v.string(),
+    reviewSendTime: v.string(),
+    reviewDelayDays: v.number(),
+    adminNotificationEmail: v.string(),
+
+    // Notifications
+    notifications: v.object({
+      emailConfirmation: v.boolean(),
+      emailReminder: v.boolean(),
+      emailReview: v.boolean(),
+      emailCancellation: v.boolean(),
+      emailPending: v.boolean(),
+      adminNewReservation: v.boolean(),
+      adminModification: v.boolean(),
+      adminCancellation: v.boolean(),
+      adminNoShow: v.boolean(),
+      adminRecidiviste: v.boolean(),
+    }),
+
+    // Métadonnées
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+    updatedByUserId: v.optional(v.string()),
+  }).index("by_key", ["key"]),
+
+  // PRD-012: Settings History for audit
+  settingsHistory: defineTable({
+    settingsId: v.id("globalSettings"),
+    changes: v.array(
+      v.object({
+        field: v.string(),
+        oldValue: v.any(),
+        newValue: v.any(),
+      })
+    ),
+    modifiedBy: v.string(),
+    modifiedByUserId: v.optional(v.string()),
+    modifiedByRole: v.string(),
+    modifiedAt: v.number(),
+  }).index("by_date", ["modifiedAt"]),
+
+  // Legacy settings (kept for compatibility)
   settings: defineTable({
     restaurantId: v.id("restaurants"),
     publicWidgetEnabled: v.boolean(),

@@ -23,7 +23,7 @@ const navigation = [
   { name: "Périodes", href: "/admin/periodes", icon: CalendarRange },
   { name: "Clients", href: "/admin/clients", icon: Users },
   { name: "Statistiques", href: "/admin/stats", icon: BarChart3 },
-  { name: "Paramètres", href: "/admin/settings", icon: Settings },
+  { name: "Réglages", href: "/admin/parametres/reglages", icon: Settings },
 ];
 
 export function AdminSidebar() {
