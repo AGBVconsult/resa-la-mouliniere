@@ -20,7 +20,9 @@ import { sendEmail } from "./lib/email/resend";
 import { computeBackoffMs, shouldMarkFailed, MAX_ATTEMPTS } from "./lib/email/retry";
 import {
   buildReminderDedupeKey,
+  buildReviewDedupeKey,
   computeTomorrowDateKey,
+  computeYesterdayDateKey,
   isStuck,
   isExpiredByRetention,
   DEFAULT_RETENTION_POLICY,
@@ -462,6 +464,140 @@ export const enqueueReminders = internalMutation({
       enqueued,
       alreadyExists,
       dateKey: tomorrowDateKey,
+    };
+  },
+});
+
+/**
+ * Enqueue review emails for completed reservations yesterday (J+1).
+ * Called by cron at 10:00 local time.
+ * 
+ * IMPORTANT: Excludes reservations with status "incident" to avoid
+ * sending review requests to clients who had issues.
+ * 
+ * Contract: reservation.review email type exists.
+ * Dedupe via dedupeKey = "review:{reservationId}"
+ */
+export const enqueueReviewEmails = internalMutation({
+  args: {
+    now: v.number(),
+  },
+  handler: async (ctx, { now }) => {
+    // Get active restaurant
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      console.log("enqueueReviewEmails: no active restaurant");
+      return { scanned: 0, enqueued: 0, alreadyExists: 0, skippedIncident: 0, dateKey: null };
+    }
+    if (activeRestaurants.length > 1) {
+      console.log("enqueueReviewEmails: multiple active restaurants, skipping");
+      return { scanned: 0, enqueued: 0, alreadyExists: 0, skippedIncident: 0, dateKey: null };
+    }
+
+    const restaurant = activeRestaurants[0];
+    const yesterdayDateKey = computeYesterdayDateKey(restaurant.timezone, now);
+
+    // Find completed reservations for yesterday
+    // Use by_restaurant_date_service index (can't filter by status in index, filter in memory)
+    const reservationsLunch = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("dateKey", yesterdayDateKey).eq("service", "lunch")
+      )
+      .filter((q) => q.eq(q.field("status"), "completed"))
+      .collect();
+
+    const reservationsDinner = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("dateKey", yesterdayDateKey).eq("service", "dinner")
+      )
+      .filter((q) => q.eq(q.field("status"), "completed"))
+      .collect();
+
+    const reservations = [...reservationsLunch, ...reservationsDinner];
+
+    let enqueued = 0;
+    let alreadyExists = 0;
+    let skippedIncident = 0;
+
+    for (const reservation of reservations) {
+      // Check if reservation had an incident event (status was changed to "incident" at some point)
+      // We check the reservationEvents table for any incident status change
+      const incidentEvent = await ctx.db
+        .query("reservationEvents")
+        .withIndex("by_reservation", (q) => q.eq("reservationId", reservation._id))
+        .filter((q) => q.eq(q.field("toStatus"), "incident"))
+        .first();
+
+      if (incidentEvent) {
+        skippedIncident++;
+        console.log("enqueueReviewEmails: skipping incident reservation", { reservationId: reservation._id });
+        continue;
+      }
+
+      const dedupeKey = buildReviewDedupeKey(reservation._id);
+
+      // Check if already exists via index
+      const existing = await ctx.db
+        .query("emailJobs")
+        .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
+        .unique();
+
+      if (existing) {
+        alreadyExists++;
+        continue;
+      }
+
+      // Enqueue review email
+      await ctx.db.insert("emailJobs", {
+        restaurantId: restaurant._id,
+        type: "reservation.review",
+        to: reservation.email,
+        subjectKey: "email.reservation.review.subject",
+        templateKey: "reservation.review",
+        templateData: {
+          firstName: reservation.firstName,
+          lastName: reservation.lastName,
+          dateKey: reservation.dateKey,
+          timeKey: reservation.timeKey,
+          service: reservation.service,
+          partySize: reservation.partySize,
+          language: reservation.language,
+        },
+        icsBase64: null,
+        status: "queued",
+        attemptCount: 0,
+        nextRetryAt: null,
+        lastAttemptAt: null,
+        lastErrorCode: null,
+        dedupeKey,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      enqueued++;
+    }
+
+    // Log without PII
+    console.log("enqueueReviewEmails completed", {
+      dateKey: yesterdayDateKey,
+      scanned: reservations.length,
+      enqueued,
+      alreadyExists,
+      skippedIncident,
+    });
+
+    return {
+      scanned: reservations.length,
+      enqueued,
+      alreadyExists,
+      skippedIncident,
+      dateKey: yesterdayDateKey,
     };
   },
 });

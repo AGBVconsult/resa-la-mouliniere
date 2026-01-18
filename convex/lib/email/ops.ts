@@ -15,6 +15,30 @@ export function buildReminderDedupeKey(reservationId: string): string {
 }
 
 /**
+ * Build a stable dedupeKey for review emails.
+ * Format: "review:{reservationId}"
+ * 
+ * @param reservationId - The reservation ID
+ * @returns Stable dedupeKey for review
+ */
+export function buildReviewDedupeKey(reservationId: string): string {
+  return `review:${reservationId}`;
+}
+
+/**
+ * Compute yesterday's date key in YYYY-MM-DD format for a given timezone.
+ * Uses Intl.DateTimeFormat for timezone-aware formatting.
+ * 
+ * @param timezone - IANA timezone string (e.g., "Europe/Brussels")
+ * @param nowMs - Current timestamp in milliseconds
+ * @returns Date key in YYYY-MM-DD format for yesterday
+ */
+export function computeYesterdayDateKey(timezone: string, nowMs: number): string {
+  const yesterday = new Date(nowMs - 24 * 60 * 60 * 1000);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(yesterday);
+}
+
+/**
  * Compute tomorrow's date key in YYYY-MM-DD format for a given timezone.
  * Uses Intl.DateTimeFormat for timezone-aware formatting.
  * 

@@ -29,6 +29,15 @@ crons.cron(
   { now: Date.now() }
 );
 
+// Enqueue review emails at 10:00 daily (J+1 review requests)
+// Excludes reservations with status "incident" to avoid sending review requests to clients who had issues
+crons.cron(
+  "enqueue-reviews",
+  "0 10 * * *",
+  internal.emails.enqueueReviewEmails,
+  { now: Date.now() }
+);
+
 // Cleanup old email jobs at 04:00 daily
 // Contract §7: emailJobs en `sent` de plus de 90 jours
 crons.cron(
