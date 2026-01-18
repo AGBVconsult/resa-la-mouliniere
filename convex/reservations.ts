@@ -344,27 +344,36 @@ export const _create = internalMutation({
     });
 
     // Send admin notification for pending reservations
-    if (status === "pending" && args.adminNotificationEmail) {
-      await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
-        restaurantId: args.restaurantId,
-        type: "admin.notification",
-        to: args.adminNotificationEmail,
-        subjectKey: "admin.notification.subject",
-        templateKey: "admin.notification",
-        templateData: {
-          firstName: args.firstName,
-          lastName: args.lastName,
-          dateKey: args.dateKey,
-          timeKey: args.timeKey,
-          service: args.service,
-          partySize,
-          language: "fr", // Admin emails are always in French
-          note: args.note ?? "",
-          adminUrl: `${args.appUrl}/admin/reservations?date=${args.dateKey}`,
-        },
-        dedupeKey: `email:admin.notification:${reservationId}:1`,
+    if (status === "pending") {
+      // Email notification
+      if (args.adminNotificationEmail) {
+        await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
+          restaurantId: args.restaurantId,
+          type: "admin.notification",
+          to: args.adminNotificationEmail,
+          subjectKey: "admin.notification.subject",
+          templateKey: "admin.notification",
+          templateData: {
+            firstName: args.firstName,
+            lastName: args.lastName,
+            dateKey: args.dateKey,
+            timeKey: args.timeKey,
+            service: args.service,
+            partySize,
+            language: "fr", // Admin emails are always in French
+            note: args.note ?? "",
+            adminUrl: `${args.appUrl}/admin/reservations?date=${args.dateKey}`,
+          },
+          dedupeKey: `email:admin.notification:${reservationId}:1`,
+        });
+        console.log("Admin email notification enqueued", { reservationId });
+      }
+
+      // Push notification (Pushover)
+      await ctx.scheduler.runAfter(0, internal.notifications.sendAdminPushNotification, {
+        type: "pending_reservation",
+        reservationId,
       });
-      console.log("Admin notification enqueued", { reservationId, adminEmail: args.adminNotificationEmail });
     }
 
     return {

@@ -49,6 +49,10 @@ export const getSecretsInternal = internalMutation({
       resendFromEmail: settings.resendFromEmail,
       resendFromName: settings.resendFromName,
       adminNotificationEmail: settings.adminNotificationEmail,
+      // Pushover push notifications
+      pushoverUserKey: settings.pushoverUserKey,
+      pushoverApiToken: settings.pushoverApiToken,
+      pushoverEnabled: settings.pushoverEnabled,
     };
   },
 });

@@ -75,6 +75,10 @@ export default defineSchema({
     resendFromEmail: v.string(),
     resendFromName: v.string(),
     adminNotificationEmail: v.optional(v.string()), // Email to receive admin notifications (pending reservations)
+    // Pushover push notifications
+    pushoverUserKey: v.optional(v.string()),    // User Key from pushover.net
+    pushoverApiToken: v.optional(v.string()),   // API Token from app
+    pushoverEnabled: v.optional(v.boolean()),   // Toggle on/off
     maxPartySizeWidget: v.number(),
     manageTokenExpireBeforeSlotMs: v.number(),
     rateLimit: v.object({ windowMs: v.number(), maxRequests: v.number() }),
