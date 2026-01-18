@@ -38,7 +38,8 @@ const emailJobType = v.union(
   v.literal("reservation.refused"),
   v.literal("reservation.cancelled"),
   v.literal("reservation.reminder"),
-  v.literal("reservation.review")
+  v.literal("reservation.review"),
+  v.literal("admin.notification")
 );
 
 const emailJobStatus = v.union(v.literal("queued"), v.literal("sent"), v.literal("failed"));
@@ -73,6 +74,7 @@ export default defineSchema({
     resendApiKey: v.optional(v.string()),
     resendFromEmail: v.string(),
     resendFromName: v.string(),
+    adminNotificationEmail: v.optional(v.string()), // Email to receive admin notifications (pending reservations)
     maxPartySizeWidget: v.number(),
     manageTokenExpireBeforeSlotMs: v.number(),
     rateLimit: v.object({ windowMs: v.number(), maxRequests: v.number() }),

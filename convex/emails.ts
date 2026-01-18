@@ -36,7 +36,8 @@ const emailJobType = v.union(
   v.literal("reservation.refused"),
   v.literal("reservation.cancelled"),
   v.literal("reservation.reminder"),
-  v.literal("reservation.review")
+  v.literal("reservation.review"),
+  v.literal("admin.notification")
 );
 
 /**

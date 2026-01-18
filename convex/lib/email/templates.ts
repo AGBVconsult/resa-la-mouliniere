@@ -16,7 +16,8 @@ export type EmailJobType =
   | "reservation.refused"
   | "reservation.cancelled"
   | "reservation.reminder"
-  | "reservation.review";
+  | "reservation.review"
+  | "admin.notification";
 
 export interface TemplateData {
   firstName: string;
@@ -343,6 +344,8 @@ function getSubjectKey(type: EmailJobType): TranslationKey {
       return "subject.reminder";
     case "reservation.review":
       return "subject.review";
+    case "admin.notification":
+      return "subject.pending"; // Not used for admin emails
   }
 }
 
@@ -362,6 +365,8 @@ function getBodyKey(type: EmailJobType): TranslationKey {
       return "body.reminder";
     case "reservation.review":
       return "body.review";
+    case "admin.notification":
+      return "body.pending"; // Not used for admin emails
   }
 }
 
@@ -373,6 +378,7 @@ const VALID_EMAIL_TYPES: EmailJobType[] = [
   "reservation.cancelled",
   "reservation.reminder",
   "reservation.review",
+  "admin.notification",
 ];
 
 /**
@@ -499,6 +505,8 @@ function getEmailTypeConfig(type: EmailJobType): { icon: string; bgColor: string
       return { icon: EMAIL_ICONS.reminder, bgColor: "#dbeafe", iconBgColor: "#dbeafe" };
     case "reservation.review":
       return { icon: EMAIL_ICONS.review, bgColor: "#ede9fe", iconBgColor: "#ede9fe" };
+    case "admin.notification":
+      return { icon: EMAIL_ICONS.pending, bgColor: "#fef3c7", iconBgColor: "#fef3c7" };
   }
 }
 
@@ -514,6 +522,7 @@ function getTitleKey(type: EmailJobType): TranslationKey {
     case "reservation.cancelled": return "body.cancelled";
     case "reservation.reminder": return "body.reminder";
     case "reservation.review": return "body.review";
+    case "admin.notification": return "body.pending";
   }
 }
 
@@ -529,6 +538,7 @@ function getSubtitleKey(type: EmailJobType): TranslationKey {
     case "reservation.cancelled": return "body.cancelled.subtitle";
     case "reservation.reminder": return "body.reminder.subtitle";
     case "reservation.review": return "body.review.subtitle";
+    case "admin.notification": return "body.pending.subtitle";
   }
 }
 
@@ -544,6 +554,7 @@ function getIntroKey(type: EmailJobType): TranslationKey {
     case "reservation.cancelled": return "body.cancelled.intro";
     case "reservation.reminder": return "body.reminder.intro";
     case "reservation.review": return "body.review.intro";
+    case "admin.notification": return "body.pending.intro";
   }
 }
 
@@ -757,6 +768,103 @@ function renderModernTemplate(
 }
 
 /**
+ * Render admin notification email template.
+ * Simple French-only template for admin notifications.
+ */
+function renderAdminNotificationTemplate(data: TemplateData & { adminUrl?: string }): string {
+  const safeFirstName = escapeHtml(data.firstName);
+  const safeLastName = escapeHtml(data.lastName);
+  const formattedDate = formatDateForDisplay(data.dateKey, "fr");
+  const serviceLabel = data.service === "lunch" ? "Déjeuner" : "Dîner";
+  const adminUrl = data.adminUrl ?? "#";
+  const safeNote = data.note ? escapeHtml(data.note) : "";
+  const hasNote = safeNote.length > 0;
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nouvelle réservation en attente</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f3f4f6;">
+  <div style="background-color: #f3f4f6; padding: 40px 0;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td align="center">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 500px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb;">
+            
+            <!-- Header -->
+            <tr>
+              <td style="padding: 30px 30px 20px 30px; text-align: center; background-color: #fef3c7; border-bottom: 1px solid #fcd34d;">
+                <div style="display: inline-block; background-color: #ffffff; border-radius: 50%; padding: 12px; margin-bottom: 15px;">
+                  ${EMAIL_ICONS.pending}
+                </div>
+                <h1 style="color: #92400e; margin: 0; font-size: 20px; font-weight: 700;">Nouvelle réservation en attente</h1>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding: 30px;">
+                <p style="margin: 0 0 20px 0; font-size: 15px; color: #374151;">
+                  Une nouvelle réservation nécessite votre validation :
+                </p>
+
+                <!-- Détails -->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border-radius: 8px; margin-bottom: 20px;">
+                  <tr>
+                    <td style="padding: 15px;">
+                      <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">
+                        <strong style="color: #111827;">Client :</strong> ${safeFirstName} ${safeLastName}
+                      </p>
+                      <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">
+                        <strong style="color: #111827;">Date :</strong> ${formattedDate}
+                      </p>
+                      <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">
+                        <strong style="color: #111827;">Heure :</strong> ${escapeHtml(data.timeKey)} (${serviceLabel})
+                      </p>
+                      <p style="margin: 0${hasNote ? " 0 8px 0" : ""}; font-size: 14px; color: #6b7280;">
+                        <strong style="color: #111827;">Couverts :</strong> ${data.partySize} personnes
+                      </p>${hasNote ? `
+                      <p style="margin: 0; font-size: 14px; color: #6b7280;">
+                        <strong style="color: #111827;">Note :</strong> <em>"${safeNote}"</em>
+                      </p>` : ""}
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- CTA -->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td align="center">
+                      <a href="${escapeHtml(adminUrl)}" style="display: inline-block; background-color: #2c5530; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">
+                        Voir dans l'admin
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding: 20px 30px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
+                  La Moulinière — Notification automatique
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>`;
+}
+
+/**
  * Render an email template.
  * Pure function, testable.
  * 
@@ -772,11 +880,19 @@ export function renderTemplate(
   }
 
   const emailType = type as EmailJobType;
-  const effectiveLocale = translations[locale] ? locale : FALLBACK_LOCALE;
 
+  // Special handling for admin notification (French only, different template)
+  if (emailType === "admin.notification") {
+    return {
+      subject: `🔔 Nouvelle réservation en attente — ${data.firstName} ${data.lastName} (${data.partySize} pers.)`,
+      html: renderAdminNotificationTemplate(data as TemplateData & { adminUrl?: string }),
+    };
+  }
+
+  const effectiveLocale = translations[locale] ? locale : FALLBACK_LOCALE;
   const subject = t(effectiveLocale, getSubjectKey(emailType));
 
-  // Use modern template for all email types
+  // Use modern template for all other email types
   return {
     subject,
     html: renderModernTemplate(emailType, effectiveLocale, data),

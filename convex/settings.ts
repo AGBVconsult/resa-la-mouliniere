@@ -48,6 +48,7 @@ export const getSecretsInternal = internalMutation({
       resendApiKey: settings.resendApiKey,
       resendFromEmail: settings.resendFromEmail,
       resendFromName: settings.resendFromName,
+      adminNotificationEmail: settings.adminNotificationEmail,
     };
   },
 });

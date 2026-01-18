@@ -186,6 +186,7 @@ export const _create = internalMutation({
     manageTokenExpireBeforeSlotMs: v.number(),
     timezone: v.string(),
     appUrl: v.string(),
+    adminNotificationEmail: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const slotKey = makeSlotKey({
@@ -341,6 +342,30 @@ export const _create = internalMutation({
       },
       dedupeKey: `email:${emailType}:${reservationId}:1`,
     });
+
+    // Send admin notification for pending reservations
+    if (status === "pending" && args.adminNotificationEmail) {
+      await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
+        restaurantId: args.restaurantId,
+        type: "admin.notification",
+        to: args.adminNotificationEmail,
+        subjectKey: "admin.notification.subject",
+        templateKey: "admin.notification",
+        templateData: {
+          firstName: args.firstName,
+          lastName: args.lastName,
+          dateKey: args.dateKey,
+          timeKey: args.timeKey,
+          service: args.service,
+          partySize,
+          language: "fr", // Admin emails are always in French
+          note: args.note ?? "",
+          adminUrl: `${args.appUrl}/admin/reservations?date=${args.dateKey}`,
+        },
+        dedupeKey: `email:admin.notification:${reservationId}:1`,
+      });
+      console.log("Admin notification enqueued", { reservationId, adminEmail: args.adminNotificationEmail });
+    }
 
     return {
       reservationId,
@@ -499,6 +524,7 @@ type SettingsInternal = {
   turnstileSecretKey: string;
   manageTokenExpireBeforeSlotMs: number;
   rateLimit: { windowMs: number; maxRequests: number };
+  adminNotificationEmail?: string;
 } | null;
 
 type CreateMutationResult = {
@@ -621,6 +647,7 @@ export const create = action({
       manageTokenExpireBeforeSlotMs: settings.manageTokenExpireBeforeSlotMs,
       timezone: settings.timezone,
       appUrl: settings.appUrl,
+      adminNotificationEmail: settings.adminNotificationEmail,
     });
 
     const result: ReservationCreateResult = {
