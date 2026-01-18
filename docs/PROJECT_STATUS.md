@@ -1,9 +1,9 @@
 # Project Status — Resa La Moulinière
 
-**Dernière mise à jour :** 2026-01-17
+**Dernière mise à jour :** 2026-01-18
 **Version actuelle :** MVP en cours
 **Statut global :** 🟡 En cours
-**Progression estimée :** 70%
+**Progression estimée :** 80%
 
 ---
 
@@ -55,16 +55,17 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 | Page annulation dédiée | ✅ | /reservation/[token]/cancel |
 | Routage groupe (>15) | ✅ | /widget/group-request |
 
-### Frontend Admin — 🔴
+### Frontend Admin — 🟡
 
 | Fonctionnalité | Statut | Notes |
 |----------------|--------|-------|
-| Vue Service journalière | ❌ | **Bloquant MVP** |
-| Liste réservations du jour | ❌ | API prête, UI manquante |
-| Gestion statuts | ❌ | API prête, UI manquante |
+| Vue Service journalière | ✅ | Page `/admin/reservations` |
+| Liste réservations du jour | ✅ | Pagination, filtres service |
+| Gestion statuts | ✅ | Boutons d'actions + menu contextuel |
 | Attribution tables (click) | ❌ | API prête, UI manquante |
 | Création manuelle | ❌ | API à exposer + UI |
 | Recherche client | ❌ | |
+| Tracking ponctualité | ✅ | Table reservationEvents + stats |
 
 ### Emails — Séquence MVP
 
@@ -82,13 +83,15 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 
 ## Bloquants Actuels
 
-- [ ] **Interface Admin complète** — Bloquant MVP, aucune UI admin existante
+- [x] ~~**Interface Admin Vue Service**~~ ✅ Terminé (18/01)
+- [ ] **Attribution tables click-to-click** — UI manquante
+- [ ] **Création réservation manuelle** — API + UI
 
 ---
 
 ## Prochaines Étapes (Priorité Haute)
 
-1. **Interface Admin Vue Service** — Estimation: 3-4 jours
+1. ~~**Interface Admin Vue Service**~~ ✅ Terminé
 2. ~~**Page modification réservation client**~~ ✅ Terminé
 3. **Emails admin (notification pending + triggers validated/refused)** — Estimation: 0.5 jour
 4. **Cron email review J+1** — Estimation: 0.5 jour
@@ -100,9 +103,9 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 
 | Phase | Effort | Statut |
 |-------|--------|--------|
-| MVP Core (Admin + Client edit + Emails) | 6-8 jours | 🟡 En cours |
+| MVP Core (Admin + Client edit + Emails) | 3-5 jours restants | 🟡 En cours |
 | Phase 2 (Analytics, CRM avancé) | TBD | ❌ Non commencé |
-| **Total MVP** | **6-8 jours** | |
+| **Total MVP** | **3-5 jours** | |
 
 ---
 
@@ -112,3 +115,4 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 |------|---------|-------------|--------|
 | 2026-01-08 | MVP | 65% | dd29fcd |
 | 2026-01-17 | MVP | 70% | - | Pages edit/cancel client terminées |
+| 2026-01-18 | MVP | 80% | - | Interface Admin Vue Service + tracking ponctualité | |

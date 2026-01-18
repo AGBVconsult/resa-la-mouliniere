@@ -517,6 +517,108 @@ export const generateSlots = internalMutation({
   },
 });
 
+// Test reservations for UI testing
+const TEST_FIRST_NAMES = ["Marie", "Jean", "Sophie", "Pierre", "Emma", "Lucas", "Camille", "Thomas", "Léa", "Nicolas"];
+const TEST_LAST_NAMES = ["Dupont", "Martin", "Bernard", "Dubois", "Moreau", "Laurent", "Simon", "Michel", "Garcia", "David"];
+const TEST_STATUSES = ["pending", "confirmed", "seated", "completed", "noshow", "cancelled"] as const;
+const TEST_TIMES_LUNCH = ["12:00", "12:15", "12:30", "12:45", "13:00", "13:15"];
+const TEST_TIMES_DINNER = ["19:00", "19:15", "19:30", "19:45", "20:00", "20:15", "20:30"];
+const TEST_OPTIONS = ["highChair", "wheelchair", "dogAccess"];
+const TEST_LANGUAGES = ["fr", "nl", "en", "de", "it"] as const;
+const TEST_PHONE_PREFIXES = ["+32", "+33", "+31", "+49", "+44"];
+
+function randomElement<T>(arr: readonly T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomSubset<T>(arr: readonly T[], maxCount: number): T[] {
+  const count = Math.floor(Math.random() * (maxCount + 1));
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+export const seedTestReservations = internalMutation({
+  args: {
+    dateKey: v.string(),
+    count: v.optional(v.number()),
+  },
+  handler: async (ctx, { dateKey, count = 10 }) => {
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      throw new Error("No active restaurant found");
+    }
+
+    const restaurant = activeRestaurants[0];
+    const now = Date.now();
+    const created: string[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const service = Math.random() > 0.5 ? "lunch" : "dinner";
+      const timeKey = service === "lunch" 
+        ? randomElement(TEST_TIMES_LUNCH) 
+        : randomElement(TEST_TIMES_DINNER);
+      const slotKey = `${dateKey}_${service}_${timeKey}`;
+      
+      const adults = Math.floor(Math.random() * 4) + 1; // 1-4
+      const childrenCount = Math.random() > 0.7 ? Math.floor(Math.random() * 3) : 0; // 0-2
+      const babyCount = Math.random() > 0.8 ? 1 : 0; // 0-1
+      const partySize = adults + childrenCount + babyCount;
+      
+      const firstName = randomElement(TEST_FIRST_NAMES);
+      const lastName = randomElement(TEST_LAST_NAMES);
+      const phonePrefix = randomElement(TEST_PHONE_PREFIXES);
+      const phoneNumber = `${phonePrefix} ${Math.floor(Math.random() * 900000000) + 100000000}`;
+      
+      const status = randomElement(TEST_STATUSES);
+      const language = randomElement(TEST_LANGUAGES);
+      const options = randomSubset(TEST_OPTIONS, 2);
+      const hasNote = Math.random() > 0.6;
+      const note = hasNote 
+        ? randomElement(["Anniversaire", "Allergie gluten", "Table près de la fenêtre SVP", "Client régulier", "Végétarien"])
+        : undefined;
+
+      const id = await ctx.db.insert("reservations", {
+        restaurantId: restaurant._id,
+        dateKey,
+        service,
+        timeKey,
+        slotKey,
+        adults,
+        childrenCount,
+        babyCount,
+        partySize,
+        firstName,
+        lastName,
+        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@test.com`,
+        phone: phoneNumber,
+        language,
+        note,
+        options,
+        status,
+        source: "admin",
+        tableIds: [],
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        cancelledAt: status === "cancelled" ? now : null,
+        refusedAt: null,
+        seatedAt: status === "seated" || status === "completed" ? now : null,
+        completedAt: status === "completed" ? now : null,
+        noshowAt: status === "noshow" ? now : null,
+      });
+
+      created.push(`${firstName} ${lastName} (${status})`);
+    }
+
+    console.log(`✅ Created ${count} test reservations for ${dateKey}`);
+    return { created, count };
+  },
+});
+
 export const testEmail = internalMutation({
   args: {
     to: v.string(),
