@@ -3,8 +3,8 @@
 > Guide de développement complet avec tâches granulaires.
 > Utilisé par Windsurf et Claude pour recommander la prochaine tâche selon le temps disponible.
 
-**Dernière mise à jour :** 2026-01-17
-**Progression globale :** 70%
+**Dernière mise à jour :** 2026-01-18
+**Progression globale :** 80%
 
 ---
 
@@ -17,7 +17,7 @@
 | 3 | Emails & Crons | 🟡 En cours | 80% |
 | 3b | Page Modification Client | ✅ Terminé | 100% |
 | 3c | Page Annulation Client | ✅ Terminé | 100% |
-| 4 | Interface Admin | ❌ Non commencé | 0% |
+| 4 | Interface Admin | 🟡 En cours | 60% |
 | 5 | Polish & Tests | ❌ Non commencé | 0% |
 
 ---
@@ -56,14 +56,14 @@ Créer l'interface admin complète (iPad-first) permettant la gestion quotidienn
 
 > Interface admin iPad-first pour la gestion quotidienne des réservations
 
-**Statut global :** ❌ Non commencé
-**Effort total :** 3-4 jours
+**Statut global :** 🟡 En cours (60%)
+**Effort total :** 1-2 jours restants
 **Priorité :** 🔴 Critique (bloquant MVP)
 
 ### Tâches
 
 #### [TASK-101] — Layout Admin avec navigation
-- **Statut :** ❌
+- **Statut :** ✅ Terminé
 - **Durée :** ⏱️ 2h
 - **Dépendances :** 🔗 Aucune
 - **Fichiers :** 
@@ -81,7 +81,7 @@ Créer l'interface admin complète (iPad-first) permettant la gestion quotidienn
   - [ ] Navigation fonctionnelle
 
 #### [TASK-102] — Sélecteur de date et service
-- **Statut :** ❌
+- **Statut :** ✅ Terminé
 - **Durée :** ⏱️ 1h
 - **Dépendances :** 🔗 TASK-101
 - **Fichiers :** 
@@ -96,7 +96,7 @@ Créer l'interface admin complète (iPad-first) permettant la gestion quotidienn
   - [ ] État synchronisé avec URL params
 
 #### [TASK-103] — Vue Service (liste réservations)
-- **Statut :** ❌
+- **Statut :** ✅ Terminé
 - **Durée :** ⏱️ 3h
 - **Dépendances :** 🔗 TASK-102
 - **Fichiers :** 
@@ -131,7 +131,7 @@ Créer l'interface admin complète (iPad-first) permettant la gestion quotidienn
   - [ ] Actions rapides accessibles
 
 #### [TASK-105] — Gestion des statuts (boutons d'action)
-- **Statut :** ❌
+- **Statut :** ✅ Terminé
 - **Durée :** ⏱️ 2h
 - **Dépendances :** 🔗 TASK-104
 - **Fichiers :** 
@@ -556,10 +556,12 @@ npx convex deploy
 pending ──→ confirmed ──→ seated ──→ completed
     │           │           │
     ↓           ↓           ↓
- refused      noshow      noshow
+ refused      noshow     incident
     │           │
     ↓           ↓
 cancelled   cancelled
+
+Nouveau statut "incident" ajouté (18/01) - empêche envoi email review J+1
 ```
 
 ---
@@ -569,6 +571,8 @@ cancelled   cancelled
 | Date | Durée | Tâches complétées | Notes |
 |------|-------|-------------------|-------|
 | 2026-01-08 | 2h | Audit MVP complet | Création DEVBOOK, PROJECT_STATUS |
+| 2026-01-17 | 3h | Pages edit/cancel client | TASK-301, TASK-303 |
+| 2026-01-18 | 4h | Interface Admin Vue Service | TASK-101, 102, 103, 105 + tracking ponctualité |
 
 ---
 
@@ -578,6 +582,6 @@ cancelled   cancelled
 
 **Si tu as 1h :** TASK-204 (Cron email review J+1) — Complète la séquence emails
 
-**Si tu as 2h :** TASK-101 (Layout Admin) — Débloque tout l'EPIC-1
+**Si tu as 2h :** TASK-106 (Attribution tables click-to-click) — Complète l'interface admin
 
-**Si tu as une demi-journée :** TASK-101 + TASK-102 + TASK-103 — Vue Service fonctionnelle
+**Si tu as une demi-journée :** TASK-106 + TASK-107 — Admin complet avec création manuelle

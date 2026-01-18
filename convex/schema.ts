@@ -18,7 +18,8 @@ const reservationStatus = v.union(
   v.literal("completed"),
   v.literal("noshow"),
   v.literal("cancelled"),
-  v.literal("refused")
+  v.literal("refused"),
+  v.literal("incident")
 );
 
 const reservationSource = v.union(
@@ -153,6 +154,34 @@ export default defineSchema({
     .index("by_restaurant_slotKey", ["restaurantId", "slotKey"])
     .index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"])
     .index("by_restaurant_status", ["restaurantId", "status"]),
+
+  // Track all status changes for analytics (punctuality, CRM, etc.)
+  reservationEvents: defineTable({
+    reservationId: v.id("reservations"),
+    restaurantId: v.id("restaurants"),
+    eventType: v.union(
+      v.literal("status_change"),
+      v.literal("table_assignment"),
+      v.literal("created"),
+      v.literal("updated")
+    ),
+    // Status change details
+    fromStatus: v.optional(v.string()),
+    toStatus: v.optional(v.string()),
+    // Timing data for analytics
+    scheduledTime: v.optional(v.string()), // e.g., "18:30" - the reservation time
+    actualTime: v.number(), // When the action happened (timestamp)
+    // Computed delay in minutes (positive = late, negative = early)
+    delayMinutes: v.optional(v.number()),
+    // Who performed the action
+    performedBy: v.optional(v.string()), // User ID or "system"
+    // Additional metadata
+    metadata: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index("by_reservation", ["reservationId"])
+    .index("by_restaurant_date", ["restaurantId", "createdAt"])
+    .index("by_eventType", ["restaurantId", "eventType", "createdAt"]),
 
   reservationTokens: defineTable({
     reservationId: v.id("reservations"),

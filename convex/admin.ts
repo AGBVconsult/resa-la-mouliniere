@@ -204,6 +204,8 @@ function buildReservationAdmin(doc: {
   email: string;
   phone: string;
   language: "fr" | "nl" | "en" | "de" | "it";
+  note?: string;
+  options?: string[];
   status: string;
   source: "online" | "admin" | "phone" | "walkin";
   tableIds: Id<"tables">[];
@@ -232,6 +234,8 @@ function buildReservationAdmin(doc: {
     email: doc.email,
     phone: doc.phone,
     language: doc.language,
+    note: doc.note ?? null,
+    options: doc.options ?? [],
     status: doc.status as ReservationStatus,
     source: doc.source,
     tableIds: doc.tableIds,
@@ -375,6 +379,108 @@ export const getReservation = query({
  * Autorisation: admin|owner
  * Optimistic locking via version
  */
+/**
+ * Get punctuality statistics for analytics.
+ * Returns average delay, on-time rate, and distribution.
+ */
+export const getPunctualityStats = query({
+  args: {
+    dateFrom: v.optional(v.string()), // YYYY-MM-DD
+    dateTo: v.optional(v.string()),   // YYYY-MM-DD
+  },
+  handler: async (ctx, { dateFrom, dateTo }) => {
+    await requireRole(ctx, "admin");
+
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(1);
+
+    if (activeRestaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+
+    const restaurant = activeRestaurants[0];
+
+    // Get all "seated" status change events
+    let events = await ctx.db
+      .query("reservationEvents")
+      .withIndex("by_eventType", (q) => 
+        q.eq("restaurantId", restaurant._id).eq("eventType", "status_change")
+      )
+      .collect();
+
+    // Filter to only "seated" transitions with delay data
+    events = events.filter((e) => 
+      e.toStatus === "seated" && 
+      e.delayMinutes !== undefined
+    );
+
+    // Apply date filters if provided
+    if (dateFrom) {
+      const fromTimestamp = new Date(dateFrom).getTime();
+      events = events.filter((e) => e.createdAt >= fromTimestamp);
+    }
+    if (dateTo) {
+      const toTimestamp = new Date(dateTo).setHours(23, 59, 59, 999);
+      events = events.filter((e) => e.createdAt <= toTimestamp);
+    }
+
+    if (events.length === 0) {
+      return {
+        totalArrivals: 0,
+        averageDelayMinutes: 0,
+        onTimeRate: 0, // % of clients arriving within 10 min of scheduled time
+        earlyRate: 0,  // % arriving early
+        lateRate: 0,   // % arriving late (>10 min)
+        veryLateRate: 0, // % arriving very late (>30 min)
+        distribution: {
+          veryEarly: 0,  // < -15 min
+          early: 0,      // -15 to -1 min
+          onTime: 0,     // -1 to +10 min
+          late: 0,       // +10 to +30 min
+          veryLate: 0,   // > +30 min
+        },
+      };
+    }
+
+    const delays = events.map((e) => e.delayMinutes as number);
+    const totalArrivals = delays.length;
+    const averageDelayMinutes = Math.round(delays.reduce((a, b) => a + b, 0) / totalArrivals);
+
+    // Calculate distribution
+    const distribution = {
+      veryEarly: delays.filter((d) => d < -15).length,
+      early: delays.filter((d) => d >= -15 && d < 0).length,
+      onTime: delays.filter((d) => d >= 0 && d <= 10).length,
+      late: delays.filter((d) => d > 10 && d <= 30).length,
+      veryLate: delays.filter((d) => d > 30).length,
+    };
+
+    const onTimeCount = distribution.onTime + distribution.early + distribution.veryEarly;
+    const onTimeRate = Math.round((onTimeCount / totalArrivals) * 100);
+    const earlyRate = Math.round(((distribution.early + distribution.veryEarly) / totalArrivals) * 100);
+    const lateRate = Math.round((distribution.late / totalArrivals) * 100);
+    const veryLateRate = Math.round((distribution.veryLate / totalArrivals) * 100);
+
+    return {
+      totalArrivals,
+      averageDelayMinutes,
+      onTimeRate,
+      earlyRate,
+      lateRate,
+      veryLateRate,
+      distribution: {
+        veryEarly: Math.round((distribution.veryEarly / totalArrivals) * 100),
+        early: Math.round((distribution.early / totalArrivals) * 100),
+        onTime: Math.round((distribution.onTime / totalArrivals) * 100),
+        late: Math.round((distribution.late / totalArrivals) * 100),
+        veryLate: Math.round((distribution.veryLate / totalArrivals) * 100),
+      },
+    };
+  },
+});
+
 export const updateReservation = mutation({
   args: {
     reservationId: v.id("reservations"),
@@ -387,7 +493,8 @@ export const updateReservation = mutation({
       v.literal("completed"),
       v.literal("noshow"),
       v.literal("cancelled"),
-      v.literal("refused")
+      v.literal("refused"),
+      v.literal("incident")
     )),
     tableIds: v.optional(v.array(v.id("tables"))),
   },
@@ -478,6 +585,58 @@ export const updateReservation = mutation({
     }
 
     await ctx.db.patch(reservationId, patch);
+
+    // Track status change event for analytics
+    if (status && status !== reservation.status) {
+      // Calculate delay for "seated" status (arrival time vs scheduled time)
+      let delayMinutes: number | undefined;
+      if (status === "seated") {
+        // Parse scheduled time (e.g., "18:30") and compare with actual time
+        const [hours, minutes] = reservation.timeKey.split(":").map(Number);
+        const scheduledDate = new Date();
+        scheduledDate.setHours(hours, minutes, 0, 0);
+        
+        // Get today's date with the scheduled time
+        const todayStr = new Date().toISOString().split("T")[0];
+        const reservationDateStr = reservation.dateKey;
+        
+        // Only calculate delay if it's the same day
+        if (todayStr === reservationDateStr) {
+          const scheduledTimestamp = scheduledDate.getTime();
+          delayMinutes = Math.round((now - scheduledTimestamp) / 60000);
+        }
+      }
+
+      await ctx.db.insert("reservationEvents", {
+        reservationId,
+        restaurantId: reservation.restaurantId,
+        eventType: "status_change",
+        fromStatus: reservation.status,
+        toStatus: status,
+        scheduledTime: reservation.timeKey,
+        actualTime: now,
+        delayMinutes,
+        performedBy: "admin", // TODO: Get actual user ID from auth
+        createdAt: now,
+      });
+    }
+
+    // Track table assignment event
+    if (tableIds !== undefined && JSON.stringify(tableIds) !== JSON.stringify(reservation.tableIds)) {
+      await ctx.db.insert("reservationEvents", {
+        reservationId,
+        restaurantId: reservation.restaurantId,
+        eventType: "table_assignment",
+        scheduledTime: reservation.timeKey,
+        actualTime: now,
+        performedBy: "admin",
+        metadata: { 
+          previousTables: reservation.tableIds,
+          newTables: tableIds,
+        },
+        createdAt: now,
+      });
+    }
 
     // Log without PII
     const updatedFields = Object.keys(patch).filter((k) => k !== "updatedAt" && k !== "version");
