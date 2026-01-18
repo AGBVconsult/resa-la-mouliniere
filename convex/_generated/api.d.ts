@@ -16,6 +16,7 @@ import type * as emails from "../emails.js";
 import type * as floor from "../floor.js";
 import type * as groupRequests from "../groupRequests.js";
 import type * as idempotency from "../idempotency.js";
+import type * as jobs from "../jobs.js";
 import type * as lib_dateUtils from "../lib/dateUtils.js";
 import type * as lib_email_ops from "../lib/email/ops.js";
 import type * as lib_email_resend from "../lib/email/resend.js";
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   floor: typeof floor;
   groupRequests: typeof groupRequests;
   idempotency: typeof idempotency;
+  jobs: typeof jobs;
   "lib/dateUtils": typeof lib_dateUtils;
   "lib/email/ops": typeof lib_email_ops;
   "lib/email/resend": typeof lib_email_resend;

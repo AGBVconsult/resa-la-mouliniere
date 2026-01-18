@@ -11,6 +11,31 @@ import { Errors } from "./lib/errors";
  * Returns minimal data needed for reservation creation.
  * Note: Using internalMutation (not internalQuery) to comply with secret leak policy.
  */
+/**
+ * Enable Pushover notifications (one-time setup).
+ */
+export const enablePushover = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(1);
+
+    if (activeRestaurants.length === 0) return { ok: false };
+
+    const settings = await ctx.db
+      .query("settings")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", activeRestaurants[0]._id))
+      .unique();
+
+    if (!settings) return { ok: false };
+
+    await ctx.db.patch(settings._id, { pushoverEnabled: true });
+    return { ok: true };
+  },
+});
+
 export const getSecretsInternal = internalMutation({
   args: {},
   handler: async (ctx) => {

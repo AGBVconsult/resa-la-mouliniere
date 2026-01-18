@@ -56,10 +56,20 @@ crons.interval(
   { now: Date.now() }
 );
 
-// TICKET: jobs.dailyFinalize not implemented yet
-// crons.cron("daily-finalize", "0 3 * * *", internal.jobs.dailyFinalize, { now: Date.now() });
+// Daily finalize at 03:00 - mark confirmed as noshow, seated as completed
+crons.cron(
+  "daily-finalize",
+  "0 3 * * *",
+  internal.jobs.dailyFinalize,
+  { now: Date.now() }
+);
 
-// TICKET: jobs.cleanup (tokens/idempotency) not implemented yet
-// crons.cron("daily-cleanup", "0 4 * * *", internal.jobs.cleanup, { now: Date.now() });
+// Daily cleanup at 04:00 - delete expired tokens and idempotency keys
+crons.cron(
+  "daily-cleanup",
+  "0 4 * * *",
+  internal.jobs.cleanup,
+  { now: Date.now() }
+);
 
 export default crons;

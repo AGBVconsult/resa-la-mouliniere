@@ -199,7 +199,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_token", ["token"])
-    .index("by_reservation_type", ["reservationId", "type"]),
+    .index("by_reservation_type", ["reservationId", "type"])
+    .index("by_expiresAt", ["expiresAt"]),
 
   groupRequests: defineTable({
     restaurantId: v.id("restaurants"),
