@@ -1,11 +1,18 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function AdminHeader() {
+  // Prevent hydration mismatch with Clerk's UserButton
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200">
       <div className="flex items-center justify-between h-full px-6">
@@ -28,14 +35,17 @@ export function AdminHeader() {
 
           <div className="h-8 w-px bg-slate-200" />
 
-          <UserButton
-            afterSignOutUrl="/admin/login"
-            appearance={{
-              elements: {
-                avatarBox: "w-9 h-9",
-              },
-            }}
-          />
+          {mounted && (
+            <UserButton
+              afterSignOutUrl="/admin/login"
+              appearance={{
+                elements: {
+                  avatarBox: "w-9 h-9",
+                },
+              }}
+            />
+          )}
+          {!mounted && <div className="w-9 h-9 rounded-full bg-slate-200 animate-pulse" />}
         </div>
       </div>
     </header>
