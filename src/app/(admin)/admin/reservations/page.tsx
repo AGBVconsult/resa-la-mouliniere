@@ -13,6 +13,7 @@ import {
   ReservationList,
   DatePickerCalendar,
   CreateReservationModal,
+  DayOverrideModal,
   type Reservation,
 } from "./components";
 
@@ -149,26 +150,6 @@ export default function ReservationsPage() {
         )}
       </div>
 
-      {/* Settings Modal (placeholder) */}
-      {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowSettings(false)}
-          />
-          <div className="relative bg-white rounded-xl p-6 w-[500px] max-h-[80vh] overflow-auto">
-            <h2 className="text-xl font-semibold mb-4">Paramètres du jour</h2>
-            <p className="text-gray-500">Modal Day Override - À implémenter</p>
-            <button
-              className="mt-4 px-4 py-2 bg-black text-white rounded-lg"
-              onClick={() => setShowSettings(false)}
-            >
-              Fermer
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Edit Modal (placeholder) */}
       {editingReservation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -200,6 +181,14 @@ export default function ReservationsPage() {
           dateKey={dateKey}
           service={currentService}
           onClose={() => setShowCreateModal(false)}
+        />
+      )}
+
+      {/* Day Override Modal */}
+      {showSettings && (
+        <DayOverrideModal
+          dateKey={dateKey}
+          onClose={() => setShowSettings(false)}
         />
       )}
     </div>

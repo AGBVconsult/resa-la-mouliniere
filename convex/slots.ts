@@ -480,5 +480,233 @@ export const openRange = mutation({
   },
 });
 
+// ═══════════════════════════════════════════════════════════════
+// QUERY: listByDate (admin — get all slots for a date)
+// Pour le Modal Day Override
+// ═══════════════════════════════════════════════════════════════
+
+export const listByDate = query({
+  args: {
+    dateKey: v.string(),
+  },
+  handler: async (ctx, { dateKey }) => {
+    await requireRole(ctx, "admin");
+
+    if (!DATE_KEY_REGEX.test(dateKey)) {
+      throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
+    }
+
+    const restaurant = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .first();
+
+    if (!restaurant) {
+      return { lunch: [], dinner: [] };
+    }
+
+    const allSlots = await ctx.db
+      .query("slots")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("dateKey", dateKey)
+      )
+      .collect();
+
+    const lunch = allSlots
+      .filter((s) => s.service === "lunch")
+      .map((s) => ({ ...s, effectiveOpen: computeEffectiveOpen(s.isOpen, s.capacity) }))
+      .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
+
+    const dinner = allSlots
+      .filter((s) => s.service === "dinner")
+      .map((s) => ({ ...s, effectiveOpen: computeEffectiveOpen(s.isOpen, s.capacity) }))
+      .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
+
+    return { lunch, dinner };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// MUTATION: updateSlot (admin — update single slot)
+// Pour le Modal Day Override
+// ═══════════════════════════════════════════════════════════════
+
+export const updateSlot = mutation({
+  args: {
+    slotId: v.id("slots"),
+    isOpen: v.optional(v.boolean()),
+    capacity: v.optional(v.number()),
+  },
+  handler: async (ctx, { slotId, isOpen, capacity }) => {
+    await requireRole(ctx, "admin");
+
+    const slot = await ctx.db.get(slotId);
+    if (!slot) {
+      throw Errors.SLOT_NOT_FOUND(slotId);
+    }
+
+    const patch: Record<string, unknown> = { updatedAt: Date.now() };
+
+    if (isOpen !== undefined) {
+      patch.isOpen = isOpen;
+    }
+    if (capacity !== undefined) {
+      if (capacity < 0) {
+        throw Errors.INVALID_INPUT("capacity", "Doit être >= 0");
+      }
+      patch.capacity = capacity;
+    }
+
+    await ctx.db.patch(slotId, patch);
+
+    return { ok: true };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// MUTATION: batchUpdateSlots (admin — update multiple slots)
+// Pour le Modal Day Override - sauvegarde en batch
+// ═══════════════════════════════════════════════════════════════
+
+export const batchUpdateSlots = mutation({
+  args: {
+    updates: v.array(
+      v.object({
+        slotId: v.id("slots"),
+        isOpen: v.optional(v.boolean()),
+        capacity: v.optional(v.number()),
+      })
+    ),
+  },
+  handler: async (ctx, { updates }) => {
+    await requireRole(ctx, "admin");
+
+    const now = Date.now();
+    let updatedCount = 0;
+
+    for (const update of updates) {
+      const slot = await ctx.db.get(update.slotId);
+      if (!slot) continue;
+
+      const patch: Record<string, unknown> = { updatedAt: now };
+
+      if (update.isOpen !== undefined) {
+        patch.isOpen = update.isOpen;
+      }
+      if (update.capacity !== undefined) {
+        if (update.capacity >= 0) {
+          patch.capacity = update.capacity;
+        }
+      }
+
+      await ctx.db.patch(update.slotId, patch);
+      updatedCount++;
+    }
+
+    console.log("Batch slots updated", { updatedCount });
+
+    return { updatedCount };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// MUTATION: toggleServiceSlots (admin — toggle all slots for a service)
+// Pour le Modal Day Override - toggle service entier
+// ═══════════════════════════════════════════════════════════════
+
+export const toggleServiceSlots = mutation({
+  args: {
+    dateKey: v.string(),
+    service: v.union(v.literal("lunch"), v.literal("dinner")),
+    isOpen: v.boolean(),
+  },
+  handler: async (ctx, { dateKey, service, isOpen }) => {
+    await requireRole(ctx, "admin");
+
+    if (!DATE_KEY_REGEX.test(dateKey)) {
+      throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
+    }
+
+    const restaurant = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .first();
+
+    if (!restaurant) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+
+    const slots = await ctx.db
+      .query("slots")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("dateKey", dateKey).eq("service", service)
+      )
+      .collect();
+
+    const now = Date.now();
+    let updatedCount = 0;
+
+    for (const slot of slots) {
+      if (slot.isOpen !== isOpen) {
+        await ctx.db.patch(slot._id, { isOpen, updatedAt: now });
+        updatedCount++;
+      }
+    }
+
+    console.log("Service slots toggled", { dateKey, service, isOpen, updatedCount });
+
+    return { updatedCount };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// MUTATION: toggleDaySlots (admin — toggle all slots for a day)
+// Pour le Modal Day Override - toggle jour complet
+// ═══════════════════════════════════════════════════════════════
+
+export const toggleDaySlots = mutation({
+  args: {
+    dateKey: v.string(),
+    isOpen: v.boolean(),
+  },
+  handler: async (ctx, { dateKey, isOpen }) => {
+    await requireRole(ctx, "admin");
+
+    if (!DATE_KEY_REGEX.test(dateKey)) {
+      throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
+    }
+
+    const restaurant = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .first();
+
+    if (!restaurant) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+
+    const slots = await ctx.db
+      .query("slots")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("dateKey", dateKey)
+      )
+      .collect();
+
+    const now = Date.now();
+    let updatedCount = 0;
+
+    for (const slot of slots) {
+      if (slot.isOpen !== isOpen) {
+        await ctx.db.patch(slot._id, { isOpen, updatedAt: now });
+        updatedCount++;
+      }
+    }
+
+    console.log("Day slots toggled", { dateKey, isOpen, updatedCount });
+
+    return { updatedCount };
+  },
+});
+
 // Export helpers for tests
 export { TIME_KEY_REGEX, DATE_KEY_REGEX };
