@@ -30,6 +30,7 @@ import type * as lib_stateMachine from "../lib/stateMachine.js";
 import type * as lib_tokens from "../lib/tokens.js";
 import type * as lib_turnstile from "../lib/turnstile.js";
 import type * as notifications from "../notifications.js";
+import type * as planning from "../planning.js";
 import type * as reservations from "../reservations.js";
 import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
@@ -67,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   "lib/tokens": typeof lib_tokens;
   "lib/turnstile": typeof lib_turnstile;
   notifications: typeof notifications;
+  planning: typeof planning;
   reservations: typeof reservations;
   seed: typeof seed;
   settings: typeof settings;

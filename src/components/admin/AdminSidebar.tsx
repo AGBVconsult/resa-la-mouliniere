@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   CalendarRange,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -19,6 +20,7 @@ import { useState } from "react";
 const navigation = [
   { name: "Tableau de bord", href: "/admin", icon: LayoutDashboard },
   { name: "Réservations", href: "/admin/reservations", icon: CalendarDays },
+  { name: "Planning", href: "/admin/planning", icon: Calendar },
   { name: "Créneaux", href: "/admin/creneaux", icon: Clock },
   { name: "Périodes", href: "/admin/periodes", icon: CalendarRange },
   { name: "Clients", href: "/admin/clients", icon: Users },
