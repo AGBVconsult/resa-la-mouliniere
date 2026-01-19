@@ -708,5 +708,70 @@ export const toggleDaySlots = mutation({
   },
 });
 
+// ═══════════════════════════════════════════════════════════════
+// MUTATION: addSlot (admin — add a temporary slot for a specific day)
+// Pour le Modal Day Override - bouton (+) Ajouter Créneau
+// ═══════════════════════════════════════════════════════════════
+
+export const addSlot = mutation({
+  args: {
+    dateKey: v.string(),
+    service: v.union(v.literal("lunch"), v.literal("dinner")),
+    timeKey: v.string(),
+    capacity: v.optional(v.number()),
+  },
+  handler: async (ctx, { dateKey, service, timeKey, capacity }) => {
+    await requireRole(ctx, "admin");
+
+    if (!DATE_KEY_REGEX.test(dateKey)) {
+      throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
+    }
+    if (!TIME_KEY_REGEX.test(timeKey)) {
+      throw Errors.INVALID_INPUT("timeKey", "Format HH:MM requis");
+    }
+
+    const restaurant = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .first();
+
+    if (!restaurant) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+
+    const slotKey = buildSlotKey(dateKey, service, timeKey);
+
+    // Check if slot already exists
+    const existing = await ctx.db
+      .query("slots")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
+      )
+      .unique();
+
+    if (existing) {
+      throw Errors.INVALID_INPUT("timeKey", "Ce créneau existe déjà");
+    }
+
+    const now = Date.now();
+    const slotId = await ctx.db.insert("slots", {
+      restaurantId: restaurant._id,
+      dateKey,
+      service,
+      timeKey,
+      slotKey,
+      isOpen: true,
+      capacity: capacity ?? DEFAULT_CAPACITY,
+      maxGroupSize: DEFAULT_MAX_GROUP_SIZE,
+      largeTableAllowed: false,
+      updatedAt: now,
+    });
+
+    console.log("Slot added", { slotKey, capacity: capacity ?? DEFAULT_CAPACITY });
+
+    return { slotId, slotKey };
+  },
+});
+
 // Export helpers for tests
 export { TIME_KEY_REGEX, DATE_KEY_REGEX };

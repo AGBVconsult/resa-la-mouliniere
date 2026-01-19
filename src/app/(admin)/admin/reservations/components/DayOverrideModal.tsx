@@ -6,9 +6,10 @@ import { api } from "../../../../../../convex/_generated/api";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { X, Loader2, Clock, Users } from "lucide-react";
+import { X, Loader2, Clock, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface DayOverrideModalProps {
@@ -27,13 +28,15 @@ interface SlotState {
 
 export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
   const slotsData = useQuery(api.slots.listByDate, { dateKey });
-  const toggleDaySlots = useMutation(api.slots.toggleDaySlots);
-  const toggleServiceSlots = useMutation(api.slots.toggleServiceSlots);
   const batchUpdateSlots = useMutation(api.slots.batchUpdateSlots);
+  const addSlot = useMutation(api.slots.addSlot);
 
   const [lunchSlots, setLunchSlots] = useState<SlotState[]>([]);
   const [dinnerSlots, setDinnerSlots] = useState<SlotState[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAddingSlot, setIsAddingSlot] = useState<"lunch" | "dinner" | null>(null);
+  const [newSlotTime, setNewSlotTime] = useState("");
+  const [newSlotCapacity, setNewSlotCapacity] = useState(50);
 
   // Initialize local state from query
   useEffect(() => {
@@ -120,6 +123,26 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
     }
   };
 
+  const handleAddSlot = async (service: "lunch" | "dinner") => {
+    if (!newSlotTime || !/^\d{2}:\d{2}$/.test(newSlotTime)) {
+      return;
+    }
+
+    try {
+      await addSlot({
+        dateKey,
+        service,
+        timeKey: newSlotTime,
+        capacity: newSlotCapacity,
+      });
+      setIsAddingSlot(null);
+      setNewSlotTime("");
+      setNewSlotCapacity(50);
+    } catch (error) {
+      console.error("Error adding slot:", error);
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -190,21 +213,39 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
             {/* Lunch */}
             <ServiceCard
               title="Déjeuner"
+              service="lunch"
               isOpen={isLunchOpen}
               onToggle={(open) => handleServiceToggle("lunch", open)}
               slots={lunchSlots}
               onSlotToggle={(id, open) => handleSlotToggle("lunch", id, open)}
               onCapacityChange={(id, cap) => handleCapacityChange("lunch", id, cap)}
+              isAddingSlot={isAddingSlot === "lunch"}
+              onStartAddSlot={() => setIsAddingSlot("lunch")}
+              onCancelAddSlot={() => setIsAddingSlot(null)}
+              newSlotTime={newSlotTime}
+              onNewSlotTimeChange={setNewSlotTime}
+              newSlotCapacity={newSlotCapacity}
+              onNewSlotCapacityChange={setNewSlotCapacity}
+              onConfirmAddSlot={() => handleAddSlot("lunch")}
             />
 
             {/* Dinner */}
             <ServiceCard
               title="Dîner"
+              service="dinner"
               isOpen={isDinnerOpen}
               onToggle={(open) => handleServiceToggle("dinner", open)}
               slots={dinnerSlots}
               onSlotToggle={(id, open) => handleSlotToggle("dinner", id, open)}
               onCapacityChange={(id, cap) => handleCapacityChange("dinner", id, cap)}
+              isAddingSlot={isAddingSlot === "dinner"}
+              onStartAddSlot={() => setIsAddingSlot("dinner")}
+              onCancelAddSlot={() => setIsAddingSlot(null)}
+              newSlotTime={newSlotTime}
+              onNewSlotTimeChange={setNewSlotTime}
+              newSlotCapacity={newSlotCapacity}
+              onNewSlotCapacityChange={setNewSlotCapacity}
+              onConfirmAddSlot={() => handleAddSlot("dinner")}
             />
           </div>
         </div>
@@ -237,20 +278,38 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
 // Service Card Component
 interface ServiceCardProps {
   title: string;
+  service: "lunch" | "dinner";
   isOpen: boolean;
   onToggle: (open: boolean) => void;
   slots: SlotState[];
   onSlotToggle: (id: Id<"slots">, open: boolean) => void;
   onCapacityChange: (id: Id<"slots">, capacity: number) => void;
+  isAddingSlot: boolean;
+  onStartAddSlot: () => void;
+  onCancelAddSlot: () => void;
+  newSlotTime: string;
+  onNewSlotTimeChange: (time: string) => void;
+  newSlotCapacity: number;
+  onNewSlotCapacityChange: (capacity: number) => void;
+  onConfirmAddSlot: () => void;
 }
 
 function ServiceCard({
   title,
+  service,
   isOpen,
   onToggle,
   slots,
   onSlotToggle,
   onCapacityChange,
+  isAddingSlot,
+  onStartAddSlot,
+  onCancelAddSlot,
+  newSlotTime,
+  onNewSlotTimeChange,
+  newSlotCapacity,
+  onNewSlotCapacityChange,
+  onConfirmAddSlot,
 }: ServiceCardProps) {
   return (
     <div className="border rounded-xl overflow-hidden">
@@ -260,9 +319,66 @@ function ServiceCard({
         <Switch checked={isOpen} onCheckedChange={onToggle} />
       </div>
 
+      {/* Créneaux horaires header with add button */}
+      <div className="px-4 py-2 flex items-center justify-between border-b bg-gray-50/50">
+        <span className="text-sm text-gray-600">Créneaux horaires</span>
+        <button
+          onClick={onStartAddSlot}
+          className="p-1 hover:bg-gray-200 rounded transition-colors"
+          title="Ajouter un créneau"
+        >
+          <Plus className="h-4 w-4 text-gray-600" />
+        </button>
+      </div>
+
       {/* Slots List */}
-      <div className="p-4 space-y-2 max-h-[400px] overflow-auto">
-        {slots.length === 0 ? (
+      <div className="p-4 space-y-2 max-h-[350px] overflow-auto">
+        {/* Add Slot Form */}
+        {isAddingSlot && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 mb-2">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4 text-emerald-600" />
+              <input
+                type="time"
+                value={newSlotTime}
+                onChange={(e) => onNewSlotTimeChange(e.target.value)}
+                className="w-24 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="HH:MM"
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Users className="h-4 w-4 text-emerald-600" />
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={newSlotCapacity}
+                onChange={(e) => onNewSlotCapacityChange(parseInt(e.target.value) || 50)}
+                className="w-16 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+            </div>
+            <div className="flex gap-1 ml-auto">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onCancelAddSlot}
+                className="h-7 px-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={onConfirmAddSlot}
+                className="h-7 px-2 bg-emerald-600 hover:bg-emerald-700"
+                disabled={!newSlotTime}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {slots.length === 0 && !isAddingSlot ? (
           <p className="text-gray-400 text-sm text-center py-4">
             Aucun créneau configuré
           </p>
