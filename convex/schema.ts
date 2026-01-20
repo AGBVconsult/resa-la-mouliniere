@@ -29,7 +29,13 @@ const reservationSource = v.union(
   v.literal("walkin")
 );
 
-const tableZone = v.union(v.literal("dining"), v.literal("terrace"));
+const tableZone = v.union(
+  v.literal("salle"), 
+  v.literal("terrasse"),
+  v.literal("dining"),   // Deprecated, pour migration
+  v.literal("terrace")   // Deprecated, pour migration
+);
+const combinationDirection = v.union(v.literal("horizontal"), v.literal("vertical"), v.literal("none"));
 
 const emailJobType = v.union(
   v.literal("reservation.confirmed"),
@@ -113,13 +119,24 @@ export default defineSchema({
     name: v.string(),
     zone: tableZone,
     capacity: v.number(),
-    gridX: v.number(),
-    gridY: v.number(),
+    // Positionnement sur grille (en unités de cellule)
+    positionX: v.optional(v.number()), // Migration: anciennement gridX
+    positionY: v.optional(v.number()), // Migration: anciennement gridY
+    gridX: v.optional(v.number()), // Deprecated, pour migration
+    gridY: v.optional(v.number()), // Deprecated, pour migration
+    // Dimensions (en cellules, défaut 1x1)
+    width: v.optional(v.number()),
+    height: v.optional(v.number()),
+    // Combinaison de tables
+    combinationDirection: v.optional(combinationDirection),
+    // État
     isActive: v.boolean(),
+    createdAt: v.optional(v.number()),
     updatedAt: v.number(),
   })
     .index("by_restaurant_name", ["restaurantId", "name"])
-    .index("by_restaurant_isActive", ["restaurantId", "isActive"]),
+    .index("by_restaurant_isActive", ["restaurantId", "isActive"])
+    .index("by_restaurant_zone", ["restaurantId", "zone"]),
 
   reservations: defineTable({
     restaurantId: v.id("restaurants"),

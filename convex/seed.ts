@@ -132,26 +132,31 @@ async function seedTablesImpl(ctx: MutationCtx, restaurantId: Id<"restaurants">)
 
   const diningCapacities = [2, 2, 4, 4, 4, 6, 6, 8];
   const terraceCapacities = [2, 4, 4, 6];
+  const TABLE_GRID_SPAN = 3;
 
   const tables = [
     ...Array.from({ length: 30 }, (_, i) => ({
       restaurantId,
-      name: `D-${String(i + 1).padStart(2, "0")}`,
-      zone: "dining" as const,
+      name: `S-${String(i + 1).padStart(2, "0")}`,
+      zone: "salle" as const,
       capacity: diningCapacities[i % diningCapacities.length],
-      gridX: i % 6,
-      gridY: Math.floor(i / 6),
+      positionX: (i % 6) * TABLE_GRID_SPAN,
+      positionY: Math.floor(i / 6) * TABLE_GRID_SPAN,
+      combinationDirection: "horizontal" as const,
       isActive: true,
+      createdAt: now,
       updatedAt: now,
     })),
     ...Array.from({ length: 20 }, (_, i) => ({
       restaurantId,
       name: `T-${String(i + 1).padStart(2, "0")}`,
-      zone: "terrace" as const,
+      zone: "terrasse" as const,
       capacity: terraceCapacities[i % terraceCapacities.length],
-      gridX: i % 6,
-      gridY: 100 + Math.floor(i / 6),
+      positionX: (i % 6) * TABLE_GRID_SPAN,
+      positionY: (10 + Math.floor(i / 6)) * TABLE_GRID_SPAN,
+      combinationDirection: "horizontal" as const,
       isActive: true,
+      createdAt: now,
       updatedAt: now,
     })),
   ];

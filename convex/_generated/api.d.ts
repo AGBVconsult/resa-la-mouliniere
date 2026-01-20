@@ -36,6 +36,7 @@ import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
 import type * as slots from "../slots.js";
 import type * as specialPeriods from "../specialPeriods.js";
+import type * as tables from "../tables.js";
 import type * as weeklyTemplates from "../weeklyTemplates.js";
 import type * as widget from "../widget.js";
 
@@ -74,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   settings: typeof settings;
   slots: typeof slots;
   specialPeriods: typeof specialPeriods;
+  tables: typeof tables;
   weeklyTemplates: typeof weeklyTemplates;
   widget: typeof widget;
 }>;
