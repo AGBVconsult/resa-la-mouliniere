@@ -20,13 +20,11 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
-import { AnimatePresence } from "framer-motion";
 import { snapToGridModifier } from "@/lib/modifiers/snapToGrid";
 import { buildOccupancyGrid, canPlaceTable, pixelToGrid } from "@/lib/utils/occupancy";
 import { triggerHaptic } from "@/lib/utils/haptics";
 import { GRID_CELL_SIZE } from "@/lib/constants/grid";
 import { FloorPlanTableGhost } from "./FloorPlanTableGhost";
-import { FloorPlanDropIndicator } from "./FloorPlanDropIndicator";
 import type { TableInfo } from "@/lib/types/tables";
 
 interface DragState {
@@ -245,19 +243,7 @@ export function FloorPlanProvider({
       >
         {children}
 
-        {/* Drop indicator */}
-        <AnimatePresence>
-          {dragState.activeTable && dragState.overPosition && (
-            <FloorPlanDropIndicator
-              position={dragState.overPosition}
-              width={dragState.activeTable.width}
-              height={dragState.activeTable.height}
-              isValid={dragState.isValidDrop}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Ghost overlay */}
+        {/* Ghost overlay - follows cursor */}
         <DragOverlay>
           {dragState.activeTable && (
             <FloorPlanTableGhost

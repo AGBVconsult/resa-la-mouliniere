@@ -2,17 +2,18 @@
 
 import { useMemo } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { cn } from "@/lib/utils";
+import { AnimatePresence } from "framer-motion";
 import {
   GRID_CELL_SIZE,
   TABLE_SIZE,
   GRID_WIDTH,
   GRID_HEIGHT,
-  ZONE_STYLES,
   COMBINATION_LINE_COLORS,
   TABLE_GRID_SPAN,
 } from "@/lib/constants/grid";
 import { FloorPlanTable } from "./FloorPlanTable";
+import { FloorPlanDropIndicator } from "./FloorPlanDropIndicator";
+import { useFloorPlanContext } from "./FloorPlanProvider";
 import type { TableInfo } from "@/lib/types/tables";
 
 interface FloorPlanGridProps {
@@ -21,18 +22,33 @@ interface FloorPlanGridProps {
   onSelectTable: (tableId: string | null) => void;
   isEditMode?: boolean;
   assignedTableIds?: Set<string>;
-  activeTableId?: string | null;
 }
 
-export function FloorPlanGrid({
+export function FloorPlanGrid(props: FloorPlanGridProps) {
+  // This component must be used inside FloorPlanProvider
+  const { dragState } = useFloorPlanContext();
+  return <FloorPlanGridInner {...props} dragState={dragState} />;
+}
+
+interface FloorPlanGridInnerProps extends FloorPlanGridProps {
+  dragState: {
+    activeId: string | null;
+    activeTable: TableInfo | null;
+    overPosition: { x: number; y: number } | null;
+    isValidDrop: boolean;
+  };
+}
+
+function FloorPlanGridInner({
   tables,
   selectedTableId,
   onSelectTable,
   isEditMode = false,
   assignedTableIds = new Set(),
-  activeTableId = null,
-}: FloorPlanGridProps) {
+  dragState,
+}: FloorPlanGridInnerProps) {
   const { setNodeRef } = useDroppable({ id: "floor-plan-grid" });
+  const activeTableId = dragState?.activeId ?? null;
   // Calculate combination lines
   const combinationLines = useMemo(() => {
     const lines: Array<{
@@ -154,6 +170,18 @@ export function FloorPlanGrid({
           onClick={() => onSelectTable(table._id)}
         />
       ))}
+
+      {/* Drop indicator - inside grid for correct positioning */}
+      <AnimatePresence>
+        {dragState?.activeTable && dragState?.overPosition && (
+          <FloorPlanDropIndicator
+            position={dragState.overPosition}
+            width={dragState.activeTable.width}
+            height={dragState.activeTable.height}
+            isValid={dragState.isValidDrop}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

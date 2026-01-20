@@ -23,7 +23,7 @@ export function FloorPlanTable({
   isDragging,
   onClick,
 }: FloorPlanTableProps) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef } = useDraggable({
     id: table._id,
     disabled: !isEditMode,
   });
@@ -34,15 +34,14 @@ export function FloorPlanTable({
   const gridWidth = table.width ?? 1;
   const gridHeight = table.height ?? 1;
 
+  // La table reste à sa position d'origine pendant le drag
+  // Le ghost (DragOverlay) et le DropIndicator suivent le curseur
   const style: React.CSSProperties = {
     left: table.positionX * GRID_CELL_SIZE + 2,
     top: table.positionY * GRID_CELL_SIZE + 2,
     width,
     height,
     touchAction: "none",
-    transform: transform
-      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-      : undefined,
   };
 
   return (
