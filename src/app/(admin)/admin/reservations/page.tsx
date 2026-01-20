@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { format } from "date-fns";
-import { usePaginatedQuery, useMutation } from "convex/react";
+import { usePaginatedQuery, useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Loader2 } from "lucide-react";
@@ -33,6 +33,22 @@ export default function ReservationsPage() {
 
   // Format date for API
   const dateKey = format(selectedDate, "yyyy-MM-dd");
+
+  // Fetch slots for capacities
+  const slotsData = useQuery(api.slots.listByDate, { dateKey });
+
+  // Build slotCapacities map for current service
+  const slotCapacities = useMemo(() => {
+    if (!slotsData) return {};
+    const slots = currentService === "lunch" ? slotsData.lunch : slotsData.dinner;
+    const capacities: Record<string, number> = {};
+    for (const slot of slots) {
+      if (slot.isOpen) {
+        capacities[slot.timeKey] = slot.capacity;
+      }
+    }
+    return capacities;
+  }, [slotsData, currentService]);
 
   // Fetch reservations
   const { results: reservations, status, loadMore } = usePaginatedQuery(
@@ -123,6 +139,7 @@ export default function ReservationsPage() {
               onToggleExpand={handleToggleExpand}
               onStatusChange={handleStatusChange}
               onEdit={handleEdit}
+              slotCapacities={slotCapacities}
             />
           )}
 
