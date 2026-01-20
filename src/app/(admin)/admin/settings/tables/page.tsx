@@ -17,11 +17,11 @@ import {
 import type { TableInfo, Zone, CombinationDirection } from "@/lib/types/tables";
 import { TABLE_GRID_SPAN } from "@/lib/constants/grid";
 
-type ZoneFilter = "all" | "salle" | "terrasse";
+type ZoneFilter = "salle" | "terrasse";
 
 export default function TablesPage() {
   const [selectedTableIds, setSelectedTableIds] = useState<Set<string>>(new Set());
-  const [zoneFilter, setZoneFilter] = useState<ZoneFilter>("all");
+  const [zoneFilter, setZoneFilter] = useState<ZoneFilter>("salle");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Helper to get single selected table (for edit panel)
@@ -56,10 +56,7 @@ export default function TablesPage() {
   }));
 
   // Filter tables by zone
-  const filteredTables = tables.filter((t) => {
-    if (zoneFilter === "all") return true;
-    return t.zone === zoneFilter;
-  });
+  const filteredTables = tables.filter((t) => t.zone === zoneFilter);
 
   // Get selected table (only if single selection)
   const selectedTable = selectedTableId ? tables.find((t) => t._id === selectedTableId) ?? null : null;
@@ -224,20 +221,9 @@ export default function TablesPage() {
           {/* Zone filter */}
           <div className="flex rounded-lg border overflow-hidden">
             <button
-              onClick={() => setZoneFilter("all")}
-              className={cn(
-                "px-3 py-1.5 text-sm font-medium transition-colors",
-                zoneFilter === "all"
-                  ? "bg-gray-900 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
-              )}
-            >
-              Tous
-            </button>
-            <button
               onClick={() => setZoneFilter("salle")}
               className={cn(
-                "px-3 py-1.5 text-sm font-medium transition-colors border-l",
+                "px-3 py-1.5 text-sm font-medium transition-colors",
                 zoneFilter === "salle"
                   ? "bg-amber-100 text-amber-800"
                   : "bg-white text-gray-600 hover:bg-gray-50"

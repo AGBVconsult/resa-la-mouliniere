@@ -5,10 +5,10 @@
 export const GRID_CELL_SIZE = 16; // px
 export const TABLE_SIZE = 48; // px
 export const TABLE_GRID_SPAN = 3; // cellules (48/16)
-export const GRID_COLS = 48;
-export const GRID_ROWS = 40;
-export const GRID_WIDTH = GRID_COLS * GRID_CELL_SIZE; // 768px
-export const GRID_HEIGHT = GRID_ROWS * GRID_CELL_SIZE; // 640px
+export const GRID_COLS = 60; // 60 colonnes
+export const GRID_ROWS = 50; // 50 lignes
+export const GRID_WIDTH = GRID_COLS * GRID_CELL_SIZE; // 960px
+export const GRID_HEIGHT = GRID_ROWS * GRID_CELL_SIZE; // 800px
 
 export const Z_INDEX = {
   grid: 1,
