@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { ChevronLeft, ChevronRight, Settings, Users, Loader2 } from "lucide-react";
@@ -12,12 +13,19 @@ const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const TIMEZONE = "Europe/Brussels";
 
 export default function PlanningPage() {
+  const router = useRouter();
+  
   // SSR-safe state initialization
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [currentMonth, setCurrentMonth] = useState<number | null>(null);
   const [todayDateKey, setTodayDateKey] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
+
+  // Navigate to reservations page with selected date
+  const navigateToReservations = (dateKey: string) => {
+    router.push(`/admin/reservations?date=${dateKey}`);
+  };
 
   // Initialize on client only (avoid hydration mismatch)
   useEffect(() => {
@@ -162,6 +170,7 @@ export default function PlanningPage() {
                 dinner={dayData?.dinner}
                 isLoading={!monthData}
                 onOpenSettings={() => setSelectedDateKey(dateKey)}
+                onOpenReservations={() => navigateToReservations(dateKey)}
               />
             );
           })}
@@ -189,6 +198,7 @@ interface DayCellProps {
   dinner?: { isOpen: boolean; capacityEffective: number; covers: number };
   isLoading: boolean;
   onOpenSettings: () => void;
+  onOpenReservations: () => void;
 }
 
 function DayCell({
@@ -200,14 +210,16 @@ function DayCell({
   dinner,
   isLoading,
   onOpenSettings,
+  onOpenReservations,
 }: DayCellProps) {
   return (
     <div
       className={cn(
-        "border-b border-r min-h-[120px] p-2 relative group transition-colors",
-        isToday && "bg-blue-50",
-        isClosed && "bg-gray-100"
+        "border-b border-r min-h-[120px] p-2 relative group transition-colors cursor-pointer hover:bg-gray-50",
+        isToday && "bg-blue-50 hover:bg-blue-100",
+        isClosed && "bg-gray-100 hover:bg-gray-150"
       )}
+      onClick={onOpenReservations}
     >
       {/* Header: Day number + Settings */}
       <div className="flex items-start justify-between mb-2">
@@ -220,11 +232,14 @@ function DayCell({
           {day}
         </span>
         <button
-          onClick={onOpenSettings}
-          className="p-1 rounded hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenSettings();
+          }}
+          className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
           title="Paramètres du jour"
         >
-          <Settings className="h-4 w-4 text-gray-500" />
+          <Settings className="h-4 w-4" />
         </button>
       </div>
 

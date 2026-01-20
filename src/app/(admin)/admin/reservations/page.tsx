@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
-import { format } from "date-fns";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { format, parseISO } from "date-fns";
 import { usePaginatedQuery, useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
@@ -18,8 +19,16 @@ import {
 } from "./components";
 
 export default function ReservationsPage() {
-  // State
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const searchParams = useSearchParams();
+  
+  // State - initialize from URL param if present
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const dateParam = searchParams.get("date");
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      return parseISO(dateParam);
+    }
+    return new Date();
+  });
   const [currentService, setCurrentService] = useState<"lunch" | "dinner">(() => {
     const hour = new Date().getHours();
     return hour < 15 ? "lunch" : "dinner";
