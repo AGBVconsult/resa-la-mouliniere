@@ -34,6 +34,7 @@ export default function TablesPage() {
   const duplicateTable = useMutation(api.tables.duplicate);
   const activateTable = useMutation(api.tables.activate);
   const deactivateTable = useMutation(api.tables.deactivate);
+  const removeTable = useMutation(api.tables.remove);
   const activateTerrace = useMutation(api.tables.activateTerrace);
   const deactivateTerrace = useMutation(api.tables.deactivateTerrace);
 
@@ -115,6 +116,18 @@ export default function TablesPage() {
       }
     } catch (error) {
       console.error("Error toggling table:", error);
+    }
+  };
+
+  const handleDeleteTable = async () => {
+    if (!selectedTableId) return;
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette table définitivement ?")) return;
+    try {
+      await removeTable({ tableId: selectedTableId as Id<"tables"> });
+      setSelectedTableId(null);
+    } catch (error) {
+      console.error("Error deleting table:", error);
+      alert("Erreur: " + (error as Error).message);
     }
   };
 
@@ -271,6 +284,7 @@ export default function TablesPage() {
           onSave={handleUpdateTable}
           onDuplicate={handleDuplicateTable}
           onToggleActive={handleToggleActive}
+          onDelete={handleDeleteTable}
         />
       </div>
 

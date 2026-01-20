@@ -330,6 +330,49 @@ export const update = mutation({
 });
 
 /**
+ * Delete a table permanently
+ */
+export const remove = mutation({
+  args: {
+    tableId: v.id("tables"),
+  },
+  handler: async (ctx, { tableId }) => {
+    await requireRole(ctx, "admin");
+
+    const table = await ctx.db.get(tableId);
+    if (!table) {
+      throw Errors.NOT_FOUND("tables", tableId);
+    }
+
+    // Check if table is assigned to any active reservation
+    const reservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_status", (q) =>
+        q.eq("restaurantId", table.restaurantId)
+      )
+      .collect();
+
+    const activeStatuses = ["pending", "confirmed", "seated"];
+    const hasActiveReservation = reservations.some(
+      (r) => activeStatuses.includes(r.status) && r.tableIds.includes(tableId)
+    );
+
+    if (hasActiveReservation) {
+      throw Errors.INVALID_INPUT(
+        "tableId",
+        "Cette table est assignée à une réservation active"
+      );
+    }
+
+    await ctx.db.delete(tableId);
+
+    console.log("Table deleted", { tableId, name: table.name });
+
+    return { ok: true };
+  },
+});
+
+/**
  * Deactivate a table (soft delete)
  */
 export const deactivate = mutation({

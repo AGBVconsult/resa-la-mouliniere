@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Copy, Power, PowerOff } from "lucide-react";
+import { X, Copy, Power, PowerOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ interface TableEditPanelProps {
   }) => void;
   onDuplicate: () => void;
   onToggleActive: () => void;
+  onDelete: () => void;
 }
 
 export function TableEditPanel({
@@ -27,6 +28,7 @@ export function TableEditPanel({
   onSave,
   onDuplicate,
   onToggleActive,
+  onDelete,
 }: TableEditPanelProps) {
   const [name, setName] = useState("");
   const [capacity, setCapacity] = useState(4);
@@ -230,6 +232,14 @@ export function TableEditPanel({
             )}
           </Button>
         </div>
+        <Button
+          variant="outline"
+          onClick={onDelete}
+          className="w-full text-red-600 hover:bg-red-50 hover:text-red-700"
+        >
+          <Trash2 className="h-4 w-4 mr-1" />
+          Supprimer définitivement
+        </Button>
       </div>
     </div>
   );

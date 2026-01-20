@@ -48,7 +48,8 @@ export function FloorPlanTable({
     <div
       ref={setNodeRef}
       className={cn(
-        "absolute flex flex-col items-center justify-center rounded-lg border-2 transition-all duration-150",
+        "absolute flex flex-col items-center justify-center rounded-lg border-2",
+        "transition-[transform,box-shadow,opacity] duration-150",
         zoneStyle.bg,
         zoneStyle.border,
         !table.isActive && "opacity-40 grayscale",
