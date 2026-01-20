@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   FloorPlanGrid,
+  FloorPlanProvider,
   TableEditPanel,
   FloorPlanStats,
   TableModal,
@@ -133,6 +134,23 @@ export default function TablesPage() {
     }
   };
 
+  // Handle drag & drop position update
+  const handleUpdatePosition = useCallback(
+    async (tableId: string, x: number, y: number) => {
+      try {
+        await updateTable({
+          tableId: tableId as Id<"tables">,
+          positionX: x,
+          positionY: y,
+        });
+      } catch (error) {
+        console.error("Error updating table position:", error);
+        throw error;
+      }
+    },
+    [updateTable]
+  );
+
   // Calculate next position for new table
   const getNextPosition = () => {
     if (tables.length === 0) return { x: 0, y: 0 };
@@ -229,12 +247,20 @@ export default function TablesPage() {
       <div className="flex gap-6">
         {/* Floor plan */}
         <div className="flex-1 space-y-4">
-          <FloorPlanGrid
+          <FloorPlanProvider
             tables={filteredTables}
             selectedTableId={selectedTableId}
             onSelectTable={setSelectedTableId}
+            onUpdatePosition={handleUpdatePosition}
             isEditMode={true}
-          />
+          >
+            <FloorPlanGrid
+              tables={filteredTables}
+              selectedTableId={selectedTableId}
+              onSelectTable={setSelectedTableId}
+              isEditMode={true}
+            />
+          </FloorPlanProvider>
           <FloorPlanStats stats={stats} />
         </div>
 
