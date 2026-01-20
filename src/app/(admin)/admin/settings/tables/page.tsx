@@ -20,9 +20,12 @@ import { TABLE_GRID_SPAN } from "@/lib/constants/grid";
 type ZoneFilter = "all" | "salle" | "terrasse";
 
 export default function TablesPage() {
-  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [selectedTableIds, setSelectedTableIds] = useState<Set<string>>(new Set());
   const [zoneFilter, setZoneFilter] = useState<ZoneFilter>("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Helper to get single selected table (for edit panel)
+  const selectedTableId = selectedTableIds.size === 1 ? Array.from(selectedTableIds)[0] : null;
 
   // Queries
   const tablesRaw = useQuery(api.tables.list, {});
@@ -58,8 +61,35 @@ export default function TablesPage() {
     return t.zone === zoneFilter;
   });
 
-  // Get selected table
-  const selectedTable = tables.find((t) => t._id === selectedTableId) ?? null;
+  // Get selected table (only if single selection)
+  const selectedTable = selectedTableId ? tables.find((t) => t._id === selectedTableId) ?? null : null;
+
+  // Handle table selection (supports multi-select with Ctrl/Cmd)
+  const handleSelectTable = useCallback((tableId: string | null, event?: React.MouseEvent) => {
+    if (!tableId) {
+      setSelectedTableIds(new Set());
+      return;
+    }
+
+    const isMultiSelect = event?.metaKey || event?.ctrlKey;
+    
+    setSelectedTableIds((prev) => {
+      const newSet = new Set(prev);
+      if (isMultiSelect) {
+        // Toggle selection
+        if (newSet.has(tableId)) {
+          newSet.delete(tableId);
+        } else {
+          newSet.add(tableId);
+        }
+      } else {
+        // Single selection
+        newSet.clear();
+        newSet.add(tableId);
+      }
+      return newSet;
+    });
+  }, []);
 
   // Handlers
   const handleCreateTable = async (data: {
@@ -100,7 +130,7 @@ export default function TablesPage() {
       const result = await duplicateTable({
         tableId: selectedTableId as Id<"tables">,
       });
-      setSelectedTableId(result.tableId);
+      setSelectedTableIds(new Set([result.tableId]));
     } catch (error) {
       console.error("Error duplicating table:", error);
     }
@@ -124,7 +154,7 @@ export default function TablesPage() {
     if (!confirm("Êtes-vous sûr de vouloir supprimer cette table définitivement ?")) return;
     try {
       await removeTable({ tableId: selectedTableId as Id<"tables"> });
-      setSelectedTableId(null);
+      setSelectedTableIds(new Set());
     } catch (error) {
       console.error("Error deleting table:", error);
       alert("Erreur: " + (error as Error).message);
@@ -262,15 +292,15 @@ export default function TablesPage() {
         <div className="flex-1 space-y-4">
           <FloorPlanProvider
             tables={filteredTables}
-            selectedTableId={selectedTableId}
-            onSelectTable={setSelectedTableId}
+            selectedTableIds={selectedTableIds}
+            onSelectTable={handleSelectTable}
             onUpdatePosition={handleUpdatePosition}
             isEditMode={true}
           >
             <FloorPlanGrid
               tables={filteredTables}
-              selectedTableId={selectedTableId}
-              onSelectTable={setSelectedTableId}
+              selectedTableIds={selectedTableIds}
+              onSelectTable={handleSelectTable}
               isEditMode={true}
             />
           </FloorPlanProvider>
@@ -280,11 +310,12 @@ export default function TablesPage() {
         {/* Edit panel */}
         <TableEditPanel
           table={selectedTable}
-          onClose={() => setSelectedTableId(null)}
+          onClose={() => setSelectedTableIds(new Set())}
           onSave={handleUpdateTable}
           onDuplicate={handleDuplicateTable}
           onToggleActive={handleToggleActive}
           onDelete={handleDeleteTable}
+          selectedCount={selectedTableIds.size}
         />
       </div>
 

@@ -18,8 +18,8 @@ import type { TableInfo } from "@/lib/types/tables";
 
 interface FloorPlanGridProps {
   tables: TableInfo[];
-  selectedTableId: string | null;
-  onSelectTable: (tableId: string | null) => void;
+  selectedTableIds: Set<string>;
+  onSelectTable: (tableId: string | null, event?: React.MouseEvent) => void;
   isEditMode?: boolean;
   assignedTableIds?: Set<string>;
 }
@@ -27,7 +27,7 @@ interface FloorPlanGridProps {
 export function FloorPlanGrid(props: FloorPlanGridProps) {
   // This component must be used inside FloorPlanProvider
   const { dragState } = useFloorPlanContext();
-  return <FloorPlanGridInner {...props} dragState={dragState} />;
+  return <FloorPlanGridInner {...props} dragState={dragState} selectedTableIds={props.selectedTableIds} />;
 }
 
 interface FloorPlanGridInnerProps extends FloorPlanGridProps {
@@ -41,7 +41,7 @@ interface FloorPlanGridInnerProps extends FloorPlanGridProps {
 
 function FloorPlanGridInner({
   tables,
-  selectedTableId,
+  selectedTableIds,
   onSelectTable,
   isEditMode = false,
   assignedTableIds = new Set(),
@@ -163,11 +163,11 @@ function FloorPlanGridInner({
         <FloorPlanTable
           key={table._id}
           table={table}
-          isSelected={selectedTableId === table._id}
+          isSelected={selectedTableIds.has(table._id)}
           isAssigned={assignedTableIds.has(table._id)}
           isEditMode={isEditMode}
           isDragging={activeTableId === table._id}
-          onClick={() => onSelectTable(table._id)}
+          onSelect={onSelectTable}
         />
       ))}
 

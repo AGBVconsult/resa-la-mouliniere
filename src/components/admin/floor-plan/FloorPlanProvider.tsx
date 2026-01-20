@@ -36,8 +36,8 @@ interface DragState {
 
 interface FloorPlanContextValue {
   tables: TableInfo[];
-  selectedTableId: string | null;
-  setSelectedTableId: (id: string | null) => void;
+  selectedTableIds: Set<string>;
+  onSelectTable: (id: string | null, event?: React.MouseEvent) => void;
   isEditMode: boolean;
   dragState: DragState;
   assignedTableIds: Set<string>;
@@ -56,8 +56,8 @@ export function useFloorPlanContext() {
 interface FloorPlanProviderProps {
   children: ReactNode;
   tables: TableInfo[];
-  selectedTableId: string | null;
-  onSelectTable: (id: string | null) => void;
+  selectedTableIds: Set<string>;
+  onSelectTable: (id: string | null, event?: React.MouseEvent) => void;
   onUpdatePosition: (tableId: string, x: number, y: number) => Promise<void>;
   isEditMode?: boolean;
   assignedTableIds?: Set<string>;
@@ -66,7 +66,7 @@ interface FloorPlanProviderProps {
 export function FloorPlanProvider({
   children,
   tables,
-  selectedTableId,
+  selectedTableIds,
   onSelectTable,
   onUpdatePosition,
   isEditMode = true,
@@ -169,23 +169,61 @@ export function FloorPlanProvider({
         return;
       }
 
-      const width = table.width ?? 1;
-      const height = table.height ?? 1;
+      // Calculate delta in grid units
+      const deltaGridX = Math.round(event.delta.x / GRID_CELL_SIZE);
+      const deltaGridY = Math.round(event.delta.y / GRID_CELL_SIZE);
 
-      // Calculate final position
-      const newPixelX = table.positionX * GRID_CELL_SIZE + event.delta.x;
-      const newPixelY = table.positionY * GRID_CELL_SIZE + event.delta.y;
-      const newGridPos = pixelToGrid(newPixelX, newPixelY, GRID_CELL_SIZE);
+      // If no movement, just reset
+      if (deltaGridX === 0 && deltaGridY === 0) {
+        setDragState({
+          activeId: null,
+          activeTable: null,
+          overPosition: null,
+          isValidDrop: false,
+        });
+        return;
+      }
 
-      // Validate
-      const { valid } = canPlaceTable(
-        occupancyGrid,
-        newGridPos.x,
-        newGridPos.y,
-        width,
-        height,
-        tableId
-      );
+      // Determine which tables to move (all selected if dragged table is selected, otherwise just the dragged one)
+      const tablesToMove = selectedTableIds.has(tableId)
+        ? tables.filter((t) => selectedTableIds.has(t._id))
+        : [table];
+
+      // Validate all new positions
+      let allValid = true;
+      const newPositions: Array<{ tableId: string; x: number; y: number }> = [];
+
+      for (const t of tablesToMove) {
+        const newX = t.positionX + deltaGridX;
+        const newY = t.positionY + deltaGridY;
+        const width = t.width ?? 1;
+        const height = t.height ?? 1;
+
+        // Check bounds
+        if (newX < 0 || newY < 0) {
+          allValid = false;
+          break;
+        }
+
+        // Check collision (exclude all tables being moved)
+        const excludeIds = tablesToMove.map((tm) => tm._id);
+        const { valid } = canPlaceTable(
+          occupancyGrid,
+          newX,
+          newY,
+          width,
+          height,
+          t._id,
+          excludeIds
+        );
+
+        if (!valid) {
+          allValid = false;
+          break;
+        }
+
+        newPositions.push({ tableId: t._id, x: newX, y: newY });
+      }
 
       // Reset drag state
       setDragState({
@@ -195,21 +233,23 @@ export function FloorPlanProvider({
         isValidDrop: false,
       });
 
-      if (!valid) {
+      if (!allValid) {
         triggerHaptic("error");
         return;
       }
 
-      // Save position
+      // Save all positions
       triggerHaptic("drop");
       try {
-        await onUpdatePosition(tableId, newGridPos.x, newGridPos.y);
+        await Promise.all(
+          newPositions.map((pos) => onUpdatePosition(pos.tableId, pos.x, pos.y))
+        );
       } catch (error) {
-        console.error("Failed to update table position:", error);
+        console.error("Failed to update table positions:", error);
         triggerHaptic("error");
       }
     },
-    [tables, occupancyGrid, onUpdatePosition]
+    [tables, occupancyGrid, onUpdatePosition, selectedTableIds]
   );
 
   const handleDragCancel = useCallback(() => {
@@ -223,8 +263,8 @@ export function FloorPlanProvider({
 
   const contextValue: FloorPlanContextValue = {
     tables,
-    selectedTableId,
-    setSelectedTableId: onSelectTable,
+    selectedTableIds,
+    onSelectTable,
     isEditMode,
     dragState,
     assignedTableIds,

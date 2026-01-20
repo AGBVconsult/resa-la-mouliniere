@@ -84,18 +84,24 @@ export function canPlaceTable(
   y: number,
   width = 1,
   height = 1,
-  excludeTableId?: string
+  excludeTableId?: string,
+  excludeTableIds?: string[]
 ): { valid: boolean; reason?: "collision" | "outOfBounds" } {
   // Check bounds
   if (!isInBounds(x, y, width, height)) {
     return { valid: false, reason: "outOfBounds" };
   }
 
+  // Build set of excluded IDs
+  const excludeSet = new Set<string>();
+  if (excludeTableId) excludeSet.add(excludeTableId);
+  if (excludeTableIds) excludeTableIds.forEach((id) => excludeSet.add(id));
+
   // Check collision
   const cells = getTableCells(x, y, width, height);
   for (const cell of cells) {
     const occupant = grid.get(cell);
-    if (occupant && occupant !== excludeTableId) {
+    if (occupant && !excludeSet.has(occupant)) {
       return { valid: false, reason: "collision" };
     }
   }

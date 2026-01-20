@@ -20,6 +20,7 @@ interface TableEditPanelProps {
   onDuplicate: () => void;
   onToggleActive: () => void;
   onDelete: () => void;
+  selectedCount?: number;
 }
 
 export function TableEditPanel({
@@ -29,6 +30,7 @@ export function TableEditPanel({
   onDuplicate,
   onToggleActive,
   onDelete,
+  selectedCount = 0,
 }: TableEditPanelProps) {
   const [name, setName] = useState("");
   const [capacity, setCapacity] = useState(4);
@@ -47,8 +49,16 @@ export function TableEditPanel({
 
   if (!table) {
     return (
-      <div className="w-[300px] bg-white border-l p-4 flex items-center justify-center text-gray-400">
-        Sélectionnez une table
+      <div className="w-[300px] bg-white border-l p-4 flex flex-col items-center justify-center text-gray-400">
+        {selectedCount > 1 ? (
+          <>
+            <span className="text-lg font-medium text-gray-600">{selectedCount} tables</span>
+            <span className="text-sm">sélectionnées</span>
+            <span className="text-xs mt-2">Déplacez-les ensemble</span>
+          </>
+        ) : (
+          <span>Sélectionnez une table</span>
+        )}
       </div>
     );
   }

@@ -12,7 +12,7 @@ interface FloorPlanTableProps {
   isAssigned: boolean;
   isEditMode: boolean;
   isDragging: boolean;
-  onClick: () => void;
+  onSelect: (tableId: string | null, event?: React.MouseEvent) => void;
 }
 
 export function FloorPlanTable({
@@ -21,7 +21,7 @@ export function FloorPlanTable({
   isAssigned,
   isEditMode,
   isDragging,
-  onClick,
+  onSelect,
 }: FloorPlanTableProps) {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: table._id,
@@ -60,7 +60,7 @@ export function FloorPlanTable({
         !isEditMode && "cursor-pointer hover:brightness-95"
       )}
       style={style}
-      onClick={onClick}
+      onClick={(e) => onSelect(table._id, e)}
       {...(isEditMode ? { ...listeners, ...attributes } : {})}
     >
       {/* Grip handle for edit mode */}
