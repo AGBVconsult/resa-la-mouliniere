@@ -20,13 +20,13 @@ const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
   finished: { bg: "bg-gray-300" },
 };
 
-// Visit badge styles
-function getVisitBadgeStyle(visits: number) {
-  if (visits === 1) return "bg-blue-50 text-blue-700 border-blue-100";
-  if (visits <= 4) return "bg-gray-50 text-gray-500 border-gray-100";
-  if (visits <= 14) return "bg-gray-100 text-gray-700 border-gray-200";
-  if (visits <= 49) return "bg-amber-50 text-amber-700 border-amber-100";
-  return "bg-amber-100 text-amber-800 border-amber-300"; // VIP
+// Visit badge styles - Design System
+function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
+  if (visits === 1) return { classes: "bg-blue-50 text-blue-700 border-blue-100", fontWeight: "font-medium" }; // Nouveau
+  if (visits <= 4) return { classes: "bg-gray-50 text-gray-500 border-gray-100", fontWeight: "font-medium" };
+  if (visits <= 14) return { classes: "bg-gray-100 text-gray-700 border-gray-200", fontWeight: "font-medium" };
+  if (visits <= 49) return { classes: "bg-amber-50 text-amber-700 border-amber-100", fontWeight: "font-bold" };
+  return { classes: "bg-amber-100 text-amber-800 border-amber-300", fontWeight: "font-bold" }; // VIP 50+
 }
 
 // Phone prefix to country mapping (comprehensive list)
@@ -409,7 +409,7 @@ export function ReservationRow({
 
   const statusStyle = STATUS_COLORS[reservation.status] || { bg: "bg-gray-400" };
   const visits = 1; // TODO: Get from CRM
-  const visitBadgeStyle = getVisitBadgeStyle(visits);
+  const visitBadge = getVisitBadgeStyle(visits);
 
   // Get table names
   const tableNames = reservation.tableIds
@@ -419,62 +419,86 @@ export function ReservationRow({
   // Options icons
   const hasOption = (opt: string) => reservation.options?.includes(opt);
 
-  // Primary action based on status
-  // Note: Convex uses "seated" (not "arrived") and "completed" (not "finished")
+  // Primary action based on status - Design System
+  // Dimensions: w-28 (112px), h-11 min-h-[44px], rounded-full, text-[11px] font-medium uppercase tracking-wide
   const getPrimaryAction = (): { label: string; color: string; nextStatus: string } | null => {
     switch (reservation.status) {
       case "pending":
-        return { label: "À valider", color: "bg-orange-500 hover:bg-orange-600 text-white", nextStatus: "confirmed" };
+        return { 
+          label: "À valider", 
+          color: "bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100", 
+          nextStatus: "confirmed" 
+        };
       case "confirmed":
-        return { label: "Arrivé", color: "bg-emerald-500 hover:bg-emerald-600 text-white", nextStatus: "seated" };
+        return { 
+          label: "Arrivé", 
+          color: "bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100", 
+          nextStatus: "seated" 
+        };
       case "seated":
-        return { label: "Terminé", color: "bg-gray-500 hover:bg-gray-600 text-white", nextStatus: "completed" };
+        return { 
+          label: "Terminé", 
+          color: "bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100", 
+          nextStatus: "completed" 
+        };
       default:
         return null;
     }
   };
 
-  // Secondary action (icon button) based on status
+  // Secondary action (icon button) based on status - Design System
+  // Dimensions: w-11 min-w-[44px], h-11 min-h-[44px], rounded-full, icon size={18}
   const getSecondaryAction = (): { icon: React.ReactNode; color: string; nextStatus: string; tooltip: string } | null => {
     switch (reservation.status) {
       case "pending":
-        return { icon: <X className="h-4 w-4" />, color: "bg-red-50 text-red-500 hover:bg-red-100", nextStatus: "cancelled", tooltip: "Refuser" };
+        return { 
+          icon: <X size={18} />, 
+          color: "bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600", 
+          nextStatus: "cancelled", 
+          tooltip: "Refuser" 
+        };
       case "confirmed":
-        return { icon: <UserX className="h-4 w-4" />, color: "bg-red-50 text-red-500 hover:bg-red-100", nextStatus: "noshow", tooltip: "No-show" };
+        return { 
+          icon: <UserX size={18} />, 
+          color: "bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600", 
+          nextStatus: "noshow", 
+          tooltip: "No-show" 
+        };
       default:
         return null;
     }
   };
 
-  // Menu actions based on status
-  const getMenuActions = (): Array<{ label: string; nextStatus: string; color: string }> => {
-    const actions: Array<{ label: string; nextStatus: string; color: string }> = [];
+  // Menu actions based on status - Design System
+  // Text: text-xs (12px), hover backgrounds by type
+  const getMenuActions = (): Array<{ label: string; nextStatus: string; textColor: string; hoverBg: string }> => {
+    const actions: Array<{ label: string; nextStatus: string; textColor: string; hoverBg: string }> = [];
     
     switch (reservation.status) {
       case "pending":
-        actions.push({ label: "Refuser", nextStatus: "cancelled", color: "text-red-600" });
+        actions.push({ label: "Refuser", nextStatus: "cancelled", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
         break;
       case "confirmed":
-        actions.push({ label: "No-show", nextStatus: "noshow", color: "text-red-600" });
-        actions.push({ label: "Annuler", nextStatus: "cancelled", color: "text-red-600" });
+        actions.push({ label: "No-show", nextStatus: "noshow", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
+        actions.push({ label: "Annuler", nextStatus: "cancelled", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
         break;
       case "seated":
-        actions.push({ label: "Signaler Incident", nextStatus: "incident", color: "text-red-600" });
+        actions.push({ label: "Signaler Incident", nextStatus: "incident", textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
         break;
       case "noshow":
-        actions.push({ label: "Marquer Arrivé", nextStatus: "seated", color: "text-emerald-600" });
-        actions.push({ label: "Restaurer", nextStatus: "confirmed", color: "text-blue-600" });
+        actions.push({ label: "Marquer Arrivé", nextStatus: "seated", textColor: "text-emerald-600", hoverBg: "hover:bg-emerald-50" });
+        actions.push({ label: "Restaurer", nextStatus: "confirmed", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
         break;
       case "cancelled":
-        actions.push({ label: "Marquer Arrivé", nextStatus: "seated", color: "text-emerald-600" });
-        actions.push({ label: "Restaurer", nextStatus: "confirmed", color: "text-blue-600" });
+        actions.push({ label: "Marquer Arrivé", nextStatus: "seated", textColor: "text-emerald-600", hoverBg: "hover:bg-emerald-50" });
+        actions.push({ label: "Restaurer", nextStatus: "confirmed", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
         break;
       case "completed":
-        actions.push({ label: "Rouvrir", nextStatus: "seated", color: "text-blue-600" });
+        actions.push({ label: "Rouvrir", nextStatus: "seated", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
         break;
       case "incident":
-        actions.push({ label: "Rouvrir", nextStatus: "seated", color: "text-blue-600" });
-        actions.push({ label: "Terminer", nextStatus: "completed", color: "text-gray-600" });
+        actions.push({ label: "Rouvrir", nextStatus: "seated", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
+        actions.push({ label: "Terminer", nextStatus: "completed", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
         break;
     }
     
@@ -577,8 +601,8 @@ export function ReservationRow({
           )}
         </div>
 
-        {/* Visits - square badge */}
-        <span className={cn("w-7 h-7 text-xs flex items-center justify-center rounded border", visitBadgeStyle)}>
+        {/* Visits - square badge - Design System: text-[10px], px-2 py-0.5 */}
+        <span className={cn("w-7 h-7 text-[10px] flex items-center justify-center rounded border", visitBadge.classes, visitBadge.fontWeight)}>
           {visits}
         </span>
 
@@ -601,24 +625,32 @@ export function ReservationRow({
         {/* Note preview */}
         <span className="flex-1 text-sm text-gray-500 truncate">{reservation.note || "-"}</span>
 
-        {/* Actions column - primary and secondary buttons */}
-        <div className="w-32 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          {/* Primary action button */}
+        {/* Actions column - primary and secondary buttons - Design System */}
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          {/* Primary action button - w-28 (112px), h-11 min-h-[44px], rounded-full */}
           {primaryAction && (
             <Button
               size="sm"
-              className={cn("rounded-full text-[11px] font-medium uppercase tracking-wide h-9 px-4", primaryAction.color)}
+              variant="ghost"
+              className={cn(
+                "w-28 h-11 min-h-[44px] rounded-full",
+                "text-[11px] font-medium uppercase tracking-wide",
+                primaryAction.color
+              )}
               onClick={() => onStatusChange(primaryAction.nextStatus)}
             >
               {primaryAction.label}
             </Button>
           )}
-          {/* Secondary action icon */}
+          {/* Secondary action icon - w-11 min-w-[44px], h-11 min-h-[44px], rounded-full */}
           {secondaryAction && (
             <Button
               size="icon"
               variant="ghost"
-              className={cn("h-9 w-9 rounded-full", secondaryAction.color)}
+              className={cn(
+                "w-11 min-w-[44px] h-11 min-h-[44px] rounded-full",
+                secondaryAction.color
+              )}
               onClick={() => onStatusChange(secondaryAction.nextStatus)}
               title={secondaryAction.tooltip}
             >
@@ -627,9 +659,8 @@ export function ReservationRow({
           )}
         </div>
 
-        {/* Menu column - separate */}
+        {/* Menu column - Design System: w-10 h-10 (40x40px), text-gray-400, hover:text-black hover:bg-gray-100 */}
         <div className="w-10 flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
-          {/* Menu */}
           <div className="relative" ref={(el) => {
             if (el && showMenu) {
               const rect = el.getBoundingClientRect();
@@ -643,7 +674,7 @@ export function ReservationRow({
             <Button
               size="icon"
               variant="ghost"
-              className="h-9 w-9 rounded-full"
+              className="w-10 h-10 rounded-full text-gray-400 hover:text-black hover:bg-gray-100"
               onClick={() => setShowMenu(!showMenu)}
             >
               <MoreHorizontal className="h-5 w-5" />
@@ -659,18 +690,18 @@ export function ReservationRow({
                   className="fixed bg-white rounded-lg shadow-xl border py-1 z-[100] min-w-[180px]"
                   style={{ right: 16 }}
                 >
-                  {/* Modifier - always available */}
+                  {/* Modifier - Design System: text-gray-700, hover:bg-blue-50 hover:text-blue-700 */}
                   <button
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 text-blue-600"
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                     onClick={() => { onEdit(); setShowMenu(false); }}
                   >
                     Modifier
                   </button>
-                  {/* Dynamic actions based on status */}
+                  {/* Dynamic actions based on status - text-xs (12px) */}
                   {menuActions.map((action) => (
                     <button
                       key={action.nextStatus}
-                      className={cn("w-full px-4 py-2 text-left text-sm hover:bg-gray-50", action.color)}
+                      className={cn("w-full px-4 py-2 text-left text-xs", action.textColor, action.hoverBg)}
                       onClick={() => { onStatusChange(action.nextStatus); setShowMenu(false); }}
                     >
                       {action.label}
