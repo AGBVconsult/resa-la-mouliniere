@@ -237,23 +237,21 @@ function DayCell({
         <div className="text-center text-gray-400 text-sm mt-4">Fermé</div>
       ) : (
         <div className="space-y-1.5">
-          {/* Lunch */}
-          {lunch && lunch.isOpen && (
-            <ServiceRow
-              label="Déj"
-              covers={lunch.covers}
-              capacity={lunch.capacityEffective}
-            />
-          )}
+          {/* Lunch - toujours en haut */}
+          <ServiceRow
+            label="Déj"
+            covers={lunch?.covers ?? 0}
+            capacity={lunch?.capacityEffective ?? 0}
+            isClosed={!lunch?.isOpen}
+          />
 
-          {/* Dinner */}
-          {dinner && dinner.isOpen && (
-            <ServiceRow
-              label="Dîn"
-              covers={dinner.covers}
-              capacity={dinner.capacityEffective}
-            />
-          )}
+          {/* Dinner - toujours en bas */}
+          <ServiceRow
+            label="Dîn"
+            covers={dinner?.covers ?? 0}
+            capacity={dinner?.capacityEffective ?? 0}
+            isClosed={!dinner?.isOpen}
+          />
         </div>
       )}
     </div>
@@ -265,10 +263,20 @@ interface ServiceRowProps {
   label: string;
   covers: number;
   capacity: number;
+  isClosed?: boolean;
 }
 
-function ServiceRow({ label, covers, capacity }: ServiceRowProps) {
+function ServiceRow({ label, covers, capacity, isClosed = false }: ServiceRowProps) {
   const percentage = capacity > 0 ? Math.min((covers / capacity) * 100, 100) : 0;
+
+  if (isClosed) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs opacity-40">
+        <span className="text-gray-400 w-6">{label}</span>
+        <span className="text-gray-400 text-[10px]">Fermé</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-1.5 text-xs">
