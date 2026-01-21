@@ -8,6 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:chromium": "playwright test --project=chromium",
+    "playwright:install": "playwright install",
     "convex:codegen": "convex codegen",
     "contracts:generate": "tsx scripts/contracts/generate.ts",
     "contracts:check": "tsx scripts/contracts/check.ts",
@@ -44,6 +49,7 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/react": "^16.3.1",
     "@types/node": "^20",
