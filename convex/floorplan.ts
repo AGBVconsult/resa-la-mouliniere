@@ -281,6 +281,7 @@ export const assign = mutation({
     console.log("Table assigned", {
       reservationId,
       tableIds,
+      primaryTableId: primaryTableId ?? tableIds[0],
       newVersion,
     });
 
