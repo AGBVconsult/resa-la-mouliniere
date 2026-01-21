@@ -515,18 +515,17 @@ export function ReservationRow({
   const primaryAction = getPrimaryAction();
 
   if (isCompact) {
-    // Compact mode (with floor plan)
+    // Compact mode (with floor plan) - all info except action buttons, click to assign
     return (
       <div
         className={cn(
-          "grid grid-cols-[24px_50px_44px_36px_1fr_60px] items-center px-4 py-2 hover:bg-gray-50/50 cursor-pointer border-b border-gray-100",
-          isExpanded && "bg-gray-50",
+          "flex items-center px-3 py-2 hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 gap-3",
           isSelectedForAssignment && "bg-blue-50 border-blue-200"
         )}
-        onClick={onToggleExpand}
+        onClick={() => onSelectForAssignment?.()}
       >
         {/* Status pill */}
-        <div className="flex justify-center">
+        <div className="w-4 flex justify-center shrink-0">
           <div
             className={cn(
               "w-1 h-5 rounded-full",
@@ -537,30 +536,47 @@ export function ReservationRow({
         </div>
 
         {/* Time */}
-        <span className="text-xs font-mono text-gray-600">{reservation.timeKey}</span>
+        <span className="w-11 text-xs font-mono text-gray-600 shrink-0">{reservation.timeKey}</span>
 
         {/* Table */}
-        <span className="text-xs px-1.5 py-0.5 bg-gray-100 rounded text-center">
-          {tableNames.substring(0, 4)}
+        <span className="w-10 text-xs px-1.5 py-0.5 bg-gray-100 rounded text-center shrink-0">
+          {tableNames.substring(0, 4) || "-"}
         </span>
 
         {/* Party size */}
-        <div className="flex items-center gap-1 text-xs text-gray-600">
-          <Users className="h-3 w-3" />
-          {reservation.partySize}
+        <div className="w-10 flex items-center gap-0.5 text-xs text-gray-600 shrink-0">
+          <span className="font-medium">{reservation.partySize}</span>
+          {(reservation.childrenCount > 0 || reservation.babyCount > 0) && (
+            <span className="text-gray-400 text-[10px]">
+              ({reservation.childrenCount > 0 ? `${reservation.childrenCount}e` : ""}
+              {reservation.babyCount > 0 ? `${reservation.babyCount}b` : ""})
+            </span>
+          )}
         </div>
 
-        {/* Name */}
-        <span className="text-sm font-medium truncate">
-          {reservation.lastName} {reservation.firstName.charAt(0)}.
+        {/* Visits badge */}
+        <span className={cn("w-5 h-5 text-[9px] flex items-center justify-center rounded border shrink-0", visitBadge.classes, visitBadge.fontWeight)}>
+          {visits}
         </span>
 
-        {/* Options - fixed order: highChair, wheelchair, dogAccess */}
-        <div className="flex items-center gap-1">
-          <Baby className={cn("h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} />
-          <Accessibility className={cn("h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} />
-          <PawPrint className={cn("h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} />
+        {/* Flag */}
+        <span className="w-6 text-sm text-center shrink-0">{getFlag(reservation.phone, reservation.language)}</span>
+
+        {/* Name */}
+        <div className="min-w-24 flex-1 truncate">
+          <span className="text-xs font-semibold">{reservation.lastName}</span>{" "}
+          <span className="text-xs text-gray-600">{reservation.firstName.charAt(0)}.</span>
         </div>
+
+        {/* Options - fixed order: highChair, wheelchair, dogAccess */}
+        <div className="flex items-center gap-0.5 shrink-0">
+          <Baby className={cn("h-3.5 w-3.5", hasOption("highChair") ? "text-black" : "text-transparent")} />
+          <Accessibility className={cn("h-3.5 w-3.5", hasOption("wheelchair") ? "text-black" : "text-transparent")} />
+          <PawPrint className={cn("h-3.5 w-3.5", hasOption("dogAccess") ? "text-black" : "text-transparent")} />
+        </div>
+
+        {/* Note preview */}
+        <span className="w-20 text-[10px] text-gray-400 truncate shrink-0">{reservation.note || ""}</span>
       </div>
     );
   }

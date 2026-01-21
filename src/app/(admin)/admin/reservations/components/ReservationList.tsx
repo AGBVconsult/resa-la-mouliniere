@@ -85,13 +85,16 @@ export function ReservationList({
           <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider"></span>
         </div>
       ) : (
-        <div className="sticky top-0 z-10 bg-white grid grid-cols-[24px_50px_44px_36px_1fr_60px] items-center px-4 py-2 border-b border-gray-200">
-          <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider"></span>
-          <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Heure</span>
-          <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Table</span>
-          <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
-          <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
-          <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Opt.</span>
+        <div className="sticky top-0 z-10 bg-white flex items-center px-3 py-2 border-b border-gray-200 gap-3">
+          <span className="w-4 text-[9px] font-medium text-gray-400 uppercase tracking-wider"></span>
+          <span className="w-11 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Heure</span>
+          <span className="w-10 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Table</span>
+          <span className="w-10 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
+          <span className="w-5 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Hist</span>
+          <span className="w-6 text-[9px] font-medium text-gray-400 uppercase tracking-wider"></span>
+          <span className="min-w-24 flex-1 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
+          <span className="w-12 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Opt.</span>
+          <span className="w-20 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Note</span>
         </div>
       )}
 
