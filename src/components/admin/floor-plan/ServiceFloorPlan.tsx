@@ -141,11 +141,15 @@ export function ServiceFloorPlan({
       if (clickedIndex === -1) return [clickedTableId];
       
       // Helper to check if two tables are adjacent
+      // Tables are adjacent if the gap between them is small (within TABLE_GRID_SPAN cells)
       const areAdjacent = (t1: typeof sorted[0], t2: typeof sorted[0]): boolean => {
-        const posDiff = isHorizontal 
-          ? t2.positionX - (t1.positionX + (t1.width ?? 1) * 3)
-          : t2.positionY - (t1.positionY + (t1.height ?? 1) * 3);
-        return posDiff <= 2;
+        const t1Size = isHorizontal ? (t1.width ?? 1) : (t1.height ?? 1);
+        const t1End = isHorizontal 
+          ? t1.positionX + t1Size * TABLE_GRID_SPAN
+          : t1.positionY + t1Size * TABLE_GRID_SPAN;
+        const t2Start = isHorizontal ? t2.positionX : t2.positionY;
+        // Allow gap up to TABLE_GRID_SPAN (one table width/height)
+        return t2Start - t1End <= TABLE_GRID_SPAN;
       };
       
       // Collect tables ONLY forward (after clicked table) - unidirectional
