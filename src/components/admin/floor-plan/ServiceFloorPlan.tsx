@@ -180,7 +180,6 @@ export function ServiceFloorPlan({
       await assignMutation({
         reservationId: selectedReservationId,
         tableIds: Array.from(selectedTableIds) as Id<"tables">[],
-        primaryTableId: primaryTableId as Id<"tables"> | undefined,
         expectedVersion: selectedReservationVersion,
       });
       toast.success("Table(s) assignée(s)");
@@ -242,7 +241,7 @@ export function ServiceFloorPlan({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="h-full flex flex-col">
       {/* Header with zone switch and legend */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         {/* Zone switch */}
@@ -304,8 +303,7 @@ export function ServiceFloorPlan({
 
       {/* Floor plan grid */}
       <div
-        className="relative bg-gray-50 border-2 border-gray-200 rounded-lg overflow-auto"
-        style={{ maxWidth: "100%", maxHeight: "500px" }}
+        className="flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg overflow-auto mt-4"
       >
         <div
           className="relative"
@@ -397,9 +395,9 @@ export function ServiceFloorPlan({
         </div>
       </div>
 
-      {/* Action buttons */}
+      {/* Action buttons - fixed at bottom */}
       {selectedReservationId && selectedTableIds.size > 0 && (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 pt-3 mt-3 border-t shrink-0">
           <Button variant="outline" size="sm" onClick={handleCancel} disabled={isAssigning}>
             <X className="w-4 h-4 mr-1" />
             Annuler
@@ -412,30 +410,6 @@ export function ServiceFloorPlan({
             <Check className="w-4 h-4 mr-1" />
             Assigner {selectedTableIds.size} table(s)
           </Button>
-        </div>
-      )}
-
-      {/* Unassigned reservations */}
-      {tableStates.unassignedReservations && tableStates.unassignedReservations.length > 0 && (
-        <div className="mt-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">
-            Réservations sans table ({tableStates.unassignedReservations?.length ?? 0})
-          </h4>
-          <div className="flex flex-wrap gap-2">
-            {tableStates.unassignedReservations?.map((r) => (
-              <div
-                key={r.id}
-                className={cn(
-                  "px-2 py-1 rounded border text-xs",
-                  selectedReservationId === r.id
-                    ? "bg-blue-100 border-blue-400"
-                    : "bg-gray-50 border-gray-200"
-                )}
-              >
-                <span className="font-medium">{r.timeKey}</span> - {r.lastName} ({r.partySize}p)
-              </div>
-            ))}
-          </div>
         </div>
       )}
     </div>

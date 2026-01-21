@@ -178,26 +178,24 @@ export default function ReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="flex-1 ml-4 bg-white border rounded-lg overflow-hidden animate-in slide-in-from-right-8 fade-in duration-500 p-4">
-            <div className="h-full flex flex-col">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Plan de salle</h3>
-                {selectedForAssignment && (
-                  <div className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
-                    Assigner: {selectedForAssignment.lastName} ({selectedForAssignment.partySize}p)
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 overflow-auto">
-                <ServiceFloorPlan
-                  dateKey={dateKey}
-                  service={currentService}
-                  selectedReservationId={selectedForAssignment?._id}
-                  selectedReservationVersion={selectedForAssignment?.version}
-                  selectedPartySize={selectedForAssignment?.partySize}
-                  onAssignmentComplete={handleAssignmentComplete}
-                />
-              </div>
+          <div className="flex-1 ml-4 bg-white border rounded-lg overflow-hidden animate-in slide-in-from-right-8 fade-in duration-500 p-4 flex flex-col">
+            <div className="flex items-center justify-between mb-2 shrink-0">
+              <h3 className="text-lg font-semibold">Plan de salle</h3>
+              {selectedForAssignment && (
+                <div className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
+                  Assigner: {selectedForAssignment.lastName} ({selectedForAssignment.partySize}p)
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-h-0">
+              <ServiceFloorPlan
+                dateKey={dateKey}
+                service={currentService}
+                selectedReservationId={selectedForAssignment?._id}
+                selectedReservationVersion={selectedForAssignment?.version}
+                selectedPartySize={selectedForAssignment?.partySize}
+                onAssignmentComplete={handleAssignmentComplete}
+              />
             </div>
           </div>
         )}
