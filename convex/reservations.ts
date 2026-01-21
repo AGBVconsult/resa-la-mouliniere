@@ -132,31 +132,43 @@ export const getByToken = query({
   },
 });
 
+/**
+ * @deprecated Utilisez api.admin.listReservations à la place
+ */
 export const listByService = query({
   args: { dateKey: v.string(), service: v.union(v.literal("lunch"), v.literal("dinner")) },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.admin.listReservations à la place");
   },
 });
 
+/**
+ * @deprecated Utilisez api.admin.listReservations avec filtre status à la place
+ */
 export const listPending = query({
   args: { dateKey: v.optional(v.string()) },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.admin.listReservations avec filtre status");
   },
 });
 
+/**
+ * @deprecated Utilisez api.admin.getReservation à la place
+ */
 export const getAdmin = query({
   args: { reservationId: v.string() },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.admin.getReservation à la place");
   },
 });
 
+/**
+ * @deprecated Utilisez api.admin.getReservation à la place
+ */
 export const getStaff = query({
   args: { reservationId: v.string() },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.admin.getReservation à la place");
   },
 });
 
@@ -460,38 +472,53 @@ export const _markTokenUsed = internalMutation({
   },
 });
 
+/**
+ * @deprecated Utilisez api.admin.updateReservation avec status: "confirmed" à la place
+ */
 export const adminConfirm = mutation({
   args: { reservationId: v.string(), expectedVersion: v.number() },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.admin.updateReservation avec status: 'confirmed'");
   },
 });
 
+/**
+ * @deprecated Utilisez api.admin.updateReservation avec status: "refused" à la place
+ */
 export const adminRefuse = mutation({
   args: { reservationId: v.string(), reasonKey: v.string(), expectedVersion: v.number() },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.admin.updateReservation avec status: 'refused'");
   },
 });
 
+/**
+ * @deprecated Utilisez api.admin.updateReservation avec status: "cancelled" à la place
+ */
 export const adminCancel = mutation({
   args: { reservationId: v.string(), expectedVersion: v.number(), now: v.number() },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.admin.updateReservation avec status: 'cancelled'");
   },
 });
 
+/**
+ * @deprecated Utilisez api.admin.updateReservation avec status: "seated" à la place
+ */
 export const checkIn = mutation({
   args: { reservationId: v.string(), expectedVersion: v.number() },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.admin.updateReservation avec status: 'seated'");
   },
 });
 
+/**
+ * @deprecated Utilisez api.admin.updateReservation avec status: "completed" à la place
+ */
 export const checkOut = mutation({
   args: { reservationId: v.string(), expectedVersion: v.number() },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.admin.updateReservation avec status: 'completed'");
   },
 });
 

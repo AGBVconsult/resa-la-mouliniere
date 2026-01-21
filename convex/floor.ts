@@ -1,3 +1,9 @@
+/**
+ * @deprecated Ce fichier contient des stubs non implémentés.
+ * Utilisez `floorplan.ts` pour les fonctionnalités de plan de salle.
+ * 
+ * Ces exports sont conservés pour la compatibilité API mais lèvent une erreur.
+ */
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -8,14 +14,14 @@ export const getTables = query({
     timeKey: v.optional(v.string()),
   },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.floorplan.getTableStates à la place");
   },
 });
 
 export const assignTables = mutation({
   args: { reservationId: v.string(), tableIds: v.array(v.string()), expectedVersion: v.number() },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.floorplan.assign à la place");
   },
 });
 
@@ -31,6 +37,6 @@ export const upsertTable = mutation({
     isActive: v.boolean(),
   },
   handler: async () => {
-    return null as any;
+    throw new Error("DEPRECATED: Utilisez api.tables.upsert à la place");
   },
 });

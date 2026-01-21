@@ -18,9 +18,6 @@ export function getRoleFromIdentity(identity: unknown): Role {
   // We accept common locations to avoid drift between environments.
   const anyId = identity as any;
 
-  // Debug: log identity structure to find where role is stored
-  console.log("Identity structure:", JSON.stringify(anyId, null, 2));
-
   const candidates = [
     anyId?.role, // Direct claim from JWT template
     anyId?.tokenClaims?.role,
