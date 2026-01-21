@@ -194,6 +194,7 @@ export default function ReservationsPage() {
                   service={currentService}
                   selectedReservationId={selectedForAssignment?._id}
                   selectedReservationVersion={selectedForAssignment?.version}
+                  selectedPartySize={selectedForAssignment?.partySize}
                   onAssignmentComplete={handleAssignmentComplete}
                 />
               </div>

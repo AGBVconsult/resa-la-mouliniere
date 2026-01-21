@@ -115,6 +115,9 @@ export const getTableStates = query({
         capacity: table.capacity,
         positionX: table.positionX ?? table.gridX ?? 0,
         positionY: table.positionY ?? table.gridY ?? 0,
+        width: table.width ?? 1,
+        height: table.height ?? 1,
+        combinationDirection: table.combinationDirection ?? "none",
         isActive: table.isActive,
         status,
         // Current reservation info (if any)

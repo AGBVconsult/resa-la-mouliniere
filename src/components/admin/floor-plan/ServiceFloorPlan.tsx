@@ -26,6 +26,7 @@ interface ServiceFloorPlanProps {
   service: "lunch" | "dinner";
   selectedReservationId?: Id<"reservations"> | null;
   selectedReservationVersion?: number;
+  selectedPartySize?: number;
   onAssignmentComplete?: () => void;
 }
 
@@ -43,10 +44,13 @@ export function ServiceFloorPlan({
   service,
   selectedReservationId,
   selectedReservationVersion,
+  selectedPartySize,
   onAssignmentComplete,
 }: ServiceFloorPlanProps) {
   const [selectedTableIds, setSelectedTableIds] = useState<Set<string>>(new Set());
+  const [primaryTableId, setPrimaryTableId] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
 
   // Query table states for this service
   const tableStates = useQuery(api.floorplan.getTableStates, { dateKey, service });
@@ -60,6 +64,79 @@ export function ServiceFloorPlan({
         }
       : "skip"
   );
+
+  // Filter tables by active zone
+  const filteredTables = useMemo(() => {
+    if (!tableStates) return [];
+    // Normalize zone names (handle deprecated values)
+    return tableStates.tables.filter((t) => {
+      const normalizedZone = t.zone === "dining" ? "salle" : t.zone === "terrace" ? "terrasse" : t.zone;
+      return normalizedZone === activeZone;
+    });
+  }, [tableStates, activeZone]);
+
+  // Find adjacent combinable tables
+  const findCombinableTables = useMemo(() => {
+    if (!tableStates) return () => [];
+    
+    return (clickedTableId: string, partySize: number): string[] => {
+      const clickedTable = tableStates.tables.find((t) => t.tableId === clickedTableId);
+      if (!clickedTable) return [clickedTableId];
+      
+      // If table has no combination direction, just return the clicked table
+      if (clickedTable.combinationDirection === "none") {
+        return [clickedTableId];
+      }
+      
+      // Find all tables with same combination direction in same zone
+      const combinableTables = tableStates.tables.filter((t) => {
+        const normalizedZone = t.zone === "dining" ? "salle" : t.zone === "terrace" ? "terrasse" : t.zone;
+        const clickedNormalizedZone = clickedTable.zone === "dining" ? "salle" : clickedTable.zone === "terrace" ? "terrasse" : clickedTable.zone;
+        return (
+          normalizedZone === clickedNormalizedZone &&
+          t.combinationDirection === clickedTable.combinationDirection &&
+          t.isActive &&
+          t.status !== "seated" &&
+          t.status !== "blocked"
+        );
+      });
+      
+      // Sort by position to find adjacent tables
+      const isHorizontal = clickedTable.combinationDirection === "horizontal";
+      const sorted = [...combinableTables].sort((a, b) => {
+        if (isHorizontal) {
+          return a.positionX - b.positionX;
+        }
+        return a.positionY - b.positionY;
+      });
+      
+      // Find the clicked table index
+      const clickedIndex = sorted.findIndex((t) => t.tableId === clickedTableId);
+      if (clickedIndex === -1) return [clickedTableId];
+      
+      // Collect tables starting from clicked, going forward until capacity is met
+      const result: string[] = [];
+      let totalCapacity = 0;
+      
+      // Start from clicked table and go forward
+      for (let i = clickedIndex; i < sorted.length && totalCapacity < partySize; i++) {
+        const table = sorted[i];
+        // Check if adjacent (position difference should be small)
+        if (i > clickedIndex) {
+          const prevTable = sorted[i - 1];
+          const posDiff = isHorizontal 
+            ? table.positionX - (prevTable.positionX + (prevTable.width ?? 1) * 2)
+            : table.positionY - (prevTable.positionY + (prevTable.height ?? 1) * 2);
+          // Allow small gap (tables are typically 2 grid cells apart)
+          if (posDiff > 2) break;
+        }
+        result.push(table.tableId);
+        totalCapacity += table.capacity;
+      }
+      
+      return result;
+    };
+  }, [tableStates]);
 
   // Handle table click
   const handleTableClick = (tableId: string, status: TableStatus) => {
@@ -78,16 +155,19 @@ export function ServiceFloorPlan({
       return;
     }
 
-    // Toggle selection
-    setSelectedTableIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(tableId)) {
-        next.delete(tableId);
-      } else {
-        next.add(tableId);
-      }
-      return next;
-    });
+    // If clicking on already selected table, deselect all
+    if (selectedTableIds.has(tableId)) {
+      setSelectedTableIds(new Set());
+      setPrimaryTableId(null);
+      return;
+    }
+
+    // Auto-select combinable tables based on party size
+    const partySize = selectedPartySize ?? 4;
+    const tablesToSelect = findCombinableTables(tableId, partySize);
+    
+    setSelectedTableIds(new Set(tablesToSelect));
+    setPrimaryTableId(tableId); // Remember which table was clicked
   };
 
   // Handle assignment
@@ -104,6 +184,7 @@ export function ServiceFloorPlan({
       });
       toast.success("Table(s) assignée(s)");
       setSelectedTableIds(new Set());
+      setPrimaryTableId(null);
       onAssignmentComplete?.();
     } catch (error: any) {
       const message = error.message || "Erreur d'assignation";
@@ -133,6 +214,7 @@ export function ServiceFloorPlan({
   // Cancel selection
   const handleCancel = () => {
     setSelectedTableIds(new Set());
+    setPrimaryTableId(null);
   };
 
   // Calculate total capacity of selected tables
@@ -142,6 +224,13 @@ export function ServiceFloorPlan({
       .filter((t) => selectedTableIds.has(t.tableId))
       .reduce((sum, t) => sum + t.capacity, 0);
   }, [tableStates, selectedTableIds]);
+
+  // Get primary table name for display
+  const primaryTableName = useMemo(() => {
+    if (!primaryTableId || !tableStates) return null;
+    const table = tableStates.tables.find((t) => t.tableId === primaryTableId);
+    return table?.name ?? null;
+  }, [primaryTableId, tableStates]);
 
   if (!tableStates) {
     return (
@@ -153,20 +242,44 @@ export function ServiceFloorPlan({
 
   return (
     <div className="space-y-4">
-      {/* Header with legend */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 text-xs">
+      {/* Header with zone switch and legend */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        {/* Zone switch */}
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          <button
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+              activeZone === "salle"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            )}
+            onClick={() => setActiveZone("salle")}
+          >
+            Salle
+          </button>
+          <button
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+              activeZone === "terrasse"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            )}
+            onClick={() => setActiveZone("terrasse")}
+          >
+            Terrasse
+          </button>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-3 text-xs">
           <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded bg-emerald-400" /> Libre
+            <span className="w-2.5 h-2.5 rounded bg-emerald-400" /> Libre
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded bg-orange-400" /> Réservée
+            <span className="w-2.5 h-2.5 rounded bg-orange-400" /> Réservée
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded bg-red-400" /> Occupée
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded bg-gray-400" /> Désactivée
+            <span className="w-2.5 h-2.5 rounded bg-red-400" /> Occupée
           </span>
         </div>
 
@@ -174,7 +287,9 @@ export function ServiceFloorPlan({
         {selectedReservationId && selectedTableIds.size > 0 && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">
-              {selectedTableIds.size} table(s) • {selectedCapacity} places
+              {primaryTableName && <span className="font-medium">{primaryTableName}</span>}
+              {selectedTableIds.size > 1 && ` (+${selectedTableIds.size - 1})`}
+              {" "}• {selectedCapacity} places
             </span>
             {checkAssignment && !checkAssignment.valid && (
               <span className="text-xs text-red-600 flex items-center gap-1">
@@ -220,11 +335,12 @@ export function ServiceFloorPlan({
           </svg>
 
           {/* Tables */}
-          {tableStates.tables.map((table) => {
+          {filteredTables.map((table) => {
             const isSelected = selectedTableIds.has(table.tableId);
+            const isPrimary = table.tableId === primaryTableId;
             const statusColors = STATUS_COLORS[table.status as TableStatus];
-            const width = TABLE_SIZE - 4;
-            const height = TABLE_SIZE - 4;
+            const width = (table.width ?? 1) * TABLE_SIZE - 4;
+            const height = (table.height ?? 1) * TABLE_SIZE - 4;
 
             return (
               <div
@@ -267,7 +383,10 @@ export function ServiceFloorPlan({
 
                 {/* Selection checkmark */}
                 {isSelected && (
-                  <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-0.5">
+                  <div className={cn(
+                    "absolute -top-1 -right-1 rounded-full p-0.5",
+                    isPrimary ? "bg-blue-600" : "bg-blue-400"
+                  )}>
                     <Check className="w-2.5 h-2.5 text-white" />
                   </div>
                 )}
