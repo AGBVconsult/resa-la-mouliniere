@@ -9,6 +9,7 @@ import { Users, X, Check, AlertCircle } from "lucide-react";
 import {
   GRID_CELL_SIZE,
   TABLE_SIZE,
+  TABLE_GRID_SPAN,
   GRID_WIDTH,
   GRID_HEIGHT,
 } from "@/lib/constants/grid";
@@ -74,6 +75,35 @@ export function ServiceFloorPlan({
       return normalizedZone === activeZone;
     });
   }, [tableStates, activeZone]);
+
+  // Calculate dynamic grid dimensions based on filtered table positions
+  const gridDimensions = useMemo(() => {
+    if (filteredTables.length === 0) {
+      return { width: 400, height: 200 };
+    }
+
+    let maxX = 0;
+    let maxY = 0;
+
+    for (const table of filteredTables) {
+      const tableWidth = (table.width ?? 1) * TABLE_GRID_SPAN;
+      const tableHeight = (table.height ?? 1) * TABLE_GRID_SPAN;
+      const tableEndX = table.positionX + tableWidth;
+      const tableEndY = table.positionY + tableHeight;
+
+      if (tableEndX > maxX) maxX = tableEndX;
+      if (tableEndY > maxY) maxY = tableEndY;
+    }
+
+    const paddingCells = 2;
+    const calculatedWidth = Math.max((maxX + paddingCells) * GRID_CELL_SIZE, 400);
+    const calculatedHeight = Math.max((maxY + paddingCells) * GRID_CELL_SIZE, 200);
+
+    return {
+      width: Math.min(calculatedWidth, GRID_WIDTH),
+      height: Math.min(calculatedHeight, GRID_HEIGHT),
+    };
+  }, [filteredTables]);
 
   // Find adjacent combinable tables
   const findCombinableTables = useMemo(() => {
@@ -303,17 +333,18 @@ export function ServiceFloorPlan({
 
       {/* Floor plan grid */}
       <div
-        className="flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg overflow-auto mt-4"
+        className="flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg overflow-auto mt-4 transition-all duration-300"
+        style={{ maxHeight: gridDimensions.height + 4 }}
       >
         <div
           className="relative"
-          style={{ width: GRID_WIDTH, height: GRID_HEIGHT, minWidth: GRID_WIDTH }}
+          style={{ width: gridDimensions.width, height: gridDimensions.height, minWidth: gridDimensions.width }}
         >
           {/* Grid pattern */}
           <svg
             className="absolute inset-0 pointer-events-none"
-            width={GRID_WIDTH}
-            height={GRID_HEIGHT}
+            width={gridDimensions.width}
+            height={gridDimensions.height}
           >
             <defs>
               <pattern
