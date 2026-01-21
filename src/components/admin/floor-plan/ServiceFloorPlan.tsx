@@ -99,7 +99,9 @@ export function ServiceFloorPlan({
     };
   }, [filteredTables]);
 
-  // Find adjacent combinable tables (searches both directions: before and after clicked table)
+  // Find adjacent combinable tables (unidirectional: only forward from clicked table)
+  // Example: click on table 10 → combines with 20, 30, 40 (forward)
+  // Example: click on table 20 → combines with 30, 40 (forward), NOT with 10 (backward)
   const findCombinableTables = useMemo(() => {
     if (!tableStates) return () => [];
     
@@ -146,25 +148,15 @@ export function ServiceFloorPlan({
         return posDiff <= 2;
       };
       
-      // Collect tables in both directions starting from clicked table
+      // Collect tables ONLY forward (after clicked table) - unidirectional
       const result: string[] = [clickedTableId];
       let totalCapacity = clickedTable.capacity;
       
-      // Go forward (after clicked table)
       for (let i = clickedIndex + 1; i < sorted.length && totalCapacity < partySize; i++) {
         const table = sorted[i];
         const prevTable = sorted[i - 1];
         if (!areAdjacent(prevTable, table)) break;
         result.push(table.tableId);
-        totalCapacity += table.capacity;
-      }
-      
-      // Go backward (before clicked table) if still need more capacity
-      for (let i = clickedIndex - 1; i >= 0 && totalCapacity < partySize; i--) {
-        const table = sorted[i];
-        const nextTable = sorted[i + 1];
-        if (!areAdjacent(table, nextTable)) break;
-        result.unshift(table.tableId);
         totalCapacity += table.capacity;
       }
       
