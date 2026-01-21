@@ -28,6 +28,7 @@ interface ServiceFloorPlanProps {
   selectedReservationId?: Id<"reservations"> | null;
   selectedReservationVersion?: number;
   selectedPartySize?: number;
+  selectedReservationName?: string;
   onAssignmentComplete?: () => void;
 }
 
@@ -46,6 +47,7 @@ export function ServiceFloorPlan({
   selectedReservationId,
   selectedReservationVersion,
   selectedPartySize,
+  selectedReservationName,
   onAssignmentComplete,
 }: ServiceFloorPlanProps) {
   const [selectedTableIds, setSelectedTableIds] = useState<Set<string>>(new Set());
@@ -272,8 +274,11 @@ export function ServiceFloorPlan({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header with zone switch and legend */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      {/* Header: Title + Zone switch + Legend on same line */}
+      <div className="flex items-center gap-4 shrink-0">
+        {/* Title */}
+        <h3 className="text-lg font-semibold whitespace-nowrap">Plan de salle</h3>
+
         {/* Zone switch */}
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
           <button
@@ -313,23 +318,33 @@ export function ServiceFloorPlan({
           </span>
         </div>
 
-        {/* Selection info */}
-        {selectedReservationId && selectedTableIds.size > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">
-              {primaryTableName && <span className="font-medium">{primaryTableName}</span>}
-              {selectedTableIds.size > 1 && ` (+${selectedTableIds.size - 1})`}
-              {" "}• {selectedCapacity} places
-            </span>
-            {checkAssignment && !checkAssignment.valid && (
-              <span className="text-xs text-red-600 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
-                {checkAssignment.error?.split("|")[0]}
-              </span>
-            )}
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Assignment info */}
+        {selectedReservationName && (
+          <div className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full whitespace-nowrap">
+            Assigner: {selectedReservationName}
           </div>
         )}
       </div>
+
+      {/* Selection info when tables selected */}
+      {selectedReservationId && selectedTableIds.size > 0 && (
+        <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+          <span>
+            {primaryTableName && <span className="font-medium">{primaryTableName}</span>}
+            {selectedTableIds.size > 1 && ` (+${selectedTableIds.size - 1})`}
+            {" "}• {selectedCapacity} places
+          </span>
+          {checkAssignment && !checkAssignment.valid && (
+            <span className="text-xs text-red-600 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              {checkAssignment.error?.split("|")[0]}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Floor plan grid */}
       <div
