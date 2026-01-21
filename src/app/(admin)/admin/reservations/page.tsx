@@ -140,12 +140,12 @@ export default function ReservationsPage() {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex min-h-0 gap-4">
         {/* Reservation List */}
         <div
           className={cn(
-            "flex flex-col bg-white border rounded-lg transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]",
-            showFloorPlan ? "w-1/3 min-w-[400px]" : "w-full"
+            "flex flex-col bg-white border rounded-lg transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden",
+            showFloorPlan ? "flex-1 min-w-[350px]" : "w-full"
           )}
         >
           {isLoading ? (
@@ -176,9 +176,9 @@ export default function ReservationsPage() {
           )}
         </div>
 
-        {/* Floor Plan */}
+        {/* Floor Plan - shrink to fit content */}
         {showFloorPlan && (
-          <div className="flex-1 ml-4 bg-white border rounded-lg overflow-hidden animate-in slide-in-from-right-8 fade-in duration-500 p-4 flex flex-col">
+          <div className="shrink-0 bg-white border rounded-lg overflow-hidden animate-in slide-in-from-right-8 fade-in duration-500 p-4 flex flex-col">
             <ServiceFloorPlan
               dateKey={dateKey}
               service={currentService}

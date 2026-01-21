@@ -68,13 +68,17 @@ export function ServiceFloorPlan({
       : "skip"
   );
 
-  // Filter tables by active zone
+  // Filter tables by active zone and valid names (exclude test tables like D-30)
   const filteredTables = useMemo(() => {
     if (!tableStates) return [];
-    // Normalize zone names (handle deprecated values)
     return tableStates.tables.filter((t) => {
+      // Normalize zone names (handle deprecated values)
       const normalizedZone = t.zone === "dining" ? "salle" : t.zone === "terrace" ? "terrasse" : t.zone;
-      return normalizedZone === activeZone;
+      // Filter by zone
+      if (normalizedZone !== activeZone) return false;
+      // Exclude tables with names starting with "D" followed by a number or dash (test tables)
+      if (/^D[0-9-]/.test(t.name)) return false;
+      return true;
     });
   }, [tableStates, activeZone]);
 
@@ -274,12 +278,12 @@ export function ServiceFloorPlan({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header: Title + Zone switch + Legend on same line */}
-      <div className="flex items-center gap-4 shrink-0">
-        {/* Title */}
+      {/* Header: Title left | Switch center | Legend right */}
+      <div className="flex items-center justify-between shrink-0">
+        {/* Left: Title */}
         <h3 className="text-lg font-semibold whitespace-nowrap">Plan de salle</h3>
 
-        {/* Zone switch */}
+        {/* Center: Zone switch */}
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
           <button
             className={cn(
@@ -305,7 +309,7 @@ export function ServiceFloorPlan({
           </button>
         </div>
 
-        {/* Legend */}
+        {/* Right: Legend */}
         <div className="flex items-center gap-3 text-xs">
           <span className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded bg-emerald-400" /> Libre
@@ -317,17 +321,16 @@ export function ServiceFloorPlan({
             <span className="w-2.5 h-2.5 rounded bg-red-400" /> Occupée
           </span>
         </div>
+      </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Assignment info */}
-        {selectedReservationName && (
+      {/* Assignment info row */}
+      {selectedReservationName && (
+        <div className="flex items-center justify-end mt-2">
           <div className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full whitespace-nowrap">
             Assigner: {selectedReservationName}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Selection info when tables selected */}
       {selectedReservationId && selectedTableIds.size > 0 && (
