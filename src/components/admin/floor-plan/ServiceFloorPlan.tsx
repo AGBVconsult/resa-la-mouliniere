@@ -99,9 +99,8 @@ export function ServiceFloorPlan({
     };
   }, [filteredTables]);
 
-  // Find adjacent combinable tables (unidirectional: only forward from clicked table)
-  // Example: click on table 10 → combines with 20, 30, 40 (forward)
-  // Example: click on table 20 → combines with 30, 40 (forward), NOT with 10 (backward)
+  // Find adjacent combinable tables - analyzes both directions and picks the best option
+  // The clicked table is always included, then we find the best combination (forward or backward)
   const findCombinableTables = useMemo(() => {
     if (!tableStates) return () => [];
     
@@ -141,30 +140,49 @@ export function ServiceFloorPlan({
       if (clickedIndex === -1) return [clickedTableId];
       
       // Helper to check if two tables are adjacent
-      // Tables are adjacent if the gap between them is small (within TABLE_GRID_SPAN cells)
       const areAdjacent = (t1: typeof sorted[0], t2: typeof sorted[0]): boolean => {
         const t1Size = isHorizontal ? (t1.width ?? 1) : (t1.height ?? 1);
         const t1End = isHorizontal 
           ? t1.positionX + t1Size * TABLE_GRID_SPAN
           : t1.positionY + t1Size * TABLE_GRID_SPAN;
         const t2Start = isHorizontal ? t2.positionX : t2.positionY;
-        // Allow gap up to TABLE_GRID_SPAN (one table width/height)
         return t2Start - t1End <= TABLE_GRID_SPAN;
       };
       
-      // Collect tables ONLY forward (after clicked table) - unidirectional
-      const result: string[] = [clickedTableId];
-      let totalCapacity = clickedTable.capacity;
-      
-      for (let i = clickedIndex + 1; i < sorted.length && totalCapacity < partySize; i++) {
+      // Try FORWARD combination (clicked table + tables after)
+      const forwardResult: string[] = [clickedTableId];
+      let forwardCapacity = clickedTable.capacity;
+      for (let i = clickedIndex + 1; i < sorted.length && forwardCapacity < partySize; i++) {
         const table = sorted[i];
         const prevTable = sorted[i - 1];
         if (!areAdjacent(prevTable, table)) break;
-        result.push(table.tableId);
-        totalCapacity += table.capacity;
+        forwardResult.push(table.tableId);
+        forwardCapacity += table.capacity;
       }
       
-      return result;
+      // Try BACKWARD combination (clicked table + tables before)
+      const backwardResult: string[] = [clickedTableId];
+      let backwardCapacity = clickedTable.capacity;
+      for (let i = clickedIndex - 1; i >= 0 && backwardCapacity < partySize; i--) {
+        const table = sorted[i];
+        const nextTable = sorted[i + 1];
+        if (!areAdjacent(table, nextTable)) break;
+        backwardResult.unshift(table.tableId);
+        backwardCapacity += table.capacity;
+      }
+      
+      // Choose the best option:
+      // 1. If forward meets capacity, use forward
+      // 2. If backward meets capacity but forward doesn't, use backward
+      // 3. If neither meets capacity, use the one with more capacity
+      if (forwardCapacity >= partySize) {
+        return forwardResult;
+      }
+      if (backwardCapacity >= partySize) {
+        return backwardResult;
+      }
+      // Neither meets capacity - return the one with more capacity
+      return forwardCapacity >= backwardCapacity ? forwardResult : backwardResult;
     };
   }, [tableStates]);
 
