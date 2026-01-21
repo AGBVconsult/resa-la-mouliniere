@@ -99,7 +99,7 @@ export function ServiceFloorPlan({
     };
   }, [filteredTables]);
 
-  // Find adjacent combinable tables
+  // Find adjacent combinable tables (searches both directions: before and after clicked table)
   const findCombinableTables = useMemo(() => {
     if (!tableStates) return () => [];
     
@@ -138,23 +138,33 @@ export function ServiceFloorPlan({
       const clickedIndex = sorted.findIndex((t) => t.tableId === clickedTableId);
       if (clickedIndex === -1) return [clickedTableId];
       
-      // Collect tables starting from clicked, going forward until capacity is met
-      const result: string[] = [];
-      let totalCapacity = 0;
+      // Helper to check if two tables are adjacent
+      const areAdjacent = (t1: typeof sorted[0], t2: typeof sorted[0]): boolean => {
+        const posDiff = isHorizontal 
+          ? t2.positionX - (t1.positionX + (t1.width ?? 1) * 3)
+          : t2.positionY - (t1.positionY + (t1.height ?? 1) * 3);
+        return posDiff <= 2;
+      };
       
-      // Start from clicked table and go forward
-      for (let i = clickedIndex; i < sorted.length && totalCapacity < partySize; i++) {
+      // Collect tables in both directions starting from clicked table
+      const result: string[] = [clickedTableId];
+      let totalCapacity = clickedTable.capacity;
+      
+      // Go forward (after clicked table)
+      for (let i = clickedIndex + 1; i < sorted.length && totalCapacity < partySize; i++) {
         const table = sorted[i];
-        // Check if adjacent (position difference should be small)
-        if (i > clickedIndex) {
-          const prevTable = sorted[i - 1];
-          const posDiff = isHorizontal 
-            ? table.positionX - (prevTable.positionX + (prevTable.width ?? 1) * 2)
-            : table.positionY - (prevTable.positionY + (prevTable.height ?? 1) * 2);
-          // Allow small gap (tables are typically 2 grid cells apart)
-          if (posDiff > 2) break;
-        }
+        const prevTable = sorted[i - 1];
+        if (!areAdjacent(prevTable, table)) break;
         result.push(table.tableId);
+        totalCapacity += table.capacity;
+      }
+      
+      // Go backward (before clicked table) if still need more capacity
+      for (let i = clickedIndex - 1; i >= 0 && totalCapacity < partySize; i--) {
+        const table = sorted[i];
+        const nextTable = sorted[i + 1];
+        if (!areAdjacent(table, nextTable)) break;
+        result.unshift(table.tableId);
         totalCapacity += table.capacity;
       }
       
