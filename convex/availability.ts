@@ -160,25 +160,35 @@ export const getDay = query({
         .collect(),
     ]);
 
-    // Load overrides for all slots (§5.12 priority: MANUAL > PERIOD > SLOT)
+    // Load ALL overrides for this restaurant in two queries (fix N+1)
+    // Using by_restaurant_origin index to batch load manual and period overrides
     const allSlots = [...lunchSlots, ...dinnerSlots];
+    const slotKeys = new Set(allSlots.map((s) => s.slotKey));
+    
+    const [manualOverrides, periodOverrides] = await Promise.all([
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "manual"))
+        .collect(),
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "period"))
+        .collect(),
+    ]);
+    
+    // Filter to relevant slots and build map with priority: MANUAL > PERIOD
     const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number; maxGroupSize?: number | null; largeTableAllowed?: boolean }>();
     
-    for (const slot of allSlots) {
-      const overrides = await ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_slotKey", (q) =>
-          q.eq("restaurantId", restaurant._id).eq("slotKey", slot.slotKey)
-        )
-        .collect();
-      
-      // Apply priority: MANUAL > PERIOD
-      const manual = overrides.find((o) => o.origin === "manual");
-      const period = overrides.find((o) => o.origin === "period");
-      const override = manual ?? period;
-      
-      if (override) {
-        overridesMap.set(slot.slotKey, override.patch);
+    // First add period overrides (lower priority)
+    for (const override of periodOverrides) {
+      if (slotKeys.has(override.slotKey)) {
+        overridesMap.set(override.slotKey, override.patch);
+      }
+    }
+    // Then add manual overrides (higher priority, overwrites period)
+    for (const override of manualOverrides) {
+      if (slotKeys.has(override.slotKey)) {
+        overridesMap.set(override.slotKey, override.patch);
       }
     }
 
@@ -304,23 +314,32 @@ export const getMonth = query({
       )
       .collect();
 
-    // 3. Load overrides for all slots (§5.12 priority: MANUAL > PERIOD > SLOT)
+    // 3. Load overrides in batch (fix N+1 query)
+    const slotKeys = new Set(slots.map((s) => s.slotKey));
+    
+    const [manualOverrides, periodOverrides] = await Promise.all([
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "manual"))
+        .collect(),
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "period"))
+        .collect(),
+    ]);
+    
     const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number; maxGroupSize?: number | null }>();
     
-    for (const slot of slots) {
-      const overrides = await ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_slotKey", (q) =>
-          q.eq("restaurantId", restaurant._id).eq("slotKey", slot.slotKey)
-        )
-        .collect();
-      
-      const manual = overrides.find((o) => o.origin === "manual");
-      const period = overrides.find((o) => o.origin === "period");
-      const override = manual ?? period;
-      
-      if (override) {
-        overridesMap.set(slot.slotKey, override.patch);
+    // First add period overrides (lower priority)
+    for (const override of periodOverrides) {
+      if (slotKeys.has(override.slotKey)) {
+        overridesMap.set(override.slotKey, override.patch);
+      }
+    }
+    // Then add manual overrides (higher priority)
+    for (const override of manualOverrides) {
+      if (slotKeys.has(override.slotKey)) {
+        overridesMap.set(override.slotKey, override.patch);
       }
     }
 

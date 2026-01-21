@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id, Doc } from "./_generated/dataModel";
+import { Errors } from "./lib/errors";
 
 /**
  * PRD-004: Floor Plan Module
@@ -181,18 +182,18 @@ export const assign = mutation({
     // 1. Load reservation
     const reservation = await ctx.db.get(reservationId);
     if (!reservation) {
-      throw new Error("RESERVATION_NOT_FOUND");
+      throw Errors.RESERVATION_NOT_FOUND(reservationId);
     }
 
     // 2. Check version (optimistic locking)
     if (reservation.version !== expectedVersion) {
-      throw new Error(`VERSION_CONFLICT|${expectedVersion}|${reservation.version}`);
+      throw Errors.VERSION_CONFLICT(expectedVersion, reservation.version);
     }
 
     // 3. Check reservation status is assignable
     const ASSIGNABLE_STATUSES = ["pending", "confirmed", "seated"];
     if (!ASSIGNABLE_STATUSES.includes(reservation.status)) {
-      throw new Error(`INVALID_STATUS|${reservation.status}`);
+      throw Errors.INVALID_STATUS(reservation.status);
     }
 
     // 4. Load tables
@@ -201,17 +202,17 @@ export const assign = mutation({
     for (let i = 0; i < tables.length; i++) {
       const table = tables[i];
       if (!table) {
-        throw new Error(`TABLE_NOT_FOUND|${tableIds[i]}`);
+        throw Errors.TABLE_NOT_FOUND(tableIds[i]);
       }
       if (!table.isActive) {
-        throw new Error(`TABLE_BLOCKED|${table.name}`);
+        throw Errors.TABLE_BLOCKED(table.name);
       }
     }
 
     // 5. Check total capacity
     const totalCapacity = tables.reduce((sum, t) => sum + (t?.capacity ?? 0), 0);
     if (totalCapacity < reservation.partySize) {
-      throw new Error(`INSUFFICIENT_CAPACITY|${totalCapacity}|${reservation.partySize}`);
+      throw Errors.INSUFFICIENT_TABLE_CAPACITY(totalCapacity, reservation.partySize);
     }
 
     // 6. Check for conflicts (other reservations on same tables, same service)
@@ -242,14 +243,10 @@ export const assign = mutation({
       for (const conflict of conflictingResas) {
         // If conflict is seated, special message
         if (conflict.status === "seated") {
-          throw new Error(
-            `TABLE_OCCUPIED_SEATED|${table?.name}|${conflict.firstName} ${conflict.lastName}`
-          );
+          throw Errors.TABLE_OCCUPIED(table?.name ?? "Unknown", `${conflict.firstName} ${conflict.lastName}`);
         }
         // Otherwise, table is already reserved
-        throw new Error(
-          `TABLE_CONFLICT|${table?.name}|${conflict.firstName} ${conflict.lastName}|${conflict.timeKey}`
-        );
+        throw Errors.TABLE_OCCUPIED(table?.name ?? "Unknown", `${conflict.firstName} ${conflict.lastName}`);
       }
     }
 
@@ -278,12 +275,7 @@ export const assign = mutation({
       createdAt: now,
     });
 
-    console.log("Table assigned", {
-      reservationId,
-      tableIds,
-      primaryTableId: primaryTableId ?? tableIds[0],
-      newVersion,
-    });
+    // Table assignment logged via reservationEvents
 
     return {
       success: true,
@@ -305,12 +297,12 @@ export const unassign = mutation({
     // 1. Load reservation
     const reservation = await ctx.db.get(reservationId);
     if (!reservation) {
-      throw new Error("RESERVATION_NOT_FOUND");
+      throw Errors.RESERVATION_NOT_FOUND(reservationId);
     }
 
     // 2. Check version
     if (reservation.version !== expectedVersion) {
-      throw new Error(`VERSION_CONFLICT|${expectedVersion}|${reservation.version}`);
+      throw Errors.VERSION_CONFLICT(expectedVersion, reservation.version);
     }
 
     const previousTableIds = reservation.tableIds;

@@ -81,6 +81,25 @@ export const Errors = {
   TABLE_CONFLICT: (slotKey: string, tableIds: string[]) =>
     appError("TABLE_CONFLICT", "error.tableConflict", { slotKey, tableIds }),
 
+  TABLE_NOT_FOUND: (tableId: string) =>
+    appError("NOT_FOUND", "error.tableNotFound", { tableId }),
+
+  TABLE_BLOCKED: (tableName: string) =>
+    appError("VALIDATION_ERROR", "error.tableBlocked", { tableName }),
+
+  TABLE_OCCUPIED: (tableName: string, guestName: string) =>
+    appError("TABLE_CONFLICT", "error.tableOccupied", { tableName, guestName }),
+
+  INSUFFICIENT_TABLE_CAPACITY: (totalCapacity: number, partySize: number) =>
+    appError("INSUFFICIENT_CAPACITY", "error.insufficientTableCapacity", { totalCapacity, partySize }),
+
+  INVALID_STATUS: (status: string) =>
+    appError("VALIDATION_ERROR", "error.invalidStatus", { status }),
+
+  // === Reservations ===
+  RESERVATION_NOT_FOUND: (reservationId: string) =>
+    appError("NOT_FOUND", "error.reservationNotFound", { reservationId }),
+
   // === Special Periods ===
   SAME_TYPE_OVERLAP: (existingPeriodId: string, existingPeriodName: string) =>
     appError("SAME_TYPE_OVERLAP", "error.sameTypeOverlap", { existingPeriodId, existingPeriodName }),

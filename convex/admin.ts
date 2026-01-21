@@ -367,7 +367,7 @@ export const getReservation = query({
     const reservation = await ctx.db.get(reservationId);
 
     if (!reservation) {
-      throw Errors.SLOT_NOT_FOUND(reservationId);
+      throw Errors.RESERVATION_NOT_FOUND(reservationId);
     }
 
     return buildReservationAdmin(reservation);
@@ -506,7 +506,7 @@ export const updateReservation = mutation({
     const reservation = await ctx.db.get(reservationId);
 
     if (!reservation) {
-      throw Errors.SLOT_NOT_FOUND(reservationId);
+      throw Errors.RESERVATION_NOT_FOUND(reservationId);
     }
 
     // Version check
@@ -618,20 +618,21 @@ export const updateReservation = mutation({
         scheduledTime: reservation.timeKey,
         actualTime: now,
         delayMinutes,
-        performedBy: "admin", // TODO: Get actual user ID from auth
+        performedBy: (await ctx.auth.getUserIdentity())?.subject ?? "admin",
         createdAt: now,
       });
     }
 
     // Track table assignment event
     if (tableIds !== undefined && JSON.stringify(tableIds) !== JSON.stringify(reservation.tableIds)) {
+      const userId = (await ctx.auth.getUserIdentity())?.subject ?? "admin";
       await ctx.db.insert("reservationEvents", {
         reservationId,
         restaurantId: reservation.restaurantId,
         eventType: "table_assignment",
         scheduledTime: reservation.timeKey,
         actualTime: now,
-        performedBy: "admin",
+        performedBy: userId,
         metadata: { 
           previousTables: reservation.tableIds,
           newTables: tableIds,
