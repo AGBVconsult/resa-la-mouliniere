@@ -624,6 +624,271 @@ export const seedTestReservations = internalMutation({
   },
 });
 
+/**
+ * Generate 50 varied test reservations across the week.
+ * Covers all statuses, services, party sizes, options, languages, etc.
+ * Use this via CLI: npx convex run seed:seedWeekReservations
+ */
+export const seedWeekReservations = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      throw new Error("No active restaurant found");
+    }
+
+    const restaurant = activeRestaurants[0];
+    const restaurantId = restaurant._id;
+    const now = Date.now();
+
+    // Get tables for assignment
+    const tables = await ctx.db
+      .query("tables")
+      .withIndex("by_restaurant_isActive", (q) => q.eq("restaurantId", restaurantId).eq("isActive", true))
+      .collect();
+
+    // Generate dates for the week (today + 6 days)
+    const today = new Date();
+    const dates: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      dates.push(`${year}-${month}-${day}`);
+    }
+
+    // Comprehensive test data
+    const firstNames = [
+      "Marie", "Jean", "Sophie", "Pierre", "Emma", "Lucas", "Camille", "Thomas", "Léa", "Nicolas",
+      "Julie", "Antoine", "Chloé", "Maxime", "Laura", "Alexandre", "Manon", "Julien", "Sarah", "Romain",
+      "Pauline", "Mathieu", "Clara", "Vincent", "Anaïs", "Guillaume", "Margot", "Florian", "Océane", "Kevin"
+    ];
+    const lastNames = [
+      "Dupont", "Martin", "Bernard", "Dubois", "Moreau", "Laurent", "Simon", "Michel", "Garcia", "David",
+      "Bertrand", "Roux", "Vincent", "Fournier", "Morel", "Girard", "André", "Lefebvre", "Mercier", "Dupuis",
+      "Lambert", "Bonnet", "François", "Martinez", "Legrand", "Garnier", "Faure", "Rousseau", "Blanc", "Guerin"
+    ];
+
+    // Phone prefixes with countries
+    const phoneConfigs = [
+      { prefix: "+32", lang: "fr" as const },   // Belgium FR
+      { prefix: "+32", lang: "nl" as const },   // Belgium NL
+      { prefix: "+33", lang: "fr" as const },   // France
+      { prefix: "+31", lang: "nl" as const },   // Netherlands
+      { prefix: "+49", lang: "de" as const },   // Germany
+      { prefix: "+44", lang: "en" as const },   // UK
+      { prefix: "+39", lang: "it" as const },   // Italy
+      { prefix: "+352", lang: "fr" as const },  // Luxembourg
+    ];
+
+    // Time slots
+    const lunchTimes = ["12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30"];
+    const dinnerTimes = ["18:00", "18:30", "19:00", "19:15", "19:30", "19:45", "20:00", "20:30"];
+
+    // Notes variées
+    const notes = [
+      "Anniversaire de mariage",
+      "Allergie aux fruits de mer",
+      "Allergie gluten - très important",
+      "Table près de la fenêtre SVP",
+      "Client régulier - VIP",
+      "Végétarien strict",
+      "Fête d'anniversaire - 30 ans",
+      "Repas d'affaires important",
+      "Demande menu enfant",
+      "Première visite - recommandé par ami",
+      "Retour après 2 ans",
+      "Chien d'assistance",
+      "Poussette double",
+      "Personne à mobilité réduite",
+      "Demande de gâteau anniversaire",
+      null, null, null, null, null, // Plus de chances de ne pas avoir de note
+    ];
+
+    // Sources
+    const sources = ["online", "admin", "phone", "walkin"] as const;
+
+    // Statuses with realistic distribution
+    const statusDistribution = [
+      "pending", "pending", "pending",           // 6% pending
+      "confirmed", "confirmed", "confirmed", "confirmed", "confirmed", "confirmed", "confirmed", "confirmed", "confirmed", "confirmed", // 20% confirmed
+      "seated", "seated", "seated", "seated", "seated",  // 10% seated
+      "completed", "completed", "completed", "completed", "completed", "completed", "completed", "completed", "completed", "completed", 
+      "completed", "completed", "completed", "completed", "completed", "completed", "completed", "completed", "completed", "completed", // 40% completed
+      "noshow", "noshow", "noshow",              // 6% noshow
+      "cancelled", "cancelled", "cancelled", "cancelled", "cancelled", // 10% cancelled
+      "incident",                                // 2% incident
+    ] as const;
+
+    const reservations: Array<{
+      dateKey: string;
+      service: "lunch" | "dinner";
+      timeKey: string;
+      adults: number;
+      childrenCount: number;
+      babyCount: number;
+      firstName: string;
+      lastName: string;
+      phone: string;
+      language: "fr" | "nl" | "en" | "de" | "it";
+      status: string;
+      source: "online" | "admin" | "phone" | "walkin";
+      options: string[];
+      note: string | null;
+      tableIds: string[];
+    }> = [];
+
+    // Generate 50 reservations
+    for (let i = 0; i < 50; i++) {
+      const dateKey = dates[i % dates.length]; // Distribute across week
+      const service = i % 3 === 0 ? "lunch" : "dinner"; // More dinners
+      const timeKey = service === "lunch" 
+        ? lunchTimes[Math.floor(Math.random() * lunchTimes.length)]
+        : dinnerTimes[Math.floor(Math.random() * dinnerTimes.length)];
+
+      // Party composition - varied scenarios
+      let adults: number, childrenCount: number, babyCount: number;
+      const scenario = i % 10;
+      switch (scenario) {
+        case 0: // Couple
+          adults = 2; childrenCount = 0; babyCount = 0;
+          break;
+        case 1: // Solo
+          adults = 1; childrenCount = 0; babyCount = 0;
+          break;
+        case 2: // Family with kids
+          adults = 2; childrenCount = 2; babyCount = 0;
+          break;
+        case 3: // Family with baby
+          adults = 2; childrenCount = 0; babyCount = 1;
+          break;
+        case 4: // Large group
+          adults = 6; childrenCount = 0; babyCount = 0;
+          break;
+        case 5: // Family reunion
+          adults = 4; childrenCount = 3; babyCount = 1;
+          break;
+        case 6: // Business dinner
+          adults = 4; childrenCount = 0; babyCount = 0;
+          break;
+        case 7: // Couple with baby
+          adults = 2; childrenCount = 0; babyCount = 1;
+          break;
+        case 8: // Friends group
+          adults = 5; childrenCount = 0; babyCount = 0;
+          break;
+        default: // Random
+          adults = Math.floor(Math.random() * 4) + 1;
+          childrenCount = Math.random() > 0.7 ? Math.floor(Math.random() * 3) : 0;
+          babyCount = Math.random() > 0.85 ? 1 : 0;
+      }
+
+      const phoneConfig = phoneConfigs[Math.floor(Math.random() * phoneConfigs.length)];
+      const phoneNumber = `${phoneConfig.prefix} ${Math.floor(Math.random() * 900000000) + 100000000}`;
+
+      const status = statusDistribution[Math.floor(Math.random() * statusDistribution.length)];
+      const source = sources[Math.floor(Math.random() * sources.length)];
+
+      // Options based on party composition
+      const options: string[] = [];
+      if (babyCount > 0 || childrenCount > 0) {
+        if (Math.random() > 0.3) options.push("highChair");
+      }
+      if (Math.random() > 0.92) options.push("wheelchair");
+      if (Math.random() > 0.88) options.push("dogAccess");
+
+      // Assign tables for seated/completed reservations
+      const tableIds: string[] = [];
+      if ((status === "seated" || status === "completed" || status === "incident") && tables.length > 0) {
+        const partySize = adults + childrenCount + babyCount;
+        // Find suitable table(s)
+        const suitableTables = tables.filter(t => t.capacity >= Math.min(partySize, 4));
+        if (suitableTables.length > 0) {
+          const table = suitableTables[Math.floor(Math.random() * suitableTables.length)];
+          tableIds.push(table._id);
+        }
+      }
+
+      reservations.push({
+        dateKey,
+        service,
+        timeKey,
+        adults,
+        childrenCount,
+        babyCount,
+        firstName: firstNames[Math.floor(Math.random() * firstNames.length)],
+        lastName: lastNames[Math.floor(Math.random() * lastNames.length)],
+        phone: phoneNumber,
+        language: phoneConfig.lang,
+        status,
+        source,
+        options,
+        note: notes[Math.floor(Math.random() * notes.length)],
+        tableIds,
+      });
+    }
+
+    // Insert all reservations
+    let created = 0;
+    for (const r of reservations) {
+      const partySize = r.adults + r.childrenCount + r.babyCount;
+      const slotKey = `${r.dateKey}#${r.service}#${r.timeKey}`;
+
+      await ctx.db.insert("reservations", {
+        restaurantId,
+        dateKey: r.dateKey,
+        service: r.service,
+        timeKey: r.timeKey,
+        slotKey,
+        adults: r.adults,
+        childrenCount: r.childrenCount,
+        babyCount: r.babyCount,
+        partySize,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        email: `${r.firstName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}.${r.lastName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}@test.com`,
+        phone: r.phone,
+        language: r.language,
+        note: r.note ?? undefined,
+        options: r.options,
+        status: r.status as "pending" | "confirmed" | "seated" | "completed" | "noshow" | "cancelled" | "refused" | "incident",
+        source: r.source,
+        tableIds: r.tableIds as any,
+        version: 1,
+        createdAt: now - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000), // Random creation time in last week
+        updatedAt: now,
+        cancelledAt: r.status === "cancelled" ? now - Math.floor(Math.random() * 24 * 60 * 60 * 1000) : null,
+        refusedAt: null,
+        seatedAt: (r.status === "seated" || r.status === "completed" || r.status === "incident") ? now - Math.floor(Math.random() * 4 * 60 * 60 * 1000) : null,
+        completedAt: r.status === "completed" ? now - Math.floor(Math.random() * 2 * 60 * 60 * 1000) : null,
+        noshowAt: r.status === "noshow" ? now - Math.floor(Math.random() * 24 * 60 * 60 * 1000) : null,
+      });
+      created++;
+    }
+
+    // Summary by status
+    const statusCounts: Record<string, number> = {};
+    for (const r of reservations) {
+      statusCounts[r.status] = (statusCounts[r.status] || 0) + 1;
+    }
+
+    console.log(`✅ Created ${created} test reservations across ${dates.length} days`);
+    console.log("Status distribution:", statusCounts);
+
+    return { 
+      created, 
+      dates,
+      statusCounts,
+    };
+  },
+});
+
 export const testEmail = internalMutation({
   args: {
     to: v.string(),

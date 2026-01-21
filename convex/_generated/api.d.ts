@@ -14,6 +14,7 @@ import type * as crons from "../crons.js";
 import type * as email from "../email.js";
 import type * as emails from "../emails.js";
 import type * as floor from "../floor.js";
+import type * as floorplan from "../floorplan.js";
 import type * as groupRequests from "../groupRequests.js";
 import type * as idempotency from "../idempotency.js";
 import type * as jobs from "../jobs.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   email: typeof email;
   emails: typeof emails;
   floor: typeof floor;
+  floorplan: typeof floorplan;
   groupRequests: typeof groupRequests;
   idempotency: typeof idempotency;
   jobs: typeof jobs;

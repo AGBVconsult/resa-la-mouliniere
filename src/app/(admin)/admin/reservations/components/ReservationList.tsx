@@ -12,6 +12,7 @@ interface ReservationListProps {
   onToggleExpand: (id: Id<"reservations">) => void;
   onStatusChange: (id: Id<"reservations">, status: string, version: number) => void;
   onEdit: (reservation: Reservation) => void;
+  onSelectForAssignment?: (reservation: Reservation) => void;
   tables?: { _id: Id<"tables">; name: string }[];
   slotCapacities?: Record<string, number>;
 }
@@ -30,6 +31,7 @@ export function ReservationList({
   onToggleExpand,
   onStatusChange,
   onEdit,
+  onSelectForAssignment,
   tables = [],
   slotCapacities = {},
 }: ReservationListProps) {
@@ -109,6 +111,7 @@ export function ReservationList({
               onToggleExpand={() => onToggleExpand(reservation._id)}
               onStatusChange={(status) => onStatusChange(reservation._id, status, reservation.version)}
               onEdit={() => onEdit(reservation)}
+              onSelectForAssignment={onSelectForAssignment ? () => onSelectForAssignment(reservation) : undefined}
               tables={tables}
             />
           ))}

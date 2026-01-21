@@ -393,6 +393,7 @@ interface ReservationRowProps {
   onToggleExpand: () => void;
   onStatusChange: (status: string) => void;
   onEdit: () => void;
+  onSelectForAssignment?: () => void;
   tables?: { _id: Id<"tables">; name: string }[];
 }
 
@@ -403,6 +404,7 @@ export function ReservationRow({
   onToggleExpand,
   onStatusChange,
   onEdit,
+  onSelectForAssignment,
   tables = [],
 }: ReservationRowProps) {
   const [showMenu, setShowMenu] = useState(false);
@@ -697,6 +699,15 @@ export function ReservationRow({
                   >
                     Modifier
                   </button>
+                  {/* Assigner table */}
+                  {onSelectForAssignment && (
+                    <button
+                      className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-emerald-50 hover:text-emerald-700"
+                      onClick={() => { onSelectForAssignment(); setShowMenu(false); }}
+                    >
+                      Assigner table
+                    </button>
+                  )}
                   {/* Dynamic actions based on status - text-xs (12px) */}
                   {menuActions.map((action) => (
                     <button

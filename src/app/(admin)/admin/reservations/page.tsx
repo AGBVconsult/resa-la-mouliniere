@@ -17,6 +17,7 @@ import {
   DayOverrideModal,
   type Reservation,
 } from "./components";
+import { ServiceFloorPlan } from "@/components/admin/floor-plan/ServiceFloorPlan";
 
 export default function ReservationsPage() {
   const searchParams = useSearchParams();
@@ -39,6 +40,7 @@ export default function ReservationsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+  const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
 
   // Format date for API
   const dateKey = format(selectedDate, "yyyy-MM-dd");
@@ -91,6 +93,16 @@ export default function ReservationsPage() {
 
   const handleEdit = useCallback((reservation: Reservation) => {
     setEditingReservation(reservation);
+  }, []);
+
+  // Handle table assignment selection
+  const handleSelectForAssignment = useCallback((reservation: Reservation) => {
+    setSelectedForAssignment(reservation);
+    setShowFloorPlan(true);
+  }, []);
+
+  const handleAssignmentComplete = useCallback(() => {
+    setSelectedForAssignment(null);
   }, []);
 
   const isLoading = status === "LoadingFirstPage";
@@ -148,6 +160,7 @@ export default function ReservationsPage() {
               onToggleExpand={handleToggleExpand}
               onStatusChange={handleStatusChange}
               onEdit={handleEdit}
+              onSelectForAssignment={handleSelectForAssignment}
               slotCapacities={slotCapacities}
             />
           )}
@@ -163,13 +176,26 @@ export default function ReservationsPage() {
           )}
         </div>
 
-        {/* Floor Plan (placeholder) */}
+        {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="flex-1 ml-4 bg-white border rounded-lg overflow-hidden animate-in slide-in-from-right-8 fade-in duration-500">
-            <div className="h-full flex items-center justify-center text-gray-400">
-              <div className="text-center">
-                <p className="text-lg font-medium">Plan de salle</p>
-                <p className="text-sm">À implémenter</p>
+          <div className="flex-1 ml-4 bg-white border rounded-lg overflow-hidden animate-in slide-in-from-right-8 fade-in duration-500 p-4">
+            <div className="h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Plan de salle</h3>
+                {selectedForAssignment && (
+                  <div className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
+                    Assigner: {selectedForAssignment.lastName} ({selectedForAssignment.partySize}p)
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 overflow-auto">
+                <ServiceFloorPlan
+                  dateKey={dateKey}
+                  service={currentService}
+                  selectedReservationId={selectedForAssignment?._id}
+                  selectedReservationVersion={selectedForAssignment?.version}
+                  onAssignmentComplete={handleAssignmentComplete}
+                />
               </div>
             </div>
           </div>
