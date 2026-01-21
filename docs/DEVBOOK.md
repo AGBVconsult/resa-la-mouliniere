@@ -3,8 +3,8 @@
 > Guide de développement complet avec tâches granulaires.
 > Utilisé par Windsurf et Claude pour recommander la prochaine tâche selon le temps disponible.
 
-**Dernière mise à jour :** 2026-01-18
-**Progression globale :** 80%
+**Dernière mise à jour :** 2026-01-21
+**Progression globale :** 88%
 
 ---
 
@@ -17,20 +17,22 @@
 | 3 | Emails & Crons | 🟡 En cours | 80% |
 | 3b | Page Modification Client | ✅ Terminé | 100% |
 | 3c | Page Annulation Client | ✅ Terminé | 100% |
-| 4 | Interface Admin | 🟡 En cours | 60% |
+| 4 | Interface Admin | ✅ Terminé | 95% |
+| 4b | Plan de Salle (PRD-004) | ✅ Terminé | 95% |
 | 5 | Polish & Tests | ❌ Non commencé | 0% |
 
 ---
 
-## 🏃 Sprint Actuel : Interface Admin
+## 🏃 Sprint Actuel : Finalisation MVP
 
 ### Objectif
-Créer l'interface admin complète (iPad-first) permettant la gestion quotidienne des réservations : vue service, gestion statuts, attribution tables, création manuelle.
+Corriger les derniers bugs et compléter les emails admin.
 
 ### Critères de complétion
-- [ ] Vue Service affiche les réservations du jour par service (lunch/dinner)
-- [ ] Gestion des statuts fonctionnelle (pending → confirmed → seated → completed)
-- [ ] Attribution de tables par click-to-click
+- [x] Vue Service affiche les réservations du jour par service (lunch/dinner)
+- [x] Gestion des statuts fonctionnelle (pending → confirmed → seated → completed)
+- [x] Attribution de tables par click-to-click
+- [ ] Bug primaryTableId — Affiche mauvaise table en combinaison backward
 - [ ] Création de réservation manuelle (téléphone/walk-in)
 - [ ] Notification email admin quand réservation pending créée
 
@@ -149,21 +151,24 @@ Créer l'interface admin complète (iPad-first) permettant la gestion quotidienn
   - [ ] UI feedback immédiat (optimistic update)
 
 #### [TASK-106] — Attribution de tables (click-to-click)
-- **Statut :** ❌
+- **Statut :** ✅ Terminé
 - **Durée :** ⏱️ 3h
 - **Dépendances :** 🔗 TASK-105
 - **Fichiers :** 
-  - `src/components/admin/TableAssignment.tsx` (créer)
-  - `src/components/admin/TableGrid.tsx` (créer)
+  - `src/components/admin/floor-plan/ServiceFloorPlan.tsx` ✅
+  - `src/components/admin/floor-plan/FloorPlanGrid.tsx` ✅
+  - `src/components/admin/floor-plan/FloorPlanTable.tsx` ✅
 - **Description :** 
-  - Grille des tables disponibles
-  - Click sur réservation → click sur table = assignation
-  - Visualisation tables occupées/libres
-  - Multi-tables possible (grands groupes)
+  - Grille des tables avec dimensions dynamiques
+  - Click sur réservation → click sur table = assignation directe
+  - Visualisation tables occupées/libres/réservées
+  - Multi-tables automatique (combinaison intelligente)
+  - Zones salle/terrasse avec switch
 - **Critères de validation :**
-  - [ ] Assignation table fonctionne
-  - [ ] Visualisation occupation temps réel
-  - [ ] Pas de drag & drop (click-to-click uniquement)
+  - [x] Assignation table fonctionne
+  - [x] Visualisation occupation temps réel
+  - [x] Pas de drag & drop (click-to-click uniquement)
+  - [x] Combinaison bidirectionnelle intelligente
 
 #### [TASK-107] — Création réservation manuelle
 - **Statut :** ❌
@@ -573,6 +578,7 @@ Nouveau statut "incident" ajouté (18/01) - empêche envoi email review J+1
 | 2026-01-08 | 2h | Audit MVP complet | Création DEVBOOK, PROJECT_STATUS |
 | 2026-01-17 | 3h | Pages edit/cancel client | TASK-301, TASK-303 |
 | 2026-01-18 | 4h | Interface Admin Vue Service | TASK-101, 102, 103, 105 + tracking ponctualité |
+| 2026-01-21 | 3h | Plan de salle complet | TASK-106 + PRD-004 (config tables, assignation directe, combinaison intelligente) |
 
 ---
 
@@ -582,6 +588,6 @@ Nouveau statut "incident" ajouté (18/01) - empêche envoi email review J+1
 
 **Si tu as 1h :** TASK-204 (Cron email review J+1) — Complète la séquence emails
 
-**Si tu as 2h :** TASK-106 (Attribution tables click-to-click) — Complète l'interface admin
+**Si tu as 2h :** TASK-107 (Création manuelle) — Complète l'interface admin
 
-**Si tu as une demi-journée :** TASK-106 + TASK-107 — Admin complet avec création manuelle
+**Si tu as une demi-journée :** Bug primaryTableId + TASK-107 — Admin complet
