@@ -157,6 +157,7 @@ export default function ReservationsPage() {
               reservations={(reservations as Reservation[]) || []}
               isCompact={showFloorPlan}
               expandedId={expandedId}
+              selectedForAssignmentId={selectedForAssignment?._id}
               onToggleExpand={handleToggleExpand}
               onStatusChange={handleStatusChange}
               onEdit={handleEdit}

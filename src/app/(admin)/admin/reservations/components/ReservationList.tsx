@@ -9,6 +9,7 @@ interface ReservationListProps {
   reservations: Reservation[];
   isCompact?: boolean;
   expandedId: Id<"reservations"> | null;
+  selectedForAssignmentId?: Id<"reservations"> | null;
   onToggleExpand: (id: Id<"reservations">) => void;
   onStatusChange: (id: Id<"reservations">, status: string, version: number) => void;
   onEdit: (reservation: Reservation) => void;
@@ -28,6 +29,7 @@ export function ReservationList({
   reservations,
   isCompact = false,
   expandedId,
+  selectedForAssignmentId,
   onToggleExpand,
   onStatusChange,
   onEdit,
@@ -108,6 +110,7 @@ export function ReservationList({
               reservation={reservation}
               isCompact={isCompact}
               isExpanded={expandedId === reservation._id}
+              isSelectedForAssignment={selectedForAssignmentId === reservation._id}
               onToggleExpand={() => onToggleExpand(reservation._id)}
               onStatusChange={(status) => onStatusChange(reservation._id, status, reservation.version)}
               onEdit={() => onEdit(reservation)}

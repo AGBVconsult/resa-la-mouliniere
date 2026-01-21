@@ -390,6 +390,7 @@ interface ReservationRowProps {
   reservation: Reservation;
   isCompact?: boolean;
   isExpanded?: boolean;
+  isSelectedForAssignment?: boolean;
   onToggleExpand: () => void;
   onStatusChange: (status: string) => void;
   onEdit: () => void;
@@ -401,6 +402,7 @@ export function ReservationRow({
   reservation,
   isCompact = false,
   isExpanded = false,
+  isSelectedForAssignment = false,
   onToggleExpand,
   onStatusChange,
   onEdit,
@@ -518,7 +520,8 @@ export function ReservationRow({
       <div
         className={cn(
           "grid grid-cols-[24px_50px_44px_36px_1fr_60px] items-center px-4 py-2 hover:bg-gray-50/50 cursor-pointer border-b border-gray-100",
-          isExpanded && "bg-gray-50"
+          isExpanded && "bg-gray-50",
+          isSelectedForAssignment && "bg-blue-50 border-blue-200"
         )}
         onClick={onToggleExpand}
       >
@@ -568,7 +571,8 @@ export function ReservationRow({
       <div
         className={cn(
           "flex items-center px-4 py-3 hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 gap-4",
-          isExpanded && "bg-gray-50"
+          isExpanded && "bg-gray-50",
+          isSelectedForAssignment && "bg-blue-50 border-blue-200"
         )}
         onClick={onToggleExpand}
       >

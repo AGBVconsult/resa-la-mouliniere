@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
-import { Users, X, Check, AlertCircle } from "lucide-react";
+import { Users } from "lucide-react";
 import {
   GRID_CELL_SIZE,
   TABLE_SIZE,
@@ -13,7 +13,6 @@ import {
   GRID_WIDTH,
   GRID_HEIGHT,
 } from "@/lib/constants/grid";
-import { Button } from "@/components/ui/button";
 
 // Simple toast replacement (can be replaced with sonner or react-hot-toast later)
 const toast = {
@@ -50,23 +49,12 @@ export function ServiceFloorPlan({
   selectedReservationName,
   onAssignmentComplete,
 }: ServiceFloorPlanProps) {
-  const [selectedTableIds, setSelectedTableIds] = useState<Set<string>>(new Set());
-  const [primaryTableId, setPrimaryTableId] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
 
   // Query table states for this service
   const tableStates = useQuery(api.floorplan.getTableStates, { dateKey, service });
   const assignMutation = useMutation(api.floorplan.assign);
-  const checkAssignment = useQuery(
-    api.floorplan.checkAssignment,
-    selectedReservationId && selectedTableIds.size > 0
-      ? {
-          reservationId: selectedReservationId,
-          tableIds: Array.from(selectedTableIds) as Id<"tables">[],
-        }
-      : "skip"
-  );
 
   // Filter tables by active zone and valid names (exclude test tables like D-30)
   const filteredTables = useMemo(() => {
@@ -174,8 +162,8 @@ export function ServiceFloorPlan({
     };
   }, [tableStates]);
 
-  // Handle table click
-  const handleTableClick = (tableId: string, status: TableStatus) => {
+  // Handle table click - assign directly on click
+  const handleTableClick = async (tableId: string, status: TableStatus) => {
     if (!selectedReservationId) {
       toast.info("Sélectionnez d'abord une réservation à assigner");
       return;
@@ -191,40 +179,25 @@ export function ServiceFloorPlan({
       return;
     }
 
-    // If clicking on already selected table, deselect all
-    if (selectedTableIds.has(tableId)) {
-      setSelectedTableIds(new Set());
-      setPrimaryTableId(null);
-      return;
-    }
+    if (selectedReservationVersion === undefined) return;
+    if (isAssigning) return;
 
     // Auto-select combinable tables based on party size
     const partySize = selectedPartySize ?? 4;
     const tablesToSelect = findCombinableTables(tableId, partySize);
     
-    setSelectedTableIds(new Set(tablesToSelect));
-    setPrimaryTableId(tableId); // Remember which table was clicked
-  };
-
-  // Handle assignment
-  const handleAssign = async () => {
-    if (!selectedReservationId || selectedTableIds.size === 0) return;
-    if (selectedReservationVersion === undefined) return;
-
+    // Assign directly
     setIsAssigning(true);
     try {
       await assignMutation({
         reservationId: selectedReservationId,
-        tableIds: Array.from(selectedTableIds) as Id<"tables">[],
+        tableIds: tablesToSelect as Id<"tables">[],
         expectedVersion: selectedReservationVersion,
       });
-      toast.success("Table(s) assignée(s)");
-      setSelectedTableIds(new Set());
-      setPrimaryTableId(null);
+      toast.success("Table assignée");
       onAssignmentComplete?.();
     } catch (error: any) {
       const message = error.message || "Erreur d'assignation";
-      // Parse error code
       const [code, ...params] = message.split("|");
       switch (code) {
         case "VERSION_CONFLICT":
@@ -246,27 +219,6 @@ export function ServiceFloorPlan({
       setIsAssigning(false);
     }
   };
-
-  // Cancel selection
-  const handleCancel = () => {
-    setSelectedTableIds(new Set());
-    setPrimaryTableId(null);
-  };
-
-  // Calculate total capacity of selected tables
-  const selectedCapacity = useMemo(() => {
-    if (!tableStates) return 0;
-    return tableStates.tables
-      .filter((t) => selectedTableIds.has(t.tableId))
-      .reduce((sum, t) => sum + t.capacity, 0);
-  }, [tableStates, selectedTableIds]);
-
-  // Get primary table name for display
-  const primaryTableName = useMemo(() => {
-    if (!primaryTableId || !tableStates) return null;
-    const table = tableStates.tables.find((t) => t.tableId === primaryTableId);
-    return table?.name ?? null;
-  }, [primaryTableId, tableStates]);
 
   if (!tableStates) {
     return (
@@ -323,32 +275,6 @@ export function ServiceFloorPlan({
         </div>
       </div>
 
-      {/* Assignment info row */}
-      {selectedReservationName && (
-        <div className="flex items-center justify-end mt-2">
-          <div className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full whitespace-nowrap">
-            Assigner: {selectedReservationName}
-          </div>
-        </div>
-      )}
-
-      {/* Selection info when tables selected */}
-      {selectedReservationId && selectedTableIds.size > 0 && (
-        <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-          <span>
-            {primaryTableName && <span className="font-medium">{primaryTableName}</span>}
-            {selectedTableIds.size > 1 && ` (+${selectedTableIds.size - 1})`}
-            {" "}• {selectedCapacity} places
-          </span>
-          {checkAssignment && !checkAssignment.valid && (
-            <span className="text-xs text-red-600 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" />
-              {checkAssignment.error?.split("|")[0]}
-            </span>
-          )}
-        </div>
-      )}
-
       {/* Floor plan grid */}
       <div
         className="flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg overflow-auto mt-4 transition-all duration-300"
@@ -384,8 +310,6 @@ export function ServiceFloorPlan({
 
           {/* Tables */}
           {filteredTables.map((table) => {
-            const isSelected = selectedTableIds.has(table.tableId);
-            const isPrimary = table.tableId === primaryTableId;
             const statusColors = STATUS_COLORS[table.status as TableStatus];
             const width = (table.width ?? 1) * TABLE_SIZE - 4;
             const height = (table.height ?? 1) * TABLE_SIZE - 4;
@@ -398,11 +322,11 @@ export function ServiceFloorPlan({
                   statusColors.bg,
                   statusColors.border,
                   table.status === "blocked" && "opacity-50",
-                  isSelected && "ring-2 ring-blue-500 ring-offset-2 scale-105",
                   selectedReservationId &&
                     table.status !== "blocked" &&
                     table.status !== "seated" &&
-                    "cursor-pointer hover:scale-[1.02] hover:shadow-md"
+                    "cursor-pointer hover:scale-[1.02] hover:shadow-md",
+                  isAssigning && "pointer-events-none opacity-70"
                 )}
                 style={{
                   left: table.positionX * GRID_CELL_SIZE + 2,
@@ -428,39 +352,12 @@ export function ServiceFloorPlan({
                     {table.reservation.lastName}
                   </span>
                 )}
-
-                {/* Selection checkmark */}
-                {isSelected && (
-                  <div className={cn(
-                    "absolute -top-1 -right-1 rounded-full p-0.5",
-                    isPrimary ? "bg-blue-600" : "bg-blue-400"
-                  )}>
-                    <Check className="w-2.5 h-2.5 text-white" />
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Action buttons - fixed at bottom */}
-      {selectedReservationId && selectedTableIds.size > 0 && (
-        <div className="flex items-center justify-end gap-2 pt-3 mt-3 border-t shrink-0">
-          <Button variant="outline" size="sm" onClick={handleCancel} disabled={isAssigning}>
-            <X className="w-4 h-4 mr-1" />
-            Annuler
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleAssign}
-            disabled={isAssigning || (checkAssignment && !checkAssignment.valid)}
-          >
-            <Check className="w-4 h-4 mr-1" />
-            Assigner {selectedTableIds.size} table(s)
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
