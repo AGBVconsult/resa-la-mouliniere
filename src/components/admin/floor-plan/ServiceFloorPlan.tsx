@@ -216,6 +216,7 @@ export function ServiceFloorPlan({
       await assignMutation({
         reservationId: selectedReservationId,
         tableIds: tablesToSelect as Id<"tables">[],
+        primaryTableId: tableId as Id<"tables">, // Table cliquée par l'utilisateur
         expectedVersion: selectedReservationVersion,
       });
       toast.success("Table assignée");

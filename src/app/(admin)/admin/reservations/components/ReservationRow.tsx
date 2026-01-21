@@ -383,6 +383,7 @@ export interface Reservation {
   status: string;
   source: "online" | "admin" | "phone" | "walkin";
   tableIds: Id<"tables">[];
+  primaryTableId?: Id<"tables">;
   version: number;
 }
 
@@ -415,10 +416,12 @@ export function ReservationRow({
   const visits = 1; // TODO: Get from CRM
   const visitBadge = getVisitBadgeStyle(visits);
 
-  // Get table names
-  const tableNames = reservation.tableIds
-    .map((id) => tables.find((t) => t._id === id)?.name || "-")
-    .join(" + ") || "-";
+  // Get primary table name (the one clicked during assignment)
+  const primaryTableName = reservation.primaryTableId
+    ? tables.find((t) => t._id === reservation.primaryTableId)?.name || "-"
+    : reservation.tableIds.length > 0
+      ? tables.find((t) => t._id === reservation.tableIds[0])?.name || "-"
+      : "-";
 
   // Options icons
   const hasOption = (opt: string) => reservation.options?.includes(opt);
@@ -540,7 +543,7 @@ export function ReservationRow({
 
         {/* Table */}
         <span className="w-10 text-xs px-1.5 py-0.5 bg-gray-100 rounded text-center shrink-0">
-          {tableNames.substring(0, 4) || "-"}
+          {primaryTableName}
         </span>
 
         {/* Party size */}
@@ -608,7 +611,7 @@ export function ReservationRow({
 
         {/* Table */}
         <span className="w-14 text-sm px-2.5 py-1 bg-gray-100 rounded text-center">
-          {tableNames}
+          {primaryTableName}
         </span>
 
         {/* Party size - detailed: total (Xe + Xb) */}

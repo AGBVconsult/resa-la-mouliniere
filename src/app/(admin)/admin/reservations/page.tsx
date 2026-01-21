@@ -48,6 +48,9 @@ export default function ReservationsPage() {
   // Fetch slots for capacities
   const slotsData = useQuery(api.slots.listByDate, { dateKey });
 
+  // Fetch tables for display
+  const tablesData = useQuery(api.tables.list, {});
+
   // Build slotCapacities map for current service
   const slotCapacities = useMemo(() => {
     if (!slotsData) return {};
@@ -163,6 +166,7 @@ export default function ReservationsPage() {
               onEdit={handleEdit}
               onSelectForAssignment={handleSelectForAssignment}
               slotCapacities={slotCapacities}
+              tables={tablesData ?? []}
             />
           )}
 
