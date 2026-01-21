@@ -174,9 +174,10 @@ export const assign = mutation({
   args: {
     reservationId: v.id("reservations"),
     tableIds: v.array(v.id("tables")),
+    primaryTableId: v.optional(v.id("tables")),
     expectedVersion: v.number(),
   },
-  handler: async (ctx, { reservationId, tableIds, expectedVersion }) => {
+  handler: async (ctx, { reservationId, tableIds, primaryTableId, expectedVersion }) => {
     // 1. Load reservation
     const reservation = await ctx.db.get(reservationId);
     if (!reservation) {
@@ -256,8 +257,12 @@ export const assign = mutation({
     const now = Date.now();
     const newVersion = reservation.version + 1;
 
+    // Use primaryTableId if provided, otherwise use first table
+    const effectivePrimaryTableId = primaryTableId ?? tableIds[0];
+
     await ctx.db.patch(reservationId, {
       tableIds,
+      primaryTableId: effectivePrimaryTableId,
       version: newVersion,
       updatedAt: now,
     });

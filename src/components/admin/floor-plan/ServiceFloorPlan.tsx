@@ -180,6 +180,7 @@ export function ServiceFloorPlan({
       await assignMutation({
         reservationId: selectedReservationId,
         tableIds: Array.from(selectedTableIds) as Id<"tables">[],
+        primaryTableId: primaryTableId as Id<"tables"> | undefined,
         expectedVersion: selectedReservationVersion,
       });
       toast.success("Table(s) assignée(s)");

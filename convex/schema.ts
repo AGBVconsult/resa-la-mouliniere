@@ -163,6 +163,7 @@ export default defineSchema({
     source: reservationSource,
 
     tableIds: v.array(v.id("tables")),
+    primaryTableId: v.optional(v.id("tables")),
 
     version: v.number(),
     createdAt: v.number(),
