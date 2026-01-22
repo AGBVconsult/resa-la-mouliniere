@@ -1,12 +1,15 @@
 # Sprint Status — Hardening MVP
 # Generated: 2026-01-22
+# Updated: 2026-01-22
 # Project: la-mouliniere
 
 current_sprint: 1
 sprint_name: "Hardening MVP Production"
 sprint_goal: "Atteindre le niveau production-ready avant release"
+sprint_status: "completed"
 start_date: "2026-01-22"
-end_date: "2026-01-24"
+end_date: "2026-01-22"
+actual_effort: "~5h"
 
 # STATUS VALUES:
 # - not_started: Work has not begun
@@ -81,9 +84,31 @@ metrics:
   in_progress: 0
   blocked: 0
   velocity_target: 7
+  velocity_actual: 7
+  completion_rate: "100%"
+  
+# Deliverables
+deliverables:
+  files_created:
+    - "src/components/ui/toast.tsx"
+    - "src/components/ui/toaster.tsx"
+    - "src/hooks/use-toast.ts"
+    - "src/lib/formatError.ts"
+    - "src/components/admin/AdminLayoutClient.tsx"
+    - "src/app/(auth)/admin/access-denied/page.tsx"
+  files_modified:
+    - "src/app/(admin)/admin/layout.tsx"
+    - "src/components/admin/floor-plan/ServiceFloorPlan.tsx"
+    - "src/app/(admin)/admin/reservations/page.tsx"
+    - "src/app/(admin)/admin/reservations/components/CreateReservationModal.tsx"
+    - "e2e/admin.spec.ts"
+    - "e2e/reservation-management.spec.ts"
+    - "e2e/widget-reservation.spec.ts"
+  commit: "67fa6b5"
   
 # Notes
 notes:
-  - "Phase 1 (P1): Toast + formatError = 2h - À faire en priorité"
-  - "Phase 2 (P2): Tests E2E + Role gate = 3h - Après Phase 1"
-  - "Tester sur iPad réel avant merge"
+  - "✅ Phase 1 (P1): Toast + formatError = 2h - TERMINÉ"
+  - "✅ Phase 2 (P2): Tests E2E + Role gate = 3h - TERMINÉ"
+  - "✅ Tests E2E: 42 tests (34 pass, 8 skip auth-required)"
+  - "✅ Commit mergé sur main: 67fa6b5"

@@ -1,15 +1,18 @@
 ---
-stepsCompleted: ['init', 'analysis', 'synthesis', 'complete']
+stepsCompleted: ['init', 'analysis', 'synthesis', 'complete', 'implemented']
 inputDocuments: ['docs/ETAT_AVANCEMENT_GLOBAL.md', 'docs/AUDIT_MVP_2026-01-08.md', 'docs/DEVBOOK.md', 'docs/PROJECT_STATUS.md']
 workflowType: 'research'
-lastStep: 4
+lastStep: 5
 research_type: 'technical'
 research_topic: 'hardening-mvp'
 research_goals: 'Identifier et prioriser les améliorations techniques pour la release production'
 user_name: 'Benjaminvantilcke'
 date: '2026-01-22'
+updated: '2026-01-22'
 web_research_enabled: false
 source_verification: true
+status: 'implemented'
+implementation_commit: '67fa6b5'
 ---
 
 # Research Report: Technical Hardening MVP
