@@ -9,6 +9,7 @@
  */
 
 import type * as admin from "../admin.js";
+import type * as assignmentLogs from "../assignmentLogs.js";
 import type * as availability from "../availability.js";
 import type * as crons from "../crons.js";
 import type * as email from "../email.js";
@@ -18,6 +19,7 @@ import type * as floorplan from "../floorplan.js";
 import type * as groupRequests from "../groupRequests.js";
 import type * as idempotency from "../idempotency.js";
 import type * as jobs from "../jobs.js";
+import type * as lib_adjacency from "../lib/adjacency.js";
 import type * as lib_dateUtils from "../lib/dateUtils.js";
 import type * as lib_email_ops from "../lib/email/ops.js";
 import type * as lib_email_resend from "../lib/email/resend.js";
@@ -26,7 +28,12 @@ import type * as lib_email_templates from "../lib/email/templates.js";
 import type * as lib_errors from "../lib/errors.js";
 import type * as lib_idempotency from "../lib/idempotency.js";
 import type * as lib_pushover from "../lib/pushover.js";
+import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_rbac from "../lib/rbac.js";
+import type * as lib_scoring from "../lib/scoring.js";
+import type * as lib_setPredictor from "../lib/setPredictor.js";
+import type * as lib_shadowMetrics from "../lib/shadowMetrics.js";
+import type * as lib_snapshot from "../lib/snapshot.js";
 import type * as lib_stateMachine from "../lib/stateMachine.js";
 import type * as lib_tokens from "../lib/tokens.js";
 import type * as lib_turnstile from "../lib/turnstile.js";
@@ -49,6 +56,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
+  assignmentLogs: typeof assignmentLogs;
   availability: typeof availability;
   crons: typeof crons;
   email: typeof email;
@@ -58,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   groupRequests: typeof groupRequests;
   idempotency: typeof idempotency;
   jobs: typeof jobs;
+  "lib/adjacency": typeof lib_adjacency;
   "lib/dateUtils": typeof lib_dateUtils;
   "lib/email/ops": typeof lib_email_ops;
   "lib/email/resend": typeof lib_email_resend;
@@ -66,7 +75,12 @@ declare const fullApi: ApiFromModules<{
   "lib/errors": typeof lib_errors;
   "lib/idempotency": typeof lib_idempotency;
   "lib/pushover": typeof lib_pushover;
+  "lib/rateLimit": typeof lib_rateLimit;
   "lib/rbac": typeof lib_rbac;
+  "lib/scoring": typeof lib_scoring;
+  "lib/setPredictor": typeof lib_setPredictor;
+  "lib/shadowMetrics": typeof lib_shadowMetrics;
+  "lib/snapshot": typeof lib_snapshot;
   "lib/stateMachine": typeof lib_stateMachine;
   "lib/tokens": typeof lib_tokens;
   "lib/turnstile": typeof lib_turnstile;

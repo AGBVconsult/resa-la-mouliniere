@@ -17,13 +17,16 @@ import {
   computeShadowMetrics 
 } from "./lib/shadowMetrics";
 import { isTableSetAdjacent, getCanonicalZone } from "./lib/adjacency";
+import { quickPredict } from "./lib/setPredictor";
+import { computeShadowMetrics as computeMetrics } from "./lib/shadowMetrics";
 
 // Current scoring version
 const CURRENT_SCORING_VERSION = "V0" as const;
 const CURRENT_SCHEMA_VERSION = 4 as const;
 
-// Current phase (will be configurable later)
+// Current phase - Phase 2: Shadow Learning active
 const CURRENT_PHASE: Phase = "shadow";
+const ENABLE_PREDICTIONS = true; // Phase 2: Enable ML predictions
 
 /**
  * Log a table assignment (called after successful assign mutation)
@@ -111,6 +114,66 @@ export const logAssignment = internalMutation({
     const assignedIsAdjacent = isTableSetAdjacent(validTables);
     const assignedTableNames = validTables.map(t => t.name);
 
+    // Phase 2: Generate ML prediction and shadow metrics
+    let mlPrediction = undefined;
+    let shadowMetrics = undefined;
+
+    if (ENABLE_PREDICTIONS) {
+      // Get available tables (not yet assigned)
+      const availableTables = activeTables.filter(t => !takenTableIds.has(t._id));
+      
+      // Generate prediction
+      const prediction = quickPredict(
+        availableTables,
+        args.partySize,
+        occupancy.zoneOccupancies
+      );
+
+      if (prediction) {
+        // Load predicted tables for comparison
+        const predictedTables = await Promise.all(
+          prediction.predictedSet.tableSet.map(id => ctx.db.get(id))
+        );
+        const validPredictedTables = predictedTables.filter((t): t is Doc<"tables"> => t !== null);
+
+        mlPrediction = {
+          predictedSet: prediction.predictedSet.tableSet,
+          predictedZone: prediction.predictedSet.zone,
+          predictedCapacity: prediction.predictedSet.capacity,
+          predictedIsAdjacent: prediction.predictedSet.isAdjacent,
+          confidence: prediction.predictedSet.confidence,
+          alternativeSets: prediction.alternativeSets.map(alt => ({
+            tableSet: alt.tableSet,
+            zone: alt.zone,
+            capacity: alt.capacity,
+            isAdjacent: alt.isAdjacent,
+            confidence: alt.confidence,
+          })),
+          scoringDetails: prediction.predictedSet.scoringDetails,
+        };
+
+        // Compute shadow metrics (compare prediction vs actual choice)
+        const metrics = computeMetrics(
+          prediction.predictedSet.tableSet,
+          validPredictedTables,
+          args.assignedTableIds,
+          validTables,
+          args.partySize
+        );
+
+        shadowMetrics = {
+          exactSetMatch: metrics.exactSetMatch,
+          partialMatchRatio: metrics.partialMatchRatio,
+          adjacencyMatch: metrics.adjacencyMatch,
+          zoneMatch: metrics.zoneMatch,
+          errorSeverity: metrics.errorSeverity,
+          capacityWasteRatio: metrics.capacityWasteRatio,
+          wastePerSeat: metrics.wastePerSeat,
+          comparedAt: metrics.comparedAt,
+        };
+      }
+    }
+
     // Insert log
     const logId = await ctx.db.insert("assignmentLogs", {
       schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -146,6 +209,10 @@ export const logAssignment = internalMutation({
       assignedIsAdjacent,
       assignedBy: args.assignedBy,
       assignmentMethod: args.assignmentMethod,
+
+      // Phase 2: ML prediction and shadow metrics
+      mlPrediction,
+      shadowMetrics,
 
       createdAt: now,
       updatedAt: now,
@@ -208,7 +275,7 @@ export const getByReservation = query({
 });
 
 /**
- * Get shadow learning statistics
+ * Get shadow learning statistics (Phase 2 enhanced)
  */
 export const getShadowStats = query({
   args: {
@@ -235,16 +302,29 @@ export const getShadowStats = query({
         exactSetMatchRate: null,
         avgPartialMatchRatio: null,
         zoneMatchRate: null,
+        adjacencyMatchRate: null,
+        avgConfidence: null,
         errorSeverityDistribution: null,
+        byPartySizeCategory: null,
+        byZone: null,
+        readyForPhase3: false,
+        phase3Blockers: ["Pas assez de données"],
       };
     }
 
     const exactMatches = logsWithMetrics.filter(l => l.shadowMetrics?.exactSetMatch).length;
     const zoneMatches = logsWithMetrics.filter(l => l.shadowMetrics?.zoneMatch).length;
+    const adjacencyMatches = logsWithMetrics.filter(l => l.shadowMetrics?.adjacencyMatch).length;
+    
     const avgPartialMatch = logsWithMetrics.reduce(
       (sum, l) => sum + (l.shadowMetrics?.partialMatchRatio ?? 0), 
       0
     ) / logsWithMetrics.length;
+
+    const logsWithPrediction = logs.filter(l => l.mlPrediction);
+    const avgConfidence = logsWithPrediction.length > 0
+      ? logsWithPrediction.reduce((sum, l) => sum + (l.mlPrediction?.confidence ?? 0), 0) / logsWithPrediction.length
+      : null;
 
     const severityDist = {
       none: logsWithMetrics.filter(l => l.shadowMetrics?.errorSeverity === "none").length,
@@ -253,13 +333,65 @@ export const getShadowStats = query({
       critical: logsWithMetrics.filter(l => l.shadowMetrics?.errorSeverity === "critical").length,
     };
 
+    // Stats by party size category
+    const byPartySizeCategory: Record<string, { count: number; exactMatchRate: number }> = {};
+    const categories = ["solo", "couple", "small_group", "medium_group", "large_group"];
+    for (const cat of categories) {
+      const catLogs = logsWithMetrics.filter(l => l.partySizeCategory === cat);
+      if (catLogs.length > 0) {
+        const catExact = catLogs.filter(l => l.shadowMetrics?.exactSetMatch).length;
+        byPartySizeCategory[cat] = {
+          count: catLogs.length,
+          exactMatchRate: catExact / catLogs.length,
+        };
+      }
+    }
+
+    // Stats by zone
+    const byZone: Record<string, { count: number; exactMatchRate: number }> = {};
+    const zones = ["salle", "terrasse", "mixed"];
+    for (const zone of zones) {
+      const zoneLogs = logsWithMetrics.filter(l => l.assignedZone === zone);
+      if (zoneLogs.length > 0) {
+        const zoneExact = zoneLogs.filter(l => l.shadowMetrics?.exactSetMatch).length;
+        byZone[zone] = {
+          count: zoneLogs.length,
+          exactMatchRate: zoneExact / zoneLogs.length,
+        };
+      }
+    }
+
+    // Phase 3 readiness check
+    const exactSetMatchRate = exactMatches / logsWithMetrics.length;
+    const majorErrorRate = (severityDist.major + severityDist.critical) / logsWithMetrics.length;
+    const minLogsRequired = 200;
+
+    const phase3Blockers: string[] = [];
+    if (logsWithMetrics.length < minLogsRequired) {
+      phase3Blockers.push(`Besoin de ${minLogsRequired - logsWithMetrics.length} logs supplémentaires`);
+    }
+    if (exactSetMatchRate < 0.8) {
+      phase3Blockers.push(`exactSetMatch ${Math.round(exactSetMatchRate * 100)}% < 80%`);
+    }
+    if (majorErrorRate > 0.05) {
+      phase3Blockers.push(`majorErrors ${Math.round(majorErrorRate * 100)}% > 5%`);
+    }
+
+    const readyForPhase3 = phase3Blockers.length === 0;
+
     return {
       totalLogs: logs.length,
       logsWithPrediction: logsWithMetrics.length,
-      exactSetMatchRate: exactMatches / logsWithMetrics.length,
+      exactSetMatchRate,
       avgPartialMatchRatio: avgPartialMatch,
       zoneMatchRate: zoneMatches / logsWithMetrics.length,
+      adjacencyMatchRate: adjacencyMatches / logsWithMetrics.length,
+      avgConfidence,
       errorSeverityDistribution: severityDist,
+      byPartySizeCategory,
+      byZone,
+      readyForPhase3,
+      phase3Blockers,
     };
   },
 });
