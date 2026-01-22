@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -11,42 +11,22 @@ export const metadata = {
 
 const ALLOWED_ROLES = ["admin", "owner", "staff"];
 
-function normalizeRole(role: unknown): string | null {
-  if (typeof role !== "string") return null;
-  const normalized = role.trim().toLowerCase();
-  return normalized.length > 0 ? normalized : null;
-}
-
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { userId, sessionClaims } = await auth();
-
-  // DEBUG: Log sessionClaims pour identifier la structure exacte
-  console.log("[AdminLayout] sessionClaims:", JSON.stringify(sessionClaims, null, 2));
+  const { userId } = await auth();
 
   if (!userId) {
     redirect("/admin/login");
   }
 
-  // Vérifier le rôle de l'utilisateur
-  // Le rôle est stocké dans les metadata publiques Clerk (publicMetadata.role)
-  const claims = sessionClaims as
-    | (Record<string, unknown> & {
-        role?: unknown;
-        publicMetadata?: Record<string, unknown>;
-        public_metadata?: Record<string, unknown>;
-        metadata?: Record<string, unknown>;
-      })
-    | undefined;
-
-  const userRole =
-    normalizeRole(claims?.role) ||
-    normalizeRole(claims?.public_metadata?.role) ||
-    normalizeRole(claims?.publicMetadata?.role) ||
-    normalizeRole(claims?.metadata?.role);
+  // Récupérer le rôle depuis les publicMetadata de l'utilisateur Clerk
+  // (les sessionClaims ne contiennent pas le rôle par défaut)
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
+  const userRole = (user.publicMetadata?.role as string | undefined)?.toLowerCase();
 
   // Si l'utilisateur n'a pas de rôle autorisé, rediriger vers access-denied
   if (!userRole || !ALLOWED_ROLES.includes(userRole)) {
