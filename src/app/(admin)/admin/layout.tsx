@@ -32,6 +32,7 @@ export default async function AdminLayout({
   // Le rôle est stocké dans les metadata publiques Clerk (publicMetadata.role)
   const claims = sessionClaims as
     | (Record<string, unknown> & {
+        role?: unknown;
         publicMetadata?: Record<string, unknown>;
         public_metadata?: Record<string, unknown>;
         metadata?: Record<string, unknown>;
@@ -39,6 +40,7 @@ export default async function AdminLayout({
     | undefined;
 
   const userRole =
+    normalizeRole(claims?.role) ||
     normalizeRole(claims?.public_metadata?.role) ||
     normalizeRole(claims?.publicMetadata?.role) ||
     normalizeRole(claims?.metadata?.role);
