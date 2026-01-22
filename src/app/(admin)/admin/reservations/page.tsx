@@ -8,6 +8,8 @@ import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { formatConvexError } from "@/lib/formatError";
 
 import {
   ReservationHeader,
@@ -73,6 +75,7 @@ export default function ReservationsPage() {
 
   // Mutation for status updates
   const updateReservation = useMutation(api.admin.updateReservation);
+  const { toast } = useToast();
 
   // Handlers
   const handleToggleExpand = useCallback((id: Id<"reservations">) => {
@@ -87,11 +90,12 @@ export default function ReservationsPage() {
           expectedVersion: version,
           status: status as any,
         });
+        toast.success("Statut mis à jour");
       } catch (error) {
-        console.error("Error updating reservation:", error);
+        toast.error(formatConvexError(error, "Erreur lors de la mise à jour"));
       }
     },
-    [updateReservation]
+    [updateReservation, toast]
   );
 
   const handleEdit = useCallback((reservation: Reservation) => {

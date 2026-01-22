@@ -13,13 +13,8 @@ import {
   GRID_WIDTH,
   GRID_HEIGHT,
 } from "@/lib/constants/grid";
-
-// Simple toast replacement (can be replaced with sonner or react-hot-toast later)
-const toast = {
-  info: (msg: string) => console.log("[INFO]", msg),
-  error: (msg: string) => console.error("[ERROR]", msg),
-  success: (msg: string) => console.log("[SUCCESS]", msg),
-};
+import { useToast } from "@/hooks/use-toast";
+import { formatConvexError } from "@/lib/formatError";
 
 interface ServiceFloorPlanProps {
   dateKey: string;
@@ -51,6 +46,7 @@ export function ServiceFloorPlan({
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
+  const { toast } = useToast();
 
   // Query table states for this service
   const tableStates = useQuery(api.floorplan.getTableStates, { dateKey, service });
@@ -216,30 +212,13 @@ export function ServiceFloorPlan({
       await assignMutation({
         reservationId: selectedReservationId,
         tableIds: tablesToSelect as Id<"tables">[],
-        primaryTableId: tableId as Id<"tables">, // Table cliquée par l'utilisateur
+        primaryTableId: tableId as Id<"tables">,
         expectedVersion: selectedReservationVersion,
       });
       toast.success("Table assignée");
       onAssignmentComplete?.();
-    } catch (error: any) {
-      const message = error.message || "Erreur d'assignation";
-      const [code, ...params] = message.split("|");
-      switch (code) {
-        case "VERSION_CONFLICT":
-          toast.error("La réservation a été modifiée. Rafraîchissez la page.");
-          break;
-        case "TABLE_OCCUPIED_SEATED":
-          toast.error(`${params[0]} est occupée par ${params[1]}`);
-          break;
-        case "TABLE_CONFLICT":
-          toast.error(`${params[0]} est réservée par ${params[1]} (${params[2]})`);
-          break;
-        case "INSUFFICIENT_CAPACITY":
-          toast.error(`Capacité insuffisante: ${params[0]} < ${params[1]} personnes`);
-          break;
-        default:
-          toast.error(message);
-      }
+    } catch (error: unknown) {
+      toast.error(formatConvexError(error, "Erreur d'assignation"));
     } finally {
       setIsAssigning(false);
     }

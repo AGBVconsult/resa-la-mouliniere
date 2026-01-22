@@ -7,6 +7,8 @@ import { X, Loader2, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { formatConvexError } from "@/lib/formatError";
 
 interface CreateReservationModalProps {
   dateKey: string;
@@ -39,6 +41,7 @@ export function CreateReservationModal({
   onSuccess,
 }: CreateReservationModalProps) {
   const createReservation = useMutation(api.admin.createReservation);
+  const { toast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,11 +83,13 @@ export function CreateReservationModal({
         note: note.trim() || undefined,
       });
 
+      toast.success("Réservation créée");
       onSuccess?.();
       onClose();
-    } catch (err: any) {
-      console.error("Error creating reservation:", err);
-      setError(err.message || "Erreur lors de la création");
+    } catch (err: unknown) {
+      const message = formatConvexError(err, "Erreur lors de la création");
+      setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

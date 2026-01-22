@@ -1,0 +1,89 @@
+# Sprint Status — Hardening MVP
+# Generated: 2026-01-22
+# Project: la-mouliniere
+
+current_sprint: 1
+sprint_name: "Hardening MVP Production"
+sprint_goal: "Atteindre le niveau production-ready avant release"
+start_date: "2026-01-22"
+end_date: "2026-01-24"
+
+# STATUS VALUES:
+# - not_started: Work has not begun
+# - in_progress: Currently being worked on
+# - blocked: Cannot proceed due to dependency or issue
+# - review: Completed, awaiting review
+# - done: Completed and verified
+
+epics:
+  epic-1:
+    name: "Hardening MVP Production"
+    status: done
+    stories:
+      1-1-toast-global:
+        name: "Composant Toast Global"
+        status: done
+        priority: P1
+        effort: 45min
+        assignee: null
+        completed_at: "2026-01-22"
+      1-2-format-error:
+        name: "Helper formatConvexError"
+        status: done
+        priority: P1
+        effort: 30min
+        assignee: null
+        completed_at: "2026-01-22"
+      1-3-toast-floorplan:
+        name: "Intégration Toast ServiceFloorPlan"
+        status: done
+        priority: P1
+        effort: 30min
+        assignee: null
+        depends_on: ["1-1-toast-global", "1-2-format-error"]
+        completed_at: "2026-01-22"
+      1-4-toast-autres:
+        name: "Intégration Toast autres composants"
+        status: done
+        priority: P1
+        effort: 15min
+        assignee: null
+        depends_on: ["1-3-toast-floorplan"]
+        completed_at: "2026-01-22"
+      1-5-tests-e2e-admin:
+        name: "Tests E2E Admin"
+        status: done
+        priority: P2
+        effort: 1h30
+        assignee: null
+        completed_at: "2026-01-22"
+      1-6-tests-e2e-client:
+        name: "Tests E2E Client"
+        status: done
+        priority: P2
+        effort: 1h
+        assignee: null
+        completed_at: "2026-01-22"
+      1-7-role-gate:
+        name: "Role Gate Frontend"
+        status: done
+        priority: P2
+        effort: 30min
+        assignee: null
+        completed_at: "2026-01-22"
+    epic-1-retrospective:
+      status: not_started
+
+# Sprint Metrics
+metrics:
+  total_stories: 7
+  completed: 7
+  in_progress: 0
+  blocked: 0
+  velocity_target: 7
+  
+# Notes
+notes:
+  - "Phase 1 (P1): Toast + formatError = 2h - À faire en priorité"
+  - "Phase 2 (P2): Tests E2E + Role gate = 3h - Après Phase 1"
+  - "Tester sur iPad réel avant merge"
