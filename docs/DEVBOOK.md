@@ -3,8 +3,8 @@
 > Guide de développement complet avec tâches granulaires.
 > Utilisé par Windsurf et Claude pour recommander la prochaine tâche selon le temps disponible.
 
-**Dernière mise à jour :** 2026-01-21
-**Progression globale :** 88%
+**Dernière mise à jour :** 2026-01-22
+**Progression globale :** 92%
 
 ---
 
@@ -19,7 +19,8 @@
 | 3c | Page Annulation Client | ✅ Terminé | 100% |
 | 4 | Interface Admin | ✅ Terminé | 95% |
 | 4b | Plan de Salle (PRD-004) | ✅ Terminé | 95% |
-| 5 | Polish & Tests | ❌ Non commencé | 0% |
+| 4c | Shadow Learning (PRD-011) | ✅ Terminé | 100% |
+| 5 | Polish & Tests | 🟡 En cours | 30% |
 
 ---
 
@@ -32,6 +33,8 @@ Corriger les derniers bugs et compléter les emails admin.
 - [x] Vue Service affiche les réservations du jour par service (lunch/dinner)
 - [x] Gestion des statuts fonctionnelle (pending → confirmed → seated → completed)
 - [x] Attribution de tables par click-to-click
+- [x] Shadow Learning Phase 1 & 2 (PRD-011) — Logging + prédictions ML
+- [x] Corrections sécurité (revue adversariale)
 - [ ] Bug primaryTableId — Affiche mauvaise table en combinaison backward
 - [ ] Création de réservation manuelle (téléphone/walk-in)
 - [ ] Notification email admin quand réservation pending créée
@@ -531,6 +534,7 @@ Corriger les derniers bugs et compléter les emails admin.
 - **Auth :** Clerk (RBAC : admin, owner, staff)
 - **Emails :** Resend avec queue et retry
 - **CAPTCHA :** Cloudflare Turnstile (widget client uniquement)
+- **ML :** Shadow Learning (PRD-011) — scoring V0 rule-based, prédictions de SETS
 
 ### Conventions
 - Icônes : Lucide uniquement (pas d'emojis dans le code)
@@ -579,6 +583,8 @@ Nouveau statut "incident" ajouté (18/01) - empêche envoi email review J+1
 | 2026-01-17 | 3h | Pages edit/cancel client | TASK-301, TASK-303 |
 | 2026-01-18 | 4h | Interface Admin Vue Service | TASK-101, 102, 103, 105 + tracking ponctualité |
 | 2026-01-21 | 3h | Plan de salle complet | TASK-106 + PRD-004 (config tables, assignation directe, combinaison intelligente) |
+| 2026-01-22 | 2h | Shadow Learning PRD-011 | Phase 1 (logging) + Phase 2 (prédictions ML, scoring V0, shadow metrics) |
+| 2026-01-22 | 1h | Corrections sécurité | Revue adversariale: error handling, N+1 queries, auth audit |
 
 ---
 
