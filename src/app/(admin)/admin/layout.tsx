@@ -24,6 +24,9 @@ export default async function AdminLayout({
 }) {
   const { userId, sessionClaims } = await auth();
 
+  // DEBUG: Log sessionClaims pour identifier la structure exacte
+  console.log("[AdminLayout] sessionClaims:", JSON.stringify(sessionClaims, null, 2));
+
   if (!userId) {
     redirect("/admin/login");
   }
