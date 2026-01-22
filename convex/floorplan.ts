@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id, Doc } from "./_generated/dataModel";
 import { Errors } from "./lib/errors";
+import { internal } from "./_generated/api";
 
 /**
  * PRD-004: Floor Plan Module
@@ -275,7 +276,22 @@ export const assign = mutation({
       createdAt: now,
     });
 
-    // Table assignment logged via reservationEvents
+    // 9. Log assignment for shadow learning (PRD-011)
+    const userId = (await ctx.auth.getUserIdentity())?.subject ?? "system";
+    await ctx.scheduler.runAfter(0, internal.assignmentLogs.logAssignment, {
+      restaurantId: reservation.restaurantId,
+      reservationId,
+      reservationVersion: newVersion,
+      dateKey: reservation.dateKey,
+      timeKey: reservation.timeKey,
+      service: reservation.service,
+      partySize: reservation.partySize,
+      childrenCount: reservation.childrenCount,
+      babiesCount: reservation.babyCount,
+      assignedTableIds: tableIds,
+      assignedBy: userId,
+      assignmentMethod: "manual_click",
+    });
 
     return {
       success: true,

@@ -362,4 +362,135 @@ export default defineSchema({
   })
     .index("by_restaurant", ["restaurantId"])
     .index("by_restaurant_day_service", ["restaurantId", "dayOfWeek", "service"]),
+
+  // PRD-011: Assignment Logs for Shadow Learning
+  assignmentLogs: defineTable({
+    // Versioning
+    schemaVersion: v.literal(4),
+    scoringVersion: v.union(v.literal("V0"), v.literal("V1"), v.literal("V2")),
+    isTest: v.optional(v.boolean()),
+
+    // Reservation snapshot
+    restaurantId: v.id("restaurants"),
+    reservationId: v.id("reservations"),
+    reservationVersion: v.number(),
+    date: v.string(),
+    time: v.string(),
+    service: v.union(v.literal("lunch"), v.literal("dinner")),
+    partySize: v.number(),
+    partySizeCategory: v.union(
+      v.literal("solo"),
+      v.literal("couple"),
+      v.literal("small_group"),
+      v.literal("medium_group"),
+      v.literal("large_group")
+    ),
+    childrenCount: v.optional(v.number()),
+    babiesCount: v.optional(v.number()),
+
+    // Tables snapshot (hybrid)
+    tablesSnapshot: v.object({
+      availableCount: v.number(),
+      takenCount: v.number(),
+      totalCount: v.number(),
+      stateHash: v.string(),
+      availableSample: v.array(v.id("tables")),
+      takenSample: v.array(v.id("tables")),
+      availableIds: v.optional(v.array(v.id("tables"))),
+      takenIds: v.optional(v.array(v.id("tables"))),
+      isFullSnapshot: v.boolean(),
+    }),
+
+    // Service occupancy
+    serviceOccupancy: v.object({
+      totalCovers: v.number(),
+      totalCapacity: v.number(),
+      capacitySource: v.literal("active_tables"),
+      occupancyRate: v.number(),
+      reservationsCount: v.number(),
+      zoneOccupancies: v.object({
+        salle: v.number(),
+        terrasse: v.number(),
+      }),
+    }),
+
+    // Human choice
+    assignedTables: v.array(v.id("tables")),
+    assignedTableNames: v.array(v.string()),
+    assignedZone: v.union(v.literal("salle"), v.literal("terrasse"), v.literal("mixed")),
+    assignedCapacity: v.number(),
+    assignedIsAdjacent: v.boolean(),
+    assignedBy: v.string(),
+    assignmentMethod: v.union(
+      v.literal("manual_click"),
+      v.literal("suggestion_accepted"),
+      v.literal("auto_vip"),
+      v.literal("full_auto")
+    ),
+
+    // ML Prediction (optional, Phase 2+)
+    mlPrediction: v.optional(v.object({
+      predictedSet: v.array(v.id("tables")),
+      predictedZone: v.union(v.literal("salle"), v.literal("terrasse"), v.literal("mixed")),
+      predictedCapacity: v.number(),
+      predictedIsAdjacent: v.boolean(),
+      confidence: v.number(),
+      alternativeSets: v.array(v.object({
+        tableSet: v.array(v.id("tables")),
+        zone: v.union(v.literal("salle"), v.literal("terrasse"), v.literal("mixed")),
+        capacity: v.number(),
+        isAdjacent: v.boolean(),
+        confidence: v.number(),
+      })),
+      scoringDetails: v.object({
+        capacityScore: v.number(),
+        clientPreferenceScore: v.number(),
+        zoneScore: v.number(),
+        balanceScore: v.number(),
+        adjacencyBonus: v.number(),
+        characteristicsScore: v.number(),
+      }),
+    })),
+
+    // Shadow metrics (comparison prediction vs choice)
+    shadowMetrics: v.optional(v.object({
+      exactSetMatch: v.boolean(),
+      partialMatchRatio: v.number(),
+      adjacencyMatch: v.boolean(),
+      zoneMatch: v.boolean(),
+      errorSeverity: v.union(
+        v.literal("none"),
+        v.literal("minor"),
+        v.literal("major"),
+        v.literal("critical")
+      ),
+      capacityWasteRatio: v.number(),
+      wastePerSeat: v.number(),
+      comparedAt: v.number(),
+    })),
+
+    // Feedback (outcome tracking)
+    feedback: v.optional(v.object({
+      outcome: v.union(
+        v.literal("completed"),
+        v.literal("noshow"),
+        v.literal("cancelled"),
+        v.literal("table_changed")
+      ),
+      actualSeatedAt: v.optional(v.number()),
+      actualCompletedAt: v.optional(v.number()),
+      tableChanged: v.boolean(),
+      feedbackRecordedAt: v.number(),
+    })),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_reservation", ["reservationId"])
+    .index("by_date", ["date"])
+    .index("by_date_service", ["date", "service"])
+    .index("by_scoring_version", ["scoringVersion"])
+    .index("by_zone", ["assignedZone"])
+    .index("by_created", ["createdAt"]),
 });
