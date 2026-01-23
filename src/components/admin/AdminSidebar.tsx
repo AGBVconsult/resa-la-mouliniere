@@ -34,6 +34,7 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Full sidebar content (mobile drawer + desktop lg+)
   const SidebarContent = () => (
     <>
       <div className="flex h-16 items-center gap-2 px-6 border-b border-slate-200">
@@ -78,12 +79,44 @@ export function AdminSidebar() {
     </>
   );
 
+  // Collapsed sidebar content (tablet md-lg: icons only with 44px touch targets)
+  const CollapsedSidebarContent = () => (
+    <>
+      <div className="flex h-16 items-center justify-center border-b border-slate-200">
+        <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
+          <span className="text-white font-bold text-sm">LM</span>
+        </div>
+      </div>
+
+      <nav className="flex-1 px-2 py-4 space-y-1">
+        {navigation.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              title={item.name}
+              className={cn(
+                "flex items-center justify-center w-11 h-11 mx-auto rounded-lg transition-colors",
+                isActive
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              )}
+            >
+              <item.icon className="h-5 w-5" />
+            </Link>
+          );
+        })}
+      </nav>
+    </>
+  );
+
   return (
     <>
-      {/* Mobile toggle button */}
+      {/* Mobile toggle button - visible on small screens only */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md border border-slate-200"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md border border-slate-200"
       >
         {mobileOpen ? (
           <X className="h-5 w-5 text-slate-600" />
@@ -95,22 +128,27 @@ export function AdminSidebar() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-30 bg-black/50"
+          className="md:hidden fixed inset-0 z-30 bg-black/50"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Mobile sidebar */}
+      {/* Mobile sidebar (drawer) - small screens only */}
       <aside
         className={cn(
-          "lg:hidden fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col transform transition-transform duration-200",
+          "md:hidden fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col transform transition-transform duration-200",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <SidebarContent />
       </aside>
 
-      {/* Desktop sidebar */}
+      {/* Tablet sidebar (collapsed, icons only) - md to lg (iPad mini) */}
+      <aside className="hidden md:flex lg:hidden fixed inset-y-0 left-0 z-40 w-16 flex-col bg-white border-r border-slate-200">
+        <CollapsedSidebarContent />
+      </aside>
+
+      {/* Desktop sidebar (full) - lg+ */}
       <aside className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:w-64 lg:flex-col bg-white border-r border-slate-200">
         <SidebarContent />
       </aside>

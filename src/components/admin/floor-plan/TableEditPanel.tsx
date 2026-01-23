@@ -49,7 +49,7 @@ export function TableEditPanel({
 
   if (!table) {
     return (
-      <div className="w-[300px] bg-white border-l p-4 flex flex-col items-center justify-center text-gray-400">
+      <div className="w-full md:w-[280px] lg:w-[300px] bg-white border-l p-4 flex flex-col items-center justify-center text-gray-400">
         {selectedCount > 1 ? (
           <>
             <span className="text-lg font-medium text-gray-600">{selectedCount} tables</span>
@@ -68,7 +68,7 @@ export function TableEditPanel({
   };
 
   return (
-    <div className="w-[300px] bg-white border-l flex flex-col">
+    <div className="w-full md:w-[280px] lg:w-[300px] bg-white border-l flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <h3 className="font-semibold">Table {table.name}</h3>

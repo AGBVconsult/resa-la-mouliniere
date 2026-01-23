@@ -37,7 +37,7 @@ export default async function AdminLayout({
     <AdminLayoutClient>
       <div className="min-h-screen bg-slate-50">
         <AdminSidebar />
-        <div className="lg:pl-64">
+        <div className="md:pl-16 lg:pl-64">
           <AdminHeader />
           <main className="p-6">{children}</main>
         </div>
