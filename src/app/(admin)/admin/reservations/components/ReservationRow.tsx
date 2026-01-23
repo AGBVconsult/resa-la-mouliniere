@@ -566,7 +566,7 @@ export function ReservationRow({
         <span className="w-6 text-sm text-center shrink-0">{getFlag(reservation.phone, reservation.language)}</span>
 
         {/* Name */}
-        <div className="min-w-24 flex-1 truncate">
+        <div className="w-24 shrink-0 truncate">
           <span className="text-xs font-semibold">{reservation.lastName}</span>{" "}
           <span className="text-xs text-gray-600">{reservation.firstName.charAt(0)}.</span>
         </div>
@@ -579,7 +579,7 @@ export function ReservationRow({
         </div>
 
         {/* Note preview */}
-        <span className="w-20 text-[10px] text-gray-400 truncate shrink-0">{reservation.note || ""}</span>
+        <span className="flex-1 text-[10px] text-gray-400 truncate">{reservation.note || ""}</span>
       </div>
     );
   }

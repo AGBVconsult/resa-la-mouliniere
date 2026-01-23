@@ -92,9 +92,9 @@ export function ReservationList({
           <span className="w-10 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
           <span className="w-5 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Hist</span>
           <span className="w-6 text-[9px] font-medium text-gray-400 uppercase tracking-wider"></span>
-          <span className="min-w-24 flex-1 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
+          <span className="w-24 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
           <span className="w-12 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Opt.</span>
-          <span className="w-20 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Note</span>
+          <span className="flex-1 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Note</span>
         </div>
       )}
 
