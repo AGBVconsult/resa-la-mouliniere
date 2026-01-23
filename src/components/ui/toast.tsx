@@ -52,7 +52,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={cn(
         "flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg",
-        "min-w-[280px] max-w-[400px]",
+        "w-full max-w-[calc(100vw-2rem)] md:min-w-[280px] md:max-w-[350px]",
         style.bg,
         style.border
       )}
@@ -83,7 +83,7 @@ interface ToastContainerProps {
 export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   return (
     <div
-      className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"
+      className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 z-[100] flex flex-col gap-2 pointer-events-none"
       aria-live="polite"
       aria-label="Notifications"
     >
