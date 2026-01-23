@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { UserButton } from "@clerk/nextjs";
-import { Bell, Search } from "lucide-react";
+import { Bell, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function AdminHeader() {
+interface AdminHeaderProps {
+  sidebarCollapsed: boolean;
+  onToggleSidebarCollapsed: () => void;
+}
+
+export function AdminHeader({ sidebarCollapsed, onToggleSidebarCollapsed }: AdminHeaderProps) {
   // Prevent hydration mismatch with Clerk's UserButton
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -17,6 +22,21 @@ export function AdminHeader() {
     <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200">
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center gap-4 flex-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="hidden md:inline-flex text-slate-600"
+            onClick={onToggleSidebarCollapsed}
+            title={sidebarCollapsed ? "Déplier la sidebar" : "Rétracter la sidebar"}
+          >
+            {sidebarCollapsed ? (
+              <PanelLeftOpen className="h-5 w-5" />
+            ) : (
+              <PanelLeftClose className="h-5 w-5" />
+            )}
+          </Button>
+
           <div className="hidden md:flex relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input

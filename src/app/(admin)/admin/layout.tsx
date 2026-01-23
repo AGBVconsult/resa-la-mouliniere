@@ -1,7 +1,5 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminLayoutClient } from "@/components/admin/AdminLayoutClient";
 
 export const metadata = {
@@ -35,13 +33,7 @@ export default async function AdminLayout({
 
   return (
     <AdminLayoutClient>
-      <div className="min-h-screen bg-slate-50">
-        <AdminSidebar />
-        <div className="md:pl-16 lg:pl-64">
-          <AdminHeader />
-          <main className="p-6">{children}</main>
-        </div>
-      </div>
+      {children}
     </AdminLayoutClient>
   );
 }

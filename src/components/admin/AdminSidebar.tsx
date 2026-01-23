@@ -30,7 +30,11 @@ const navigation = [
   { name: "Paramètres", href: "/admin/settings", icon: Settings },
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  collapsed?: boolean;
+}
+
+export function AdminSidebar({ collapsed = false }: AdminSidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -143,14 +147,14 @@ export function AdminSidebar() {
         <SidebarContent />
       </aside>
 
-      {/* Tablet sidebar (collapsed, icons only) - md to lg (iPad mini) */}
-      <aside className="hidden md:flex lg:hidden fixed inset-y-0 left-0 z-40 w-16 flex-col bg-white border-r border-slate-200">
-        <CollapsedSidebarContent />
-      </aside>
-
-      {/* Desktop sidebar (full) - lg+ */}
-      <aside className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:w-64 lg:flex-col bg-white border-r border-slate-200">
-        <SidebarContent />
+      {/* Desktop/Tablet sidebar (md+) */}
+      <aside
+        className={cn(
+          "hidden md:flex fixed inset-y-0 left-0 z-40 flex-col bg-white border-r border-slate-200 transition-[width] duration-200",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        {collapsed ? <CollapsedSidebarContent /> : <SidebarContent />}
       </aside>
     </>
   );
