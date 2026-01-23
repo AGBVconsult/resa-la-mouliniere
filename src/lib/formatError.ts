@@ -16,6 +16,8 @@ const ERROR_MESSAGES: Record<string, string | ((meta?: Record<string, unknown>) 
 
   // Data
   "error.noActiveRestaurant": "Aucun restaurant actif trouvé",
+  "error.multipleActiveRestaurants": (meta) =>
+    `Erreur de configuration : ${meta?.count || "plusieurs"} restaurants actifs détectés`,
   "error.settingsNotFound": "Paramètres non trouvés",
   "error.userNotFound": "Utilisateur non trouvé",
 

@@ -4,9 +4,9 @@
 **Priorité :** Haute  
 **Effort estimé :** 6 heures  
 **Effort réel :** ~5 heures  
-**Statut :** ✅ TERMINÉ  
-**Date de complétion :** 2026-01-22  
-**Commit :** 67fa6b5
+**Statut :** ✅ TERMINÉ
+**Date de complétion :** 2026-01-22
+**Commit :** c22cae5 (inclut 4 hotfixes auth post-sprint)
 
 ---
 
@@ -196,7 +196,7 @@ Améliorer les tests E2E Playwright pour les parcours client (modification et an
 Ajouter une vérification de rôle dans le layout admin pour empêcher les utilisateurs non autorisés d'accéder à l'interface.
 
 #### Critères d'Acceptation
-- [x] Vérification rôle via sessionClaims
+- [x] Vérification rôle via clerkClient API (publicMetadata.role)
 - [x] Rôles autorisés : admin, owner, staff
 - [x] Redirection vers `/admin/access-denied` si rôle insuffisant
 - [x] Page "Accès refusé" avec message clair
@@ -204,6 +204,9 @@ Ajouter une vérification de rôle dans le layout admin pour empêcher les utili
 #### Tâches Techniques
 - [x] Modifier `src/app/(admin)/admin/layout.tsx` (ajouter role check)
 - [x] Créer `src/app/(auth)/admin/access-denied/page.tsx`
+
+#### Note Post-Sprint
+> L'implémentation initiale via `sessionClaims` ne fonctionnait pas car Clerk ne propage pas les `publicMetadata` dans le JWT par défaut. Corrigé en utilisant l'API `clerkClient.users.getUser()` pour récupérer le rôle directement. (commits b520b2b → c22cae5)
 
 #### Fichiers
 - `src/app/(admin)/admin/layout.tsx` ✅
@@ -241,12 +244,15 @@ Story 1.7 (Role Gate) ───────────┘
 - Utilisation de Framer Motion (déjà installé) au lieu d'ajouter une dépendance
 - Helper `formatConvexError` centralisé et réutilisable
 - Tests E2E avec skips conditionnels pour éviter les faux négatifs
-- Role gate simple via sessionClaims Clerk
+- Role gate via clerkClient API (après correction post-sprint)
 
 ### Ce qui pourrait être amélioré
 - Tests E2E avec authentification mock pour couvrir plus de scénarios
 - Ajouter focus trap sur les modals (accessibilité)
 - Dashboard dynamique branché sur Convex
+
+### Leçons apprises
+- **Clerk sessionClaims** : Les `publicMetadata` ne sont pas automatiquement inclus dans le JWT. Pour accéder aux metadata utilisateur côté serveur, utiliser `clerkClient.users.getUser(userId)` plutôt que `sessionClaims`.
 
 ### Actions pour le prochain sprint
 - Audit accessibilité (touch targets, contraste, focus)
@@ -255,4 +261,4 @@ Story 1.7 (Role Gate) ───────────┘
 
 ---
 
-*Epic terminé — 2026-01-22 — Commit 67fa6b5*
+*Epic terminé — 2026-01-22 — Commit c22cae5*

@@ -104,11 +104,11 @@ deliverables:
     - "e2e/admin.spec.ts"
     - "e2e/reservation-management.spec.ts"
     - "e2e/widget-reservation.spec.ts"
-  commit: "67fa6b5"
-  
+  commit: "c22cae5"
+
 # Notes
 notes:
   - "✅ Phase 1 (P1): Toast + formatError = 2h - TERMINÉ"
   - "✅ Phase 2 (P2): Tests E2E + Role gate = 3h - TERMINÉ"
   - "✅ Tests E2E: 42 tests (34 pass, 8 skip auth-required)"
-  - "✅ Commit mergé sur main: 67fa6b5"
+  - "✅ Commit final: c22cae5 (inclut hotfixes auth Clerk post-sprint)"
