@@ -39,6 +39,30 @@ interface ClientNote {
   createdAt: number;
 }
 
+/** Client detail - union of full and masked views from API */
+interface ClientDetail {
+  _id: Id<"clients">;
+  firstName?: string;
+  lastName?: string;
+  phone: string;
+  email?: string;
+  clientStatus: ClientStatus;
+  totalVisits: number;
+  totalNoShows?: number;
+  totalLateCancellations?: number;
+  totalCancellations?: number;
+  totalRehabilitatedNoShows?: number;
+  totalDeparturesBeforeOrder?: number;
+  score?: number;
+  scoreVersion?: number;
+  scoreBreakdown?: Record<string, number>;
+  lastVisitAt?: number;
+  firstSeenAt?: number;
+  preferredLanguage?: string;
+  needsRebuild?: boolean;
+  notes?: ClientNote[];
+}
+
 function statusBadge(status: ClientStatus): { cls: string; label: string } {
   switch (status) {
     case "vip":
@@ -91,8 +115,8 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const clientId = id as Id<"clients">;
 
   const clientRaw = useQuery(api.clients.get, { clientId });
-  // Cast to any to handle union type from RBAC (full client vs PII-masked)
-  const client = clientRaw as any;
+  // Cast to ClientDetail to handle union type from RBAC (full client vs PII-masked)
+  const client = clientRaw as ClientDetail | null | undefined;
   const addNoteMutation = useMutation(api.clients.addNote);
   const deleteNoteMutation = useMutation(api.clients.deleteNote);
   const rebuildStatsMutation = useMutation(api.clients.rebuildStats);
@@ -127,7 +151,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     );
   }
 
-  const badge = statusBadge(client.clientStatus as ClientStatus);
+  const badge = statusBadge(client.clientStatus);
   const displayName = `${client.firstName ?? ""} ${client.lastName ?? ""}`.trim() || "Client";
 
   async function handleAddNote() {
@@ -180,7 +204,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     }
   }
 
-  const notes = (client.notes ?? []) as ClientNote[];
+  const notes = client.notes ?? [];
 
   return (
     <div className="space-y-6">

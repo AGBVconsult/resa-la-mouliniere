@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
+import type { Id } from "../../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,7 +55,7 @@ const DEFAULT_DINNER_SLOTS: Slot[] = [
 ];
 
 interface EditPeriod {
-  _id: string;
+  _id: Id<"specialPeriods">;
   name: string;
   startDate: string;
   endDate: string;
@@ -212,7 +213,7 @@ export function AddPeriodDialog({ isOpen, onClose, defaultType = "fermeture", ed
           }
 
           // Delete old period and create new one (simpler than complex update)
-          await deletePeriod({ periodId: editPeriod._id as any });
+          await deletePeriod({ periodId: editPeriod._id });
           await createPeriod({
             name: name.trim(),
             type: "event",
@@ -230,7 +231,7 @@ export function AddPeriodDialog({ isOpen, onClose, defaultType = "fermeture", ed
           });
         } else {
           // Update fermeture
-          await deletePeriod({ periodId: editPeriod._id as any });
+          await deletePeriod({ periodId: editPeriod._id });
           await createPeriod({
             name: name.trim(),
             type: "closure",
