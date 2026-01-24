@@ -145,6 +145,8 @@ export default defineSchema({
     timeKey: v.string(),
     slotKey: v.string(),
 
+    clientId: v.optional(v.id("clients")),
+
     adults: v.number(),
     childrenCount: v.number(),
     babyCount: v.number(),
@@ -174,6 +176,7 @@ export default defineSchema({
     seatedAt: v.union(v.null(), v.number()),
     completedAt: v.union(v.null(), v.number()),
     noshowAt: v.union(v.null(), v.number()),
+    markedNoshowAt: v.optional(v.union(v.null(), v.number())),
   })
     .index("by_restaurant_slotKey", ["restaurantId", "slotKey"])
     .index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"])
@@ -362,6 +365,126 @@ export default defineSchema({
   })
     .index("by_restaurant", ["restaurantId"])
     .index("by_restaurant_day_service", ["restaurantId", "dayOfWeek", "service"]),
+
+  clients: defineTable({
+    primaryPhone: v.string(),
+    phones: v.optional(v.array(v.string())),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emails: v.optional(v.array(v.string())),
+    searchText: v.string(),
+    preferredLanguage: v.optional(language),
+    totalVisits: v.number(),
+    totalNoShows: v.number(),
+    totalRehabilitatedNoShows: v.number(),
+    totalCancellations: v.number(),
+    totalLateCancellations: v.number(),
+    totalDeparturesBeforeOrder: v.number(),
+    score: v.number(),
+    scoreVersion: v.string(),
+    scoreBreakdown: v.optional(v.object({
+      visits: v.number(),
+      noshows: v.number(),
+      lateCancels: v.number(),
+    })),
+    clientStatus: v.union(
+      v.literal("new"),
+      v.literal("regular"),
+      v.literal("vip"),
+      v.literal("bad_guest")
+    ),
+    isBlacklisted: v.optional(v.boolean()),
+    needsRebuild: v.optional(v.boolean()),
+    needsRebuildReason: v.optional(v.union(
+      v.literal("reservation_backdated_edit"),
+      v.literal("manual_merge"),
+      v.literal("manual_correction"),
+      v.literal("migration")
+    )),
+    needsRebuildAt: v.optional(v.number()),
+    dietaryRestrictions: v.optional(v.array(v.string())),
+    preferredZone: v.optional(v.string()),
+    preferredTable: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    notes: v.optional(v.array(v.object({
+      id: v.string(),
+      content: v.string(),
+      type: v.union(
+        v.literal("preference"),
+        v.literal("incident"),
+        v.literal("info"),
+        v.literal("alert")
+      ),
+      author: v.string(),
+      createdAt: v.number(),
+    }))),
+    notesUpdatedAt: v.optional(v.number()),
+    marketingConsent: v.optional(v.boolean()),
+    marketingConsentAt: v.optional(v.number()),
+    marketingConsentSource: v.optional(v.string()),
+    acquisitionSource: v.optional(v.string()),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.string()),
+    deletionReason: v.optional(v.string()),
+    firstSeenAt: v.number(),
+    lastVisitAt: v.optional(v.number()),
+    lastUpdatedAt: v.number(),
+    // Aggregated reservation stats
+    totalReservations: v.optional(v.number()),
+    lastTableId: v.optional(v.id("tables")),
+    preferredTableId: v.optional(v.id("tables")),
+    preferredService: v.optional(v.union(v.literal("lunch"), v.literal("dinner"))),
+    avgPartySize: v.optional(v.number()),
+    avgMealDurationMinutes: v.optional(v.number()),
+    avgDelayMinutes: v.optional(v.number()),
+  })
+    .index("by_primaryPhone", ["primaryPhone"])
+    .index("by_email", ["email"])
+    .index("by_lastVisitAt", ["lastVisitAt"])
+    .index("by_score", ["score"])
+    .index("by_status", ["clientStatus"])
+    .index("by_needsRebuild", ["needsRebuild"])
+    .index("by_deletedAt", ["deletedAt"])
+    .searchIndex("search_client", {
+      searchField: "searchText",
+      filterFields: ["clientStatus", "preferredLanguage", "deletedAt"],
+    }),
+
+  crmDailyFinalizations: defineTable({
+    dateKey: v.string(),
+    status: v.union(v.literal("running"), v.literal("success"), v.literal("failed")),
+    leaseExpiresAt: v.number(),
+    lockOwner: v.optional(v.string()),
+    startedAt: v.number(),
+    finishedAt: v.optional(v.number()),
+    processedReservations: v.number(),
+    processedClients: v.number(),
+    errorMessage: v.optional(v.string()),
+    attempt: v.number(),
+    version: v.string(),
+  })
+    .index("by_dateKey", ["dateKey"])
+    .index("by_status", ["status"]),
+
+  clientLedger: defineTable({
+    dateKey: v.string(),
+    clientId: v.id("clients"),
+    reservationId: v.id("reservations"),
+    outcome: v.union(
+      v.literal("completed"),
+      v.literal("completed_rehabilitated"),
+      v.literal("noshow"),
+      v.literal("cancelled"),
+      v.literal("late_cancelled"),
+      v.literal("departure_before_order")
+    ),
+    points: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_clientId", ["clientId"])
+    .index("by_dateKey", ["dateKey"])
+    .index("by_reservationId", ["reservationId"]),
 
   // PRD-011: Assignment Logs for Shadow Learning
   assignmentLogs: defineTable({

@@ -11,6 +11,8 @@
 import type * as admin from "../admin.js";
 import type * as assignmentLogs from "../assignmentLogs.js";
 import type * as availability from "../availability.js";
+import type * as clients from "../clients.js";
+import type * as crm from "../crm.js";
 import type * as crons from "../crons.js";
 import type * as email from "../email.js";
 import type * as emails from "../emails.js";
@@ -58,6 +60,8 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   assignmentLogs: typeof assignmentLogs;
   availability: typeof availability;
+  clients: typeof clients;
+  crm: typeof crm;
   crons: typeof crons;
   email: typeof email;
   emails: typeof emails;

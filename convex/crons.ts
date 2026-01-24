@@ -12,6 +12,8 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
+const internalAny = internal as any;
+
 // Process email queue every minute
 crons.interval(
   "process-email-queue",
@@ -69,6 +71,22 @@ crons.cron(
   "daily-cleanup",
   "0 4 * * *",
   internal.jobs.cleanup,
+  { now: Date.now() }
+);
+
+// CRM nightly check (DST-safe): Convex runs in UTC, so run hourly and check local hour in handler
+crons.hourly(
+  "crm-nightly-check",
+  { minuteUTC: 0 },
+  internalAny.crm.nightlyCheck,
+  { now: Date.now() }
+);
+
+// CRM purge/anonymisation: monthly job
+crons.monthly(
+  "crm-purge-old-clients",
+  { day: 1, hourUTC: 2, minuteUTC: 0 },
+  internalAny.crm.purgeOldClients,
   { now: Date.now() }
 );
 

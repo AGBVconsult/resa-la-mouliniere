@@ -15,6 +15,130 @@ import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./l
 import { verifyTurnstile } from "./lib/turnstile";
 import { computeRequestHash } from "./lib/idempotency";
 
+const CRM_SCORE_VERSION = "v1";
+
+function normalize(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function normalizeEmail(email: string): string {
+  return normalize(email);
+}
+
+function normalizePhone(phone: string): string {
+  const cleaned = phone.replace(/[^+\d]/g, "");
+  if (cleaned.startsWith("+")) return cleaned;
+  return `+${cleaned}`;
+}
+
+function buildSearchText(client: {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  primaryPhone: string;
+  phones?: string[];
+  emails?: string[];
+}): string {
+  const parts = [
+    client.firstName,
+    client.lastName,
+    client.email,
+    client.primaryPhone,
+    ...(client.phones ?? []),
+    ...(client.emails ?? []),
+  ].filter(Boolean);
+
+  return normalize(parts.join(" "));
+}
+
+async function getOrCreateClientIdFromReservation(
+  ctx: any,
+  reservation: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    language: Language;
+    source: "online" | "admin" | "phone" | "walkin";
+  }
+): Promise<Id<"clients">> {
+  const phone = normalizePhone(reservation.phone);
+  const email = normalizeEmail(reservation.email);
+  const now = Date.now();
+
+  const existing = await ctx.db
+    .query("clients")
+    .withIndex("by_primaryPhone", (q: any) => q.eq("primaryPhone", phone))
+    .unique();
+
+  if (existing) {
+    const patch: Record<string, unknown> = { lastUpdatedAt: now };
+    if (reservation.firstName && !existing.firstName) patch.firstName = reservation.firstName;
+    if (reservation.lastName && !existing.lastName) patch.lastName = reservation.lastName;
+    if (email && !existing.email) patch.email = email;
+
+    const mergedEmails = new Set([
+      ...(existing.emails ?? []),
+      ...(existing.email ? [existing.email] : []),
+      email,
+    ]);
+    patch.emails = Array.from(mergedEmails);
+    patch.searchText = buildSearchText({
+      firstName: (patch.firstName as string | undefined) ?? existing.firstName,
+      lastName: (patch.lastName as string | undefined) ?? existing.lastName,
+      email: (patch.email as string | undefined) ?? existing.email,
+      primaryPhone: phone,
+      phones: existing.phones,
+      emails: patch.emails as string[],
+    });
+
+    await ctx.db.patch(existing._id, patch);
+    return existing._id;
+  }
+
+  const clientId = await ctx.db.insert("clients", {
+    primaryPhone: phone,
+    phones: [],
+    firstName: reservation.firstName,
+    lastName: reservation.lastName,
+    email,
+    emails: [email],
+    searchText: buildSearchText({
+      firstName: reservation.firstName,
+      lastName: reservation.lastName,
+      email,
+      primaryPhone: phone,
+      phones: [],
+      emails: [email],
+    }),
+    preferredLanguage: reservation.language,
+    totalVisits: 0,
+    totalNoShows: 0,
+    totalRehabilitatedNoShows: 0,
+    totalCancellations: 0,
+    totalLateCancellations: 0,
+    totalDeparturesBeforeOrder: 0,
+    score: 0,
+    scoreVersion: CRM_SCORE_VERSION,
+    scoreBreakdown: { visits: 0, noshows: 0, lateCancels: 0 },
+    clientStatus: "new",
+    isBlacklisted: false,
+    needsRebuild: false,
+    dietaryRestrictions: [],
+    tags: [],
+    notes: [],
+    acquisitionSource: reservation.source,
+    firstSeenAt: now,
+    lastUpdatedAt: now,
+  });
+
+  return clientId;
+}
+
 /**
  * Build ReservationAdmin DTO from DB document.
  * Pure helper, testable.
@@ -256,6 +380,15 @@ export const _create = internalMutation({
 
     const now = Date.now();
 
+    const clientId = await getOrCreateClientIdFromReservation(ctx, {
+      firstName: args.firstName,
+      lastName: args.lastName,
+      email: args.email,
+      phone: args.phone,
+      language: args.language as Language,
+      source: args.source,
+    });
+
     // Insert reservation
     const reservationId = await ctx.db.insert("reservations", {
       restaurantId: args.restaurantId,
@@ -263,6 +396,7 @@ export const _create = internalMutation({
       service: args.service,
       timeKey: args.timeKey,
       slotKey,
+      clientId,
       adults: args.adults,
       childrenCount: args.childrenCount,
       babyCount: args.babyCount,
@@ -285,6 +419,7 @@ export const _create = internalMutation({
       seatedAt: null,
       completedAt: null,
       noshowAt: null,
+      markedNoshowAt: null,
     });
 
     // Compute token expiry

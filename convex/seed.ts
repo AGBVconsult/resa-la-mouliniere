@@ -614,6 +614,7 @@ export const seedTestReservations = internalMutation({
         seatedAt: status === "seated" || status === "completed" ? now : null,
         completedAt: status === "completed" ? now : null,
         noshowAt: status === "noshow" ? now : null,
+        markedNoshowAt: null,
       });
 
       created.push(`${firstName} ${lastName} (${status})`);
@@ -868,6 +869,7 @@ export const seedWeekReservations = internalMutation({
         seatedAt: (r.status === "seated" || r.status === "completed" || r.status === "incident") ? now - Math.floor(Math.random() * 4 * 60 * 60 * 1000) : null,
         completedAt: r.status === "completed" ? now - Math.floor(Math.random() * 2 * 60 * 60 * 1000) : null,
         noshowAt: r.status === "noshow" ? now - Math.floor(Math.random() * 24 * 60 * 60 * 1000) : null,
+        markedNoshowAt: null,
       });
       created++;
     }

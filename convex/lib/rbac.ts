@@ -1,16 +1,17 @@
 import type { QueryCtx, MutationCtx } from "../_generated/server";
 import { Errors } from "./errors";
 
-export type Role = "staff" | "admin" | "owner";
+export type Role = "staff" | "manager" | "admin" | "owner";
 
 const ROLE_HIERARCHY: Record<Role, number> = {
   staff: 1,
-  admin: 2,
-  owner: 3,
+  manager: 2,
+  admin: 3,
+  owner: 4,
 };
 
 function isRole(value: unknown): value is Role {
-  return value === "staff" || value === "admin" || value === "owner";
+  return value === "staff" || value === "manager" || value === "admin" || value === "owner";
 }
 
 export function getRoleFromIdentity(identity: unknown): Role {

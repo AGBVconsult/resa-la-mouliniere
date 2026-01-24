@@ -5,6 +5,7 @@ import { ToastProvider } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { PWARegister } from "@/components/admin/PWARegister";
 
 interface AdminLayoutClientProps {
   children: ReactNode;
@@ -32,6 +33,7 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
 
   return (
     <ToastProvider>
+      <PWARegister />
       <div className="min-h-screen bg-slate-50">
         <AdminSidebar collapsed={sidebarCollapsed} />
         <div

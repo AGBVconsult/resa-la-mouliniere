@@ -1,0 +1,19 @@
+{
+  "name": "La Moulinière Admin",
+  "short_name": "LM Admin",
+  "description": "Interface d'administration La Moulinière",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/admin-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -77,6 +77,7 @@ export const dailyFinalize = internalMutation({
       await ctx.db.patch(reservation._id, {
         status: "noshow",
         noshowAt: now,
+        markedNoshowAt: now,
         updatedAt: now,
         version: reservation.version + 1,
       });
