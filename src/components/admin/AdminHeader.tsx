@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Bell, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { NotificationPopover } from "./NotificationPopover";
 
 interface AdminHeaderProps {
   sidebarCollapsed: boolean;
@@ -14,9 +17,29 @@ interface AdminHeaderProps {
 export function AdminHeader({ sidebarCollapsed, onToggleSidebarCollapsed }: AdminHeaderProps) {
   // Prevent hydration mismatch with Clerk's UserButton
   const [mounted, setMounted] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  
+  const pendingReservations = useQuery(api.admin.listPendingReservations);
+  const pendingCount = pendingReservations?.length ?? 0;
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Close popover when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+
+    if (showNotifications) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showNotifications]);
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200">
@@ -48,10 +71,24 @@ export function AdminHeader({ sidebarCollapsed, onToggleSidebarCollapsed }: Admi
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5 text-slate-600" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-          </Button>
+          <div ref={notificationRef} className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={() => setShowNotifications(!showNotifications)}
+            >
+              <Bell className="h-5 w-5 text-slate-600" />
+              {pendingCount > 0 && (
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-xs font-medium rounded-full px-1">
+                  {pendingCount > 99 ? "99+" : pendingCount}
+                </span>
+              )}
+            </Button>
+            {showNotifications && (
+              <NotificationPopover onClose={() => setShowNotifications(false)} />
+            )}
+          </div>
 
           <div className="h-8 w-px bg-slate-200" />
 

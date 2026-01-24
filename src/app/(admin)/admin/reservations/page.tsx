@@ -33,6 +33,10 @@ export default function ReservationsPage() {
     return new Date();
   });
   const [currentService, setCurrentService] = useState<"lunch" | "dinner">(() => {
+    const serviceParam = searchParams.get("service");
+    if (serviceParam === "lunch" || serviceParam === "dinner") {
+      return serviceParam;
+    }
     const hour = new Date().getHours();
     return hour < 15 ? "lunch" : "dinner";
   });

@@ -1,10 +1,10 @@
 # État d'Avancement Global — Resa La Moulinière
 
 **Date de génération :** 22 janvier 2026  
-**Version :** 1.1  
+**Version :** 1.2  
 **Auteur :** Audit automatisé Cascade  
 **Objectif :** Base de référence pour le planning d'implémentation futur  
-**Dernière mise à jour :** 22 janvier 2026 (Sprint Hardening terminé)
+**Dernière mise à jour :** 24 janvier 2026 (Notifications réservations en attente)
 
 ---
 
@@ -16,8 +16,9 @@
 | **Statut MVP** | ✅ **Complet — Production-ready** |
 | **Tests** | 257 unit + 42 E2E passing |
 | **Deploy** | https://resa-la-mouliniere.vercel.app |
-| **Dernière release** | 2026-01-22 |
+| **Dernière release** | 2026-01-24 |
 | **Sprint Hardening** | ✅ Terminé |
+| **Notifications Admin** | ✅ Implémenté |
 
 ### Verdict
 Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardening a été complété avec succès :
@@ -25,6 +26,7 @@ Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardeni
 - ✅ Gestion d'erreurs Convex unifiée
 - ✅ Role gate frontend
 - ✅ Tests E2E améliorés
+- ✅ **Notifications réservations en attente** (24/01/2026)
 
 ---
 
@@ -92,6 +94,7 @@ Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardeni
 | Vue Service journalière | ✅ | Prod-ready | - |
 | Liste réservations (pagination) | ✅ | Prod-ready | - |
 | Gestion statuts (boutons) | ✅ | Prod-ready | Toast sur succès/erreur |
+| **Notifications réservations en attente** | ✅ | Prod-ready | Popup header avec Valider/Refuser |
 | Plan de salle interactif | ✅ | Prod-ready | Toast réel implémenté |
 | Attribution tables (click-to-click) | ✅ | Prod-ready | formatConvexError |
 | Création réservation manuelle | ✅ | Prod-ready | Toast + formatConvexError |
@@ -235,6 +238,7 @@ Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardeni
 | 2026-01-22 | MVP | 98% | **MVP COMPLET** |
 | 2026-01-22 | MVP | 98% | Audit maturité complet (backend + frontend) |
 | 2026-01-22 | MVP | **100%** | **Sprint Hardening terminé** (PRD-012) |
+| 2026-01-24 | MVP | **100%** | Notifications réservations en attente (header) |
 
 ---
 
@@ -286,4 +290,4 @@ Le projet **Resa La Moulinière** est **production-ready** :
 
 ---
 
-*Document mis à jour par Cascade — 22 janvier 2026 (v1.1)*
+*Document mis à jour par Cascade — 24 janvier 2026 (v1.2)*

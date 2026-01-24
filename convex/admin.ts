@@ -1032,3 +1032,37 @@ export const createReservation = mutation({
     };
   },
 });
+
+/**
+ * List pending reservations for notification bell.
+ * Returns all reservations with status "pending" for the active restaurant.
+ * 
+ * Autorisation: admin|owner
+ */
+export const listPendingReservations = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireRole(ctx, "admin");
+
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      return [];
+    }
+
+    const restaurant = activeRestaurants[0];
+
+    const pendingReservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_status", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("status", "pending")
+      )
+      .order("desc")
+      .collect();
+
+    return pendingReservations.map(buildReservationAdmin);
+  },
+});
