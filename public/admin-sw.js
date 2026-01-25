@@ -26,9 +26,12 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  // Skip non-admin routes
+  // Skip non-admin routes and RSC requests
   const url = new URL(event.request.url);
   if (!url.pathname.startsWith('/admin')) return;
+
+  // Skip RSC (React Server Components) requests - they should not be cached
+  if (url.searchParams.has('_rsc')) return;
 
   event.respondWith(
     fetch(event.request)
@@ -42,9 +45,15 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => {
+      .catch(async () => {
         // Fallback to cache on network failure
-        return caches.match(event.request);
+        const cachedResponse = await caches.match(event.request);
+        // Return cached response or a proper error response
+        return cachedResponse || new Response('Offline - resource not available', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' }
+        });
       })
   );
 });
