@@ -135,47 +135,63 @@ export function ServiceFloorPlan({
       const clickedIndex = sorted.findIndex((t) => t.tableId === clickedTableId);
       if (clickedIndex === -1) return [clickedTableId];
       
-      // Helper to check if two tables are adjacent
-      // Tables must be aligned on the perpendicular axis (within TABLE_GRID_SPAN)
+      // Helper to check if two tables are truly adjacent (touching or within 1 cell gap)
+      // Both axes must be checked: tables must be aligned AND touching
       const areAdjacent = (t1: typeof sorted[0], t2: typeof sorted[0]): boolean => {
-        const t1Size = isHorizontal ? (t1.width ?? 1) : (t1.height ?? 1);
-        const t1End = isHorizontal 
-          ? t1.positionX + t1Size * TABLE_GRID_SPAN
-          : t1.positionY + t1Size * TABLE_GRID_SPAN;
-        const t2Start = isHorizontal ? t2.positionX : t2.positionY;
+        // Calculate bounding boxes
+        const t1Width = (t1.width ?? 1) * TABLE_GRID_SPAN;
+        const t1Height = (t1.height ?? 1) * TABLE_GRID_SPAN;
+        const t2Width = (t2.width ?? 1) * TABLE_GRID_SPAN;
+        const t2Height = (t2.height ?? 1) * TABLE_GRID_SPAN;
         
-        // Check alignment on perpendicular axis (must be within TABLE_GRID_SPAN)
-        const perpendicularDiff = isHorizontal
-          ? Math.abs(t1.positionY - t2.positionY)
-          : Math.abs(t1.positionX - t2.positionX);
+        // Check X axis overlap/adjacency
+        const t1EndX = t1.positionX + t1Width;
+        const t2EndX = t2.positionX + t2Width;
+        const xGap = Math.max(0, Math.max(t1.positionX, t2.positionX) - Math.min(t1EndX, t2EndX));
         
-        if (perpendicularDiff > TABLE_GRID_SPAN) {
-          return false;
+        // Check Y axis overlap/adjacency  
+        const t1EndY = t1.positionY + t1Height;
+        const t2EndY = t2.positionY + t2Height;
+        const yGap = Math.max(0, Math.max(t1.positionY, t2.positionY) - Math.min(t1EndY, t2EndY));
+        
+        // Tables are adjacent if:
+        // - They overlap or touch on one axis (gap <= TABLE_GRID_SPAN)
+        // - AND they are within TABLE_GRID_SPAN on the other axis
+        const maxGap = TABLE_GRID_SPAN;
+        
+        if (isHorizontal) {
+          // For horizontal combination: must be adjacent on X, aligned on Y
+          return xGap <= maxGap && yGap <= maxGap;
+        } else {
+          // For vertical combination: must be adjacent on Y, aligned on X
+          return yGap <= maxGap && xGap <= maxGap;
         }
-        
-        return t2Start - t1End <= TABLE_GRID_SPAN;
       };
       
       // Try FORWARD combination (clicked table + tables after)
+      // Each new table must be adjacent to the LAST table added to the group
       const forwardResult: string[] = [clickedTableId];
       let forwardCapacity = clickedTable.capacity;
+      let lastAddedForward = clickedTable;
       for (let i = clickedIndex + 1; i < sorted.length && forwardCapacity < partySize; i++) {
         const table = sorted[i];
-        const prevTable = sorted[i - 1];
-        if (!areAdjacent(prevTable, table)) break;
+        if (!areAdjacent(lastAddedForward, table)) break;
         forwardResult.push(table.tableId);
         forwardCapacity += table.capacity;
+        lastAddedForward = table;
       }
       
       // Try BACKWARD combination (clicked table + tables before)
+      // Each new table must be adjacent to the FIRST table in the group
       const backwardResult: string[] = [clickedTableId];
       let backwardCapacity = clickedTable.capacity;
+      let firstAddedBackward = clickedTable;
       for (let i = clickedIndex - 1; i >= 0 && backwardCapacity < partySize; i--) {
         const table = sorted[i];
-        const nextTable = sorted[i + 1];
-        if (!areAdjacent(table, nextTable)) break;
+        if (!areAdjacent(table, firstAddedBackward)) break;
         backwardResult.unshift(table.tableId);
         backwardCapacity += table.capacity;
+        firstAddedBackward = table;
       }
       
       // Choose the best option:
