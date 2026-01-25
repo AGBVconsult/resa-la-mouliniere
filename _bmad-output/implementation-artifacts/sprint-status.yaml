@@ -100,16 +100,46 @@ epics:
         description: "Envoyer un email au client quand sa réservation est marquée no-show"
         brainstorm_needed: true
 
+  epic-3:
+    name: "UX Widget Réservation"
+    status: not_started
+    stories:
+      3-1-supprimer-checkbox-annulation:
+        name: "Supprimer case à cocher Politique d'annulation"
+        status: idea
+        priority: P2
+        type: feature
+        description: "Enlever la case à cocher 'Politique d'annulation' sur la dernière étape"
+      3-2-texte-regles-resto:
+        name: "Remplacer texte infos pratiques par règles resto"
+        status: idea
+        priority: P2
+        type: feature
+        description: "Remplacer 'J'ai lu les infos pratiques' par texte explicatif des règles du resto (contenu à définir)"
+        brainstorm_needed: true
+      3-3-reduire-hauteur-recap:
+        name: "Réduire hauteur card Récapitulatif"
+        status: idea
+        priority: P3
+        type: feature
+        description: "Diminuer la hauteur de la card récapitulatif sur la dernière étape"
+      3-4-creneaux-heure-actuelle:
+        name: "Masquer créneaux passés du jour"
+        status: idea
+        priority: P2
+        type: bug
+        description: "Les créneaux horaires affichés ne peuvent être antérieurs à l'heure actuelle du jour"
+
 # Sprint Metrics
 metrics:
-  total_stories: 9
+  total_stories: 13
   completed: 7
   in_progress: 0
   blocked: 0
-  ideas: 1
-  velocity_target: 9
+  ideas: 5
+  velocity_target: 13
   velocity_actual: 7
-  completion_rate: "78%"
+  completion_rate: "54%"
   
 # Deliverables
 deliverables:
