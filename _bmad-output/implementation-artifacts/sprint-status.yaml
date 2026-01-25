@@ -1,15 +1,15 @@
 # Sprint Status — Hardening MVP
 # Generated: 2026-01-22
-# Updated: 2026-01-22
+# Updated: 2026-01-25
 # Project: la-mouliniere
 
-current_sprint: 1
-sprint_name: "Hardening MVP Production"
-sprint_goal: "Atteindre le niveau production-ready avant release"
-sprint_status: "completed"
-start_date: "2026-01-22"
-end_date: "2026-01-22"
-actual_effort: "~5h"
+current_sprint: 2
+sprint_name: "Production Fixes & Emails"
+sprint_goal: "Corriger les bugs production et améliorer le système d'emails"
+sprint_status: "in_progress"
+start_date: "2026-01-25"
+end_date: null
+actual_effort: null
 
 # STATUS VALUES:
 # - not_started: Work has not begun
@@ -17,6 +17,7 @@ actual_effort: "~5h"
 # - blocked: Cannot proceed due to dependency or issue
 # - review: Completed, awaiting review
 # - done: Completed and verified
+# - idea: Feature idea to brainstorm
 
 epics:
   epic-1:
@@ -77,15 +78,38 @@ epics:
     epic-1-retrospective:
       status: not_started
 
+  epic-2:
+    name: "Emails & Notifications"
+    status: in_progress
+    stories:
+      2-1-fix-admin-status-emails:
+        name: "Fix emails changement statut admin"
+        status: not_started
+        priority: P1
+        effort: 1h
+        assignee: null
+        type: bug
+        description: "Les emails ne sont pas envoyés quand l'admin confirme/annule une réservation"
+      2-2-email-noshow:
+        name: "Email No-show au client"
+        status: idea
+        priority: P2
+        effort: 2h
+        assignee: null
+        type: feature
+        description: "Envoyer un email au client quand sa réservation est marquée no-show"
+        brainstorm_needed: true
+
 # Sprint Metrics
 metrics:
-  total_stories: 7
+  total_stories: 9
   completed: 7
   in_progress: 0
   blocked: 0
-  velocity_target: 7
+  ideas: 1
+  velocity_target: 9
   velocity_actual: 7
-  completion_rate: "100%"
+  completion_rate: "78%"
   
 # Deliverables
 deliverables:
