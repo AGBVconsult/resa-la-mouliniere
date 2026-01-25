@@ -136,12 +136,23 @@ export function ServiceFloorPlan({
       if (clickedIndex === -1) return [clickedTableId];
       
       // Helper to check if two tables are adjacent
+      // Tables must be aligned on the perpendicular axis (within TABLE_GRID_SPAN)
       const areAdjacent = (t1: typeof sorted[0], t2: typeof sorted[0]): boolean => {
         const t1Size = isHorizontal ? (t1.width ?? 1) : (t1.height ?? 1);
         const t1End = isHorizontal 
           ? t1.positionX + t1Size * TABLE_GRID_SPAN
           : t1.positionY + t1Size * TABLE_GRID_SPAN;
         const t2Start = isHorizontal ? t2.positionX : t2.positionY;
+        
+        // Check alignment on perpendicular axis (must be within TABLE_GRID_SPAN)
+        const perpendicularDiff = isHorizontal
+          ? Math.abs(t1.positionY - t2.positionY)
+          : Math.abs(t1.positionX - t2.positionX);
+        
+        if (perpendicularDiff > TABLE_GRID_SPAN) {
+          return false;
+        }
+        
         return t2Start - t1End <= TABLE_GRID_SPAN;
       };
       

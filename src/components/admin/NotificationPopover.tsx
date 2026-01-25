@@ -3,6 +3,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Check, X, Clock, Users, Calendar, Utensils } from "lucide-react";
@@ -18,7 +19,11 @@ interface NotificationPopoverProps {
 export function NotificationPopover({ onClose }: NotificationPopoverProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const pendingReservations = useQuery(api.admin.listPendingReservations);
+  const { isSignedIn } = useAuth();
+  const pendingReservations = useQuery(
+    api.admin.listPendingReservations,
+    isSignedIn ? {} : "skip"
+  );
   const updateReservation = useMutation(api.admin.updateReservation);
 
   const handleConfirm = async (id: Id<"reservations">, version: number) => {

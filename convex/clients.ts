@@ -174,6 +174,13 @@ export const get = query({
         lastVisitAt: client.lastVisitAt,
         preferredLanguage: client.preferredLanguage,
         needsRebuild: client.needsRebuild,
+        dietaryRestrictions: client.dietaryRestrictions,
+        tags: client.tags,
+        notes: client.notes,
+        preferredZone: client.preferredZone,
+        preferredTable: client.preferredTable,
+        firstSeenAt: client.firstSeenAt,
+        isBlacklisted: client.isBlacklisted,
       };
     }
 

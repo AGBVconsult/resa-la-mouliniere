@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useAuth } from "@clerk/nextjs";
 import { Bell, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,11 @@ export function AdminHeader({ sidebarCollapsed, onToggleSidebarCollapsed }: Admi
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   
-  const pendingReservations = useQuery(api.admin.listPendingReservations);
+  const { isSignedIn } = useAuth();
+  const pendingReservations = useQuery(
+    api.admin.listPendingReservations,
+    isSignedIn ? {} : "skip"
+  );
   const pendingCount = pendingReservations?.length ?? 0;
 
   useEffect(() => {
