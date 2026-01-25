@@ -54,13 +54,18 @@ interface ClientDetail {
   totalRehabilitatedNoShows?: number;
   totalDeparturesBeforeOrder?: number;
   score?: number;
-  scoreVersion?: number;
+  scoreVersion?: string;
   scoreBreakdown?: Record<string, number>;
   lastVisitAt?: number;
   firstSeenAt?: number;
   preferredLanguage?: string;
   needsRebuild?: boolean;
   notes?: ClientNote[];
+  dietaryRestrictions?: string[];
+  tags?: string[];
+  preferredZone?: string;
+  preferredTable?: string;
+  isBlacklisted?: boolean;
 }
 
 function statusBadge(status: ClientStatus): { cls: string; label: string } {

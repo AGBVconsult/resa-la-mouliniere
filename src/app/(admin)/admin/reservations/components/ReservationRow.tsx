@@ -5,6 +5,7 @@ import { Users, Baby, Accessibility, PawPrint, ChevronDown, MoreHorizontal, X, U
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
+import type { ReservationStatus } from "../../../../../../spec/contracts.generated";
 
 // Status colors
 const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
@@ -393,7 +394,7 @@ interface ReservationRowProps {
   isExpanded?: boolean;
   isSelectedForAssignment?: boolean;
   onToggleExpand: () => void;
-  onStatusChange: (status: string) => void;
+  onStatusChange: (status: ReservationStatus) => void;
   onEdit: () => void;
   onSelectForAssignment?: () => void;
   tables?: { _id: Id<"tables">; name: string }[];
@@ -428,7 +429,7 @@ export function ReservationRow({
 
   // Primary action based on status - Design System
   // Dimensions: w-28 (112px), h-11 min-h-[44px], rounded-full, text-[11px] font-medium uppercase tracking-wide
-  const getPrimaryAction = (): { label: string; color: string; nextStatus: string } | null => {
+  const getPrimaryAction = (): { label: string; color: string; nextStatus: ReservationStatus } | null => {
     switch (reservation.status) {
       case "pending":
         return { 
@@ -455,7 +456,7 @@ export function ReservationRow({
 
   // Secondary action (icon button) based on status - Design System
   // Dimensions: w-11 min-w-[44px], h-11 min-h-[44px], rounded-full, icon size={18}
-  const getSecondaryAction = (): { icon: React.ReactNode; color: string; nextStatus: string; tooltip: string } | null => {
+  const getSecondaryAction = (): { icon: React.ReactNode; color: string; nextStatus: ReservationStatus; tooltip: string } | null => {
     switch (reservation.status) {
       case "pending":
         return { 
@@ -478,8 +479,8 @@ export function ReservationRow({
 
   // Menu actions based on status - Design System
   // Text: text-xs (12px), hover backgrounds by type
-  const getMenuActions = (): Array<{ label: string; nextStatus: string; textColor: string; hoverBg: string }> => {
-    const actions: Array<{ label: string; nextStatus: string; textColor: string; hoverBg: string }> = [];
+  const getMenuActions = (): Array<{ label: string; nextStatus: ReservationStatus; textColor: string; hoverBg: string }> => {
+    const actions: Array<{ label: string; nextStatus: ReservationStatus; textColor: string; hoverBg: string }> = [];
     
     switch (reservation.status) {
       case "pending":

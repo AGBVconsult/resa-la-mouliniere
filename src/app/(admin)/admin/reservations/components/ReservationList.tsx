@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { TimeChunk } from "./TimeChunk";
 import { ReservationRow, type Reservation } from "./ReservationRow";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
+import type { ReservationStatus } from "../../../../../../spec/contracts.generated";
 
 interface ReservationListProps {
   reservations: Reservation[];
@@ -11,7 +12,7 @@ interface ReservationListProps {
   expandedId: Id<"reservations"> | null;
   selectedForAssignmentId?: Id<"reservations"> | null;
   onToggleExpand: (id: Id<"reservations">) => void;
-  onStatusChange: (id: Id<"reservations">, status: string, version: number) => void;
+  onStatusChange: (id: Id<"reservations">, status: ReservationStatus, version: number) => void;
   onEdit: (reservation: Reservation) => void;
   onSelectForAssignment?: (reservation: Reservation) => void;
   tables?: { _id: Id<"tables">; name: string }[];

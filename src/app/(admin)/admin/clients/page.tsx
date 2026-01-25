@@ -168,11 +168,11 @@ export default function AdminClientsPage() {
       : "skip"
   );
 
-  const rows = useMemo<ClientListRow[]>(() => {
+  const rows = useMemo(() => {
     const base = q.trim().length >= 2
-      ? (searchResult as ClientListRow[] | undefined)
+      ? searchResult
       : listResult?.page;
-    return base ?? [];
+    return (base ?? []) as ClientListRow[];
   }, [q, listResult, searchResult]);
 
   const rebuildCount = useMemo(() => rows.filter((r) => r.needsRebuild).length, [rows]);
