@@ -19,7 +19,8 @@ export async function verifyTurnstile(
   secretKey: string
 ): Promise<TurnstileResult> {
   // If secret is missing or placeholder, fail immediately (never log secret)
-  if (!secretKey || secretKey === "placeholder" || secretKey.startsWith("0x")) {
+  // Note: Real Cloudflare keys start with "0x", test keys start with "1x"
+  if (!secretKey || secretKey === "placeholder" || secretKey.startsWith("1x") || secretKey === "REPLACE_IN_CONVEX_DASHBOARD") {
     return { success: false, errorCodes: ["missing-secret"], reason: "missing-secret" };
   }
 
