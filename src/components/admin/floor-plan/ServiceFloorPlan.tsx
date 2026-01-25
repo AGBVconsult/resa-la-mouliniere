@@ -95,8 +95,8 @@ export function ServiceFloorPlan({
     };
   }, [filteredTables]);
 
-  // Find adjacent combinable tables - analyzes both directions and picks the best option
-  // The clicked table is always included, then we find the best combination (forward or backward)
+  // Find combinable tables - ONLY tables directly adjacent to the clicked table
+  // Simple rule: tables must touch (gap <= TABLE_GRID_SPAN on both axes)
   const findCombinableTables = useMemo(() => {
     if (!tableStates) return () => [];
     
@@ -109,103 +109,65 @@ export function ServiceFloorPlan({
         return [clickedTableId];
       }
       
-      // Find all tables with same combination direction in same zone
-      const combinableTables = tableStates.tables.filter((t) => {
+      // If clicked table already has enough capacity, no need to combine
+      if (clickedTable.capacity >= partySize) {
+        return [clickedTableId];
+      }
+      
+      const isHorizontal = clickedTable.combinationDirection === "horizontal";
+      const clickedWidth = (clickedTable.width ?? 1) * TABLE_GRID_SPAN;
+      const clickedHeight = (clickedTable.height ?? 1) * TABLE_GRID_SPAN;
+      const clickedEndX = clickedTable.positionX + clickedWidth;
+      const clickedEndY = clickedTable.positionY + clickedHeight;
+      
+      // Find ALL tables that are directly adjacent to the clicked table
+      const adjacentTables = tableStates.tables.filter((t) => {
+        if (t.tableId === clickedTableId) return false;
+        
+        // Must be same zone
         const normalizedZone = t.zone === "dining" ? "salle" : t.zone === "terrace" ? "terrasse" : t.zone;
         const clickedNormalizedZone = clickedTable.zone === "dining" ? "salle" : clickedTable.zone === "terrace" ? "terrasse" : clickedTable.zone;
-        return (
-          normalizedZone === clickedNormalizedZone &&
-          t.combinationDirection === clickedTable.combinationDirection &&
-          t.isActive &&
-          t.status !== "seated" &&
-          t.status !== "blocked"
-        );
+        if (normalizedZone !== clickedNormalizedZone) return false;
+        
+        // Must have same combination direction
+        if (t.combinationDirection !== clickedTable.combinationDirection) return false;
+        
+        // Must be available
+        if (!t.isActive || t.status === "seated" || t.status === "blocked") return false;
+        
+        // Check if tables are touching (adjacent)
+        const tWidth = (t.width ?? 1) * TABLE_GRID_SPAN;
+        const tHeight = (t.height ?? 1) * TABLE_GRID_SPAN;
+        const tEndX = t.positionX + tWidth;
+        const tEndY = t.positionY + tHeight;
+        
+        // Calculate gaps between bounding boxes
+        const xGap = Math.max(0, Math.max(clickedTable.positionX, t.positionX) - Math.min(clickedEndX, tEndX));
+        const yGap = Math.max(0, Math.max(clickedTable.positionY, t.positionY) - Math.min(clickedEndY, tEndY));
+        
+        // Tables must touch on both axes (gap <= TABLE_GRID_SPAN)
+        return xGap <= TABLE_GRID_SPAN && yGap <= TABLE_GRID_SPAN;
       });
       
-      // Sort by position to find adjacent tables
-      const isHorizontal = clickedTable.combinationDirection === "horizontal";
-      const sorted = [...combinableTables].sort((a, b) => {
+      // Sort adjacent tables by position (for consistent ordering)
+      adjacentTables.sort((a, b) => {
         if (isHorizontal) {
           return a.positionX - b.positionX;
         }
         return a.positionY - b.positionY;
       });
       
-      // Find the clicked table index
-      const clickedIndex = sorted.findIndex((t) => t.tableId === clickedTableId);
-      if (clickedIndex === -1) return [clickedTableId];
+      // Build result: clicked table + adjacent tables until we have enough capacity
+      const result: string[] = [clickedTableId];
+      let totalCapacity = clickedTable.capacity;
       
-      // Helper to check if two tables are truly adjacent (touching or within 1 cell gap)
-      // Both axes must be checked: tables must be aligned AND touching
-      const areAdjacent = (t1: typeof sorted[0], t2: typeof sorted[0]): boolean => {
-        // Calculate bounding boxes
-        const t1Width = (t1.width ?? 1) * TABLE_GRID_SPAN;
-        const t1Height = (t1.height ?? 1) * TABLE_GRID_SPAN;
-        const t2Width = (t2.width ?? 1) * TABLE_GRID_SPAN;
-        const t2Height = (t2.height ?? 1) * TABLE_GRID_SPAN;
-        
-        // Check X axis overlap/adjacency
-        const t1EndX = t1.positionX + t1Width;
-        const t2EndX = t2.positionX + t2Width;
-        const xGap = Math.max(0, Math.max(t1.positionX, t2.positionX) - Math.min(t1EndX, t2EndX));
-        
-        // Check Y axis overlap/adjacency  
-        const t1EndY = t1.positionY + t1Height;
-        const t2EndY = t2.positionY + t2Height;
-        const yGap = Math.max(0, Math.max(t1.positionY, t2.positionY) - Math.min(t1EndY, t2EndY));
-        
-        // Tables are adjacent if:
-        // - They overlap or touch on one axis (gap <= TABLE_GRID_SPAN)
-        // - AND they are within TABLE_GRID_SPAN on the other axis
-        const maxGap = TABLE_GRID_SPAN;
-        
-        if (isHorizontal) {
-          // For horizontal combination: must be adjacent on X, aligned on Y
-          return xGap <= maxGap && yGap <= maxGap;
-        } else {
-          // For vertical combination: must be adjacent on Y, aligned on X
-          return yGap <= maxGap && xGap <= maxGap;
-        }
-      };
-      
-      // Try FORWARD combination (clicked table + tables after)
-      // Each new table must be adjacent to the LAST table added to the group
-      const forwardResult: string[] = [clickedTableId];
-      let forwardCapacity = clickedTable.capacity;
-      let lastAddedForward = clickedTable;
-      for (let i = clickedIndex + 1; i < sorted.length && forwardCapacity < partySize; i++) {
-        const table = sorted[i];
-        if (!areAdjacent(lastAddedForward, table)) break;
-        forwardResult.push(table.tableId);
-        forwardCapacity += table.capacity;
-        lastAddedForward = table;
+      for (const table of adjacentTables) {
+        if (totalCapacity >= partySize) break;
+        result.push(table.tableId);
+        totalCapacity += table.capacity;
       }
       
-      // Try BACKWARD combination (clicked table + tables before)
-      // Each new table must be adjacent to the FIRST table in the group
-      const backwardResult: string[] = [clickedTableId];
-      let backwardCapacity = clickedTable.capacity;
-      let firstAddedBackward = clickedTable;
-      for (let i = clickedIndex - 1; i >= 0 && backwardCapacity < partySize; i--) {
-        const table = sorted[i];
-        if (!areAdjacent(table, firstAddedBackward)) break;
-        backwardResult.unshift(table.tableId);
-        backwardCapacity += table.capacity;
-        firstAddedBackward = table;
-      }
-      
-      // Choose the best option:
-      // 1. If forward meets capacity, use forward
-      // 2. If backward meets capacity but forward doesn't, use backward
-      // 3. If neither meets capacity, use the one with more capacity
-      if (forwardCapacity >= partySize) {
-        return forwardResult;
-      }
-      if (backwardCapacity >= partySize) {
-        return backwardResult;
-      }
-      // Neither meets capacity - return the one with more capacity
-      return forwardCapacity >= backwardCapacity ? forwardResult : backwardResult;
+      return result;
     };
   }, [tableStates]);
 
