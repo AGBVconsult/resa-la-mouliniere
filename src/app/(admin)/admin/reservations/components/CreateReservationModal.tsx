@@ -25,11 +25,15 @@ const LANGUAGES = [
   { value: "it", label: "Italiano" },
 ] as const;
 
+type LanguageValue = (typeof LANGUAGES)[number]["value"];
+
 const SOURCES = [
   { value: "phone", label: "Téléphone" },
   { value: "walkin", label: "Walk-in" },
   { value: "admin", label: "Admin" },
 ] as const;
+
+type SourceValue = (typeof SOURCES)[number]["value"];
 
 const TIME_SLOTS_LUNCH = ["12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30"];
 const TIME_SLOTS_DINNER = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"];
@@ -55,8 +59,8 @@ export function CreateReservationModal({
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [language, setLanguage] = useState<"fr" | "nl" | "en" | "de" | "it">("fr");
-  const [source, setSource] = useState<"admin" | "phone" | "walkin">("phone");
+  const [language, setLanguage] = useState<LanguageValue>("fr");
+  const [source, setSource] = useState<SourceValue>("phone");
   const [note, setNote] = useState("");
 
   const timeSlots = service === "lunch" ? TIME_SLOTS_LUNCH : TIME_SLOTS_DINNER;
@@ -289,7 +293,7 @@ export function CreateReservationModal({
               </label>
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value as any)}
+                onChange={(e) => setLanguage(e.target.value as LanguageValue)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               >
                 {LANGUAGES.map((lang) => (
@@ -305,7 +309,7 @@ export function CreateReservationModal({
               </label>
               <select
                 value={source}
-                onChange={(e) => setSource(e.target.value as any)}
+                onChange={(e) => setSource(e.target.value as SourceValue)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               >
                 {SOURCES.map((src) => (

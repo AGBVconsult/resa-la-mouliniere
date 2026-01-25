@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns";
 import { usePaginatedQuery, useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
+import type { ReservationStatus } from "../../../../../spec/contracts.generated";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -87,12 +88,12 @@ export default function ReservationsPage() {
   }, []);
 
   const handleStatusChange = useCallback(
-    async (id: Id<"reservations">, status: string, version: number) => {
+    async (id: Id<"reservations">, status: ReservationStatus, version: number) => {
       try {
         await updateReservation({
           reservationId: id,
           expectedVersion: version,
-          status: status as any,
+          status,
         });
         toast.success("Statut mis à jour");
       } catch (error) {

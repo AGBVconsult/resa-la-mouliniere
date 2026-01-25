@@ -1,10 +1,10 @@
 # État d'Avancement Global — Resa La Moulinière
 
-**Date de génération :** 22 janvier 2026  
-**Version :** 1.2  
-**Auteur :** Audit automatisé Cascade  
-**Objectif :** Base de référence pour le planning d'implémentation futur  
-**Dernière mise à jour :** 24 janvier 2026 (Notifications réservations en attente)
+**Date de génération :** 22 janvier 2026
+**Version :** 1.3
+**Auteur :** Audit automatisé Cascade
+**Objectif :** Base de référence pour le planning d'implémentation futur
+**Dernière mise à jour :** 24 janvier 2026 (Code review + fixes)
 
 ---
 
@@ -158,6 +158,8 @@ Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardeni
 |--------|--------|----------------------|
 | ~~Toast factice~~ | ✅ Résolu | `src/components/ui/toast.tsx` + `useToast` hook |
 | ~~Parsing erreur déphasé~~ | ✅ Résolu | `src/lib/formatError.ts` |
+| ~~Memory leak toast timers~~ | ✅ Résolu (24/01) | Cleanup avec `useRef` + `useEffect` dans `use-toast.ts` |
+| ~~`as any` type bypasses~~ | ✅ Résolu (24/01) | Types stricts dans 5 fichiers (voir changelog) |
 
 ### 5.2 Risques Moyens (P2) — ✅ RÉSOLUS
 
@@ -239,6 +241,7 @@ Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardeni
 | 2026-01-22 | MVP | 98% | Audit maturité complet (backend + frontend) |
 | 2026-01-22 | MVP | **100%** | **Sprint Hardening terminé** (PRD-012) |
 | 2026-01-24 | MVP | **100%** | Notifications réservations en attente (header) |
+| 2026-01-24 | MVP | **100%** | Code review adversariale + 6 fixes (memory leak, `as any`) |
 
 ---
 
@@ -283,11 +286,31 @@ Le projet **Resa La Moulinière** est **production-ready** :
 - ✅ **Fonctionnellement complet** : toutes les features critiques sont implémentées
 - ✅ **Backend robuste** : idempotence, retry, logging, RBAC
 - ✅ **Frontend hardened** : toast réel, gestion erreurs, role gate
-- ✅ **Tests E2E** : 42 tests (34 pass, 8 skip auth-required)
+- ✅ **Tests E2E** : 47 tests (admin: 4 pass + 10 skip, client: 13 pass, widget: 11 pass, autres: 9 pass)
 - ✅ **Prêt pour release production**
 
 **Effort restant (P3 post-release) :** ~4 heures (accessibilité, dashboard, docs)
 
 ---
 
-*Document mis à jour par Cascade — 24 janvier 2026 (v1.2)*
+## 12. Changelog Code Review (24/01/2026)
+
+### Issues corrigées (Code Review adversariale)
+
+| Issue | Sévérité | Fichier | Fix |
+|-------|----------|---------|-----|
+| Memory leak setTimeout | 🔴 HIGH | `src/hooks/use-toast.ts` | Ajout cleanup timers avec useRef + useEffect |
+| `as any` status | 🔴 HIGH | `src/app/(admin)/admin/reservations/page.tsx` | Import `ReservationStatus` type |
+| `as any` language/source | 🔴 HIGH | `CreateReservationModal.tsx` | Types `LanguageValue`/`SourceValue` dérivés |
+| `as any` searchResult | 🟡 MEDIUM | `src/app/(admin)/admin/clients/page.tsx` | Cast explicit `ClientListRow[]` |
+| `as any` clientRaw | 🟡 MEDIUM | `src/app/(admin)/admin/clients/[id]/page.tsx` | Interface `ClientDetail` définie |
+| `as any` periodId | 🟡 MEDIUM | `AddPeriodDialog.tsx` | Import et usage `Id<"specialPeriods">` |
+
+### Améliorations TypeScript
+- Constante `DEFAULT_TOAST_DURATION` extraite (magic number)
+- Types dérivés des const arrays (`LanguageValue`, `SourceValue`)
+- Interface `ClientDetail` pour typage union RBAC
+
+---
+
+*Document mis à jour par Barry (Quick Flow Solo Dev) — 24 janvier 2026 (v1.3)*
