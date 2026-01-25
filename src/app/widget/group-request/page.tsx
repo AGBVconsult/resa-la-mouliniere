@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useAction } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import dynamic from 'next/dynamic';
 import { api } from '../../../../convex/_generated/api';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -26,7 +26,7 @@ function GroupRequestContent() {
   const initialBabies = parseInt(searchParams.get('babies') || '0');
 
   const { t } = useTranslation(lang);
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
+  const settings = useQuery(api.widget.getSettings, { lang });
 
   const [partySize, setPartySize] = useState(
     Math.max(16, initialAdults + initialChildren + initialBabies)
@@ -98,6 +98,15 @@ function GroupRequestContent() {
       setIsSubmitting(false);
     }
   };
+
+  // Chargement des settings
+  if (settings === undefined) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   // Succès
   if (submitted) {
@@ -200,13 +209,15 @@ function GroupRequestContent() {
         </div>
 
         {/* Turnstile */}
-        <div className="flex justify-center">
-          <Turnstile
-            siteKey={turnstileSiteKey}
-            onSuccess={setTurnstileToken}
-            onError={() => setError('error.turnstileFailed')}
-          />
-        </div>
+        {settings?.turnstileSiteKey && (
+          <div className="flex justify-center">
+            <Turnstile
+              siteKey={settings.turnstileSiteKey}
+              onSuccess={setTurnstileToken}
+              onError={() => setError('error.turnstileFailed')}
+            />
+          </div>
+        )}
 
         {/* Erreur */}
         {error && (
