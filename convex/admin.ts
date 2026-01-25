@@ -749,6 +749,68 @@ export const updateReservation = mutation({
       await markClientNeedsRebuild(ctx, reservation, "reservation_backdated_edit");
     }
 
+    // Send email notification for status changes
+    if (status && status !== reservation.status) {
+      // Get settings for appUrl
+      const settings = await ctx.db
+        .query("settings")
+        .withIndex("by_restaurantId", (q) => q.eq("restaurantId", reservation.restaurantId))
+        .unique();
+
+      // Get manage token for URLs
+      const tokenDoc = await ctx.db
+        .query("reservationTokens")
+        .withIndex("by_reservation_type", (q) =>
+          q.eq("reservationId", reservationId).eq("type", "manage")
+        )
+        .unique();
+
+      const manageToken = tokenDoc?.token ?? "";
+      const appUrl = settings?.appUrl ?? "";
+      const newVersion = patch.version as number;
+
+      // Determine email type based on status transition
+      let emailType: "reservation.validated" | "reservation.cancelled" | "reservation.refused" | null = null;
+
+      if (status === "confirmed" && reservation.status === "pending") {
+        emailType = "reservation.validated";
+      } else if (status === "cancelled") {
+        emailType = "reservation.cancelled";
+      } else if (status === "refused") {
+        emailType = "reservation.refused";
+      }
+
+      if (emailType && settings) {
+        await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
+          restaurantId: reservation.restaurantId,
+          type: emailType,
+          to: reservation.email,
+          subjectKey: `email.${emailType}.subject`,
+          templateKey: emailType,
+          templateData: {
+            firstName: reservation.firstName,
+            lastName: reservation.lastName,
+            dateKey: reservation.dateKey,
+            timeKey: reservation.timeKey,
+            service: reservation.service,
+            partySize: reservation.partySize,
+            adults: reservation.adults,
+            childrenCount: reservation.childrenCount,
+            babyCount: reservation.babyCount,
+            language: reservation.language,
+            manageUrl: `${appUrl}/reservation/${manageToken}`,
+            editUrl: `${appUrl}/reservation/${manageToken}/edit`,
+            cancelUrl: `${appUrl}/reservation/${manageToken}/cancel`,
+            note: reservation.note ?? "",
+            options: reservation.options ?? [],
+          },
+          dedupeKey: `email:${emailType}:${reservationId}:${newVersion}`,
+        });
+
+        console.log("Status change email enqueued", { reservationId, emailType, newVersion });
+      }
+    }
+
     // Track status change event for analytics
     if (status && status !== reservation.status) {
       // Calculate delay for "seated" status (arrival time vs scheduled time)
