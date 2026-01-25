@@ -1,8 +1,9 @@
 // Service Worker for La Moulinière Admin PWA
-const CACHE_NAME = 'lm-admin-v1';
+const CACHE_NAME = 'lm-admin-v2';
 
 // Install event - cache essential assets
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing service worker...');
   self.skipWaiting();
 });
 
