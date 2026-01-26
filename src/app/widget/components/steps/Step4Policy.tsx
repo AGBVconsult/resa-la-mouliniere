@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { User, Mail, Phone } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { StepHeader } from "../ui/StepHeader";
-import { NavigationFooter } from "../ui/NavigationFooter";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import { formatDateDisplayFull } from "@/lib/utils";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
@@ -17,8 +16,13 @@ interface Step4PolicyProps {
   partySize: number;
   settings: { turnstileSiteKey: string };
   onSuccess: (result: ReservationResult) => void;
-  onBack: () => void;
   setLoading: (loading: boolean) => void;
+  requestPrimaryToken: number;
+  onFooterStateChange: (state: {
+    primaryDisabled: boolean;
+    backDisabled: boolean;
+    primaryLabel: string;
+  }) => void;
 }
 
 export function Step4Policy({
@@ -27,22 +31,24 @@ export function Step4Policy({
   partySize,
   settings,
   onSuccess,
-  onBack,
   setLoading,
+  requestPrimaryToken,
+  onFooterStateChange,
 }: Step4PolicyProps) {
   const { t } = useTranslation(lang);
 
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const lastRequestTokenRef = useRef(requestPrimaryToken);
 
   const idemKeyRef = useRef<string>(crypto.randomUUID());
 
   const createReservation = useAction(api.reservations.create);
 
-  const canSubmit = turnstileToken && !submitting;
+  const canSubmit = !!turnstileToken && !submitting;
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!canSubmit || !data.dateKey || !data.service || !data.timeKey) return;
 
     setSubmitting(true);
@@ -98,7 +104,46 @@ export function Step4Policy({
       setSubmitting(false);
       setLoading(false);
     }
-  };
+  }, [
+    canSubmit,
+    createReservation,
+    data.adults,
+    data.babyCount,
+    data.childrenCount,
+    data.dateKey,
+    data.email,
+    data.firstName,
+    data.lastName,
+    data.message,
+    data.phone,
+    data.requiresDogAccess,
+    data.requiresHighChair,
+    data.requiresWheelchair,
+    data.service,
+    data.timeKey,
+    lang,
+    onSuccess,
+    setLoading,
+    turnstileToken,
+  ]);
+
+  const primaryLabel = useMemo(() => {
+    return submitting ? t.sending : t.confirm_booking;
+  }, [submitting, t.confirm_booking, t.sending]);
+
+  useEffect(() => {
+    onFooterStateChange({
+      primaryDisabled: !canSubmit,
+      backDisabled: submitting,
+      primaryLabel,
+    });
+  }, [canSubmit, onFooterStateChange, primaryLabel, submitting]);
+
+  useEffect(() => {
+    if (requestPrimaryToken === lastRequestTokenRef.current) return;
+    lastRequestTokenRef.current = requestPrimaryToken;
+    void handleSubmit();
+  }, [handleSubmit, requestPrimaryToken]);
 
   const guestLabel = partySize > 1 ? t.convives : t.convive;
 
@@ -151,16 +196,6 @@ export function Step4Policy({
           </div>
         )}
       </div>
-
-      {/* Footer */}
-      <NavigationFooter
-        backLabel={t.back}
-        onBack={onBack}
-        backDisabled={submitting}
-        primaryLabel={submitting ? t.sending : t.confirm_booking}
-        onPrimary={handleSubmit}
-        primaryDisabled={!canSubmit}
-      />
     </div>
   );
 }

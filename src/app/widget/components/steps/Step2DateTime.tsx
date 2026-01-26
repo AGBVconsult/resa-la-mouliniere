@@ -5,7 +5,6 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { StepHeader } from "../ui/StepHeader";
 import { TimeSlotGrid } from "../ui/TimeSlotGrid";
-import { NavigationFooter } from "../ui/NavigationFooter";
 import { MonthCalendar } from "../calendar/MonthCalendar";
 import { MiniCalendarStrip } from "../calendar/MiniCalendarStrip";
 import { useTranslation } from "@/components/booking/i18n/translations";
@@ -16,8 +15,6 @@ interface Step2DateTimeProps {
   partySize: number;
   data: BookingState;
   onUpdate: (updates: Partial<BookingState>) => void;
-  onNext: () => void;
-  onBack: () => void;
 }
 
 export function Step2DateTime({
@@ -25,8 +22,6 @@ export function Step2DateTime({
   partySize,
   data,
   onUpdate,
-  onNext,
-  onBack,
 }: Step2DateTimeProps) {
   const { t } = useTranslation(lang);
 
@@ -105,8 +100,6 @@ export function Step2DateTime({
       }
     ) || [];
   }, [dayData, partySize]);
-
-  const canContinue = !!(data.dateKey && data.service && data.timeKey);
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -206,13 +199,7 @@ export function Step2DateTime({
         )}
       </div>
 
-      <NavigationFooter
-        backLabel={t.back}
-        onBack={onBack}
-        primaryLabel={`${t.continue} →`}
-        onPrimary={onNext}
-        primaryDisabled={!canContinue}
-      />
+      {/* Footer */}
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { Baby, Accessibility, Dog } from "lucide-react";
 import { StepHeader } from "../ui/StepHeader";
 import { CounterRow } from "../ui/CounterRow";
 import { Toggle } from "../ui/Toggle";
-import { NavigationFooter } from "../ui/NavigationFooter";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language, BookingState } from "@/components/booking/types";
 
@@ -12,14 +11,10 @@ interface Step1GuestsProps {
   lang: Language;
   data: BookingState;
   onUpdate: (updates: Partial<BookingState>) => void;
-  onNext: () => void;
 }
 
-export function Step1Guests({ lang, data, onUpdate, onNext }: Step1GuestsProps) {
+export function Step1Guests({ lang, data, onUpdate }: Step1GuestsProps) {
   const { t } = useTranslation(lang);
-  
-  const total = data.adults + data.childrenCount + data.babyCount;
-  const canContinue = data.adults >= 1 && total <= 15;
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -92,18 +87,6 @@ export function Step1Guests({ lang, data, onUpdate, onNext }: Step1GuestsProps) 
       </div>
 
       {/* Footer */}
-      <NavigationFooter
-        primaryLabel={`${t.continue} →`}
-        onPrimary={onNext}
-        primaryDisabled={!canContinue}
-        leftContent={
-          <span className="text-slate-600">
-            <span className="text-sm">Total: </span>
-            <span className="text-lg font-bold">{total}</span>
-            <span className="text-sm"> {total > 1 ? t.convives : t.convive}</span>
-          </span>
-        }
-      />
     </div>
   );
 }

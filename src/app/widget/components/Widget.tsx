@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { AnimatePresence } from "framer-motion";
@@ -10,6 +10,7 @@ import { BookingHeader } from "./BookingHeader";
 import { BookingFooter } from "./BookingFooter";
 import { LoadingSpinner } from "./ui/LoadingSpinner";
 import { StepTransition } from "./ui/StepTransition";
+import { NavigationFooter } from "./ui/NavigationFooter";
 
 import { Step1Guests } from "./steps/Step1Guests";
 import { Step2DateTime } from "./steps/Step2DateTime";
@@ -54,6 +55,14 @@ export default function Widget() {
 
   const [data, setData] = useState<BookingState>(initialBookingState);
 
+  const [requestPrimaryToken, setRequestPrimaryToken] = useState(0);
+  const [canContinueStep3, setCanContinueStep3] = useState(false);
+  const [step5FooterState, setStep5FooterState] = useState<{
+    primaryDisabled: boolean;
+    backDisabled: boolean;
+    primaryLabel: string;
+  } | null>(null);
+
   const settings = useQuery(api.widget.getSettings, { lang });
   const { t } = useTranslation(lang);
 
@@ -69,6 +78,14 @@ export default function Widget() {
   }
 
   const partySize = data.adults + data.childrenCount + data.babyCount;
+
+  const step1CanContinue = useMemo(() => {
+    return data.adults >= 1 && partySize <= 15;
+  }, [data.adults, partySize]);
+
+  const step2CanContinue = useMemo(() => {
+    return !!(data.dateKey && data.service && data.timeKey);
+  }, [data.dateKey, data.service, data.timeKey]);
 
   // Redirect grand groupe (>15)
   useEffect(() => {
@@ -98,6 +115,102 @@ export default function Widget() {
     setStep((prev) => Math.max(prev - 1, 1) as Step);
   };
 
+  const footerConfig = useMemo(() => {
+    if (step === 6) {
+      return { showNavigation: false } as const;
+    }
+
+    if (step === 1) {
+      return {
+        showNavigation: true,
+        backLabel: undefined,
+        onBack: undefined,
+        backDisabled: false,
+        primaryLabel: `${t.continue} →`,
+        onPrimary: nextStep,
+        primaryDisabled: !step1CanContinue,
+        leftContent: (
+          <span className="text-slate-600">
+            <span className="text-sm">Total: </span>
+            <span className="text-lg font-bold">{partySize}</span>
+            <span className="text-sm"> {partySize > 1 ? t.convives : t.convive}</span>
+          </span>
+        ),
+      } as const;
+    }
+
+    if (step === 2) {
+      return {
+        showNavigation: true,
+        backLabel: t.back,
+        onBack: prevStep,
+        backDisabled: false,
+        primaryLabel: `${t.continue} →`,
+        onPrimary: nextStep,
+        primaryDisabled: !step2CanContinue,
+        leftContent: undefined,
+      } as const;
+    }
+
+    if (step === 3) {
+      return {
+        showNavigation: true,
+        backLabel: t.back,
+        onBack: prevStep,
+        backDisabled: false,
+        primaryLabel: t.continue,
+        onPrimary: () => setRequestPrimaryToken((x) => x + 1),
+        primaryDisabled: !canContinueStep3,
+        leftContent: undefined,
+      } as const;
+    }
+
+    if (step === 4) {
+      return {
+        showNavigation: true,
+        backLabel: t.back,
+        onBack: prevStep,
+        backDisabled: false,
+        primaryLabel: t.practical_info_noted,
+        onPrimary: nextStep,
+        primaryDisabled: false,
+        leftContent: undefined,
+      } as const;
+    }
+
+    if (step === 5) {
+      return {
+        showNavigation: true,
+        backLabel: t.back,
+        onBack: prevStep,
+        backDisabled: step5FooterState?.backDisabled ?? false,
+        primaryLabel: step5FooterState?.primaryLabel ?? t.confirm_booking,
+        onPrimary: () => setRequestPrimaryToken((x) => x + 1),
+        primaryDisabled: step5FooterState?.primaryDisabled ?? true,
+        leftContent: undefined,
+      } as const;
+    }
+
+    return { showNavigation: false } as const;
+  }, [
+    canContinueStep3,
+    nextStep,
+    partySize,
+    prevStep,
+    step,
+    step1CanContinue,
+    step2CanContinue,
+    step5FooterState?.backDisabled,
+    step5FooterState?.primaryDisabled,
+    step5FooterState?.primaryLabel,
+    t.back,
+    t.confirm_booking,
+    t.continue,
+    t.convive,
+    t.convives,
+    t.practical_info_noted,
+  ]);
+
   return (
     <div className="min-h-screen md:bg-slate-100 md:flex md:items-center md:justify-center md:p-4">
       <div
@@ -118,13 +231,13 @@ export default function Widget() {
         />
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden relative flex flex-col">
+        <div className="flex-1 overflow-auto relative flex flex-col">
           <LoadingSpinner visible={loading} />
 
           <AnimatePresence mode="wait" initial={false}>
             {step === 1 && (
               <StepTransition key="step-1" direction={direction}>
-                <Step1Guests lang={lang} data={data} onUpdate={updateData} onNext={nextStep} />
+                <Step1Guests lang={lang} data={data} onUpdate={updateData} />
               </StepTransition>
             )}
 
@@ -135,8 +248,6 @@ export default function Widget() {
                   partySize={partySize}
                   data={data}
                   onUpdate={updateData}
-                  onNext={nextStep}
-                  onBack={prevStep}
                 />
               </StepTransition>
             )}
@@ -148,7 +259,8 @@ export default function Widget() {
                   data={data}
                   onUpdate={updateData}
                   onNext={nextStep}
-                  onBack={prevStep}
+                  requestPrimaryToken={requestPrimaryToken}
+                  onCanContinueChange={setCanContinueStep3}
                 />
               </StepTransition>
             )}
@@ -157,8 +269,6 @@ export default function Widget() {
               <StepTransition key="step-4" direction={direction}>
                 <Step5PracticalInfo
                   lang={lang}
-                  onNext={nextStep}
-                  onBack={prevStep}
                 />
               </StepTransition>
             )}
@@ -174,8 +284,9 @@ export default function Widget() {
                     setResult(res);
                     goToStep(6);
                   }}
-                  onBack={prevStep}
                   setLoading={setLoading}
+                  requestPrimaryToken={requestPrimaryToken}
+                  onFooterStateChange={setStep5FooterState}
                 />
               </StepTransition>
             )}
@@ -189,7 +300,21 @@ export default function Widget() {
         </div>
 
         {/* Footer */}
-        <BookingFooter />
+        <BookingFooter
+          navigation={
+            footerConfig.showNavigation ? (
+              <NavigationFooter
+                backLabel={footerConfig.backLabel}
+                onBack={footerConfig.onBack}
+                backDisabled={footerConfig.backDisabled}
+                primaryLabel={footerConfig.primaryLabel}
+                onPrimary={footerConfig.onPrimary}
+                primaryDisabled={footerConfig.primaryDisabled}
+                leftContent={footerConfig.leftContent}
+              />
+            ) : undefined
+          }
+        />
       </div>
     </div>
   );

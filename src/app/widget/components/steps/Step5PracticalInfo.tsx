@@ -2,20 +2,15 @@
 
 import { Clock, Smartphone, Mail, Heart } from "lucide-react";
 import { StepHeader } from "../ui/StepHeader";
-import { NavigationFooter } from "../ui/NavigationFooter";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language } from "@/components/booking/types";
 
 interface Step5PracticalInfoProps {
   lang: Language;
-  onNext: () => void;
-  onBack: () => void;
 }
 
 export function Step5PracticalInfo({
   lang,
-  onNext,
-  onBack,
 }: Step5PracticalInfoProps) {
   const { t } = useTranslation(lang);
 
@@ -90,12 +85,6 @@ export function Step5PracticalInfo({
       </div>
 
       {/* Footer */}
-      <NavigationFooter
-        backLabel={t.back}
-        onBack={onBack}
-        primaryLabel={t.practical_info_noted}
-        onPrimary={onNext}
-      />
     </div>
   );
 }

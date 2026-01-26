@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StepHeader } from "../ui/StepHeader";
 import { Input } from "../ui/Input";
-import { NavigationFooter } from "../ui/NavigationFooter";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language, BookingState } from "@/components/booking/types";
 
@@ -12,7 +11,8 @@ interface Step3ContactProps {
   data: BookingState;
   onUpdate: (updates: Partial<BookingState>) => void;
   onNext: () => void;
-  onBack: () => void;
+  requestPrimaryToken: number;
+  onCanContinueChange: (canContinue: boolean) => void;
 }
 
 interface FormErrors {
@@ -22,12 +22,18 @@ interface FormErrors {
   phone?: string;
 }
 
-export function Step3Contact({ lang, data, onUpdate, onNext, onBack }: Step3ContactProps) {
+export function Step3Contact({
+  lang,
+  data,
+  onUpdate,
+  onNext,
+  requestPrimaryToken,
+  onCanContinueChange,
+}: Step3ContactProps) {
   const { t } = useTranslation(lang);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-
-  const partySize = data.adults + data.childrenCount + data.babyCount;
+  const lastRequestTokenRef = useRef(requestPrimaryToken);
 
   const validateEmail = (email: string): boolean => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -39,7 +45,7 @@ export function Step3Contact({ lang, data, onUpdate, onNext, onBack }: Step3Cont
     return /^(\+|00)?[0-9]{9,15}$/.test(cleaned);
   };
 
-  const validate = (): boolean => {
+  const validate = useCallback((): boolean => {
     const newErrors: FormErrors = {};
 
     if (!data.firstName || data.firstName.length < 2) {
@@ -61,14 +67,32 @@ export function Step3Contact({ lang, data, onUpdate, onNext, onBack }: Step3Cont
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [data.email, data.firstName, data.lastName, data.phone, t.error_email, t.error_min_chars, t.error_phone, t.error_required]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setTouched({ firstName: true, lastName: true, email: true, phone: true });
     if (validate()) {
       onNext();
     }
-  };
+  }, [onNext, validate]);
+
+  const canContinue = useMemo(() => {
+    if (!data.firstName || data.firstName.length < 2) return false;
+    if (!data.lastName || data.lastName.length < 2) return false;
+    if (!data.email || !validateEmail(data.email)) return false;
+    if (!data.phone || !validatePhone(data.phone)) return false;
+    return true;
+  }, [data.email, data.firstName, data.lastName, data.phone]);
+
+  useEffect(() => {
+    onCanContinueChange(canContinue);
+  }, [canContinue, onCanContinueChange]);
+
+  useEffect(() => {
+    if (requestPrimaryToken === lastRequestTokenRef.current) return;
+    lastRequestTokenRef.current = requestPrimaryToken;
+    handleNext();
+  }, [handleNext, requestPrimaryToken]);
 
   const handleFieldChange = (field: keyof BookingState, value: string) => {
     onUpdate({ [field]: value });
@@ -144,14 +168,6 @@ export function Step3Contact({ lang, data, onUpdate, onNext, onBack }: Step3Cont
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <NavigationFooter
-        backLabel={t.back}
-        onBack={onBack}
-        primaryLabel={t.continue}
-        onPrimary={handleNext}
-      />
     </div>
   );
 }
