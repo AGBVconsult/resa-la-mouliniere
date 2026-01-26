@@ -13,6 +13,7 @@ interface BookingHeaderProps {
   guestLabel?: string;
   dateLabel?: string;
   timeLabel?: string;
+  hideSummary?: boolean;
 }
 
 export function BookingHeader({ 
@@ -23,6 +24,7 @@ export function BookingHeader({
   guestLabel,
   dateLabel,
   timeLabel,
+  hideSummary = false,
 }: BookingHeaderProps) {
   return (
     <div className="bg-slate-900 text-white px-4 py-3">
@@ -46,27 +48,29 @@ export function BookingHeader({
         </div>
       </div>
 
-      {/* Ligne 2 : Récap progressif */}
-      <div className="flex items-center justify-center gap-6 mt-2 text-sm">
-        {guestCount !== undefined && guestLabel && (
-          <span className="flex items-center gap-2">
-            <Users size={14} className="text-slate-400" />
-            <span>{guestCount} {guestLabel}</span>
-          </span>
-        )}
-        {dateLabel && (
-          <span className="flex items-center gap-2">
-            <Calendar size={14} className="text-slate-400" />
-            <span>{dateLabel}</span>
-          </span>
-        )}
-        {timeLabel && (
-          <span className="flex items-center gap-2">
-            <Clock size={14} className="text-slate-400" />
-            <span>{timeLabel}</span>
-          </span>
-        )}
-      </div>
+      {/* Ligne 2 : Récap progressif (masqué si hideSummary) */}
+      {!hideSummary && (
+        <div className="flex items-center justify-center gap-6 mt-2 text-sm">
+          {guestCount !== undefined && guestLabel && (
+            <span className="flex items-center gap-2">
+              <Users size={14} className="text-slate-400" />
+              <span>{guestCount} {guestLabel}</span>
+            </span>
+          )}
+          {dateLabel && (
+            <span className="flex items-center gap-2">
+              <Calendar size={14} className="text-slate-400" />
+              <span>{dateLabel}</span>
+            </span>
+          )}
+          {timeLabel && (
+            <span className="flex items-center gap-2">
+              <Clock size={14} className="text-slate-400" />
+              <span>{timeLabel}</span>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

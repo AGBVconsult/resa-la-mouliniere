@@ -3,12 +3,11 @@
 import { useState, useRef } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { Check } from "lucide-react";
+import { Check, User, Mail, Phone } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
-import { formatDateDisplay } from "@/lib/utils";
-import { THRESHOLDS } from "@/components/booking/constants";
+import { formatDateDisplayFull } from "@/lib/utils";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
 
 interface Step4PolicyProps {
@@ -32,8 +31,7 @@ export function Step4Policy({
 }: Step4PolicyProps) {
   const { t } = useTranslation(lang);
 
-  const [acceptPolicy, setAcceptPolicy] = useState(false);
-  const [acceptRules, setAcceptRules] = useState(false);
+  const [acceptPracticalInfo, setAcceptPracticalInfo] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -42,7 +40,7 @@ export function Step4Policy({
 
   const createReservation = useAction(api.reservations.create);
 
-  const canSubmit = acceptPolicy && acceptRules && turnstileToken && !submitting;
+  const canSubmit = acceptPracticalInfo && turnstileToken && !submitting;
 
   const handleSubmit = async () => {
     if (!canSubmit || !data.dateKey || !data.service || !data.timeKey) return;
@@ -52,7 +50,6 @@ export function Step4Policy({
     setError(null);
 
     try {
-      // Build options array from boolean flags
       const options: string[] = [];
       if (data.requiresHighChair) options.push("highChair");
       if (data.requiresDogAccess) options.push("dogAccess");
@@ -96,7 +93,6 @@ export function Step4Policy({
     } catch (err: unknown) {
       console.error("Reservation error:", err);
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
-      // Generate new idempotency key for retry
       idemKeyRef.current = crypto.randomUUID();
     } finally {
       setSubmitting(false);
@@ -104,7 +100,7 @@ export function Step4Policy({
     }
   };
 
-  const serviceLabel = data.service === "lunch" ? t.lunch : t.dinner;
+  const guestLabel = partySize > 1 ? t.convives : t.convive;
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -112,79 +108,61 @@ export function Step4Policy({
       <div className="flex-1 overflow-y-auto p-6">
         <StepHeader title={t.step4_title} subtitle={t.step4_subtitle} className="mb-6" />
 
-        {/* Récapitulatif */}
+        {/* Card Récapitulatif - Une seule ligne */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
-          <h3 className="font-bold text-slate-900 mb-3">{t.summary}</h3>
-          
+          <p className="text-center font-medium text-slate-900">
+            {partySize} {guestLabel} • {data.dateKey && formatDateDisplayFull(data.dateKey, lang)} • {data.timeKey}
+          </p>
+        </div>
+
+        {/* Card Infos client */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+          <h3 className="font-bold text-slate-900 mb-3">{t.client_info}</h3>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-500">{t.date}</span>
-              <span className="font-medium">{data.dateKey && formatDateDisplay(data.dateKey, lang)}</span>
+            <div className="flex items-center gap-3">
+              <User size={16} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-700">{data.firstName} {data.lastName}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">{t.time}</span>
-              <span className="font-medium">{serviceLabel} • {data.timeKey}</span>
+            <div className="flex items-center gap-3">
+              <Phone size={16} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-700">{data.phone}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">{t.guests}</span>
-              <span className="font-medium">
-                {data.adults} {t.adults}
-                {data.childrenCount > 0 && ` + ${data.childrenCount} ${t.children}`}
-                {data.babyCount > 0 && ` + ${data.babyCount} ${t.babies}`}
-              </span>
+            <div className="flex items-center gap-3">
+              <Mail size={16} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-700">{data.email}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">{t.contact}</span>
-              <span className="font-medium">{data.firstName} {data.lastName}</span>
-            </div>
-            {(data.requiresHighChair || data.requiresWheelchair || data.requiresDogAccess) && (
-              <div className="flex justify-between">
-                <span className="text-slate-500">{t.options}</span>
-                <span className="font-medium text-right">
-                  {[
-                    data.requiresHighChair && t.high_chair,
-                    data.requiresWheelchair && t.wheelchair,
-                    data.requiresDogAccess && t.dog.replace("Je viens avec mon ", "").replace("Ik kom met mijn ", "").replace("I'm coming with my ", "").replace("Ich komme mit meinem ", "").replace("Vengo con il mio ", ""),
-                  ].filter(Boolean).join(", ")}
-                </span>
-              </div>
-            )}
-            {data.message && (
-              <div className="flex justify-between">
-                <span className="text-slate-500">{t.note}</span>
-                <span className="font-medium text-right max-w-[180px] truncate" title={data.message}>
-                  {data.message.length > 30 ? data.message.slice(0, 30) + "..." : data.message}
-                </span>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Checkboxes */}
-        <div className="space-y-3 mb-6">
-          <label className="flex items-start gap-3 cursor-pointer">
+        {/* Card Informations pratiques */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+          <label className="flex items-start gap-3 cursor-pointer mb-4">
             <div
               className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
-                acceptPolicy ? "bg-slate-900 border-slate-900" : "border-slate-300"
+                acceptPracticalInfo ? "bg-slate-900 border-slate-900" : "border-slate-300"
               }`}
-              onClick={() => setAcceptPolicy(!acceptPolicy)}
+              onClick={() => setAcceptPracticalInfo(!acceptPracticalInfo)}
             >
-              {acceptPolicy && <Check size={14} className="text-white" />}
+              {acceptPracticalInfo && <Check size={14} className="text-white" />}
             </div>
-            <span className="text-sm text-slate-700">{t.accept_policy}</span>
+            <span className="text-sm font-medium text-slate-900">{t.accept_practical_info}</span>
           </label>
 
-          <label className="flex items-start gap-3 cursor-pointer">
-            <div
-              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
-                acceptRules ? "bg-slate-900 border-slate-900" : "border-slate-300"
-              }`}
-              onClick={() => setAcceptRules(!acceptRules)}
-            >
-              {acceptRules && <Check size={14} className="text-white" />}
-            </div>
-            <span className="text-sm text-slate-700">{t.accept_rules}</span>
-          </label>
+          <div className="text-sm text-slate-600 space-y-3 pl-9">
+            <p className="font-medium text-slate-700">{t.practical_info_intro}</p>
+            <p>
+              {t.practical_info_delay_1} <strong>15 minutes</strong> {t.practical_info_delay_2}
+            </p>
+            <p>
+              {t.practical_info_payment_1} <strong>Payconiq</strong>. <strong>{t.practical_info_payment_2}</strong>{t.practical_info_payment_3}
+            </p>
+            <p>
+              {t.practical_info_email_1} <strong>{t.practical_info_email_2}</strong>. {t.practical_info_email_3}
+            </p>
+            <p className="pt-2">
+              {t.practical_info_signature_1} — <strong>Allisson & Benjamin</strong>
+            </p>
+          </div>
         </div>
 
         {/* Turnstile */}
