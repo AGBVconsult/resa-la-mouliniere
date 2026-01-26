@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 interface NavigationFooterProps {
   /** Label du bouton retour (optionnel - si non fourni, pas de bouton retour) */
   backLabel?: string;
@@ -14,7 +16,7 @@ interface NavigationFooterProps {
   /** Désactiver le bouton retour */
   backDisabled?: boolean;
   /** Contenu supplémentaire à gauche (ex: "Total: 2 convives") */
-  leftContent?: React.ReactNode;
+  leftContent?: ReactNode;
 }
 
 /**
@@ -33,7 +35,7 @@ export function NavigationFooter({
   const showBackButton = backLabel && onBack;
 
   return (
-    <div className="px-6 py-4 bg-white border-t border-slate-200 flex items-center gap-3">
+    <div className="px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white border-t border-slate-200 flex items-center gap-3 flex-shrink-0">
       {/* Contenu à gauche (optionnel) - utilisé par Step1 pour "Total: X convives" */}
       {leftContent && !showBackButton && (
         <div className="flex-1">
