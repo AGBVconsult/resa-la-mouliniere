@@ -28,11 +28,11 @@ export function BookingHeader({
 }: BookingHeaderProps) {
   return (
     <div className="bg-slate-900 text-white px-4 py-3">
-      {/* Ligne 1 : Logo + Progress + Langue */}
+      {/* Ligne 1 : Progress centré + Langue à droite */}
       <div className="flex items-center justify-between h-12">
-        <span className="text-sm font-bold tracking-tight">LA MOULINIÈRE</span>
+        <div className="w-16" />
         <ProgressIndicator currentStep={currentStep} totalSteps={6} />
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 w-16 justify-end">
           <Globe size={16} className="text-slate-400" />
           <select
             value={lang}

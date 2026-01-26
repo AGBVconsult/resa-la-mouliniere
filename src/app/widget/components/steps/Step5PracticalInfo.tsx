@@ -1,6 +1,7 @@
 "use client";
 
-import { Clock, Smartphone, Mail } from "lucide-react";
+import { Clock, Smartphone, Mail, Heart } from "lucide-react";
+import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language } from "@/components/booking/types";
 
@@ -18,81 +19,72 @@ export function Step5PracticalInfo({
   const { t } = useTranslation(lang);
 
   return (
-    <div className="flex flex-col h-full bg-[#F8F9FA]">
-      {/* Contenu scrollable */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {/* Titre */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-semibold text-[#1A1A1A] leading-tight">
-            {t.practical_info_title_line1}
-          </h1>
-          <h2 className="text-2xl font-semibold text-[#1A1A1A] leading-tight">
-            {t.practical_info_title_line2}
-          </h2>
-          {/* Séparateur accent */}
-          <div className="flex justify-center mt-4">
-            <div className="w-12 h-1 bg-amber-400 rounded-full" />
-          </div>
-        </div>
+    <div className="flex flex-col h-full bg-slate-50">
+      {/* Contenu sans scroll */}
+      <div className="flex-1 p-6 flex flex-col">
+        <StepHeader title={t.practical_info_title_line1} subtitle={t.practical_info_title_line2} className="mb-4" />
 
-        {/* Blocs d'information */}
-        <div className="space-y-6 mt-8">
-          {/* Bloc 1 - Horloge */}
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-              <Clock size={22} className="text-slate-500" />
+        {/* Card avec les informations */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm flex-1 flex flex-col justify-between">
+          {/* Blocs d'information */}
+          <div className="space-y-3">
+            {/* Bloc 1 - Horloge */}
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                <Clock size={14} className="text-slate-500" />
+              </div>
+              <p className="text-slate-700 text-sm leading-relaxed pt-1">
+                {t.practical_info_delay_text_1}{" "}
+                <strong>{t.practical_info_15min}</strong>{" "}
+                {t.practical_info_delay_text_2}
+              </p>
             </div>
-            <p className="text-[#1A1A1A] text-base leading-relaxed pt-2">
-              {t.practical_info_delay_text_1}{" "}
-              <strong>{t.practical_info_15min}</strong>{" "}
-              {t.practical_info_delay_text_2}
+
+            {/* Bloc 2 - Smartphone/Paiement */}
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                <Smartphone size={14} className="text-slate-500" />
+              </div>
+              <div className="pt-1">
+                <p className="text-slate-700 text-sm leading-relaxed">
+                  {t.practical_info_payment_text_1}{" "}
+                  <strong>Payconiq</strong>.{" "}
+                  <span className="inline-flex items-center bg-orange-500 text-white text-xs font-medium px-1.5 py-0.5 rounded">
+                    {t.practical_info_no_card}
+                  </span>
+                </p>
+                <p className="text-slate-500 text-sm mt-0.5">
+                  {t.practical_info_cash}
+                </p>
+              </div>
+            </div>
+
+            {/* Bloc 3 - Email */}
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                <Mail size={14} className="text-slate-500" />
+              </div>
+              <div className="pt-1">
+                <p className="text-slate-700 text-sm leading-relaxed">
+                  {t.practical_info_email_text_1}{" "}
+                  <strong>{t.practical_info_email_confirm}</strong>.
+                </p>
+                <p className="text-slate-500 text-sm mt-0.5">
+                  {t.practical_info_email_text_2}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Signature */}
+          <div className="text-center pt-4 mt-3 border-t border-slate-100">
+            <p className="text-slate-700 text-sm flex items-center justify-center gap-1">
+              {t.practical_info_welcome} <Heart size={14} className="text-red-500 fill-red-500" />
+            </p>
+            <p className="text-teal-600 font-semibold tracking-wider uppercase text-xs mt-1">
+              ALLISSON & BENJAMIN
             </p>
           </div>
-
-          {/* Bloc 2 - Smartphone/Paiement */}
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-              <Smartphone size={22} className="text-slate-500" />
-            </div>
-            <div className="pt-2">
-              <p className="text-[#1A1A1A] text-base leading-relaxed">
-                {t.practical_info_payment_text_1}{" "}
-                <strong>Payconiq</strong>.{" "}
-                <span className="inline-flex items-center bg-[#F97316] text-white text-sm font-medium px-2 py-0.5 rounded ml-1">
-                  {t.practical_info_no_card}
-                </span>
-              </p>
-              <p className="text-slate-500 text-base mt-1">
-                {t.practical_info_cash}
-              </p>
-            </div>
-          </div>
-
-          {/* Bloc 3 - Email */}
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-              <Mail size={22} className="text-slate-500" />
-            </div>
-            <div className="pt-2">
-              <p className="text-[#1A1A1A] text-base leading-relaxed">
-                {t.practical_info_email_text_1}{" "}
-                <strong>{t.practical_info_email_confirm}</strong>.
-              </p>
-              <p className="text-slate-500 text-base mt-1">
-                {t.practical_info_email_text_2}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Signature */}
-        <div className="text-center mt-10 pt-6 border-t border-slate-200">
-          <p className="text-[#1A1A1A] text-lg">
-            {t.practical_info_welcome} <span className="text-red-500">❤️</span>
-          </p>
-          <p className="text-teal-600 font-semibold tracking-wider uppercase text-sm mt-2">
-            ALLISSON & BENJAMIN
-          </p>
         </div>
       </div>
 
