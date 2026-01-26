@@ -114,7 +114,7 @@ export default function Widget() {
           guestLabel={partySize > 1 ? t.convives : t.convive}
           dateLabel={data.dateKey ? formatDateShort(data.dateKey, lang) : undefined}
           timeLabel={data.timeKey || undefined}
-          hideSummary={step === 4}
+          hideSummary={step === 5}
         />
 
         {/* Content */}
@@ -155,10 +155,8 @@ export default function Widget() {
 
             {step === 4 && (
               <StepTransition key="step-4" direction={direction}>
-                <Step4Policy
+                <Step5PracticalInfo
                   lang={lang}
-                  data={data}
-                  partySize={partySize}
                   onNext={nextStep}
                   onBack={prevStep}
                 />
@@ -167,12 +165,12 @@ export default function Widget() {
 
             {step === 5 && settings && (
               <StepTransition key="step-5" direction={direction}>
-                <Step5PracticalInfo
+                <Step4Policy
                   lang={lang}
                   data={data}
                   partySize={partySize}
                   settings={settings}
-                  onSuccess={(res) => {
+                  onSuccess={(res: ReservationResult) => {
                     setResult(res);
                     goToStep(6);
                   }}
