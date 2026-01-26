@@ -145,7 +145,7 @@ export function Step3Contact({ lang, data, onUpdate, onNext, onBack }: Step3Cont
       </div>
 
       {/* Footer */}
-      <div className="p-6 bg-white border-t flex gap-3">
+      <div className="px-6 py-4 bg-white border-t flex gap-3">
         <button
           type="button"
           onClick={onBack}
