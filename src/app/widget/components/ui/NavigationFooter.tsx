@@ -32,8 +32,15 @@ export function NavigationFooter({
 }: NavigationFooterProps) {
   const showBackButton = backLabel && onBack;
 
+  // Calcul de la classe flex du bouton principal
+  const getPrimaryFlexClass = () => {
+    if (showBackButton) return "flex-[2]"; // Retour + Continuer : ratio 1:2
+    if (leftContent) return "flex-1"; // leftContent + Continuer : ratio 1:1
+    return "flex-1"; // Bouton seul : pleine largeur
+  };
+
   return (
-    <div className="px-6 py-4 bg-white border-t border-slate-200 flex items-center gap-3">
+    <div className="px-6 pt-4 pb-4 bg-white border-t border-slate-200 flex items-center gap-4 flex-shrink-0 min-h-[88px]">
       {/* Contenu à gauche (optionnel) - utilisé par Step1 pour "Total: X convives" */}
       {leftContent && !showBackButton && (
         <div className="flex-1">
@@ -58,9 +65,7 @@ export function NavigationFooter({
         type="button"
         onClick={onPrimary}
         disabled={primaryDisabled}
-        className={`py-4 rounded-xl font-bold text-white transition-all ${
-          showBackButton || leftContent ? "flex-[2]" : "flex-1"
-        } ${
+        className={`py-4 rounded-xl font-bold text-white transition-all ${getPrimaryFlexClass()} ${
           primaryDisabled
             ? "bg-slate-300 cursor-not-allowed"
             : "bg-slate-900 hover:bg-slate-800 active:scale-[0.98]"
