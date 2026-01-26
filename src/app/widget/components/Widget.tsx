@@ -15,7 +15,8 @@ import { Step1Guests } from "./steps/Step1Guests";
 import { Step2DateTime } from "./steps/Step2DateTime";
 import { Step3Contact } from "./steps/Step3Contact";
 import { Step4Policy } from "./steps/Step4Policy";
-import { Step5Confirmation } from "./steps/Step5Confirmation";
+import { Step5PracticalInfo } from "./steps/Step5PracticalInfo";
+import { Step6Confirmation } from "./steps/Step6Confirmation";
 
 import { THRESHOLDS, DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from "@/components/booking/constants";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
@@ -23,7 +24,7 @@ import { initialBookingState } from "@/components/booking/types";
 import { formatDateShort } from "@/lib/utils";
 import { useTranslation } from "@/components/booking/i18n/translations";
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 function detectBrowserLanguage(): Language {
   if (typeof window === "undefined") return DEFAULT_LANGUAGE;
@@ -89,7 +90,7 @@ export default function Widget() {
 
   const nextStep = () => {
     setDirection("forward");
-    setStep((prev) => Math.min(prev + 1, 5) as Step);
+    setStep((prev) => Math.min(prev + 1, 6) as Step);
   };
 
   const prevStep = () => {
@@ -152,16 +153,28 @@ export default function Widget() {
               </StepTransition>
             )}
 
-            {step === 4 && settings && (
+            {step === 4 && (
               <StepTransition key="step-4" direction={direction}>
                 <Step4Policy
+                  lang={lang}
+                  data={data}
+                  partySize={partySize}
+                  onNext={nextStep}
+                  onBack={prevStep}
+                />
+              </StepTransition>
+            )}
+
+            {step === 5 && settings && (
+              <StepTransition key="step-5" direction={direction}>
+                <Step5PracticalInfo
                   lang={lang}
                   data={data}
                   partySize={partySize}
                   settings={settings}
                   onSuccess={(res) => {
                     setResult(res);
-                    goToStep(5);
+                    goToStep(6);
                   }}
                   onBack={prevStep}
                   setLoading={setLoading}
@@ -169,9 +182,9 @@ export default function Widget() {
               </StepTransition>
             )}
 
-            {step === 5 && result && (
-              <StepTransition key="step-5" direction={direction}>
-                <Step5Confirmation lang={lang} data={data} partySize={partySize} result={result} />
+            {step === 6 && result && (
+              <StepTransition key="step-6" direction={direction}>
+                <Step6Confirmation lang={lang} data={data} partySize={partySize} result={result} />
               </StepTransition>
             )}
           </AnimatePresence>

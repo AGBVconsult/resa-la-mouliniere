@@ -79,7 +79,22 @@ export const translations = {
     hide_monthly_calendar: "Masquer calendrier mensuel",
     sending: "Envoi...",
     
-    // Step 5
+    // Step 5 - Practical Info Page
+    practical_info_title_line1: "Quelques informations",
+    practical_info_title_line2: "avant votre venue",
+    practical_info_delay_text_1: "Pour vous accueillir dans les meilleures conditions, nous maintenons votre réservation",
+    practical_info_15min: "15 minutes",
+    practical_info_delay_text_2: "après l'heure prévue.",
+    practical_info_payment_text_1: "Pour un règlement simple et rapide, nous utilisons",
+    practical_info_no_card: "Pas de carte bancaire",
+    practical_info_cash: "Vous pouvez aussi payer en espèces.",
+    practical_info_email_text_1: "Pour que tout reste simple, nous vous envoyons un",
+    practical_info_email_confirm: "email de confirmation",
+    practical_info_email_text_2: "Vous pourrez modifier, annuler ou nous écrire directement depuis ce mail.",
+    practical_info_welcome: "On se réjouit de vous accueillir",
+    practical_info_noted: "C'est noté !",
+
+    // Step 6 - Confirmation
     confirmed_title: "Merci !",
     confirmed_subtitle: "Votre table est réservée",
     pending_title: "Demande reçue",
@@ -183,6 +198,23 @@ export const translations = {
     cancelled_subtitle: "Uw reservering is succesvol geannuleerd.",
     hide_monthly_calendar: "Verberg maandkalender",
     sending: "Verzenden...",
+    
+    // Step 5 - Practical Info Page
+    practical_info_title_line1: "Enkele informatie",
+    practical_info_title_line2: "voor uw bezoek",
+    practical_info_delay_text_1: "Om u in de beste omstandigheden te ontvangen, houden we uw reservering",
+    practical_info_15min: "15 minuten",
+    practical_info_delay_text_2: "na de geplande tijd aan.",
+    practical_info_payment_text_1: "Voor een eenvoudige en snelle betaling gebruiken we",
+    practical_info_no_card: "Geen bankkaart",
+    practical_info_cash: "U kunt ook contant betalen.",
+    practical_info_email_text_1: "Om alles eenvoudig te houden, sturen we u een",
+    practical_info_email_confirm: "bevestigingsmail",
+    practical_info_email_text_2: "U kunt wijzigen, annuleren of ons rechtstreeks vanuit deze mail schrijven.",
+    practical_info_welcome: "We kijken ernaar uit u te verwelkomen",
+    practical_info_noted: "Begrepen!",
+
+    // Step 6 - Confirmation
     confirmed_title: "Bedankt!",
     confirmed_subtitle: "Uw tafel is gereserveerd",
     pending_title: "Aanvraag ontvangen",
@@ -276,6 +308,23 @@ export const translations = {
     cancelled_subtitle: "Your reservation has been successfully cancelled.",
     hide_monthly_calendar: "Hide monthly calendar",
     sending: "Sending...",
+    
+    // Step 5 - Practical Info Page
+    practical_info_title_line1: "Some information",
+    practical_info_title_line2: "before your visit",
+    practical_info_delay_text_1: "To welcome you in the best conditions, we hold your reservation",
+    practical_info_15min: "15 minutes",
+    practical_info_delay_text_2: "after the scheduled time.",
+    practical_info_payment_text_1: "For a quick and easy payment, we use",
+    practical_info_no_card: "No credit card",
+    practical_info_cash: "You can also pay in cash.",
+    practical_info_email_text_1: "To keep things simple, we send you a",
+    practical_info_email_confirm: "confirmation email",
+    practical_info_email_text_2: "You can modify, cancel or write to us directly from this email.",
+    practical_info_welcome: "We look forward to welcoming you",
+    practical_info_noted: "Got it!",
+
+    // Step 6 - Confirmation
     confirmed_title: "Thank you!",
     confirmed_subtitle: "Your table is reserved",
     pending_title: "Request received",
@@ -379,7 +428,22 @@ export const translations = {
     cancelled_subtitle: "Ihre Reservierung wurde erfolgreich storniert.",
     sending: "Wird gesendet...",
     
-    // Step 5
+    // Step 5 - Practical Info Page
+    practical_info_title_line1: "Einige Informationen",
+    practical_info_title_line2: "vor Ihrem Besuch",
+    practical_info_delay_text_1: "Um Sie bestmöglich zu empfangen, halten wir Ihre Reservierung",
+    practical_info_15min: "15 Minuten",
+    practical_info_delay_text_2: "nach der geplanten Zeit.",
+    practical_info_payment_text_1: "Für eine schnelle und einfache Zahlung nutzen wir",
+    practical_info_no_card: "Keine Kreditkarte",
+    practical_info_cash: "Sie können auch bar bezahlen.",
+    practical_info_email_text_1: "Um alles einfach zu halten, senden wir Ihnen eine",
+    practical_info_email_confirm: "Bestätigungs-E-Mail",
+    practical_info_email_text_2: "Sie können direkt aus dieser E-Mail ändern, stornieren oder uns schreiben.",
+    practical_info_welcome: "Wir freuen uns, Sie zu begrüßen",
+    practical_info_noted: "Verstanden!",
+
+    // Step 6 - Confirmation
     confirmed_title: "Vielen Dank!",
     confirmed_subtitle: "Ihr Tisch ist reserviert",
     pending_title: "Anfrage erhalten",
@@ -493,7 +557,22 @@ export const translations = {
     cancelled_subtitle: "La tua prenotazione è stata annullata con successo.",
     sending: "Invio in corso...",
     
-    // Step 5
+    // Step 5 - Practical Info Page
+    practical_info_title_line1: "Alcune informazioni",
+    practical_info_title_line2: "prima della tua visita",
+    practical_info_delay_text_1: "Per accoglierti nelle migliori condizioni, manteniamo la tua prenotazione",
+    practical_info_15min: "15 minuti",
+    practical_info_delay_text_2: "dopo l'orario previsto.",
+    practical_info_payment_text_1: "Per un pagamento semplice e veloce, utilizziamo",
+    practical_info_no_card: "Niente carta di credito",
+    practical_info_cash: "Puoi anche pagare in contanti.",
+    practical_info_email_text_1: "Per mantenere tutto semplice, ti inviamo una",
+    practical_info_email_confirm: "email di conferma",
+    practical_info_email_text_2: "Puoi modificare, annullare o scriverci direttamente da questa email.",
+    practical_info_welcome: "Non vediamo l'ora di accoglierti",
+    practical_info_noted: "Capito!",
+
+    // Step 6 - Confirmation
     confirmed_title: "Grazie!",
     confirmed_subtitle: "Il tuo tavolo è prenotato",
     pending_title: "Richiesta ricevuta",

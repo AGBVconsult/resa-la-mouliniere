@@ -5,14 +5,14 @@ import { useTranslation } from "@/components/booking/i18n/translations";
 import { formatDateDisplay } from "@/lib/utils";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
 
-interface Step5ConfirmationProps {
+interface Step6ConfirmationProps {
   lang: Language;
   data: BookingState;
   partySize: number;
   result: ReservationResult;
 }
 
-export function Step5Confirmation({ lang, data, partySize, result }: Step5ConfirmationProps) {
+export function Step6Confirmation({ lang, data, partySize, result }: Step6ConfirmationProps) {
   const { t } = useTranslation(lang);
 
   const isConfirmed = result.kind === "reservation" && result.status === "confirmed";
