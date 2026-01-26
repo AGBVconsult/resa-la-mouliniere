@@ -2,6 +2,7 @@
 
 import { Clock, Smartphone, Mail, Heart } from "lucide-react";
 import { StepHeader } from "../ui/StepHeader";
+import { NavigationFooter } from "../ui/NavigationFooter";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language } from "@/components/booking/types";
 
@@ -89,22 +90,12 @@ export function Step5PracticalInfo({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 bg-white border-t flex gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex-1 py-4 rounded-xl font-bold border border-slate-200 hover:bg-slate-50 transition-all"
-        >
-          {t.back}
-        </button>
-        <button
-          type="button"
-          onClick={onNext}
-          className="flex-[2] py-4 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all"
-        >
-          {t.practical_info_noted}
-        </button>
-      </div>
+      <NavigationFooter
+        backLabel={t.back}
+        onBack={onBack}
+        primaryLabel={t.practical_info_noted}
+        onPrimary={onNext}
+      />
     </div>
   );
 }
