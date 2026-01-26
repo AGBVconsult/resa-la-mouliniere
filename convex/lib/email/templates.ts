@@ -460,9 +460,11 @@ function buildPartySizeDetail(data: TemplateData, locale: Language): string {
 }
 
 /**
- * Base URL for email icons (hosted on production)
+ * Base URL for email icons (hosted on GitHub for reliable delivery)
+ * Using raw.githubusercontent.com ensures icons are always accessible in emails
  */
-const ICONS_BASE_URL = "https://lamouliniere.be/emails/icons";
+const ICONS_BASE_URL =
+  "https://raw.githubusercontent.com/AGBVconsult/resa-la-mouliniere/main/public/emails/icons";
 
 /**
  * PNG icons for email templates (hosted on our infrastructure for 100% compatibility)
