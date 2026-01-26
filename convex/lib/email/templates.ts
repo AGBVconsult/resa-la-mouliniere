@@ -459,10 +459,15 @@ function buildPartySizeDetail(data: TemplateData, locale: Language): string {
   return detail;
 }
 
+function getPublicAppUrl(): string {
+  const raw = process.env.APP_URL ?? "https://lamouliniere.be";
+  return raw.endsWith("/") ? raw.slice(0, -1) : raw;
+}
+
 /**
  * Base URL for email icons (hosted on production)
  */
-const ICONS_BASE_URL = "https://lamouliniere.be/emails/icons";
+const ICONS_BASE_URL = `${getPublicAppUrl()}/emails/icons`;
 
 /**
  * PNG icons for email templates (hosted on our infrastructure for 100% compatibility)
