@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { StepHeader } from "../ui/StepHeader";
 import { TimeSlotGrid } from "../ui/TimeSlotGrid";
+import { NavigationFooter } from "../ui/NavigationFooter";
 import { MonthCalendar } from "../calendar/MonthCalendar";
 import { MiniCalendarStrip } from "../calendar/MiniCalendarStrip";
 import { useTranslation } from "@/components/booking/i18n/translations";
@@ -205,27 +206,13 @@ export function Step2DateTime({
         )}
       </div>
 
-      <div className="px-6 py-4 bg-white border-t flex gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex-1 py-4 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all"
-        >
-          {t.back}
-        </button>
-        <button
-          type="button"
-          onClick={onNext}
-          disabled={!canContinue}
-          className={`flex-[2] py-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${
-            canContinue
-              ? "bg-slate-900 hover:bg-slate-800 active:scale-[0.98]"
-              : "bg-slate-400 cursor-not-allowed"
-          }`}
-        >
-          {t.continue} →
-        </button>
-      </div>
+      <NavigationFooter
+        backLabel={t.back}
+        onBack={onBack}
+        primaryLabel={`${t.continue} →`}
+        onPrimary={onNext}
+        primaryDisabled={!canContinue}
+      />
     </div>
   );
 }

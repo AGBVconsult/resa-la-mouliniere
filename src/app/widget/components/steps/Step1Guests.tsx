@@ -1,9 +1,10 @@
 "use client";
 
-import { Users, Baby, Accessibility, Dog } from "lucide-react";
+import { Baby, Accessibility, Dog } from "lucide-react";
 import { StepHeader } from "../ui/StepHeader";
 import { CounterRow } from "../ui/CounterRow";
 import { Toggle } from "../ui/Toggle";
+import { NavigationFooter } from "../ui/NavigationFooter";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language, BookingState } from "@/components/booking/types";
 
@@ -90,27 +91,19 @@ export function Step1Guests({ lang, data, onUpdate, onNext }: Step1GuestsProps) 
         </div>
       </div>
 
-      {/* Footer - Total + Continuer sur la MÊME LIGNE */}
-      <div className="px-6 py-4 bg-white border-t">
-        <div className="flex items-center justify-between gap-4">
+      {/* Footer */}
+      <NavigationFooter
+        primaryLabel={`${t.continue} →`}
+        onPrimary={onNext}
+        primaryDisabled={!canContinue}
+        leftContent={
           <span className="text-slate-600">
             <span className="text-sm">Total: </span>
             <span className="text-lg font-bold">{total}</span>
             <span className="text-sm"> {total > 1 ? t.convives : t.convive}</span>
           </span>
-          <button
-            onClick={onNext}
-            disabled={!canContinue}
-            className={`px-8 py-3 rounded-xl font-bold text-white transition-all ${
-              canContinue
-                ? "bg-slate-900 hover:bg-slate-800 active:scale-[0.98]"
-                : "bg-slate-300 cursor-not-allowed"
-            }`}
-          >
-            {t.continue} →
-          </button>
-        </div>
-      </div>
+        }
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { api } from "../../../../../convex/_generated/api";
 import { User, Mail, Phone } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { StepHeader } from "../ui/StepHeader";
+import { NavigationFooter } from "../ui/NavigationFooter";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import { formatDateDisplayFull } from "@/lib/utils";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
@@ -152,28 +153,14 @@ export function Step4Policy({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 bg-white border-t flex gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          disabled={submitting}
-          className="flex-1 py-4 rounded-xl font-bold border border-slate-200 hover:bg-slate-50 transition-all disabled:opacity-50"
-        >
-          {t.back}
-        </button>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          className={`flex-[2] py-4 rounded-xl font-bold text-white transition-all ${
-            canSubmit
-              ? "bg-slate-900 hover:bg-slate-800"
-              : "bg-slate-300 cursor-not-allowed"
-          }`}
-        >
-          {submitting ? t.sending : t.confirm_booking}
-        </button>
-      </div>
+      <NavigationFooter
+        backLabel={t.back}
+        onBack={onBack}
+        backDisabled={submitting}
+        primaryLabel={submitting ? t.sending : t.confirm_booking}
+        onPrimary={handleSubmit}
+        primaryDisabled={!canSubmit}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { StepHeader } from "../ui/StepHeader";
 import { Input } from "../ui/Input";
+import { NavigationFooter } from "../ui/NavigationFooter";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language, BookingState } from "@/components/booking/types";
 
@@ -145,22 +146,12 @@ export function Step3Contact({ lang, data, onUpdate, onNext, onBack }: Step3Cont
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 bg-white border-t flex gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex-1 py-4 rounded-xl font-bold border border-slate-200 hover:bg-slate-50 transition-all"
-        >
-          {t.back}
-        </button>
-        <button
-          type="button"
-          onClick={handleNext}
-          className="flex-[2] py-4 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all"
-        >
-          {t.continue}
-        </button>
-      </div>
+      <NavigationFooter
+        backLabel={t.back}
+        onBack={onBack}
+        primaryLabel={t.continue}
+        onPrimary={handleNext}
+      />
     </div>
   );
 }
