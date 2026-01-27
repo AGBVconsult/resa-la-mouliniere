@@ -1,6 +1,8 @@
 "use client";
 
-import { Baby, Footprints, Accessibility, PawPrint } from "lucide-react";
+import { Baby, Accessibility, PawPrint } from "lucide-react";
+import { stroller } from "@lucide/lab";
+import { Icon } from "lucide-react";
 import { StepHeader } from "../ui/StepHeader";
 import { CounterRow } from "../ui/CounterRow";
 import { Toggle } from "../ui/Toggle";
@@ -62,7 +64,7 @@ export function Step1Guests({ lang, data, onUpdate }: Step1GuestsProps) {
             <>
               <Toggle
                 label={t.stroller}
-                icon={Footprints}
+                icon={(props: { size?: number | string; className?: string }) => <Icon iconNode={stroller} {...props} />}
                 checked={data.requiresStroller}
                 onChange={(v) => onUpdate({ requiresStroller: v })}
                 highlighted

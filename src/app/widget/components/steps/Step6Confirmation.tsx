@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckCircle, Clock, Calendar, Share2, User, Phone, Mail, MessageSquare, Users, Baby, Footprints, Accessibility, PawPrint } from "lucide-react";
+import { CheckCircle, Clock, Calendar, Share2, User, Phone, Mail, MessageSquare, Users, Baby, Accessibility, PawPrint, Icon } from "lucide-react";
+import { stroller } from "@lucide/lab";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import { formatDateDisplay } from "@/lib/utils";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
@@ -45,9 +46,11 @@ export function Step6Confirmation({ lang, data, partySize, result }: Step6Confir
     return parts.join(" ");
   };
 
-  const selectedOptions = (): { icon: typeof Baby; label: string }[] => {
-    const opts: { icon: typeof Baby; label: string }[] = [];
-    if (data.requiresStroller) opts.push({ icon: Footprints, label: t.stroller });
+  type IconType = typeof Baby | ((props: { size?: number }) => React.ReactElement);
+  
+  const selectedOptions = (): { icon: IconType; label: string }[] => {
+    const opts: { icon: IconType; label: string }[] = [];
+    if (data.requiresStroller) opts.push({ icon: (props: { size?: number }) => <Icon iconNode={stroller} {...props} />, label: t.stroller });
     if (data.requiresHighChair) opts.push({ icon: Baby, label: t.high_chair });
     if (data.requiresWheelchair) opts.push({ icon: Accessibility, label: t.wheelchair });
     if (data.requiresDogAccess) opts.push({ icon: PawPrint, label: t.dog });

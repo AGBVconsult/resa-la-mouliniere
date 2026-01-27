@@ -3,12 +3,15 @@
 import { useCallback } from "react";
 import { Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+
+type IconComponent = LucideIcon | ComponentType<SVGProps<SVGSVGElement> & { size?: number | string; className?: string }>;
 
 interface ToggleProps {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   highlighted?: boolean;
 }
 
