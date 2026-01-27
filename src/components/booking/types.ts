@@ -17,11 +17,14 @@ export interface ContactDetails {
   message: string;
 }
 
+export type BabySeating = "lap" | "highchair";
+
 export interface BookingOptions {
   requiresHighChair: boolean;
   requiresStroller: boolean;
   requiresDogAccess: boolean;
   requiresWheelchair: boolean;
+  babySeating: BabySeating | null;
 }
 
 export interface DayStatus {
@@ -40,6 +43,7 @@ export interface BookingState {
   requiresStroller: boolean;
   requiresDogAccess: boolean;
   requiresWheelchair: boolean;
+  babySeating: BabySeating | null;
   // Step 2
   dateKey: string | null;
   service: Service | null;
@@ -60,6 +64,7 @@ export const initialBookingState: BookingState = {
   requiresStroller: false,
   requiresDogAccess: false,
   requiresWheelchair: false,
+  babySeating: null,
   dateKey: null,
   service: null,
   timeKey: null,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Baby, Accessibility, PawPrint } from "lucide-react";
+import { Accessibility, PawPrint } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Icon } from "lucide-react";
 import { StepHeader } from "../ui/StepHeader";
@@ -59,24 +59,15 @@ export function Step1Guests({ lang, data, onUpdate }: Step1GuestsProps) {
 
         {/* Options */}
         <div className="space-y-[1vh]">
-          {/* Options poussette/chaise haute - si bébé OU enfant */}
-          {(data.babyCount > 0 || data.childrenCount > 0) && (
-            <>
-              <Toggle
-                label={t.stroller}
-                icon={(props: { size?: number | string; className?: string }) => <Icon iconNode={stroller} {...props} />}
-                checked={data.requiresStroller}
-                onChange={(v) => onUpdate({ requiresStroller: v })}
-                highlighted
-              />
-              <Toggle
-                label={t.high_chair}
-                icon={Baby}
-                checked={data.requiresHighChair}
-                onChange={(v) => onUpdate({ requiresHighChair: v })}
-                highlighted
-              />
-            </>
+          {/* Option poussette - uniquement si enfant */}
+          {data.childrenCount > 0 && (
+            <Toggle
+              label={t.stroller}
+              icon={(props: { size?: number | string; className?: string }) => <Icon iconNode={stroller} {...props} />}
+              checked={data.requiresStroller}
+              onChange={(v) => onUpdate({ requiresStroller: v })}
+              highlighted
+            />
           )}
 
           {/* PMR - Toujours visible */}

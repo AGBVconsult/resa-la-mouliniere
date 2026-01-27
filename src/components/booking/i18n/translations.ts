@@ -20,6 +20,15 @@ export const translations = {
     convives: "convives",
     convive: "convive",
     
+    // Step 1 Baby
+    step1_baby_title: "Votre bébé est le bienvenu",
+    step1_baby_subtitle: "Tout est prévu pour vous accueillir en toute sérénité",
+    baby_changing_table: "Table à langer",
+    baby_play_corner: "Coin jeux & livres",
+    baby_seating_question: "Comment sera installé votre bébé ?",
+    baby_seating_lap: "Sur nos genoux",
+    baby_seating_highchair: "À table avec nous (Nous prévoyons une chaise haute)",
+    
     // Step 2
     step2_title: "Quand souhaitez-vous venir ?",
     step2_subtitle: "Choisissez une date",
@@ -147,6 +156,16 @@ export const translations = {
     dog: "Ik kom met mijn hond",
     convives: "gasten",
     convive: "gast",
+    
+    // Step 1 Baby
+    step1_baby_title: "Uw baby is welkom",
+    step1_baby_subtitle: "Alles is voorzien om u in alle rust te ontvangen",
+    baby_changing_table: "Luiertafel",
+    baby_play_corner: "Speelhoek & boeken",
+    baby_seating_question: "Hoe zal uw baby zitten?",
+    baby_seating_lap: "Op onze schoot",
+    baby_seating_highchair: "Aan tafel met ons (We voorzien een kinderstoel)",
+    
     step2_title: "Wanneer wilt u komen?",
     step2_subtitle: "Kies een datum",
     step2_slots_subtitle: "Kies een tijdslot",
@@ -259,6 +278,16 @@ export const translations = {
     dog: "I'm coming with my dog",
     convives: "guests",
     convive: "guest",
+    
+    // Step 1 Baby
+    step1_baby_title: "Your baby is welcome",
+    step1_baby_subtitle: "Everything is ready to welcome you with peace of mind",
+    baby_changing_table: "Changing table",
+    baby_play_corner: "Play corner & books",
+    baby_seating_question: "How will your baby be seated?",
+    baby_seating_lap: "On our lap",
+    baby_seating_highchair: "At the table with us (We'll provide a high chair)",
+    
     step2_title: "When would you like to come?",
     step2_subtitle: "Choose a date",
     step2_slots_subtitle: "Choose a time slot",
@@ -374,6 +403,15 @@ export const translations = {
     dog: "Ich komme mit meinem Hund",
     convives: "Gäste",
     convive: "Gast",
+    
+    // Step 1 Baby
+    step1_baby_title: "Ihr Baby ist willkommen",
+    step1_baby_subtitle: "Alles ist bereit, um Sie in aller Ruhe zu empfangen",
+    baby_changing_table: "Wickeltisch",
+    baby_play_corner: "Spielecke & Bücher",
+    baby_seating_question: "Wie wird Ihr Baby sitzen?",
+    baby_seating_lap: "Auf unserem Schoß",
+    baby_seating_highchair: "Mit uns am Tisch (Wir stellen einen Hochstuhl bereit)",
     
     // Step 2
     step2_title: "Wann möchten Sie kommen?",
@@ -503,6 +541,15 @@ export const translations = {
     stroller: "Vengo con un passeggino",
     wheelchair: "Accesso disabili",
     dog: "Vengo con il mio cane",
+    
+    // Step 1 Baby
+    step1_baby_title: "Il tuo bambino è il benvenuto",
+    step1_baby_subtitle: "Tutto è pronto per accogliervi in tutta tranquillità",
+    baby_changing_table: "Fasciatoio",
+    baby_play_corner: "Angolo giochi & libri",
+    baby_seating_question: "Come sarà seduto il tuo bambino?",
+    baby_seating_lap: "Sulle nostre ginocchia",
+    baby_seating_highchair: "A tavola con noi (Forniamo un seggiolone)",
     convives: "ospiti",
     convive: "ospite",
     

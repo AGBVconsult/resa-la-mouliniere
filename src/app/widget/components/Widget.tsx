@@ -13,6 +13,7 @@ import { StepTransition } from "./ui/StepTransition";
 import { NavigationFooter } from "./ui/NavigationFooter";
 
 import { Step1Guests } from "./steps/Step1Guests";
+import { Step1Baby } from "./steps/Step1Baby";
 import { Step2DateTime } from "./steps/Step2DateTime";
 import { Step3Contact } from "./steps/Step3Contact";
 import { Step4Policy } from "./steps/Step4Policy";
@@ -25,7 +26,7 @@ import { initialBookingState } from "@/components/booking/types";
 import { formatDateShort } from "@/lib/utils";
 import { useTranslation } from "@/components/booking/i18n/translations";
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6;
+type Step = 1 | "1b" | 2 | 3 | 4 | 5 | 6;
 
 function detectBrowserLanguage(): Language {
   if (typeof window === "undefined") return DEFAULT_LANGUAGE;
@@ -107,12 +108,34 @@ export default function Widget() {
 
   const nextStep = () => {
     setDirection("forward");
-    setStep((prev) => Math.min(prev + 1, 6) as Step);
+    setStep((prev) => {
+      if (prev === 1) {
+        // Si bébé sélectionné, aller à l'étape bébé
+        return data.babyCount > 0 ? "1b" : 2;
+      }
+      if (prev === "1b") return 2;
+      if (prev === 2) return 3;
+      if (prev === 3) return 4;
+      if (prev === 4) return 5;
+      if (prev === 5) return 6;
+      return prev;
+    });
   };
 
   const prevStep = () => {
     setDirection("backward");
-    setStep((prev) => Math.max(prev - 1, 1) as Step);
+    setStep((prev) => {
+      if (prev === "1b") return 1;
+      if (prev === 2) {
+        // Si bébé sélectionné, retourner à l'étape bébé
+        return data.babyCount > 0 ? "1b" : 1;
+      }
+      if (prev === 3) return 2;
+      if (prev === 4) return 3;
+      if (prev === 5) return 4;
+      if (prev === 6) return 5;
+      return prev;
+    });
   };
 
   const footerConfig = useMemo(() => {
@@ -136,6 +159,21 @@ export default function Widget() {
             <span className="text-sm"> {partySize > 1 ? t.convives : t.convive}</span>
           </span>
         ),
+      } as const;
+    }
+
+    if (step === "1b") {
+      // Étape bébé - on peut continuer seulement si un choix est fait
+      const canContinueBaby = data.babySeating !== null;
+      return {
+        showNavigation: true,
+        backLabel: t.back,
+        onBack: prevStep,
+        backDisabled: false,
+        primaryLabel: `${t.continue} →`,
+        onPrimary: nextStep,
+        primaryDisabled: !canContinueBaby,
+        leftContent: undefined,
       } as const;
     }
 
@@ -194,6 +232,7 @@ export default function Widget() {
     return { showNavigation: false } as const;
   }, [
     canContinueStep3,
+    data.babySeating,
     nextStep,
     partySize,
     prevStep,
@@ -220,7 +259,7 @@ export default function Widget() {
       >
         {/* Header */}
         <BookingHeader
-          currentStep={step}
+          currentStep={step === "1b" ? 1 : step}
           lang={lang}
           onLangChange={setLang}
           guestCount={partySize}
@@ -238,6 +277,12 @@ export default function Widget() {
             {step === 1 && (
               <StepTransition key="step-1" direction={direction}>
                 <Step1Guests lang={lang} data={data} onUpdate={updateData} />
+              </StepTransition>
+            )}
+
+            {step === "1b" && (
+              <StepTransition key="step-1b" direction={direction}>
+                <Step1Baby lang={lang} data={data} onUpdate={updateData} />
               </StepTransition>
             )}
 
