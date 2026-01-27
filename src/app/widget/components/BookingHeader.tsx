@@ -27,7 +27,7 @@ export function BookingHeader({
   hideSummary = false,
 }: BookingHeaderProps) {
   return (
-    <div className="bg-slate-900 text-white px-[4vw] py-[1.5vh] min-h-[8vh]">
+    <div className="bg-slate-900 text-white px-[4vw] py-[1.5vh] min-h-[8vh] flex-shrink-0">
       {/* Ligne 1 : Progress centré + Langue à droite */}
       <div className="flex items-center justify-between h-[4vh] min-h-[40px]">
         <div className="w-16" />

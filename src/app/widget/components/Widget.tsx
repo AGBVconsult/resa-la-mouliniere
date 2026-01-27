@@ -212,11 +212,11 @@ export default function Widget() {
   ]);
 
   return (
-    <div className="min-h-screen md:bg-slate-100 md:flex md:items-center md:justify-center md:p-4">
+    <div className="h-[100dvh] md:h-auto md:min-h-screen md:bg-slate-100 md:flex md:items-center md:justify-center md:p-4">
       <div
         role="form"
         aria-label="Formulaire de réservation"
-        className="w-full h-[100dvh] flex flex-col bg-white md:max-w-[400px] md:h-[100dvh] md:max-h-[850px] md:rounded-3xl md:shadow-2xl md:border md:border-slate-200 overflow-hidden"
+        className="w-full h-[100dvh] flex flex-col bg-white md:h-[100dvh] md:max-h-[850px] md:max-w-[400px] md:rounded-3xl md:shadow-2xl md:border md:border-slate-200 overflow-hidden"
       >
         {/* Header */}
         <BookingHeader
@@ -231,7 +231,7 @@ export default function Widget() {
         />
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden relative flex flex-col min-h-0 bg-slate-50">
+        <div className="flex-1 min-h-0 overflow-y-auto relative flex flex-col bg-slate-50">
           <LoadingSpinner visible={loading} />
 
           <AnimatePresence mode="wait" initial={false}>
