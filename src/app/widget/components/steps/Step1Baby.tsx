@@ -83,10 +83,7 @@ export function Step1Baby({ lang, data, onUpdate }: Step1BabyProps) {
                   : "border-slate-200 hover:border-slate-300"
               }`}
             >
-              <div className="flex flex-col items-start">
-                <span className="text-[1.6vh] font-medium">{t.baby_seating_highchair}</span>
-                <span className="text-[1.3vh] text-slate-500">{t.high_chair}</span>
-              </div>
+              <span className="text-[1.6vh] font-medium">{t.baby_seating_highchair} ({t.high_chair})</span>
               <div
                 className={`w-[3vh] h-[3vh] min-w-[20px] min-h-[20px] rounded-full border flex items-center justify-center transition-all ${
                   data.babySeating === "highchair"
