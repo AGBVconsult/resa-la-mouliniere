@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Smartphone, Mail, Heart } from "lucide-react";
+import { Hourglass, Euro, Mail } from "lucide-react";
 import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language } from "@/components/booking/types";
@@ -24,10 +24,10 @@ export function Step5PracticalInfo({
         <div className="bg-white rounded-2xl p-4 shadow-sm flex-1 flex flex-col justify-between">
           {/* Blocs d'information */}
           <div className="space-y-3">
-            {/* Bloc 1 - Horloge */}
+            {/* Bloc 1 - Hourglass */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                <Clock size={14} className="text-slate-500" />
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <Hourglass size={14} className="text-red-500" />
               </div>
               <p className="text-slate-700 text-sm leading-relaxed pt-1">
                 {t.practical_info_delay_text_1}{" "}
@@ -36,10 +36,10 @@ export function Step5PracticalInfo({
               </p>
             </div>
 
-            {/* Bloc 2 - Smartphone/Paiement */}
+            {/* Bloc 2 - Euro/Paiement */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                <Smartphone size={14} className="text-slate-500" />
+              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                <Euro size={14} className="text-orange-500" />
               </div>
               <div className="pt-1">
                 <p className="text-slate-700 text-sm leading-relaxed">
@@ -57,8 +57,8 @@ export function Step5PracticalInfo({
 
             {/* Bloc 3 - Email */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                <Mail size={14} className="text-slate-500" />
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Mail size={14} className="text-blue-500" />
               </div>
               <div className="pt-1">
                 <p className="text-slate-700 text-sm leading-relaxed">
@@ -74,8 +74,8 @@ export function Step5PracticalInfo({
 
           {/* Signature */}
           <div className="text-center pt-4 mt-3 border-t border-slate-100">
-            <p className="text-slate-700 text-sm flex items-center justify-center gap-1">
-              {t.practical_info_welcome} <Heart size={14} className="text-red-500 fill-red-500" />
+            <p className="text-slate-700 text-sm">
+              {t.practical_info_welcome}
             </p>
             <p className="text-teal-600 font-semibold tracking-wider uppercase text-xs mt-1">
               ALLISSON & BENJAMIN

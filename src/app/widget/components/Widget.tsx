@@ -227,7 +227,7 @@ export default function Widget() {
           guestLabel={partySize > 1 ? t.convives : t.convive}
           dateLabel={data.dateKey ? formatDateShort(data.dateKey, lang) : undefined}
           timeLabel={data.timeKey || undefined}
-          hideSummary={step === 5}
+          hideSummary={step === 4 || step === 5}
         />
 
         {/* Content */}
