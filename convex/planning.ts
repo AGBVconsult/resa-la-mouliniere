@@ -24,6 +24,7 @@ interface DayEffective {
 // ═══════════════════════════════════════════════════════════════
 // QUERY: getMonthEffective
 // Vue mensuelle avec cascade résolue server-side
+// Utilise les slotOverrides comme source de vérité (comme le widget)
 // ═══════════════════════════════════════════════════════════════
 
 export const getMonthEffective = query({
@@ -49,88 +50,6 @@ export const getMonthEffective = query({
     const lastDay = new Date(year, month, 0).getDate();
     const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
-    // Fetch special periods (closures) that overlap with this month
-    // This handles closures even when slots don't exist yet
-    const allSpecialPeriods = await ctx.db
-      .query("specialPeriods")
-      .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
-      .collect();
-
-    // DEBUG: Log all special periods
-    console.log("[DEBUG getMonthEffective] allSpecialPeriods:", allSpecialPeriods.map(p => ({
-      id: p._id,
-      name: p.name,
-      type: p.type,
-      startDate: p.startDate,
-      endDate: p.endDate,
-      status: p.applyRules.status,
-      services: p.applyRules.services,
-      activeDays: p.applyRules.activeDays,
-    })));
-
-    // Filter periods that overlap with this month
-    const monthPeriods = allSpecialPeriods.filter(
-      (p) => p.startDate <= endDate && p.endDate >= startDate
-    );
-
-    // DEBUG: Log filtered periods
-    console.log("[DEBUG getMonthEffective] monthPeriods for", { year, month, startDate, endDate }, ":", monthPeriods.map(p => ({
-      name: p.name,
-      status: p.applyRules.status,
-    })));
-
-    // Helper to parse dateKey to Date (local time, not UTC)
-    const parseDateKey = (dateKey: string): Date => {
-      const [y, m, d] = dateKey.split("-").map(Number);
-      return new Date(y, m - 1, d);
-    };
-
-    // Helper to format Date to dateKey
-    const formatDateKey = (date: Date): string => {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const d = String(date.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
-    };
-
-    // Helper to get ISO weekday (1=Monday, 7=Sunday)
-    const getISOWeekday = (date: Date): number => {
-      const day = date.getDay();
-      return day === 0 ? 7 : day;
-    };
-
-    // Build closure map: dateKey -> { lunch: boolean, dinner: boolean }
-    const closureMap = new Map<string, { lunch: boolean; dinner: boolean }>();
-    for (const period of monthPeriods) {
-      if (period.applyRules.status !== "closed") continue;
-      
-      // Iterate through period dates that fall within this month
-      const periodStart = period.startDate > startDate ? period.startDate : startDate;
-      const periodEnd = period.endDate < endDate ? period.endDate : endDate;
-      
-      const current = parseDateKey(periodStart);
-      const end = parseDateKey(periodEnd);
-      
-      while (current <= end) {
-        const dateKey = formatDateKey(current);
-        const weekday = getISOWeekday(current);
-        
-        // Check if this day is in activeDays
-        if (period.applyRules.activeDays.includes(weekday)) {
-          const existing = closureMap.get(dateKey) || { lunch: false, dinner: false };
-          for (const service of period.applyRules.services) {
-            existing[service] = true;
-          }
-          closureMap.set(dateKey, existing);
-        }
-        
-        current.setDate(current.getDate() + 1);
-      }
-    }
-
-    // DEBUG: Log closure map
-    console.log("[DEBUG getMonthEffective] closureMap entries:", Array.from(closureMap.entries()));
-
     // Fetch all slots for the month
     const allSlots = await ctx.db
       .query("slots")
@@ -144,7 +63,7 @@ export const getMonthEffective = query({
       (s) => s.dateKey >= startDate && s.dateKey <= endDate
     );
 
-    // Fetch slotOverrides (manual and period) to apply closures/modifications
+    // Fetch slotOverrides (manual and period) - these are the source of truth
     const slotKeys = new Set(monthSlots.map((s) => s.slotKey));
     const [manualOverrides, periodOverrides] = await Promise.all([
       ctx.db
@@ -170,7 +89,7 @@ export const getMonthEffective = query({
       }
     }
 
-    // Apply overrides to slots
+    // Apply overrides to slots (same logic as widget)
     const effectiveSlots = monthSlots.map((slot) => {
       const override = overridesMap.get(slot.slotKey);
       if (!override) return slot;
@@ -215,24 +134,19 @@ export const getMonthEffective = query({
       const lunchReservations = dayReservations.filter((r) => r.service === "lunch");
       const dinnerReservations = dayReservations.filter((r) => r.service === "dinner");
 
-      // Check if this day has a closure from specialPeriods
-      const closure = closureMap.get(dateKey);
-      const lunchClosed = closure?.lunch ?? false;
-      const dinnerClosed = closure?.dinner ?? false;
-
       // Calculate effective values for each service
-      // If a closure exists from specialPeriods, force isOpen to false
+      // isOpen is true only if at least one slot is open with capacity > 0
       result[dateKey] = {
         lunch: {
-          isOpen: lunchClosed ? false : lunchSlots.some((s) => s.isOpen && s.capacity > 0),
-          capacityEffective: lunchClosed ? 0 : lunchSlots
+          isOpen: lunchSlots.some((s) => s.isOpen && s.capacity > 0),
+          capacityEffective: lunchSlots
             .filter((s) => s.isOpen)
             .reduce((sum, s) => sum + s.capacity, 0),
           covers: lunchReservations.reduce((sum, r) => sum + r.partySize, 0),
         },
         dinner: {
-          isOpen: dinnerClosed ? false : dinnerSlots.some((s) => s.isOpen && s.capacity > 0),
-          capacityEffective: dinnerClosed ? 0 : dinnerSlots
+          isOpen: dinnerSlots.some((s) => s.isOpen && s.capacity > 0),
+          capacityEffective: dinnerSlots
             .filter((s) => s.isOpen)
             .reduce((sum, s) => sum + s.capacity, 0),
           covers: dinnerReservations.reduce((sum, r) => sum + r.partySize, 0),
