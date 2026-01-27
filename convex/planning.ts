@@ -62,6 +62,43 @@ export const getMonthEffective = query({
       (s) => s.dateKey >= startDate && s.dateKey <= endDate
     );
 
+    // Fetch slotOverrides (manual and period) to apply closures/modifications
+    const slotKeys = new Set(monthSlots.map((s) => s.slotKey));
+    const [manualOverrides, periodOverrides] = await Promise.all([
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "manual"))
+        .collect(),
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "period"))
+        .collect(),
+    ]);
+
+    // Build overrides map with priority: MANUAL > PERIOD
+    const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number }>();
+    for (const override of periodOverrides) {
+      if (slotKeys.has(override.slotKey)) {
+        overridesMap.set(override.slotKey, override.patch);
+      }
+    }
+    for (const override of manualOverrides) {
+      if (slotKeys.has(override.slotKey)) {
+        overridesMap.set(override.slotKey, override.patch);
+      }
+    }
+
+    // Apply overrides to slots
+    const effectiveSlots = monthSlots.map((slot) => {
+      const override = overridesMap.get(slot.slotKey);
+      if (!override) return slot;
+      return {
+        ...slot,
+        isOpen: override.isOpen ?? slot.isOpen,
+        capacity: override.capacity ?? slot.capacity,
+      };
+    });
+
     // Fetch all reservations for the month with active statuses
     const allReservations = await ctx.db
       .query("reservations")
@@ -86,8 +123,8 @@ export const getMonthEffective = query({
     for (let day = 1; day <= lastDay; day++) {
       const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-      // Get slots for this day
-      const daySlots = monthSlots.filter((s) => s.dateKey === dateKey);
+      // Get effective slots for this day
+      const daySlots = effectiveSlots.filter((s) => s.dateKey === dateKey);
       const lunchSlots = daySlots.filter((s) => s.service === "lunch");
       const dinnerSlots = daySlots.filter((s) => s.service === "dinner");
 

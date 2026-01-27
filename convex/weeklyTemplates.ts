@@ -704,6 +704,20 @@ export const syncSlotsWithTemplate = mutation({
       }
     }
 
+    // Fetch slotOverrides to check if slots have period overrides (closures)
+    const slotKeysSet = new Set(slotKeys);
+    const periodOverrides = await ctx.db
+      .query("slotOverrides")
+      .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurantId).eq("origin", "period"))
+      .collect();
+    
+    const periodOverridesBySlotKey = new Map<string, { isOpen?: boolean }>();
+    for (const override of periodOverrides) {
+      if (slotKeysSet.has(override.slotKey)) {
+        periodOverridesBySlotKey.set(override.slotKey, override.patch);
+      }
+    }
+
     // Template slot timeKeys
     const templateTimeKeys = new Set(template.slots.filter((s) => s.isActive).map((s) => s.timeKey));
     const templateSlotMap = new Map(template.slots.map((s) => [s.timeKey, s]));
@@ -746,6 +760,12 @@ export const syncSlotsWithTemplate = mutation({
       for (const slot of existingSlotsForDate) {
         const templateSlot = templateSlotMap.get(slot.timeKey);
         const hasReservations = (activeReservationsBySlot.get(slot.slotKey) ?? 0) > 0;
+        const hasPeriodOverride = periodOverridesBySlotKey.has(slot.slotKey);
+
+        // Skip slots that have a period override (closure/modification from specialPeriods)
+        if (hasPeriodOverride) {
+          continue;
+        }
 
         if (!templateSlot || !templateSlot.isActive) {
           // Slot should be removed/closed

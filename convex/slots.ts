@@ -512,12 +512,49 @@ export const listByDate = query({
       )
       .collect();
 
-    const lunch = allSlots
+    // Fetch slotOverrides (manual and period) to apply closures/modifications
+    const slotKeys = new Set(allSlots.map((s) => s.slotKey));
+    const [manualOverrides, periodOverrides] = await Promise.all([
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "manual"))
+        .collect(),
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "period"))
+        .collect(),
+    ]);
+
+    // Build overrides map with priority: MANUAL > PERIOD
+    const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number }>();
+    for (const override of periodOverrides) {
+      if (slotKeys.has(override.slotKey)) {
+        overridesMap.set(override.slotKey, override.patch);
+      }
+    }
+    for (const override of manualOverrides) {
+      if (slotKeys.has(override.slotKey)) {
+        overridesMap.set(override.slotKey, override.patch);
+      }
+    }
+
+    // Apply overrides to slots
+    const effectiveSlots = allSlots.map((slot) => {
+      const override = overridesMap.get(slot.slotKey);
+      if (!override) return slot;
+      return {
+        ...slot,
+        isOpen: override.isOpen ?? slot.isOpen,
+        capacity: override.capacity ?? slot.capacity,
+      };
+    });
+
+    const lunch = effectiveSlots
       .filter((s) => s.service === "lunch")
       .map((s) => ({ ...s, effectiveOpen: computeEffectiveOpen(s.isOpen, s.capacity) }))
       .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
 
-    const dinner = allSlots
+    const dinner = effectiveSlots
       .filter((s) => s.service === "dinner")
       .map((s) => ({ ...s, effectiveOpen: computeEffectiveOpen(s.isOpen, s.capacity) }))
       .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
