@@ -38,6 +38,7 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "framer-motion": "^12.23.26",
+    "libphonenumber-js": "^1.12.35",
     "lucide-react": "^0.562.0",
     "next": "16.1.0",
     "react": "19.2.3",

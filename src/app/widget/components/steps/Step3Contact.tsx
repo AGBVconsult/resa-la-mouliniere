@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AsYouType, parsePhoneNumberFromString } from "libphonenumber-js";
 import { StepHeader } from "../ui/StepHeader";
 import { Input } from "../ui/Input";
 import { useTranslation } from "@/components/booking/i18n/translations";
@@ -40,9 +41,18 @@ export function Step3Contact({
   };
 
   const validatePhone = (phone: string): boolean => {
-    // Accept various formats: +32..., 0032..., 04..., etc.
-    const cleaned = phone.replace(/[\s\-\(\)]/g, "");
-    return /^(\+|00)?[0-9]{9,15}$/.test(cleaned);
+    const parsed = parsePhoneNumberFromString(phone, "BE");
+    return parsed?.isValid() ?? false;
+  };
+
+  const formatPhoneAsYouType = (value: string): string => {
+    const formatter = new AsYouType("BE");
+    return formatter.input(value);
+  };
+
+  const formatToE164 = (phone: string): string => {
+    const parsed = parsePhoneNumberFromString(phone, "BE");
+    return parsed?.isValid() ? parsed.format("E.164") : phone;
   };
 
   const validate = useCallback((): boolean => {
@@ -147,7 +157,20 @@ export function Step3Contact({
             label={t.phone}
             type="tel"
             value={data.phone}
-            onChange={(v) => handleFieldChange("phone", v)}
+            onChange={(v) => {
+              const formatted = formatPhoneAsYouType(v);
+              onUpdate({ phone: formatted });
+              if (touched.phone) {
+                setTimeout(() => validate(), 0);
+              }
+            }}
+            onBlur={() => {
+              // Convertir en E.164 au blur si valide
+              if (validatePhone(data.phone)) {
+                onUpdate({ phone: formatToE164(data.phone) });
+              }
+              handleBlur("phone");
+            }}
             required
             error={touched.phone ? errors.phone : undefined}
             placeholder="+32 4XX XX XX XX"

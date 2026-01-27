@@ -59,8 +59,8 @@ export function Step1Guests({ lang, data, onUpdate }: Step1GuestsProps) {
 
         {/* Options */}
         <div className="space-y-[1vh]">
-          {/* Options bébé - SEULEMENT si babyCount > 0 */}
-          {data.babyCount > 0 && (
+          {/* Options poussette/chaise haute - si bébé OU enfant */}
+          {(data.babyCount > 0 || data.childrenCount > 0) && (
             <>
               <Toggle
                 label={t.stroller}

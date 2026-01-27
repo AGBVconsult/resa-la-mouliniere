@@ -7,6 +7,7 @@ interface InputProps {
   type?: "text" | "email" | "tel";
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   required?: boolean;
   error?: string;
   placeholder?: string;
@@ -18,6 +19,7 @@ export function Input({
   type = "text",
   value,
   onChange,
+  onBlur,
   required = false,
   error,
   placeholder,
@@ -38,6 +40,7 @@ export function Input({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         required={required}
         placeholder={placeholder}
         autoComplete={autoComplete}
