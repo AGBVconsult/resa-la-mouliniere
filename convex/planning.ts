@@ -56,10 +56,28 @@ export const getMonthEffective = query({
       .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
       .collect();
 
+    // DEBUG: Log all special periods
+    console.log("[DEBUG getMonthEffective] allSpecialPeriods:", allSpecialPeriods.map(p => ({
+      id: p._id,
+      name: p.name,
+      type: p.type,
+      startDate: p.startDate,
+      endDate: p.endDate,
+      status: p.applyRules.status,
+      services: p.applyRules.services,
+      activeDays: p.applyRules.activeDays,
+    })));
+
     // Filter periods that overlap with this month
     const monthPeriods = allSpecialPeriods.filter(
       (p) => p.startDate <= endDate && p.endDate >= startDate
     );
+
+    // DEBUG: Log filtered periods
+    console.log("[DEBUG getMonthEffective] monthPeriods for", { year, month, startDate, endDate }, ":", monthPeriods.map(p => ({
+      name: p.name,
+      status: p.applyRules.status,
+    })));
 
     // Helper to parse dateKey to Date (local time, not UTC)
     const parseDateKey = (dateKey: string): Date => {
@@ -109,6 +127,9 @@ export const getMonthEffective = query({
         current.setDate(current.getDate() + 1);
       }
     }
+
+    // DEBUG: Log closure map
+    console.log("[DEBUG getMonthEffective] closureMap entries:", Array.from(closureMap.entries()));
 
     // Fetch all slots for the month
     const allSlots = await ctx.db
