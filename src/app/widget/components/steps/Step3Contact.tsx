@@ -1,11 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AsYouType, parsePhoneNumberFromString } from "libphonenumber-js";
 import { StepHeader } from "../ui/StepHeader";
 import { Input } from "../ui/Input";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language, BookingState } from "@/components/booking/types";
+import {
+  formatPhoneAsYouType,
+  formatToE164,
+  isValidPhone,
+  getPhoneCountry,
+  getCountryFlag,
+} from "@/lib/phone";
 
 interface Step3ContactProps {
   lang: Language;
@@ -41,18 +47,7 @@ export function Step3Contact({
   };
 
   const validatePhone = (phone: string): boolean => {
-    const parsed = parsePhoneNumberFromString(phone, "BE");
-    return parsed?.isValid() ?? false;
-  };
-
-  const formatPhoneAsYouType = (value: string): string => {
-    const formatter = new AsYouType("BE");
-    return formatter.input(value);
-  };
-
-  const formatToE164 = (phone: string): string => {
-    const parsed = parsePhoneNumberFromString(phone, "BE");
-    return parsed?.isValid() ? parsed.format("E.164") : phone;
+    return isValidPhone(phone);
   };
 
   const validate = useCallback((): boolean => {
@@ -105,17 +100,36 @@ export function Step3Contact({
   }, [handleNext, requestPrimaryToken]);
 
   const handleFieldChange = (field: keyof BookingState, value: string) => {
-    onUpdate({ [field]: value });
+    // Formatage spécial pour le téléphone
+    if (field === "phone") {
+      const formatted = formatPhoneAsYouType(value);
+      onUpdate({ phone: formatted });
+    } else {
+      onUpdate({ [field]: value });
+    }
+
     if (touched[field]) {
-      // Re-validate on change if already touched
       setTimeout(() => validate(), 0);
     }
   };
 
   const handleBlur = (field: string) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
+
+    // Normaliser le téléphone en E.164 au blur
+    if (field === "phone" && data.phone) {
+      const e164 = formatToE164(data.phone);
+      if (e164) {
+        onUpdate({ phone: e164 });
+      }
+    }
+
     validate();
   };
+
+  // Déterminer le drapeau à afficher
+  const phoneCountry = data.phone ? getPhoneCountry(data.phone) : null;
+  const phoneFlag = phoneCountry ? getCountryFlag(phoneCountry) : null;
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -157,24 +171,13 @@ export function Step3Contact({
             label={t.phone}
             type="tel"
             value={data.phone}
-            onChange={(v) => {
-              const formatted = formatPhoneAsYouType(v);
-              onUpdate({ phone: formatted });
-              if (touched.phone) {
-                setTimeout(() => validate(), 0);
-              }
-            }}
-            onBlur={() => {
-              // Convertir en E.164 au blur si valide
-              if (validatePhone(data.phone)) {
-                onUpdate({ phone: formatToE164(data.phone) });
-              }
-              handleBlur("phone");
-            }}
+            onChange={(v) => handleFieldChange("phone", v)}
+            onBlur={() => handleBlur("phone")}
             required
             error={touched.phone ? errors.phone : undefined}
             placeholder="+32 4XX XX XX XX"
             autoComplete="tel"
+            prefix={phoneFlag}
           />
 
           <div className="mb-0">
