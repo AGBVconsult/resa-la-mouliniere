@@ -16,9 +16,9 @@ interface BookingHeaderProps {
   hideSummary?: boolean;
 }
 
-export function BookingHeader({ 
-  currentStep, 
-  lang, 
+export function BookingHeader({
+  currentStep,
+  lang,
   onLangChange,
   guestCount,
   guestLabel,
@@ -27,9 +27,9 @@ export function BookingHeader({
   hideSummary = false,
 }: BookingHeaderProps) {
   return (
-    <div className="bg-slate-900 text-white px-4 py-3">
+    <div className="bg-slate-900 text-white px-[4vw] py-[1.5vh] min-h-[8vh]">
       {/* Ligne 1 : Progress centré + Langue à droite */}
-      <div className="flex items-center justify-between h-12">
+      <div className="flex items-center justify-between h-[4vh] min-h-[40px]">
         <div className="w-16" />
         <ProgressIndicator currentStep={currentStep} totalSteps={6} />
         <div className="flex items-center gap-1.5 w-16 justify-end">
@@ -50,7 +50,7 @@ export function BookingHeader({
 
       {/* Ligne 2 : Récap progressif (masqué si hideSummary) */}
       {!hideSummary && (
-        <div className="flex items-center justify-center gap-6 mt-2 text-sm">
+        <div className="flex items-center justify-center gap-[4vw] mt-[0.5vh] text-[1.6vh]">
           {guestCount !== undefined && guestLabel && (
             <span className="flex items-center gap-2">
               <Users size={14} className="text-slate-400" />
