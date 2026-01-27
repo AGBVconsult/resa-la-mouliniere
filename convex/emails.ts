@@ -242,10 +242,11 @@ export const _getReservationForEmail = internalQuery({
  */
 export const processQueue = internalAction({
   args: {
-    now: v.number(),
+    now: v.optional(v.number()),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { now, limit = 10 }): Promise<{ processedCount: number }> => {
+  handler: async (ctx, { now: nowArg, limit = 10 }): Promise<{ processedCount: number }> => {
+    const now = nowArg ?? Date.now();
     // Get settings (including resend API key) via internal mutation
     const settings = await ctx.runMutation(internal.settings.getSecretsInternal, {});
     

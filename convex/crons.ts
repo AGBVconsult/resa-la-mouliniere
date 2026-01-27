@@ -15,11 +15,12 @@ const crons = cronJobs();
 const internalAny = internal as any;
 
 // Process email queue every minute
+// Note: Convex crons evaluate args at runtime, but we use Date.now() in handler for safety
 crons.interval(
   "process-email-queue",
   { minutes: 1 },
   internal.emails.processQueue,
-  { now: Date.now(), limit: 10 }
+  {}
 );
 
 // Enqueue reminder emails at 18:00 daily (J-1 reminders)
