@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { User, Mail, Phone, Users, Calendar, Clock, MessageSquare, Baby, Accessibility, Dog } from "lucide-react";
+import { User, Mail, Phone, Users, Calendar, MessageSquare, Baby, Footprints, Accessibility, PawPrint } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
@@ -173,9 +173,10 @@ export function Step4Policy({
 
   const selectedOptions = (): { icon: typeof Baby; label: string }[] => {
     const opts: { icon: typeof Baby; label: string }[] = [];
+    if (data.requiresStroller) opts.push({ icon: Footprints, label: t.stroller });
     if (data.requiresHighChair) opts.push({ icon: Baby, label: t.high_chair });
     if (data.requiresWheelchair) opts.push({ icon: Accessibility, label: t.wheelchair });
-    if (data.requiresDogAccess) opts.push({ icon: Dog, label: t.dog });
+    if (data.requiresDogAccess) opts.push({ icon: PawPrint, label: t.dog });
     return opts;
   };
 
@@ -197,11 +198,7 @@ export function Step4Policy({
             </div>
             <div className="flex items-center gap-3">
               <Calendar size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{data.dateKey && formatDateDisplayFull(data.dateKey, lang)}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Clock size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{serviceLabel} • {data.timeKey}</span>
+              <span className="text-slate-700">{data.dateKey && formatDateDisplayFull(data.dateKey, lang)} • {serviceLabel} • {data.timeKey}</span>
             </div>
             {selectedOptions().length > 0 && (
               <div className="pt-2 border-t border-slate-100 mt-2">
@@ -228,11 +225,7 @@ export function Step4Policy({
             </div>
             <div className="flex items-center gap-3">
               <Phone size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{formatPhoneInternational(data.phone)}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Mail size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{data.email}</span>
+              <span className="text-slate-700">{formatPhoneInternational(data.phone)} • {data.email}</span>
             </div>
           </div>
         </div>
@@ -240,7 +233,7 @@ export function Step4Policy({
         {/* Card Message (si renseigné) */}
         {data.message && data.message.trim() && (
           <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
-            <h3 className="font-bold text-slate-900 mb-3">{t.message}</h3>
+            <h3 className="font-bold text-slate-900 mb-3">Message</h3>
             <div className="flex items-start gap-3">
               <MessageSquare size={16} className="text-slate-400 flex-shrink-0 mt-0.5" />
               <p className="text-slate-700 text-sm">{data.message}</p>

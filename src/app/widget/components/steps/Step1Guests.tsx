@@ -1,6 +1,6 @@
 "use client";
 
-import { Baby, Accessibility, Dog } from "lucide-react";
+import { Baby, Footprints, Accessibility, PawPrint } from "lucide-react";
 import { StepHeader } from "../ui/StepHeader";
 import { CounterRow } from "../ui/CounterRow";
 import { Toggle } from "../ui/Toggle";
@@ -57,15 +57,24 @@ export function Step1Guests({ lang, data, onUpdate }: Step1GuestsProps) {
 
         {/* Options */}
         <div className="space-y-2">
-          {/* Chaise haute - SEULEMENT si babyCount > 0 */}
+          {/* Options bébé - SEULEMENT si babyCount > 0 */}
           {data.babyCount > 0 && (
-            <Toggle
-              label={t.high_chair}
-              icon={Baby}
-              checked={data.requiresHighChair}
-              onChange={(v) => onUpdate({ requiresHighChair: v })}
-              highlighted
-            />
+            <>
+              <Toggle
+                label={t.stroller}
+                icon={Footprints}
+                checked={data.requiresStroller}
+                onChange={(v) => onUpdate({ requiresStroller: v })}
+                highlighted
+              />
+              <Toggle
+                label={t.high_chair}
+                icon={Baby}
+                checked={data.requiresHighChair}
+                onChange={(v) => onUpdate({ requiresHighChair: v })}
+                highlighted
+              />
+            </>
           )}
 
           {/* PMR - Toujours visible */}
@@ -79,7 +88,7 @@ export function Step1Guests({ lang, data, onUpdate }: Step1GuestsProps) {
           {/* Chien - Toujours visible */}
           <Toggle
             label={t.dog}
-            icon={Dog}
+            icon={PawPrint}
             checked={data.requiresDogAccess}
             onChange={(v) => onUpdate({ requiresDogAccess: v })}
           />

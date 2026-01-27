@@ -19,6 +19,7 @@ export interface ContactDetails {
 
 export interface BookingOptions {
   requiresHighChair: boolean;
+  requiresStroller: boolean;
   requiresDogAccess: boolean;
   requiresWheelchair: boolean;
 }
@@ -36,6 +37,7 @@ export interface BookingState {
   childrenCount: number;
   babyCount: number;
   requiresHighChair: boolean;
+  requiresStroller: boolean;
   requiresDogAccess: boolean;
   requiresWheelchair: boolean;
   // Step 2
@@ -55,6 +57,7 @@ export const initialBookingState: BookingState = {
   childrenCount: 0,
   babyCount: 0,
   requiresHighChair: false,
+  requiresStroller: false,
   requiresDogAccess: false,
   requiresWheelchair: false,
   dateKey: null,
