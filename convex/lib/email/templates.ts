@@ -459,36 +459,47 @@ function buildPartySizeDetail(data: TemplateData, locale: Language): string {
   return detail;
 }
 
-function getPublicAppUrl(): string {
-  const raw = process.env.APP_URL ?? "https://lamouliniere.be";
-  return raw.endsWith("/") ? raw.slice(0, -1) : raw;
-}
-
 /**
- * Base URL for email icons (hosted on production)
+ * Base64-encoded PNG icons for email templates
+ * Using Data URIs for maximum email client compatibility (no external requests)
  */
-const ICONS_BASE_URL = `${getPublicAppUrl()}/emails/icons`;
+const ICON_DATA = {
+  // Header icons (32x32)
+  checkGreen: "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA20lEQVR4nGNgGAWjYBTQGISGhjJrh+hP1A4x+KITqn9UI9BYkr6Wh+ov1Qk1+I/A+hMG0HID+jggFIfl2qEG92geBaHgODdYjMXnD/VC9RRHLR/cwa4RaCwJyqugPKsdajAZZDDZCS7E4L5mkKE8ST7RCdWfgJpq9ZficwRVLcfmAHyOoLrlIKAfqi8NMoCQI2hiOQxohRrLaYca3MVi+Ep7e3sWuuRzzSBDeVwhQTOfExsSdC3hNHGEBE19TnR00MNy3NFBh4oFWxaFlBP6E0BsDAWjYBSMgqEKACcHCQJrtxlyAAAAAElFTkSuQmCC",
+  hourglassOrange: "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAABGElEQVR4nO2XOw7CMAyG2VBsLsEl6DV6Bpi4EsXpDDtTy8g5uAKDLQaeSlMQQ4FAS40QljJU/W1/ip1Xp/ONtp10+2IxZYI5E6yYcC1Tsyi/nw6vxbX3hbmL5WIGAwhhIhZPjQ7CJBwgNTETclPJi1ipid8qh1yCWJiF+jjtxe+tpLf2BxD9EsDGdzEsg30Ilh4ANk0AZGUnH5lg9EzvNE5bAmT1ARIzYIs7XwY8PIIokls8lNqd860NUBG4EiJEU8vYwvCawE0x9cYh/z4OwW0lvzvVn5z2sE4PXyG/AcCaJWDNJmTNZciaG5GQiZhw//JW7HzIRLqHEUHe5HGcKx3HqH0hwT/AqfUSiPbDRLSfZlvtx2mbdgYe6wEvWOWezQAAAABJRU5ErkJggg==",
+  xRed: "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA4ElEQVR4nO2WQQ7CIBREOQx/uEw3TTUu9OQFdvUU1mhorFGKLdR+WcgkLJowzCvwASGKioo+yEpZGaKza1bKRiTKENUv/irVLwzQGeA2NKKLBg6xXtfXeZ5+oPsOAPEQgfB1AFbKZjLQAkQw3H0T1WKNWqV2/oAa6FvgNAlXah/qa5U6rgpPgWALj4FgD1+AuBqgZw+fg/hZuAfx9tfjbLCHOw1r7k37CBCqjk2lAxsupkTZwrXbhN5ysEDomVJLOaw2DxcPsUHohENmcwib+zIyua9jk/tBYnM/yYqK/kZ3U4HI6j6aPWwAAAAASUVORK5CYII=",
+  xGray: "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA40lEQVR4nO2WQQ7CIBBFOWA3TTUu9AQMmxn3MtxVT2GbGho1RrAtCLKQn7Bowuc/CgMIUVVV9UFAupHIF9sATRfsR9M+/aSbGIAzEI+2SeSrIt6t9dq+1vPw27G+AoAACDc8FgBN9z7QEoQvfPpG04oYyaPeeGbTK9QHN9xsfX0l8T4qPAQiW/gaiOzhcxASeQDiPnv4/J/4UfgrhDtrHgF5yB5uNa05aQfALoevOpJKeTfccolmC5d08m7C5BBqptRCDqvk4eKubBAq4JBJDgGlLyMofh1T+QdJU/RJVlX1N7oBdeX5AbXD1PsAAAAASUVORK5CYII=",
+  bellBlue: "iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA40lEQVR4nO1SOwrCQBQMWEVrL5JCL+AFLLyAv2JfAplNZfVeIFaSi1hZpfEGHkBv4Q1EeRE1EYWNoJUPBpZhZ5idfZ73YqJo2VW48m/HgAuFK18bQjokyxtjZUuQo0LPpoIqr3dVUzMxSdo3kBNZ3rsaGchBNSG4V0kjC7JyBnLf9WlA7qtGtRUjFiWblk2lEcv9Qog0UzKMedAEpBqk2SORlaJ0/wzFFxKh3pHr0HNHf6MfdmQgMyWN5bHz90Mm1z3i6d0oSVYdAu8aLyN4N59zuxZzNFq3KObAeRljDlRzM7gAacZT9xseSIYAAAAASUVORK5CYII=",
+  starPurple: "iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAACXBIWXMAAAsTAAALEwEAmpwYAAACIUlEQVR4nJ1TO2tUYRC98W1hq8Qy2KQTtVUQ/AEipBFBsFjdmd3snVlWyzNZVtwtLLSzSGW08Bf4Ah+FFmpnSoOCif4AHwSMyvnuXrPZDbvgwIXvfjPfPM45k2VjrGa4IBar/HjO/sfm568fEot1sXimjuc8X2ni4MSHmuOYeLxTx5oYOlWDqMefdN/AUZ5rjqtqsagWP9Xxnr6RRGKxLIYV8bgnFht8KI5XWZZN8ROPJ/27H2K4zVg1vB3OM8UqDOBPtdGereU4cxHYVwYA2FVtto9X8s50msBwXy2+jI5mschqZeA4qzbas+yaEGxxXGr1DqhHna2zKu/q9Vt7xaJXYJaY6wHYQx+7Tfh5KEkpsjdxTj2+J4fFC47Qx6yXsDIspc/xWxxd+sxu7heP1wkzi/UkDfH4RFCliVNzcw92DoC/Kh53N0fHEu8GMNvB7ikNdXzOxPFVDA/FcGSIxbGJMjKZZFEmsrisjl9Fm3hcqdzZnRI5uhxHB0ZTixv0MUYNT8vR1HC+wCnHjFpcS2Dbwul/YDu65YrwXIKtOU6UAh1RO6lkZ6R2Ev2VvDNNqVAyI06KiyJL5xYOs2rJYDkOuy0LUbwUcV/5m0a5q8eHJH9WK9bhZckk8etjslGsEVa4VluSpERcTovltJBUuaGWcMgXTpLRfpJWH4I18Xiz7dIOG9Uuhm/UmHo8SvjlmJn4cDurOc6q4WPCr4nKuOC/JmdtdjHj1WAAAAAASUVORK5CYII=",
+  // Detail icons (18x18)
+  calendarGray: "iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAACXBIWXMAAAsTAAALEwEAmpwYAAABs0lEQVR4nLWTvWtUURDFt/GjTCGCNqmsg50RCVoIFhZaWlm5JjO7ec48F8tzdtfKFJIu9oIQwdgaUck/IFhJmiR2gkiKQCCCH8zdvN2byHNNkYEp7ryZ3z0zb26jcZw257gshnlx3mk6zlTxlvWmxHFlLADASTW+VOfvoRu/qXevx3dxvhjE8foucLoWpAaq45eUtKLARFJg+BiwUNZuL55SZyHGn+rs14LEuC6OV3msZb2pUBFtDvMcy2rYqgc5t8X5NI8VBSb22yyyCxfUuVPfmvONOL9E8SgGT6CiO12BxbChjve1oLb3LopxL2DqXBTjSpqZY3kww+5tdW6KY7cCj4FhNbVp/CxOxN/cV/dEnG9nDZcax26IHXLcVMdDNT7KXYz35ju9C1XubImzLcetZvPZiQMQKfuTavx0YBH/cvwQYyflG++nlYjWy/7kCGT8IM7voaiaR27awXk1PI/Ba4mrgxrcSFtvXEtJzQePzx3ek7rWxfFVHUvDC5ztpCxUSYmZOMxZ99q4OapxLd+fqBmAMDMEpcMYE+O78NFss9p4xWJo/fM1Z4X5hUep/W/7A3kjEEGTbhQ6AAAAAElFTkSuQmCC",
+  clockGray: "iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAACXBIWXMAAAsTAAALEwEAmpwYAAABm0lEQVR4nJWUsVLCQBCGU4kvgDrjaK9Wii+go5XoK1hq7kjIbuz3EuUBaHwKa1sRXwC0QW2RVlsrnD8JGJIQhp1ZJrm5+9jd/79YVkm4bmvd9sMaEs/WMnEpsqpZWJN502zG6VQsr5rEc5x2pRSivHBPs/mMD0oHhzRLPcr4uRMBST4cX3bnQ0h+NMvQpuBosu44rSpy8t7w5ViR+cLeHCxuB5XI0ObbrZk/IHlEptewBzBF5n2mTeUbQsnpSv5B5gmZXW94cpLMrjldxGCLNpeBEIqlq8n0oxfIGpFJPGtJkIa6bMbXvqxZ2pPDqC0/OCsBvWdnh7C94Dw+G9Ys/CRy1wtBviFF5hepSe6v6G4zVdEFzjoc7i9sDYFqAImALA/Z1qb2iB1rnq0FoW5kI+0pTeZFsfRy8sNsi2CT0Byc5uSHqWB7mKxoqNlwXdnWLCPNMsjdO9gdtgcMZrNKK5GRYvNtN8Odwk2AQerkpncxTEiMVGR8zCRReDAXMoU57Up008n0Cz4jPcxERFZKIXloq6o9OUCm1SqKP+DlIqY4dRxaAAAAAElFTkSuQmCC",
+  usersGray: "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAADAElEQVR4nN1WPWgUURBeMYL4X0hA0CSKSrQI1loE0gXUKkFu31xORU+wSGEhWp2gkMt7a2JA8C9YpbKzEEEQRbCwMlUkp8FoihQhBu52ZjcirMzd7u27y57cbsyBDjx4zJufb+bNzHuG8a9SrtdrU4B3ePG+5QCkwCsKyOPF+5Y6f5T1tkjA+SoAwHnmtQyANO3LgfNgWcK+1Mro5/zUu7z8LMy1JAsKnAvh3dMDBfQwvArn/IY6fzbobZYCZ/3of45knK58mjoU4GoZhMAvG9oREmhIu/fHGv9JlZ+m9IZEPmY6h/ToFTgHg3PeV3jls1mWZZ3YjqxzdECB08d9LQEtCfRcAn6qpjjs+6f1usyr7QxcZV3fhlWZG04f+1jjeNS0T0tBK/WtFbkEOhxhvQ3m8VkzNtgX+9TRT0YLclqxoAS9UEDjSuDVfNo91iiDfMYyFVnWwUJwNRG2J8MMpNwjStCiFuVXOVTq+Rt9XZ4bQ6Uethnap0X2WSNopd2jCmhBA/H2/qC3Y70AcllvmxT4SneuhHs8Ungk43QFU84vpHejF72dSZ0r8LZLga+1oL7dBefwH5XyaeqQAj9rd/V+Qni74jrn7EnAN/qDFVW8kZQXuL9cfGHRfBjPrOwxmiSWZR0tkwW2acShMWHvUwJntNaZaFaXZbW0z7CtWM4DkqZ9Yr0A2IaRlCyBZ6vvPWA2yW9JAZ5JDEAB3QwB0MmmAZh0SsvcjcQApMCpwFB9EVqp4l4l8BYv3kcUYdBFU+sAQNN+C30PeDwXJFBOCSxqhVZknj4zWMfPwHQi57lery34bilBL3MZb6sUdE0CLTV8ZICWWIZlWSf4tiX6pFgpt1sz/rFmTFecLUug6/5argOz4OtU6ifldscGoAQOREeJJSnwdn7wx+5AlvfM47MGT/hAbACS77n2+XQl0D0FpfaGoKHUzjLVqwuzlYufAcBhP+Jf5d+OSZ1N65rUyTqs68+C4dgAPMPbpEy7f827HYPK/wzT7mdbSW0Y/z39BrKHdtm77zKxAAAAAElFTkSuQmCC",
+  messageCircleGray: "iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAACXBIWXMAAAsTAAALEwEAmpwYAAABfElEQVR4nJVUQVLCQBDMSf0AesK7elL8gJaeRL/g1ey4ITN5wExC8QBfBOIHQC6oV+SqP8CaTUqRZAlM1aQ2ldne6eneBMGaiKLeQZhkLU1dB9vEPfMeEBOgTIBksZyG+BWQY2ufdteCmDg7AZKPfCMPdBMQt13m64EDRH63CR/7QZC/gXgWYnrhO+wx4UuD8qm1JbCcjnbCs5C6zTr6IXWbCmZQ3v7RNImgtlzVCZBYgxyVOov5qphd568YZWJQ+lWngwfINUA8BJSxe1FZHTJyXEdpNZy6JIuHhPcDiPnc0UrSG19HQGKrvoVxepvvzVqBPgq521XFBqXvp813utdSdlpLzawHctSs7TXyYudYed4aCOXFEI9K8qvZNp0RUHpdkl9NpbZXk21iyCjiQyCeA/G0dO/U7mp7BVOz+UDAdcJzQ/IVdrKjyiIFU9sXN32ow1SJNQ1KojMpFJ56QZZpupuOMq74jYx0Jsy8U0d/BbTXgJjPNH8l9sQPXRYPk3KyrQUAAAAASUVORK5CYII=",
+  settingsGray: "iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAACXBIWXMAAAsTAAALEwEAmpwYAAABgElEQVR4nL2TPS8EcRDGz0sIlVqBmpIgevEJVnEhIjmHmTu3M0uu4vnfqRUaIVHS+AAqEQUJSp2aiIQPoPGSuV2SvdfV3CRb/Se/fZ6ZZ1KpdtSaYJoDZFlckcStkF8e+xeAtTRH4h5Z3XfNJ+6GfUy0hJC6Eiu+SPGQEyzwFgYBdFKwO0yCHIl7IsUH+ZhvrMR3S/ZXEncEoKdeT6GAAVZcGWw9KI/XNGSz6CfFOwsuPO+sq5nqQgh7JsV1nbkgU1ETlKZa+k9Zv8tbfz7AaDXokBUvqYS1WsBIuABkYg8kOGfBbVIQgO6KA3XbcZC6U1t5UhBvYbCiKEA2/hCG7nNjA0NJQBS4RQPlBJNxkI+JMHBIt4Lk8/u9lrPIQUccpNi0INoQm0E876yLFMfWy1qarZWq7o4F938bEaSrba4rZlhxGSnfabBKO4sQ9ntXNjOymxPckuI1urU3m09duXZDUSZCmNm0mYkrsuAkisYBi1sW2etr6DsKF7eaT1vqB0344VpX5Vo2AAAAAElFTkSuQmCC",
+  infoGray: "iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAACXBIWXMAAAsTAAALEwEAmpwYAAABfElEQVR4nJVUQVLCQBDMSf0AesK7elL8gJaeRL/g1ey4ITN5wExC8QBfBOIHQC6oV+SqP8CaTUqRZAlM1aQ2ldne6eneBMGaiKLeQZhkLU1dB9vEPfMeEBOgTIBksZyG+BWQY2ufdteCmDg7AZKPfCMPdBMQt13m64EDRH63CR/7QZC/gXgWYnrhO+wx4UuD8qm1JbCcjnbCs5C6zTr6IXWbCmZQ3v7RNImgtlzVCZBYgxyVOov5qphd568YZWJQ+lWngwfINUA8BJSxe1FZHTJyXEdpNZy6JIuHhPcDiPnc0UrSG19HQGKrvoVxepvvzVqBPgq521XFBqXvp813utdSdlpLzawHctSs7TXyYudYed4aCOXFEI9K8qvZNp0RUHpdkl9NpbZXk21iyCjiQyCeA/G0dO/U7mp7BVOz+UDAdcJzQ/IVdrKjyiIFU9sXN32ow1SJNQ1KojMpFJ56QZZpupuOMq74jYx0Jsy8U0d/BbTXgJjPNH8l9sQPXRYPk3KyrQUAAAAASUVORK5CYII=",
+};
 
 /**
- * PNG icons for email templates (hosted on our infrastructure for 100% compatibility)
- * Using Lucide icons converted to PNG
+ * PNG icons for email templates using Data URIs (base64 encoded)
+ * No external requests needed - maximum email client compatibility
  */
 const EMAIL_ICONS = {
   // Header icons (32x32)
-  check: `<img src="${ICONS_BASE_URL}/check-green.png" alt="✓" width="32" height="32" style="display: block;" />`,
-  pending: `<img src="${ICONS_BASE_URL}/hourglass-orange.png" alt="⏳" width="32" height="32" style="display: block;" />`,
-  validated: `<img src="${ICONS_BASE_URL}/check-green.png" alt="✓" width="32" height="32" style="display: block;" />`,
-  refused: `<img src="${ICONS_BASE_URL}/x-red.png" alt="✗" width="32" height="32" style="display: block;" />`,
-  cancelled: `<img src="${ICONS_BASE_URL}/x-gray.png" alt="✗" width="32" height="32" style="display: block;" />`,
-  reminder: `<img src="${ICONS_BASE_URL}/bell-blue.png" alt="🔔" width="32" height="32" style="display: block;" />`,
-  review: `<img src="${ICONS_BASE_URL}/star-purple.png" alt="⭐" width="32" height="32" style="display: block;" />`,
+  check: `<img src="data:image/png;base64,${ICON_DATA.checkGreen}" alt="✓" width="32" height="32" style="display: block;" />`,
+  pending: `<img src="data:image/png;base64,${ICON_DATA.hourglassOrange}" alt="⏳" width="32" height="32" style="display: block;" />`,
+  validated: `<img src="data:image/png;base64,${ICON_DATA.checkGreen}" alt="✓" width="32" height="32" style="display: block;" />`,
+  refused: `<img src="data:image/png;base64,${ICON_DATA.xRed}" alt="✗" width="32" height="32" style="display: block;" />`,
+  cancelled: `<img src="data:image/png;base64,${ICON_DATA.xGray}" alt="✗" width="32" height="32" style="display: block;" />`,
+  reminder: `<img src="data:image/png;base64,${ICON_DATA.bellBlue}" alt="🔔" width="32" height="32" style="display: block;" />`,
+  review: `<img src="data:image/png;base64,${ICON_DATA.starPurple}" alt="⭐" width="32" height="32" style="display: block;" />`,
   // Detail icons (18x18)
-  calendar: `<img src="${ICONS_BASE_URL}/calendar-gray.png" alt="📅" width="18" height="18" style="display: block;" />`,
-  clock: `<img src="${ICONS_BASE_URL}/clock-gray.png" alt="🕐" width="18" height="18" style="display: block;" />`,
-  users: `<img src="${ICONS_BASE_URL}/users-gray.png" alt="👥" width="18" height="18" style="display: block;" />`,
-  message: `<img src="${ICONS_BASE_URL}/message-circle-gray.png" alt="💬" width="18" height="18" style="display: block;" />`,
-  options: `<img src="${ICONS_BASE_URL}/settings-gray.png" alt="⚙️" width="18" height="18" style="display: block;" />`,
-  reason: `<img src="${ICONS_BASE_URL}/info-gray.png" alt="ℹ️" width="18" height="18" style="display: block;" />`,
+  calendar: `<img src="data:image/png;base64,${ICON_DATA.calendarGray}" alt="📅" width="18" height="18" style="display: block;" />`,
+  clock: `<img src="data:image/png;base64,${ICON_DATA.clockGray}" alt="🕐" width="18" height="18" style="display: block;" />`,
+  users: `<img src="data:image/png;base64,${ICON_DATA.usersGray}" alt="👥" width="18" height="18" style="display: block;" />`,
+  message: `<img src="data:image/png;base64,${ICON_DATA.messageCircleGray}" alt="💬" width="18" height="18" style="display: block;" />`,
+  options: `<img src="data:image/png;base64,${ICON_DATA.settingsGray}" alt="⚙️" width="18" height="18" style="display: block;" />`,
+  reason: `<img src="data:image/png;base64,${ICON_DATA.infoGray}" alt="ℹ️" width="18" height="18" style="display: block;" />`,
 };
 
 /**
