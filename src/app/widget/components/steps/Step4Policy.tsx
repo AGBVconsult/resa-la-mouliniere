@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { User, Mail, Phone } from "lucide-react";
+import { User, Mail, Phone, Users, Calendar, Clock, MessageSquare, Baby, Accessibility, Dog } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
@@ -147,17 +147,75 @@ export function Step4Policy({
 
   const guestLabel = partySize > 1 ? t.convives : t.convive;
 
+  const formatPhoneInternational = (phone: string): string => {
+    const cleaned = phone.replace(/[\s\-\(\)]/g, "");
+    if (cleaned.startsWith("+")) return cleaned;
+    if (cleaned.startsWith("00")) return "+" + cleaned.slice(2);
+    if (cleaned.startsWith("0")) return "+32" + cleaned.slice(1);
+    return cleaned;
+  };
+
+  const guestDetails = (): string => {
+    const parts: string[] = [];
+    parts.push(`${partySize} ${guestLabel}`);
+    const details: string[] = [];
+    if (data.childrenCount > 0) {
+      details.push(`${data.childrenCount} ${t.children.toLowerCase()}`);
+    }
+    if (data.babyCount > 0) {
+      details.push(`${data.babyCount} ${t.babies.toLowerCase()}`);
+    }
+    if (details.length > 0) {
+      parts.push(`(${details.join(", ")})`);
+    }
+    return parts.join(" ");
+  };
+
+  const selectedOptions = (): { icon: typeof Baby; label: string }[] => {
+    const opts: { icon: typeof Baby; label: string }[] = [];
+    if (data.requiresHighChair) opts.push({ icon: Baby, label: t.high_chair });
+    if (data.requiresWheelchair) opts.push({ icon: Accessibility, label: t.wheelchair });
+    if (data.requiresDogAccess) opts.push({ icon: Dog, label: t.dog });
+    return opts;
+  };
+
+  const serviceLabel = data.service === "lunch" ? t.lunch : t.dinner;
+
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Contenu scrollable */}
       <div className="flex-1 overflow-y-auto p-6">
         <StepHeader title={t.step4_title} subtitle={t.step4_subtitle} className="mb-6" />
 
-        {/* Card Récapitulatif - Une seule ligne */}
+        {/* Card Récapitulatif */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
-          <p className="text-center font-medium text-slate-900">
-            {partySize} {guestLabel} • {data.dateKey && formatDateDisplayFull(data.dateKey, lang)} • {data.timeKey}
-          </p>
+          <h3 className="font-bold text-slate-900 mb-3">{t.summary}</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-3">
+              <Users size={16} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-700">{guestDetails()}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Calendar size={16} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-700">{data.dateKey && formatDateDisplayFull(data.dateKey, lang)}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Clock size={16} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-700">{serviceLabel} • {data.timeKey}</span>
+            </div>
+            {selectedOptions().length > 0 && (
+              <div className="pt-2 border-t border-slate-100 mt-2">
+                <div className="flex flex-wrap gap-2">
+                  {selectedOptions().map((opt, idx) => (
+                    <span key={idx} className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+                      <opt.icon size={12} />
+                      {opt.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Card Infos client */}
@@ -166,11 +224,11 @@ export function Step4Policy({
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-3">
               <User size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{data.firstName} {data.lastName}</span>
+              <span className="text-slate-700">{data.lastName} {data.firstName}</span>
             </div>
             <div className="flex items-center gap-3">
               <Phone size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{data.phone}</span>
+              <span className="text-slate-700">{formatPhoneInternational(data.phone)}</span>
             </div>
             <div className="flex items-center gap-3">
               <Mail size={16} className="text-slate-400 flex-shrink-0" />
@@ -178,6 +236,17 @@ export function Step4Policy({
             </div>
           </div>
         </div>
+
+        {/* Card Message (si renseigné) */}
+        {data.message && data.message.trim() && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+            <h3 className="font-bold text-slate-900 mb-3">{t.message}</h3>
+            <div className="flex items-start gap-3">
+              <MessageSquare size={16} className="text-slate-400 flex-shrink-0 mt-0.5" />
+              <p className="text-slate-700 text-sm">{data.message}</p>
+            </div>
+          </div>
+        )}
 
         {/* Turnstile */}
         <div className="flex justify-center mb-4">

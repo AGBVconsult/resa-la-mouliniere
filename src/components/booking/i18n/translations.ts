@@ -76,6 +76,7 @@ export const translations = {
     cancel_warning: "Cette action est irréversible. Votre réservation sera définitivement annulée.",
     cancelled_title: "Réservation annulée",
     cancelled_subtitle: "Votre réservation a été annulée avec succès.",
+    new_reservation: "Nouvelle réservation",
     hide_monthly_calendar: "Masquer calendrier mensuel",
     sending: "Envoi...",
     
@@ -196,6 +197,7 @@ export const translations = {
     cancel_warning: "Deze actie is onomkeerbaar. Uw reservering wordt definitief geannuleerd.",
     cancelled_title: "Reservering geannuleerd",
     cancelled_subtitle: "Uw reservering is succesvol geannuleerd.",
+    new_reservation: "Nieuwe reservering",
     hide_monthly_calendar: "Verberg maandkalender",
     sending: "Verzenden...",
     
@@ -306,6 +308,7 @@ export const translations = {
     cancel_warning: "This action is irreversible. Your reservation will be permanently cancelled.",
     cancelled_title: "Reservation cancelled",
     cancelled_subtitle: "Your reservation has been successfully cancelled.",
+    new_reservation: "New reservation",
     hide_monthly_calendar: "Hide monthly calendar",
     sending: "Sending...",
     
@@ -426,6 +429,7 @@ export const translations = {
     cancel_warning: "Diese Aktion ist unwiderruflich. Ihre Reservierung wird endgültig storniert.",
     cancelled_title: "Reservierung storniert",
     cancelled_subtitle: "Ihre Reservierung wurde erfolgreich storniert.",
+    new_reservation: "Neue Reservierung",
     sending: "Wird gesendet...",
     
     // Step 5 - Practical Info Page
@@ -555,6 +559,7 @@ export const translations = {
     cancel_warning: "Questa azione è irreversibile. La tua prenotazione sarà definitivamente annullata.",
     cancelled_title: "Prenotazione annullata",
     cancelled_subtitle: "La tua prenotazione è stata annullata con successo.",
+    new_reservation: "Nuova prenotazione",
     sending: "Invio in corso...",
     
     // Step 5 - Practical Info Page

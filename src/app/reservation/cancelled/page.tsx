@@ -20,9 +20,15 @@ function CancelledContent() {
       <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center">
         {t.cancelled_title}
       </h2>
-      <p className="text-sm text-slate-500 text-center">
+      <p className="text-slate-500 text-center mb-8">
         {t.cancelled_subtitle}
       </p>
+      <a
+        href="/widget"
+        className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all"
+      >
+        {t.new_reservation}
+      </a>
     </div>
   );
 }

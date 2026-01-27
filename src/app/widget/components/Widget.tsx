@@ -227,7 +227,7 @@ export default function Widget() {
           guestLabel={partySize > 1 ? t.convives : t.convive}
           dateLabel={data.dateKey ? formatDateShort(data.dateKey, lang) : undefined}
           timeLabel={data.timeKey || undefined}
-          hideSummary={step === 4 || step === 5}
+          hideSummary={step === 4}
         />
 
         {/* Content */}
@@ -269,8 +269,6 @@ export default function Widget() {
               <StepTransition key="step-4" direction={direction}>
                 <Step5PracticalInfo
                   lang={lang}
-                  data={data}
-                  partySize={partySize}
                 />
               </StepTransition>
             )}

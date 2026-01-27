@@ -13,7 +13,6 @@ import { StepHeader } from "@/app/widget/components/ui/StepHeader";
 
 import {
   AlertCircle,
-  CheckCircle,
   Loader2,
   ArrowLeft,
   XCircle,
