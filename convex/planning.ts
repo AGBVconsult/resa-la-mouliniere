@@ -49,6 +49,42 @@ export const getMonthEffective = query({
     const lastDay = new Date(year, month, 0).getDate();
     const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
+    // Fetch special periods (closures) that overlap with this month
+    // This handles closures even when slots don't exist yet
+    const allSpecialPeriods = await ctx.db
+      .query("specialPeriods")
+      .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
+      .collect();
+
+    // Filter periods that overlap with this month
+    const monthPeriods = allSpecialPeriods.filter(
+      (p) => p.startDate <= endDate && p.endDate >= startDate
+    );
+
+    // Build closure map: dateKey -> { lunch: boolean, dinner: boolean }
+    const closureMap = new Map<string, { lunch: boolean; dinner: boolean }>();
+    for (const period of monthPeriods) {
+      if (period.applyRules.status !== "closed") continue;
+      
+      // Iterate through period dates that fall within this month
+      const periodStart = period.startDate > startDate ? period.startDate : startDate;
+      const periodEnd = period.endDate < endDate ? period.endDate : endDate;
+      
+      for (let d = new Date(periodStart); d <= new Date(periodEnd); d.setDate(d.getDate() + 1)) {
+        const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const weekday = d.getDay() === 0 ? 7 : d.getDay(); // ISO weekday
+        
+        // Check if this day is in activeDays
+        if (!period.applyRules.activeDays.includes(weekday)) continue;
+        
+        const existing = closureMap.get(dateKey) || { lunch: false, dinner: false };
+        for (const service of period.applyRules.services) {
+          existing[service] = true;
+        }
+        closureMap.set(dateKey, existing);
+      }
+    }
+
     // Fetch all slots for the month
     const allSlots = await ctx.db
       .query("slots")
@@ -133,18 +169,24 @@ export const getMonthEffective = query({
       const lunchReservations = dayReservations.filter((r) => r.service === "lunch");
       const dinnerReservations = dayReservations.filter((r) => r.service === "dinner");
 
+      // Check if this day has a closure from specialPeriods
+      const closure = closureMap.get(dateKey);
+      const lunchClosed = closure?.lunch ?? false;
+      const dinnerClosed = closure?.dinner ?? false;
+
       // Calculate effective values for each service
+      // If a closure exists from specialPeriods, force isOpen to false
       result[dateKey] = {
         lunch: {
-          isOpen: lunchSlots.some((s) => s.isOpen && s.capacity > 0),
-          capacityEffective: lunchSlots
+          isOpen: lunchClosed ? false : lunchSlots.some((s) => s.isOpen && s.capacity > 0),
+          capacityEffective: lunchClosed ? 0 : lunchSlots
             .filter((s) => s.isOpen)
             .reduce((sum, s) => sum + s.capacity, 0),
           covers: lunchReservations.reduce((sum, r) => sum + r.partySize, 0),
         },
         dinner: {
-          isOpen: dinnerSlots.some((s) => s.isOpen && s.capacity > 0),
-          capacityEffective: dinnerSlots
+          isOpen: dinnerClosed ? false : dinnerSlots.some((s) => s.isOpen && s.capacity > 0),
+          capacityEffective: dinnerClosed ? 0 : dinnerSlots
             .filter((s) => s.isOpen)
             .reduce((sum, s) => sum + s.capacity, 0),
           covers: dinnerReservations.reduce((sum, r) => sum + r.partySize, 0),
