@@ -231,7 +231,7 @@ export default function Widget() {
         />
 
         {/* Content */}
-        <div className="flex-1 overflow-auto relative flex flex-col">
+        <div className="flex-1 overflow-auto relative flex flex-col min-h-0 bg-slate-50">
           <LoadingSpinner visible={loading} />
 
           <AnimatePresence mode="wait" initial={false}>
