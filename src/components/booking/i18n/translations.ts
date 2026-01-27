@@ -27,7 +27,7 @@ export const translations = {
     baby_play_corner: "Coin jeux & livres",
     baby_seating_question: "Comment sera installé votre bébé ?",
     baby_seating_lap: "Sur nos genoux",
-    baby_seating_highchair: "À table avec nous (Nous prévoyons une chaise haute)",
+    baby_seating_highchair: "À table avec nous",
     
     // Step 2
     step2_title: "Quand souhaitez-vous venir ?",
@@ -164,7 +164,7 @@ export const translations = {
     baby_play_corner: "Speelhoek & boeken",
     baby_seating_question: "Hoe zal uw baby zitten?",
     baby_seating_lap: "Op onze schoot",
-    baby_seating_highchair: "Aan tafel met ons (We voorzien een kinderstoel)",
+    baby_seating_highchair: "Aan tafel met ons",
     
     step2_title: "Wanneer wilt u komen?",
     step2_subtitle: "Kies een datum",
@@ -286,7 +286,7 @@ export const translations = {
     baby_play_corner: "Play corner & books",
     baby_seating_question: "How will your baby be seated?",
     baby_seating_lap: "On our lap",
-    baby_seating_highchair: "At the table with us (We'll provide a high chair)",
+    baby_seating_highchair: "At the table with us",
     
     step2_title: "When would you like to come?",
     step2_subtitle: "Choose a date",
@@ -411,7 +411,7 @@ export const translations = {
     baby_play_corner: "Spielecke & Bücher",
     baby_seating_question: "Wie wird Ihr Baby sitzen?",
     baby_seating_lap: "Auf unserem Schoß",
-    baby_seating_highchair: "Mit uns am Tisch (Wir stellen einen Hochstuhl bereit)",
+    baby_seating_highchair: "Mit uns am Tisch",
     
     // Step 2
     step2_title: "Wann möchten Sie kommen?",
@@ -549,7 +549,7 @@ export const translations = {
     baby_play_corner: "Angolo giochi & libri",
     baby_seating_question: "Come sarà seduto il tuo bambino?",
     baby_seating_lap: "Sulle nostre ginocchia",
-    baby_seating_highchair: "A tavola con noi (Forniamo un seggiolone)",
+    baby_seating_highchair: "A tavola con noi",
     convives: "ospiti",
     convive: "ospite",
     

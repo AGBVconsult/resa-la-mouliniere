@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language, BookingState, BabySeating } from "@/components/booking/types";
@@ -45,57 +46,56 @@ export function Step1Baby({ lang, data, onUpdate }: Step1BabyProps) {
             {t.baby_seating_question}
           </p>
 
-          <div className="space-y-[1.5vh]">
+          <div className="space-y-[1vh]">
             {/* Option: Sur nos genoux */}
             <button
               type="button"
+              role="switch"
+              aria-checked={data.babySeating === "lap"}
               onClick={() => handleSeatingChange("lap")}
-              className={`w-full flex items-center gap-[3vw] p-[2vh] rounded-xl border-2 transition-all ${
+              className={`w-full flex items-center justify-between p-[1.2vh] min-h-[5.5vh] rounded-lg border cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
                 data.babySeating === "lap"
                   ? "border-slate-900 bg-slate-50"
-                  : "border-slate-200 bg-white hover:border-slate-300"
+                  : "border-slate-200 hover:border-slate-300"
               }`}
             >
+              <span className="text-[1.6vh] font-medium">{t.baby_seating_lap}</span>
               <div
-                className={`w-[2.5vh] h-[2.5vh] rounded-full border-2 flex items-center justify-center ${
+                className={`w-[3vh] h-[3vh] min-w-[20px] min-h-[20px] rounded-full border flex items-center justify-center transition-all ${
                   data.babySeating === "lap"
-                    ? "border-slate-900"
-                    : "border-slate-300"
+                    ? "bg-slate-900 border-slate-900"
+                    : "border-slate-300 bg-white"
                 }`}
               >
-                {data.babySeating === "lap" && (
-                  <div className="w-[1.3vh] h-[1.3vh] rounded-full bg-slate-900" />
-                )}
+                {data.babySeating === "lap" && <Check size={12} className="text-white" />}
               </div>
-              <span className="text-[1.7vh] text-slate-700">
-                {t.baby_seating_lap}
-              </span>
             </button>
 
             {/* Option: Chaise haute */}
             <button
               type="button"
+              role="switch"
+              aria-checked={data.babySeating === "highchair"}
               onClick={() => handleSeatingChange("highchair")}
-              className={`w-full flex items-center gap-[3vw] p-[2vh] rounded-xl border-2 transition-all ${
+              className={`w-full flex items-center justify-between p-[1.2vh] min-h-[5.5vh] rounded-lg border cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
                 data.babySeating === "highchair"
                   ? "border-slate-900 bg-slate-50"
-                  : "border-slate-200 bg-white hover:border-slate-300"
+                  : "border-slate-200 hover:border-slate-300"
               }`}
             >
+              <div className="flex flex-col items-start">
+                <span className="text-[1.6vh] font-medium">{t.baby_seating_highchair}</span>
+                <span className="text-[1.3vh] text-slate-500">{t.high_chair}</span>
+              </div>
               <div
-                className={`w-[2.5vh] h-[2.5vh] rounded-full border-2 flex items-center justify-center ${
+                className={`w-[3vh] h-[3vh] min-w-[20px] min-h-[20px] rounded-full border flex items-center justify-center transition-all ${
                   data.babySeating === "highchair"
-                    ? "border-slate-900"
-                    : "border-slate-300"
+                    ? "bg-slate-900 border-slate-900"
+                    : "border-slate-300 bg-white"
                 }`}
               >
-                {data.babySeating === "highchair" && (
-                  <div className="w-[1.3vh] h-[1.3vh] rounded-full bg-slate-900" />
-                )}
+                {data.babySeating === "highchair" && <Check size={12} className="text-white" />}
               </div>
-              <span className="text-[1.7vh] text-slate-700">
-                {t.baby_seating_highchair}
-              </span>
             </button>
           </div>
         </div>
