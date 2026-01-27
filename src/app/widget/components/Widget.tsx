@@ -269,6 +269,8 @@ export default function Widget() {
               <StepTransition key="step-4" direction={direction}>
                 <Step5PracticalInfo
                   lang={lang}
+                  data={data}
+                  partySize={partySize}
                 />
               </StepTransition>
             )}

@@ -36,7 +36,6 @@ export default function CancelReservationPage({ params }: PageProps) {
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [idemKey] = useState(() => crypto.randomUUID());
 
   // Fetch reservation
@@ -52,7 +51,7 @@ export default function CancelReservationPage({ params }: PageProps) {
         token,
         idemKey,
       });
-      setSuccess(true);
+      router.push(`/reservation/cancelled?lang=${lang}`);
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Une erreur est survenue";
@@ -130,25 +129,6 @@ export default function CancelReservationPage({ params }: PageProps) {
               <ArrowLeft size={18} />
               {t.back}
             </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Success state
-  if (success) {
-    return (
-      <div className="min-h-screen md:bg-slate-100 md:flex md:items-center md:justify-center md:p-4">
-        <div className="w-full min-h-[100dvh] flex flex-col bg-white md:min-h-0 md:max-w-[400px] md:h-[750px] md:rounded-3xl md:shadow-2xl md:border md:border-slate-200 overflow-hidden">
-          <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 px-6">
-            <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-            <h2 className="text-lg font-bold text-slate-900 mb-2">
-              {t.cancelled_title}
-            </h2>
-            <p className="text-sm text-slate-500 text-center mb-6">
-              {t.cancelled_subtitle}
-            </p>
           </div>
         </div>
       </div>
