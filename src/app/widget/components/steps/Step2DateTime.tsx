@@ -104,14 +104,14 @@ export function Step2DateTime({
   return (
     <div className="flex flex-col h-full bg-slate-50">
       <div className="flex-1 flex flex-col">
-        <div className="px-6 pt-6 pb-4 text-center">
+        <div className="px-[4vw] pt-[2vh] pb-[1vh] text-center">
           <StepHeader
             title={t.step2_title}
             subtitle={t.step2_subtitle}
           />
         </div>
 
-        <div className="px-6">
+        <div className="px-[4vw]">
           {!isCalendarCollapsed ? (
             <MonthCalendar
               year={year}
@@ -125,7 +125,7 @@ export function Step2DateTime({
             />
           ) : (
             <div className="bg-white rounded-2xl shadow-sm">
-              <div className="text-center pt-4 font-bold text-lg">
+              <div className="text-center pt-[1vh] font-bold text-[2.2vh]">
                 {t.months[month - 1]} {year}
               </div>
               
@@ -136,11 +136,11 @@ export function Step2DateTime({
                 lang={lang}
               />
 
-              <div className="text-center pb-4">
+              <div className="text-center pb-[1vh]">
                 <button
                   type="button"
                   onClick={handleShowFullCalendar}
-                  className="text-sm text-slate-500 underline hover:text-slate-700"
+                  className="text-[1.5vh] text-slate-500 underline hover:text-slate-700"
                 >
                   {t.show_monthly_calendar}
                 </button>
@@ -150,10 +150,10 @@ export function Step2DateTime({
         </div>
 
         {data.dateKey && isCalendarCollapsed && (
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 overflow-y-auto px-[4vw] py-[1.5vh]">
             {lunchSlots.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+              <div className="mb-[2vh]">
+                <h3 className="text-[1.6vh] font-bold text-slate-700 mb-[1vh] flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-amber-500" />
                   <span>{t.lunch}</span>
                   <span className="font-normal text-slate-400">{t.lunch_hours}</span>
@@ -168,8 +168,8 @@ export function Step2DateTime({
             )}
 
             {dinnerSlots.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+              <div className="mb-[2vh]">
+                <h3 className="text-[1.6vh] font-bold text-slate-700 mb-[1vh] flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-blue-500" />
                   <span>{t.dinner}</span>
                   <span className="font-normal text-slate-400">{t.dinner_hours}</span>
@@ -184,7 +184,7 @@ export function Step2DateTime({
             )}
 
             {lunchSlots.length === 0 && dinnerSlots.length === 0 && (
-              <div className="text-center py-8 text-slate-500">
+              <div className="text-center py-[2vh] text-slate-500">
                 <p>{t.no_slots}</p>
                 <button
                   type="button"

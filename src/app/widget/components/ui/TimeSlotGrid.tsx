@@ -21,7 +21,7 @@ export function TimeSlotGrid({ slots, selectedTime, onSelect, color }: TimeSlotG
     const isDisabled = !slot.isOpen || slot.remainingCapacity <= 0;
 
     const base =
-      "py-3 min-h-[44px] rounded-xl text-center font-semibold text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2";
+      "py-[1.2vh] min-h-[5vh] rounded-xl text-center font-semibold text-[1.6vh] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2";
 
     if (isDisabled) {
       return `${base} bg-slate-100 text-slate-400 cursor-not-allowed`;
@@ -41,7 +41,7 @@ export function TimeSlotGrid({ slots, selectedTime, onSelect, color }: TimeSlotG
   };
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+    <div className="grid grid-cols-3 gap-[1vh]">
       {slots.map((slot) => (
         <button
           key={slot.timeKey}

@@ -49,21 +49,21 @@ export function Toggle({
         handleToggle();
       }}
       onMouseDown={(e) => e.preventDefault()}
-      className={`w-full flex items-center justify-between p-3 min-h-[44px] rounded-lg border cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${getContainerClasses()}`}
+      className={`w-full flex items-center justify-between p-[1.2vh] min-h-[5.5vh] rounded-lg border cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${getContainerClasses()}`}
     >
       <div className="flex items-center gap-3">
         {Icon && (
           <Icon
-            size={20}
+            size={18}
             className={highlighted && !checked ? "text-amber-600" : "text-slate-600"}
           />
         )}
-        <span className="text-sm font-medium">{label}</span>
+        <span className="text-[1.6vh] font-medium">{label}</span>
       </div>
       <div
-        className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${getCheckboxClasses()}`}
+        className={`w-[3vh] h-[3vh] min-w-[20px] min-h-[20px] rounded-full border flex items-center justify-center transition-all ${getCheckboxClasses()}`}
       >
-        {checked && <Check size={14} className="text-white" />}
+        {checked && <Check size={12} className="text-white" />}
       </div>
     </button>
   );

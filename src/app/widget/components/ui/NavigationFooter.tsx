@@ -35,7 +35,7 @@ export function NavigationFooter({
   const showBackButton = backLabel && onBack;
 
   return (
-    <div className="px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white border-t border-slate-200 flex items-center gap-3 flex-shrink-0">
+    <div className="px-[4vw] pt-[1.5vh] pb-[calc(2vh+env(safe-area-inset-bottom))] bg-white border-t border-slate-200 flex items-center gap-[2vw] flex-shrink-0">
       {/* Contenu à gauche (optionnel) - utilisé par Step1 pour "Total: X convives" */}
       {leftContent && !showBackButton && (
         <div className="flex-1">
@@ -49,7 +49,7 @@ export function NavigationFooter({
           type="button"
           onClick={onBack}
           disabled={backDisabled}
-          className="flex-1 py-4 rounded-xl font-bold text-slate-700 border border-slate-200 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 py-[1.5vh] min-h-[44px] rounded-xl font-bold text-slate-700 border border-slate-200 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {backLabel}
         </button>
@@ -60,7 +60,7 @@ export function NavigationFooter({
         type="button"
         onClick={onPrimary}
         disabled={primaryDisabled}
-        className={`py-4 rounded-xl font-bold text-white transition-all ${
+        className={`py-[1.5vh] min-h-[44px] rounded-xl font-bold text-white transition-all ${
           showBackButton || leftContent ? "flex-[2]" : "flex-1"
         } ${
           primaryDisabled

@@ -188,13 +188,13 @@ export function Step4Policy({
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Contenu scrollable */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <StepHeader title={t.step4_title} subtitle={t.step4_subtitle} className="mb-6" />
+      <div className="flex-1 overflow-hidden p-[2vh]">
+        <StepHeader title={t.step4_title} subtitle={t.step4_subtitle} className="mb-[1.5vh]" />
 
         {/* Card Récapitulatif */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
-          <h3 className="font-bold text-slate-900 mb-3">{t.summary}</h3>
-          <div className="space-y-2 text-sm">
+        <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm mb-[1.5vh]">
+          <h3 className="font-bold text-slate-900 mb-[1vh] text-[1.6vh]">{t.summary}</h3>
+          <div className="space-y-[0.8vh] text-[1.5vh]">
             <div className="flex items-center gap-3">
               <Users size={16} className="text-slate-400 flex-shrink-0" />
               <span className="text-slate-700">{guestDetails()}</span>
@@ -219,9 +219,9 @@ export function Step4Policy({
         </div>
 
         {/* Card Infos client */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
-          <h3 className="font-bold text-slate-900 mb-3">{t.client_info}</h3>
-          <div className="space-y-2 text-sm">
+        <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm mb-[1.5vh]">
+          <h3 className="font-bold text-slate-900 mb-[1vh] text-[1.6vh]">{t.client_info}</h3>
+          <div className="space-y-[0.8vh] text-[1.5vh]">
             <div className="flex items-center gap-3">
               <User size={16} className="text-slate-400 flex-shrink-0" />
               <span className="text-slate-700">{data.lastName} {data.firstName}</span>
@@ -237,8 +237,8 @@ export function Step4Policy({
 
         {/* Card Message (si renseigné) */}
         {data.message && data.message.trim() && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
-            <h3 className="font-bold text-slate-900 mb-3">Message</h3>
+          <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm mb-[1.5vh]">
+            <h3 className="font-bold text-slate-900 mb-[1vh] text-[1.6vh]">Message</h3>
             <div className="flex items-start gap-3">
               <MessageSquare size={16} className="text-slate-400 flex-shrink-0 mt-0.5" />
               <p className="text-slate-700 text-sm">{data.message}</p>
@@ -247,9 +247,10 @@ export function Step4Policy({
         )}
 
         {/* Turnstile */}
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center mb-[1.5vh]">
           <Turnstile
             siteKey={settings.turnstileSiteKey}
+            options={{ size: "compact" }}
             onSuccess={setTurnstileToken}
             onError={() => setTurnstileToken(null)}
             onExpire={() => setTurnstileToken(null)}
@@ -258,7 +259,7 @@ export function Step4Policy({
 
         {/* Error message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-[1vh] mb-[1.5vh]">
             <p className="text-sm text-red-600">{error}</p>
           </div>
         )}

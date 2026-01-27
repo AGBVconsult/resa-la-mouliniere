@@ -63,11 +63,11 @@ export function MonthCalendar({
 
   const renderIndicator = (isOpen: boolean, type: "lunch" | "dinner") => {
     if (!isOpen) {
-      return <div className="w-2 h-2 rounded-full bg-slate-300" />;
+      return <div className="w-[1vh] h-[1vh] min-w-[6px] min-h-[6px] rounded-full bg-slate-300" />;
     }
     return (
       <div
-        className="w-2 h-2 rounded-full"
+        className="w-[1vh] h-[1vh] min-w-[6px] min-h-[6px] rounded-full"
         style={{
           backgroundColor: type === "lunch" ? COLORS.lunch.available : COLORS.dinner.available,
         }}
@@ -76,24 +76,24 @@ export function MonthCalendar({
   };
 
   return (
-    <div className="p-6 bg-white rounded-2xl shadow-sm">
+    <div className="p-[2vh] bg-white rounded-2xl shadow-sm">
       {/* Navigation */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-[1.5vh]">
         <button
           type="button"
           onClick={onPrevMonth}
-          className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors"
+          className="w-[5vh] h-[5vh] min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors"
           aria-label="Mois précédent"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="font-bold text-lg capitalize">
+        <span className="font-bold text-[2.2vh] capitalize">
           {months[month - 1]} {year}
         </span>
         <button
           type="button"
           onClick={onNextMonth}
-          className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors"
+          className="w-[5vh] h-[5vh] min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors"
           aria-label="Mois suivant"
         >
           <ChevronRight size={20} />
@@ -101,16 +101,16 @@ export function MonthCalendar({
       </div>
 
       {/* En-tête jours */}
-      <div className="grid grid-cols-7 mb-2 text-center">
+      <div className="grid grid-cols-7 mb-[0.5vh] text-center">
         {daysShort.map((d, i) => (
-          <span key={i} className="text-[10px] font-bold text-slate-500 uppercase">
+          <span key={i} className="text-[1.3vh] font-bold text-slate-500 uppercase">
             {d}
           </span>
         ))}
       </div>
 
       {/* Grille calendrier */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-[0.5vh]">
         {calendarDays.map((dateKey, idx) => {
           if (!dateKey) {
             return <div key={idx} className="aspect-square" />;
@@ -136,7 +136,7 @@ export function MonthCalendar({
                 isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"
               } ${isSelected ? "bg-slate-900 text-white" : ""}`}
             >
-              <span className="text-sm font-medium">{dayNumber}</span>
+              <span className="text-[1.8vh] font-medium">{dayNumber}</span>
               <div className="flex gap-1">
                 {renderIndicator(hasLunch, "lunch")}
                 {renderIndicator(hasDinner, "dinner")}
@@ -147,8 +147,8 @@ export function MonthCalendar({
       </div>
 
       {/* Légende */}
-      <div className="mt-6 pt-4 border-t border-slate-100">
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-slate-500">
+      <div className="mt-[1.5vh] pt-[1vh] border-t border-slate-100">
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-[1.4vh] text-slate-500">
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             <span>{legend.lunchAvailable}</span>

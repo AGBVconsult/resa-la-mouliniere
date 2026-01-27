@@ -28,8 +28,8 @@ export function Input({
   const hasError = !!error;
 
   return (
-    <div className="mb-4">
-      <label htmlFor={id} className="block text-xs font-semibold text-slate-600 mb-1.5">
+    <div className="mb-[1.5vh]">
+      <label htmlFor={id} className="block text-[1.4vh] font-semibold text-slate-600 mb-[0.5vh]">
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
@@ -43,14 +43,14 @@ export function Input({
         autoComplete={autoComplete}
         aria-invalid={hasError}
         aria-describedby={hasError ? errorId : undefined}
-        className={`w-full px-4 py-3 border rounded-lg transition-colors bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 ${
+        className={`w-full px-[3vw] py-[1.2vh] min-h-[5vh] border rounded-lg transition-colors bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 ${
           hasError
             ? "border-red-300 focus:ring-red-500/20 focus:border-red-500"
             : "border-slate-200 focus:ring-slate-900/20 focus:border-slate-900"
         }`}
       />
       {hasError && (
-        <p id={errorId} className="mt-1 text-xs text-red-500" role="alert">
+        <p id={errorId} className="mt-[0.3vh] text-[1.3vh] text-red-500" role="alert">
           {error}
         </p>
       )}

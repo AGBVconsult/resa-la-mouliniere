@@ -21,15 +21,15 @@ export function Step1Guests({ lang, data, onUpdate }: Step1GuestsProps) {
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Contenu - PAS DE SCROLL */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-4">
+      <div className="flex-1 flex flex-col justify-center px-[4vw] py-[2vh]">
         <StepHeader
           title={t.step1_title}
           subtitle={t.step1_subtitle}
-          className="mb-6"
+          className="mb-[2vh]"
         />
 
         {/* Compteurs */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+        <div className="bg-white rounded-2xl p-[2vh] shadow-sm mb-[2vh]">
           <CounterRow
             label={t.adults}
             value={data.adults}
@@ -58,7 +58,7 @@ export function Step1Guests({ lang, data, onUpdate }: Step1GuestsProps) {
         </div>
 
         {/* Options */}
-        <div className="space-y-2">
+        <div className="space-y-[1vh]">
           {/* Options bébé - SEULEMENT si babyCount > 0 */}
           {data.babyCount > 0 && (
             <>

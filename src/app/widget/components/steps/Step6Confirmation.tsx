@@ -106,32 +106,32 @@ END:VCALENDAR`;
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Contenu */}
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center text-center">
+      <div className="flex-1 overflow-hidden p-[2vh] flex flex-col items-center justify-center text-center">
         {/* Icon */}
-        <div className="mb-6">
+        <div className="mb-[2vh]">
           {isConfirmed ? (
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle size={40} className="text-green-600" />
+            <div className="w-[10vh] h-[10vh] rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle size={32} className="text-green-600" />
             </div>
           ) : (
-            <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center">
-              <Clock size={40} className="text-amber-600" />
+            <div className="w-[10vh] h-[10vh] rounded-full bg-amber-100 flex items-center justify-center">
+              <Clock size={32} className="text-amber-600" />
             </div>
           )}
         </div>
 
         {/* Title */}
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">
+        <h2 className="text-[2.8vh] font-bold text-slate-900 mb-[0.5vh]">
           {isConfirmed ? t.confirmed_title : t.pending_title}
         </h2>
-        <p className="text-slate-500 mb-8">
+        <p className="text-[1.6vh] text-slate-500 mb-[2vh]">
           {isConfirmed ? t.confirmed_subtitle : t.pending_subtitle}
         </p>
 
         {/* Card Récapitulatif */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm w-full max-w-sm mb-4">
-          <h3 className="font-bold text-slate-900 mb-3">{t.summary}</h3>
-          <div className="space-y-2 text-sm">
+        <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm w-full max-w-[90%] mb-[1.5vh]">
+          <h3 className="font-bold text-slate-900 mb-[0.8vh] text-[1.6vh]">{t.summary}</h3>
+          <div className="space-y-[0.6vh] text-[1.5vh]">
             <div className="flex items-center gap-3">
               <Users size={16} className="text-slate-400 flex-shrink-0" />
               <span className="text-slate-700">{guestDetails()}</span>
@@ -160,9 +160,9 @@ END:VCALENDAR`;
         </div>
 
         {/* Card Infos client */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm w-full max-w-sm mb-4">
-          <h3 className="font-bold text-slate-900 mb-3">{t.client_info}</h3>
-          <div className="space-y-2 text-sm">
+        <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm w-full max-w-[90%] mb-[1.5vh]">
+          <h3 className="font-bold text-slate-900 mb-[0.8vh] text-[1.6vh]">{t.client_info}</h3>
+          <div className="space-y-[0.6vh] text-[1.5vh]">
             <div className="flex items-center gap-3">
               <User size={16} className="text-slate-400 flex-shrink-0" />
               <span className="text-slate-700">{data.lastName} {data.firstName}</span>
@@ -180,8 +180,8 @@ END:VCALENDAR`;
 
         {/* Card Message (si renseigné) */}
         {data.message && data.message.trim() && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm w-full max-w-sm mb-4">
-            <h3 className="font-bold text-slate-900 mb-3">{t.message}</h3>
+          <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm w-full max-w-[90%] mb-[1.5vh]">
+            <h3 className="font-bold text-slate-900 mb-[0.8vh] text-[1.6vh]">{t.message}</h3>
             <div className="flex items-start gap-3">
               <MessageSquare size={16} className="text-slate-400 flex-shrink-0 mt-0.5" />
               <p className="text-slate-700 text-sm">{data.message}</p>
@@ -190,16 +190,16 @@ END:VCALENDAR`;
         )}
 
         {/* Email confirmation */}
-        <p className="text-sm text-slate-500 mb-4">
+        <p className="text-[1.4vh] text-slate-500 mb-[1.5vh]">
           {t.email_sent} <span className="font-medium text-slate-700">{data.email}</span>
         </p>
 
         {/* Actions */}
-        <div className="flex gap-3 w-full max-w-sm">
+        <div className="flex gap-[2vw] w-full max-w-[90%]">
           <button
             type="button"
             onClick={handleAddToCalendar}
-            className="flex-1 py-3 rounded-xl font-semibold border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-[1.2vh] min-h-[44px] rounded-xl font-semibold border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
           >
             <Calendar size={18} />
             {t.add_calendar}
@@ -208,7 +208,7 @@ END:VCALENDAR`;
             <button
               type="button"
               onClick={handleShare}
-              className="flex-1 py-3 rounded-xl font-semibold border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-[1.2vh] min-h-[44px] rounded-xl font-semibold border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
             >
               <Share2 size={18} />
               {t.share}

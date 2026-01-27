@@ -32,10 +32,10 @@ export function CounterRow({
   const canIncrement = value < max;
 
   return (
-    <div className="flex items-center justify-between py-3">
+    <div className="flex items-center justify-between py-[1.2vh]">
       <div>
-        <span className="text-sm font-medium text-slate-700">{label}</span>
-        {sublabel && <p className="text-xs text-slate-400">{sublabel}</p>}
+        <span className="text-[1.6vh] font-medium text-slate-700">{label}</span>
+        {sublabel && <p className="text-[1.3vh] text-slate-400">{sublabel}</p>}
       </div>
       <div className="flex items-center gap-4">
         <button
@@ -43,18 +43,18 @@ export function CounterRow({
           onClick={handleDecrement}
           disabled={!canDecrement}
           aria-label={`Diminuer ${label}`}
-          className={`w-11 h-11 rounded-full flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
+          className={`w-[5.5vh] h-[5.5vh] min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
             canDecrement
               ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
               : "bg-slate-50 text-slate-400 cursor-not-allowed"
           }`}
         >
-          <Minus size={20} />
+          <Minus size={16} />
         </button>
         <span
           aria-live="polite"
           aria-atomic="true"
-          className="w-8 text-center text-lg font-bold text-slate-900"
+          className="w-[4vh] text-center text-[2.2vh] font-bold text-slate-900"
         >
           {value}
         </span>
@@ -63,13 +63,13 @@ export function CounterRow({
           onClick={handleIncrement}
           disabled={!canIncrement}
           aria-label={`Augmenter ${label}`}
-          className={`w-11 h-11 rounded-full flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
+          className={`w-[5.5vh] h-[5.5vh] min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
             canIncrement
               ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
               : "bg-slate-50 text-slate-400 cursor-not-allowed"
           }`}
         >
-          <Plus size={20} />
+          <Plus size={16} />
         </button>
       </div>
     </div>

@@ -20,7 +20,7 @@ export function ProgressIndicator({ currentStep, totalSteps = 5 }: ProgressIndic
         return (
           <div key={stepNumber} className="flex items-center">
             <div
-              className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
+              className={`w-[2.5vh] h-[2.5vh] min-w-[16px] min-h-[16px] rounded-full flex items-center justify-center transition-all duration-300 ${
                 isCompleted
                   ? "bg-slate-100"
                   : isCurrent
@@ -28,13 +28,13 @@ export function ProgressIndicator({ currentStep, totalSteps = 5 }: ProgressIndic
                     : "border-[1.5px] border-slate-600 bg-transparent"
               }`}
             >
-              {isCompleted && <Check size={12} className="text-slate-900" strokeWidth={3} />}
-              {isCurrent && <div className="w-2 h-2 rounded-full bg-white" />}
+              {isCompleted && <Check size={10} className="text-slate-900" strokeWidth={3} />}
+              {isCurrent && <div className="w-[1vh] h-[1vh] rounded-full bg-white" />}
             </div>
 
             {stepNumber < totalSteps && (
               <div
-                className={`w-3 h-[2px] transition-all duration-300 ${
+                className={`w-[1.5vh] h-[0.3vh] transition-all duration-300 ${
                   isComplete || stepNumber < currentStep ? "bg-slate-100" : "bg-slate-600"
                 }`}
               />

@@ -110,11 +110,11 @@ export function Step3Contact({
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Contenu scrollable */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <StepHeader title={t.step3_title} subtitle={t.step3_subtitle} className="mb-6" />
+      <div className="flex-1 overflow-hidden p-[2vh]">
+        <StepHeader title={t.step3_title} subtitle={t.step3_subtitle} className="mb-[2vh]" />
 
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl p-[2vh] shadow-sm">
+          <div className="grid grid-cols-2 gap-[2vw]">
             <Input
               label={t.first_name}
               value={data.firstName}
@@ -155,15 +155,15 @@ export function Step3Contact({
           />
 
           <div className="mb-0">
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            <label className="block text-[1.4vh] font-semibold text-slate-600 mb-[0.5vh]">
               {t.message}
             </label>
             <textarea
               value={data.message}
               onChange={(e) => onUpdate({ message: e.target.value })}
               placeholder={t.message_placeholder}
-              rows={3}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 resize-none"
+              rows={2}
+              className="w-full px-[3vw] py-[1.2vh] min-h-[8vh] border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 resize-none"
             />
           </div>
         </div>

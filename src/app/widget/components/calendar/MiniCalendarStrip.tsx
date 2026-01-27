@@ -57,11 +57,11 @@ export function MiniCalendarStrip({
 
   const renderIndicator = (isOpen: boolean, type: "lunch" | "dinner") => {
     if (!isOpen) {
-      return <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />;
+      return <div className="w-[0.8vh] h-[0.8vh] rounded-full bg-slate-300" />;
     }
     return (
       <div
-        className="w-1.5 h-1.5 rounded-full"
+        className="w-[0.8vh] h-[0.8vh] rounded-full"
         style={{
           backgroundColor: type === "lunch" ? COLORS.lunch.available : COLORS.dinner.available,
         }}
@@ -70,7 +70,7 @@ export function MiniCalendarStrip({
   };
 
   return (
-    <div className="flex gap-2 py-4 justify-center">
+    <div className="flex gap-2 py-[1.5vh] justify-center">
       {days.map((dateKey) => {
         const date = new Date(dateKey + "T12:00:00");
         const dayState = dayStateMap.get(dateKey);
@@ -90,7 +90,7 @@ export function MiniCalendarStrip({
             type="button"
             onClick={() => !isDisabled && onDateSelect(dateKey)}
             disabled={isDisabled}
-            className={`flex-shrink-0 w-14 py-2 rounded-xl flex flex-col items-center gap-1 transition-all ${
+            className={`flex-shrink-0 w-[12vw] min-w-[48px] py-[1vh] rounded-xl flex flex-col items-center gap-1 transition-all ${
               isSelected
                 ? "bg-slate-900 text-white shadow-md scale-105"
                 : isDisabled
@@ -98,10 +98,10 @@ export function MiniCalendarStrip({
                   : "bg-white border border-slate-100 text-slate-700 hover:border-slate-300"
             }`}
           >
-            <span className="text-[10px] uppercase font-bold tracking-wider">
+            <span className="text-[1.2vh] uppercase font-bold tracking-wider">
               {daysShort[dayOfWeek]}
             </span>
-            <span className="text-xl font-bold">{dayNumber}</span>
+            <span className="text-[2.8vh] font-bold">{dayNumber}</span>
             <div className="flex gap-1">
               {renderIndicator(hasLunch, "lunch")}
               {renderIndicator(hasDinner, "dinner")}
