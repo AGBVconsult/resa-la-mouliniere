@@ -61,6 +61,26 @@ export const getMonthEffective = query({
       (p) => p.startDate <= endDate && p.endDate >= startDate
     );
 
+    // Helper to parse dateKey to Date (local time, not UTC)
+    const parseDateKey = (dateKey: string): Date => {
+      const [y, m, d] = dateKey.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    };
+
+    // Helper to format Date to dateKey
+    const formatDateKey = (date: Date): string => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    };
+
+    // Helper to get ISO weekday (1=Monday, 7=Sunday)
+    const getISOWeekday = (date: Date): number => {
+      const day = date.getDay();
+      return day === 0 ? 7 : day;
+    };
+
     // Build closure map: dateKey -> { lunch: boolean, dinner: boolean }
     const closureMap = new Map<string, { lunch: boolean; dinner: boolean }>();
     for (const period of monthPeriods) {
@@ -70,18 +90,23 @@ export const getMonthEffective = query({
       const periodStart = period.startDate > startDate ? period.startDate : startDate;
       const periodEnd = period.endDate < endDate ? period.endDate : endDate;
       
-      for (let d = new Date(periodStart); d <= new Date(periodEnd); d.setDate(d.getDate() + 1)) {
-        const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        const weekday = d.getDay() === 0 ? 7 : d.getDay(); // ISO weekday
+      const current = parseDateKey(periodStart);
+      const end = parseDateKey(periodEnd);
+      
+      while (current <= end) {
+        const dateKey = formatDateKey(current);
+        const weekday = getISOWeekday(current);
         
         // Check if this day is in activeDays
-        if (!period.applyRules.activeDays.includes(weekday)) continue;
-        
-        const existing = closureMap.get(dateKey) || { lunch: false, dinner: false };
-        for (const service of period.applyRules.services) {
-          existing[service] = true;
+        if (period.applyRules.activeDays.includes(weekday)) {
+          const existing = closureMap.get(dateKey) || { lunch: false, dinner: false };
+          for (const service of period.applyRules.services) {
+            existing[service] = true;
+          }
+          closureMap.set(dateKey, existing);
         }
-        closureMap.set(dateKey, existing);
+        
+        current.setDate(current.getDate() + 1);
       }
     }
 
