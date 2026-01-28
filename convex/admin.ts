@@ -775,7 +775,8 @@ export const updateReservation = mutation({
       if (status === "confirmed" && reservation.status === "pending") {
         emailType = "reservation.validated";
       } else if (status === "cancelled") {
-        emailType = "reservation.cancelled";
+        // Admin cancellation = cancelled by restaurant
+        emailType = "reservation.cancelled_by_restaurant";
       } else if (status === "refused") {
         emailType = "reservation.refused";
       } else if (status === "noshow") {
