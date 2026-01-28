@@ -116,6 +116,10 @@ type TranslationKey =
   | "cancel.link"
   | "review.link"
   | "footer"
+  | "footer.signature"
+  | "payment.title"
+  | "payment.text"
+  | "address"
   | "reason";
 
 type Translations = Record<TranslationKey, string>;
@@ -174,6 +178,10 @@ const translations: Record<Language, Translations> = {
     "cancel.link": "Annuler ma réservation",
     "review.link": "Laisser un avis",
     "footer": "Allisson & Benjamin",
+    "footer.signature": "On se réjouit de vous accueillir,",
+    "payment.title": "Bon à savoir pour le règlement :",
+    "payment.text": "Nous n'avons pas de terminal bancaire. Pour un règlement simple et rapide, nous utilisons Payconiq (comptes belges), vous pouvez aussi payer en espèces.",
+    "address": "Visserskaai 17, 8400 Oostende",
     "reason": "Raison",
   },
   nl: {
@@ -229,6 +237,10 @@ const translations: Record<Language, Translations> = {
     "cancel.link": "Mijn reservering annuleren",
     "review.link": "Laat een beoordeling achter",
     "footer": "Allisson & Benjamin",
+    "footer.signature": "We kijken ernaar uit u te verwelkomen,",
+    "payment.title": "Goed om te weten voor de betaling:",
+    "payment.text": "We hebben geen betaalterminal. Voor een snelle en eenvoudige betaling gebruiken we Payconiq (Belgische rekeningen), u kunt ook contant betalen.",
+    "address": "Visserskaai 17, 8400 Oostende",
     "reason": "Reden",
   },
   en: {
@@ -284,6 +296,10 @@ const translations: Record<Language, Translations> = {
     "cancel.link": "Cancel my reservation",
     "review.link": "Leave a review",
     "footer": "Allisson & Benjamin",
+    "footer.signature": "We look forward to welcoming you,",
+    "payment.title": "Good to know for payment:",
+    "payment.text": "We don't have a card terminal. For quick and easy payment, we use Payconiq (Belgian accounts), you can also pay in cash.",
+    "address": "Visserskaai 17, 8400 Oostende",
     "reason": "Reason",
   },
   de: {
@@ -339,6 +355,10 @@ const translations: Record<Language, Translations> = {
     "cancel.link": "Meine Reservierung stornieren",
     "review.link": "Bewertung hinterlassen",
     "footer": "Allisson & Benjamin",
+    "footer.signature": "Wir freuen uns, Sie zu begrüßen,",
+    "payment.title": "Gut zu wissen für die Zahlung:",
+    "payment.text": "Wir haben kein Kartenterminal. Für eine schnelle und einfache Zahlung nutzen wir Payconiq (belgische Konten), Sie können auch bar bezahlen.",
+    "address": "Visserskaai 17, 8400 Oostende",
     "reason": "Grund",
   },
   it: {
@@ -394,6 +414,10 @@ const translations: Record<Language, Translations> = {
     "cancel.link": "Annulla la mia prenotazione",
     "review.link": "Lascia una recensione",
     "footer": "Allisson & Benjamin",
+    "footer.signature": "Non vediamo l'ora di accoglierti,",
+    "payment.title": "Buono a sapersi per il pagamento:",
+    "payment.text": "Non abbiamo un terminale per carte. Per un pagamento rapido e semplice, utilizziamo Payconiq (conti belgi), puoi anche pagare in contanti.",
+    "address": "Visserskaai 17, 8400 Oostende",
     "reason": "Motivo",
   },
 };
@@ -649,6 +673,10 @@ function renderModernTemplate(
   const reviewLabel = t(locale, "review.link");
   const reasonLabel = t(locale, "reason");
   const footer = t(locale, "footer");
+  const footerSignature = t(locale, "footer.signature");
+  const paymentTitle = t(locale, "payment.title");
+  const paymentText = t(locale, "payment.text");
+  const address = t(locale, "address");
   const subject = t(locale, getSubjectKey(type));
   
   const config = getEmailTypeConfig(type);
@@ -668,51 +696,51 @@ function renderModernTemplate(
   const showEditCancel = type === "reservation.confirmed" || type === "reservation.pending" || type === "reservation.validated" || type === "reservation.reminder";
   const showReview = type === "reservation.review";
   const showDetails = type !== "reservation.review";
+  // Show payment info for confirmed, validated, reminder, modified emails
+  const showPayment = type === "reservation.confirmed" || type === "reservation.validated" || type === "reservation.reminder" || type === "reservation.modified";
 
   // Build details section HTML
   let detailsHtml = "";
   if (showDetails) {
     detailsHtml = `
                 <!-- Carte Détails -->
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px; margin-bottom: 30px;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px; margin-bottom: 20px;">
                   <!-- Date -->
                   <tr>
-                    <td style="padding: 20px 20px 15px 20px; border-bottom: 1px dashed #e5e7eb;">
-                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; color: #111827; font-weight: 600;">${formattedDate}</span>
+                    <td style="padding: 16px 20px; border-bottom: 1px dashed #e5e7eb;">
+                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px; color: #111827;">• Date : <strong>${formattedDate}</strong></span>
                     </td>
                   </tr>
                   <!-- Heure -->
                   <tr>
-                    <td style="padding: 15px 20px 15px 20px; border-bottom: 1px dashed #e5e7eb;">
-                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; color: #111827; font-weight: 600;">${escapeHtml(data.timeKey)}</span>
+                    <td style="padding: 16px 20px; border-bottom: 1px dashed #e5e7eb;">
+                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px; color: #111827;">• Heure : <strong>${escapeHtml(data.timeKey)}</strong></span>
                     </td>
                   </tr>
                   <!-- Couverts -->
                   <tr>
-                    <td style="padding: 15px 20px ${hasExtras ? "15px" : "20px"} 20px;${hasExtras ? " border-bottom: 1px dashed #e5e7eb;" : ""}">
-                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; color: #111827; font-weight: 600;">${partySizeDetail}</span>
+                    <td style="padding: 16px 20px; border-bottom: 1px dashed #e5e7eb;">
+                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px; color: #111827;">• Personnes : <strong>${partySizeDetail}</strong></span>
                     </td>
-                  </tr>${hasOptions ? `
-                  <!-- Options -->
+                  </tr>
+                  <!-- Adresse -->
                   <tr>
-                    <td style="padding: 15px 20px ${hasNote || hasCancelReason ? "15px" : "20px"} 20px;${hasNote || hasCancelReason ? " border-bottom: 1px dashed #e5e7eb;" : ""}">
-                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #4b5563;">${optionsString}</span>
+                    <td style="padding: 16px 20px;">
+                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px; color: #111827;">• Adresse : <strong>${address}</strong></span>
                     </td>
-                  </tr>` : ""}${hasCancelReason ? `
-                  <!-- Raison du refus -->
-                  <tr>
-                    <td style="padding: 15px 20px ${hasNote ? "15px" : "20px"} 20px;${hasNote ? " border-bottom: 1px dashed #e5e7eb;" : ""}">
-                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">${reasonLabel}</span>
-                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #4b5563; line-height: 1.5; display: block; margin-top: 4px;">${safeCancelReason}</span>
-                    </td>
-                  </tr>` : ""}${hasNote ? `
-                  <!-- Note -->
-                  <tr>
-                    <td style="padding: 15px 20px 20px 20px;">
-                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #4b5563; line-height: 1.5; display: block; font-style: italic;">"${safeNote}"</span>
-                    </td>
-                  </tr>` : ""}
+                  </tr>
                 </table>`;
+  }
+  
+  // Build payment section HTML
+  let paymentHtml = "";
+  if (showPayment) {
+    paymentHtml = `
+                <!-- Section Paiement -->
+                <div style="background-color: #fef3c7; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                  <p style="margin: 0 0 8px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #92400e;">💳 ${paymentTitle}</p>
+                  <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #78350f; line-height: 1.5;">${paymentText}</p>
+                </div>`;
   }
 
   // Build actions section HTML
@@ -780,9 +808,10 @@ function renderModernTemplate(
                 </p>
 
                 ${detailsHtml}
+                ${paymentHtml}
                 ${actionsHtml}
 
-                <p style="text-align: center; margin-top: 30px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #9ca3af;">${footer}</p>
+                <p style="text-align: center; margin-top: 30px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #6b7280; line-height: 1.6;">${footerSignature}<br><strong>${footer}</strong></p>
 
               </td>
             </tr>
