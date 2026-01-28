@@ -50,22 +50,22 @@ export function BookingHeader({
 
       {/* Ligne 2 : Récap progressif (masqué si hideSummary) */}
       {!hideSummary && (
-        <div className="flex items-center justify-center gap-[4vw] mt-[0.5vh] text-[1.6vh]">
+        <div className="flex items-center justify-center gap-4 mt-[0.5vh] text-sm whitespace-nowrap">
           {guestCount !== undefined && guestLabel && (
-            <span className="flex items-center gap-2">
-              <Users size={14} className="text-slate-400" />
+            <span className="flex items-center gap-1.5">
+              <Users size={14} className="text-slate-400 flex-shrink-0" />
               <span>{guestCount} {guestLabel}</span>
             </span>
           )}
           {dateLabel && (
-            <span className="flex items-center gap-2">
-              <Calendar size={14} className="text-slate-400" />
+            <span className="flex items-center gap-1.5">
+              <Calendar size={14} className="text-slate-400 flex-shrink-0" />
               <span>{dateLabel}</span>
             </span>
           )}
           {timeLabel && (
-            <span className="flex items-center gap-2">
-              <Clock size={14} className="text-slate-400" />
+            <span className="flex items-center gap-1.5">
+              <Clock size={14} className="text-slate-400 flex-shrink-0" />
               <span>{timeLabel}</span>
             </span>
           )}
