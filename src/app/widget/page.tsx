@@ -4,7 +4,7 @@ import Widget from "./components/Widget";
 function WidgetSkeleton() {
   return (
     <div className="min-h-screen md:bg-slate-100 md:flex md:items-center md:justify-center md:p-4">
-      <div className="w-full min-h-[100dvh] flex flex-col bg-white md:min-h-0 md:max-w-[400px] md:h-[750px] md:rounded-3xl md:shadow-2xl md:border md:border-slate-200 overflow-hidden">
+      <div className="w-full min-h-[100dvh] flex flex-col bg-white md:min-h-0 md:max-w-[480px] md:h-[750px] md:rounded-3xl md:shadow-2xl md:border md:border-slate-200 overflow-hidden">
         <div className="bg-slate-900 text-white px-6 py-4">
           <div className="h-6 bg-slate-700 rounded w-1/2 animate-pulse" />
           <div className="flex justify-center mt-4">

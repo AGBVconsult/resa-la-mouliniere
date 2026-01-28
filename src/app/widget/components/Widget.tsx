@@ -255,7 +255,7 @@ export default function Widget() {
       <div
         role="form"
         aria-label="Formulaire de réservation"
-        className="w-full h-[100dvh] flex flex-col bg-white md:h-[100dvh] md:max-h-[850px] md:max-w-[400px] md:rounded-3xl md:shadow-2xl md:border md:border-slate-200 overflow-hidden"
+        className="w-full h-[100dvh] flex flex-col bg-white md:h-[100dvh] md:max-h-[850px] md:max-w-[480px] md:rounded-3xl md:shadow-2xl md:border md:border-slate-200 overflow-hidden"
       >
         {/* Header */}
         <BookingHeader
