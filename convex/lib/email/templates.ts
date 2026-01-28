@@ -117,6 +117,7 @@ type TranslationKey =
   | "review.link"
   | "footer"
   | "footer.signature"
+  | "footer.signature.negative"
   | "payment.title"
   | "payment.text"
   | "address"
@@ -179,6 +180,7 @@ const translations: Record<Language, Translations> = {
     "review.link": "Laisser un avis",
     "footer": "Allisson & Benjamin",
     "footer.signature": "On se réjouit de vous accueillir,",
+    "footer.signature.negative": "Bien à vous,",
     "payment.title": "Bon à savoir pour le règlement :",
     "payment.text": "Nous n'avons pas de terminal bancaire. Pour un règlement simple et rapide, nous utilisons Payconiq (comptes belges), vous pouvez aussi payer en espèces.",
     "address": "Visserskaai 17, 8400 Oostende",
@@ -238,6 +240,7 @@ const translations: Record<Language, Translations> = {
     "review.link": "Laat een beoordeling achter",
     "footer": "Allisson & Benjamin",
     "footer.signature": "We kijken ernaar uit u te verwelkomen,",
+    "footer.signature.negative": "Met vriendelijke groeten,",
     "payment.title": "Goed om te weten voor de betaling:",
     "payment.text": "We hebben geen betaalterminal. Voor een snelle en eenvoudige betaling gebruiken we Payconiq (Belgische rekeningen), u kunt ook contant betalen.",
     "address": "Visserskaai 17, 8400 Oostende",
@@ -297,6 +300,7 @@ const translations: Record<Language, Translations> = {
     "review.link": "Leave a review",
     "footer": "Allisson & Benjamin",
     "footer.signature": "We look forward to welcoming you,",
+    "footer.signature.negative": "Best regards,",
     "payment.title": "Good to know for payment:",
     "payment.text": "We don't have a card terminal. For quick and easy payment, we use Payconiq (Belgian accounts), you can also pay in cash.",
     "address": "Visserskaai 17, 8400 Oostende",
@@ -356,6 +360,7 @@ const translations: Record<Language, Translations> = {
     "review.link": "Bewertung hinterlassen",
     "footer": "Allisson & Benjamin",
     "footer.signature": "Wir freuen uns, Sie zu begrüßen,",
+    "footer.signature.negative": "Mit freundlichen Grüßen,",
     "payment.title": "Gut zu wissen für die Zahlung:",
     "payment.text": "Wir haben kein Kartenterminal. Für eine schnelle und einfache Zahlung nutzen wir Payconiq (belgische Konten), Sie können auch bar bezahlen.",
     "address": "Visserskaai 17, 8400 Oostende",
@@ -415,6 +420,7 @@ const translations: Record<Language, Translations> = {
     "review.link": "Lascia una recensione",
     "footer": "Allisson & Benjamin",
     "footer.signature": "Non vediamo l'ora di accoglierti,",
+    "footer.signature.negative": "Cordiali saluti,",
     "payment.title": "Buono a sapersi per il pagamento:",
     "payment.text": "Non abbiamo un terminale per carte. Per un pagamento rapido e semplice, utilizziamo Payconiq (conti belgi), puoi anche pagare in contanti.",
     "address": "Visserskaai 17, 8400 Oostende",
@@ -698,10 +704,23 @@ function renderModernTemplate(
   const showDetails = type !== "reservation.review";
   // Show payment info for confirmed, validated, reminder, modified emails
   const showPayment = type === "reservation.confirmed" || type === "reservation.validated" || type === "reservation.reminder" || type === "reservation.modified";
+  // Show address only for positive emails (not for noshow, refused, cancelled_by_restaurant, cancelled)
+  const showAddress = type === "reservation.confirmed" || type === "reservation.validated" || type === "reservation.reminder" || type === "reservation.modified" || type === "reservation.pending";
+  // Negative emails use different signature
+  const isNegativeEmail = type === "reservation.noshow" || type === "reservation.refused" || type === "reservation.cancelled_by_restaurant" || type === "reservation.cancelled";
+  const signatureText = isNegativeEmail ? t(locale, "footer.signature.negative") : footerSignature;
 
   // Build details section HTML
   let detailsHtml = "";
   if (showDetails) {
+    const addressRow = showAddress ? `
+                  <!-- Adresse -->
+                  <tr>
+                    <td style="padding: 16px 20px;">
+                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px; color: #111827;">• Adresse : <strong>${address}</strong></span>
+                    </td>
+                  </tr>` : "";
+    
     detailsHtml = `
                 <!-- Carte Détails -->
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px; margin-bottom: 20px;">
@@ -713,22 +732,10 @@ function renderModernTemplate(
                   </tr>
                   <!-- Heure -->
                   <tr>
-                    <td style="padding: 16px 20px; border-bottom: 1px dashed #e5e7eb;">
+                    <td style="padding: 16px 20px;${showAddress ? " border-bottom: 1px dashed #e5e7eb;" : ""}">
                       <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px; color: #111827;">• Heure : <strong>${escapeHtml(data.timeKey)}</strong></span>
                     </td>
-                  </tr>
-                  <!-- Couverts -->
-                  <tr>
-                    <td style="padding: 16px 20px; border-bottom: 1px dashed #e5e7eb;">
-                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px; color: #111827;">• Personnes : <strong>${partySizeDetail}</strong></span>
-                    </td>
-                  </tr>
-                  <!-- Adresse -->
-                  <tr>
-                    <td style="padding: 16px 20px;">
-                      <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px; color: #111827;">• Adresse : <strong>${address}</strong></span>
-                    </td>
-                  </tr>
+                  </tr>${addressRow}
                 </table>`;
   }
   
@@ -811,7 +818,7 @@ function renderModernTemplate(
                 ${paymentHtml}
                 ${actionsHtml}
 
-                <p style="text-align: center; margin-top: 30px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #6b7280; line-height: 1.6;">${footerSignature}<br><strong>${footer}</strong></p>
+                <p style="text-align: center; margin-top: 30px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #6b7280; line-height: 1.6;">${signatureText}<br><strong>${footer}</strong></p>
 
               </td>
             </tr>
