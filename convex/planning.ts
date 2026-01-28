@@ -83,6 +83,7 @@ export const getMonthEffective = query({
 
     // Build closure map: dateKey -> { lunch: boolean, dinner: boolean }
     const closureMap = new Map<string, { lunch: boolean; dinner: boolean }>();
+    
     for (const period of monthPeriods) {
       if (period.applyRules.status !== "closed") continue;
       
