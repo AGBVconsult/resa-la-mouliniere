@@ -462,7 +462,7 @@ export function ReservationRow({
         return { 
           icon: <X size={18} />, 
           color: "bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600", 
-          nextStatus: "cancelled", 
+          nextStatus: "refused", 
           tooltip: "Refuser" 
         };
       case "confirmed":
@@ -484,7 +484,7 @@ export function ReservationRow({
     
     switch (reservation.status) {
       case "pending":
-        actions.push({ label: "Refuser", nextStatus: "cancelled", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
+        actions.push({ label: "Refuser", nextStatus: "refused", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
         break;
       case "confirmed":
         actions.push({ label: "No-show", nextStatus: "noshow", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });

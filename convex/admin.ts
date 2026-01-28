@@ -770,7 +770,7 @@ export const updateReservation = mutation({
       const newVersion = patch.version as number;
 
       // Determine email type based on status transition
-      let emailType: "reservation.validated" | "reservation.cancelled" | "reservation.refused" | null = null;
+      let emailType: "reservation.validated" | "reservation.cancelled" | "reservation.refused" | "reservation.noshow" | "reservation.cancelled_by_restaurant" | null = null;
 
       if (status === "confirmed" && reservation.status === "pending") {
         emailType = "reservation.validated";
@@ -778,6 +778,8 @@ export const updateReservation = mutation({
         emailType = "reservation.cancelled";
       } else if (status === "refused") {
         emailType = "reservation.refused";
+      } else if (status === "noshow") {
+        emailType = "reservation.noshow";
       }
 
       if (emailType && settings) {
