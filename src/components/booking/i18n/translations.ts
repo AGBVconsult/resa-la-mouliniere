@@ -113,6 +113,7 @@ export const translations = {
     add_calendar: "Calendrier",
     share: "Partager",
     email_sent: "Un email de confirmation a été envoyé à",
+    back_to_website: "Retour au site",
     
     // Navigation
     back: "Retour",
@@ -245,6 +246,7 @@ export const translations = {
     add_calendar: "Kalender",
     share: "Delen",
     email_sent: "Een bevestigingsmail is verzonden naar",
+    back_to_website: "Terug naar de website",
     back: "Terug",
     continue: "Doorgaan",
     months: ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"],
@@ -367,6 +369,7 @@ export const translations = {
     add_calendar: "Calendar",
     share: "Share",
     email_sent: "A confirmation email has been sent to",
+    back_to_website: "Back to website",
     back: "Back",
     continue: "Continue",
     months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -497,6 +500,7 @@ export const translations = {
     add_calendar: "Kalender",
     share: "Teilen",
     email_sent: "Eine Bestätigungs-E-Mail wurde gesendet an",
+    back_to_website: "Zurück zur Website",
     
     // Navigation
     back: "Zurück",
@@ -637,6 +641,7 @@ export const translations = {
     add_calendar: "Calendario",
     share: "Condividi",
     email_sent: "Un'email di conferma è stata inviata a",
+    back_to_website: "Torna al sito",
     
     // Navigation
     back: "Indietro",

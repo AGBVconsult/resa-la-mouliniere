@@ -215,6 +215,16 @@ END:VCALENDAR`;
             </button>
           )}
         </div>
+
+        {/* Lien retour site */}
+        <a
+          href="https://www.lamouliniere.be"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-[2vh] text-[1.3vh] text-slate-400 hover:text-slate-600 underline transition-colors"
+        >
+          {t.back_to_website || "Retour au site"}
+        </a>
       </div>
     </div>
   );
