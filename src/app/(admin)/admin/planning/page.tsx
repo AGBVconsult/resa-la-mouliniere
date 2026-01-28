@@ -157,6 +157,7 @@ export default function PlanningPage() {
             const dateKey = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const dayData = monthData?.[dateKey];
             const isToday = dateKey === todayDateKey;
+            const isPast = todayDateKey ? dateKey < todayDateKey : false;
             const isClosed = dayData && !dayData.lunch.isOpen && !dayData.dinner.isOpen;
 
             return (
@@ -165,6 +166,7 @@ export default function PlanningPage() {
                 day={day}
                 dateKey={dateKey}
                 isToday={isToday}
+                isPast={isPast}
                 isClosed={isClosed ?? false}
                 lunch={dayData?.lunch}
                 dinner={dayData?.dinner}
@@ -193,6 +195,7 @@ interface DayCellProps {
   day: number;
   dateKey: string;
   isToday: boolean;
+  isPast: boolean;
   isClosed: boolean;
   lunch?: { isOpen: boolean; capacityEffective: number; covers: number };
   dinner?: { isOpen: boolean; capacityEffective: number; covers: number };
@@ -205,6 +208,7 @@ function DayCell({
   day,
   dateKey,
   isToday,
+  isPast,
   isClosed,
   lunch,
   dinner,
@@ -212,12 +216,16 @@ function DayCell({
   onOpenSettings,
   onOpenReservations,
 }: DayCellProps) {
+  // Past days are shown as closed (grayed out) but still show fill rate
+  const showAsClosed = isPast || isClosed;
+  
   return (
     <div
       className={cn(
         "border-b border-r min-h-[120px] p-2 relative group transition-colors cursor-pointer hover:bg-gray-50",
         isToday && "bg-blue-50 hover:bg-blue-100",
-        isClosed && "bg-gray-100 hover:bg-gray-150"
+        isPast && "bg-gray-100 opacity-60",
+        !isPast && isClosed && "bg-gray-100 hover:bg-gray-150"
       )}
       onClick={onOpenReservations}
     >
@@ -247,6 +255,22 @@ function DayCell({
       {isLoading ? (
         <div className="flex items-center justify-center h-16">
           <Loader2 className="h-4 w-4 animate-spin text-gray-300" />
+        </div>
+      ) : isPast ? (
+        // Past days: show fill rate but grayed out
+        <div className="space-y-1.5">
+          <ServiceRow
+            label="Déj"
+            covers={lunch?.covers ?? 0}
+            capacity={lunch?.capacityEffective ?? 0}
+            isClosed={!lunch?.isOpen}
+          />
+          <ServiceRow
+            label="Dîn"
+            covers={dinner?.covers ?? 0}
+            capacity={dinner?.capacityEffective ?? 0}
+            isClosed={!dinner?.isOpen}
+          />
         </div>
       ) : isClosed ? (
         <div className="text-center text-gray-400 text-sm mt-4">Fermé</div>

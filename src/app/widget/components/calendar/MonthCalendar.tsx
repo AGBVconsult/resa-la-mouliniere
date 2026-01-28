@@ -29,6 +29,12 @@ export function MonthCalendar({
 }: MonthCalendarProps) {
   const { months, daysShort, legend } = useTranslation(lang);
 
+  // Calculate max date (2 months from today)
+  const today = new Date();
+  const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, today.getDate());
+  const maxDateKey = `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, "0")}-${String(maxDate.getDate()).padStart(2, "0")}`;
+  const todayKey = today.toISOString().split("T")[0];
+
   // Générer la grille du mois
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month - 1, 1);
@@ -59,7 +65,6 @@ export function MonthCalendar({
     return map;
   }, [monthData]);
 
-  const today = new Date().toISOString().split("T")[0];
 
   const renderIndicator = (isOpen: boolean, type: "lunch" | "dinner") => {
     if (!isOpen) {
@@ -117,12 +122,13 @@ export function MonthCalendar({
           }
 
           const dayState = dayStateMap.get(dateKey);
-          const isPast = dateKey < today;
+          const isPast = dateKey < todayKey;
+          const isTooFar = dateKey > maxDateKey;
           const isSelected = dateKey === selectedDate;
           const hasLunch = dayState?.lunch?.isOpen ?? false;
           const hasDinner = dayState?.dinner?.isOpen ?? false;
           const hasAvailability = hasLunch || hasDinner;
-          const isDisabled = isPast || !hasAvailability;
+          const isDisabled = isPast || isTooFar || !hasAvailability;
 
           const dayNumber = parseInt(dateKey.split("-")[2]);
 
