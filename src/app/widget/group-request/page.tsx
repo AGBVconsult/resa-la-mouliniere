@@ -213,6 +213,7 @@ function GroupRequestContent() {
           <div className="flex justify-center">
             <Turnstile
               siteKey={settings.turnstileSiteKey}
+              options={{ size: "normal" }}
               onSuccess={setTurnstileToken}
               onError={() => setError('error.turnstileFailed')}
             />

@@ -250,7 +250,7 @@ export function Step4Policy({
         <div className="flex justify-center mb-[1.5vh]">
           <Turnstile
             siteKey={settings.turnstileSiteKey}
-            options={{ size: "compact" }}
+            options={{ size: "normal" }}
             onSuccess={setTurnstileToken}
             onError={() => setTurnstileToken(null)}
             onExpire={() => setTurnstileToken(null)}
