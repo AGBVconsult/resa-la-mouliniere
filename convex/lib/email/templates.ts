@@ -15,8 +15,11 @@ export type EmailJobType =
   | "reservation.validated"
   | "reservation.refused"
   | "reservation.cancelled"
+  | "reservation.modified"
   | "reservation.reminder"
+  | "reservation.noshow"
   | "reservation.review"
+  | "reservation.cancelled_by_restaurant"
   | "admin.notification";
 
 export interface TemplateData {
@@ -66,8 +69,11 @@ type TranslationKey =
   | "subject.validated"
   | "subject.refused"
   | "subject.cancelled"
+  | "subject.modified"
   | "subject.reminder"
+  | "subject.noshow"
   | "subject.review"
+  | "subject.cancelled_by_restaurant"
   | "greeting"
   | "body.confirmed"
   | "body.confirmed.subtitle"
@@ -90,6 +96,15 @@ type TranslationKey =
   | "body.review"
   | "body.review.subtitle"
   | "body.review.intro"
+  | "body.modified"
+  | "body.modified.subtitle"
+  | "body.modified.intro"
+  | "body.noshow"
+  | "body.noshow.subtitle"
+  | "body.noshow.intro"
+  | "body.cancelled_by_restaurant"
+  | "body.cancelled_by_restaurant.subtitle"
+  | "body.cancelled_by_restaurant.intro"
   | "details.date"
   | "details.time"
   | "details.guests"
@@ -107,35 +122,47 @@ type Translations = Record<TranslationKey, string>;
 
 const translations: Record<Language, Translations> = {
   fr: {
-    "subject.confirmed": "Votre réservation est confirmée",
-    "subject.pending": "Votre demande de réservation",
-    "subject.validated": "Votre réservation a été validée",
-    "subject.refused": "Votre demande de réservation n'a pas pu être acceptée",
-    "subject.cancelled": "Votre réservation a été annulée",
-    "subject.reminder": "Rappel de votre réservation",
-    "subject.review": "Comment s'est passée votre visite ?",
+    "subject.confirmed": "Réservation confirmée !",
+    "subject.pending": "Demande bien reçue (Validation en cours ⏳)",
+    "subject.validated": "Réservation confirmée !",
+    "subject.refused": "Votre demande n'a pas pu être confirmée",
+    "subject.cancelled": "Annulation confirmée",
+    "subject.modified": "Réservation modifiée",
+    "subject.reminder": "On vous attend tout à l'heure !",
+    "subject.noshow": "On vous a attendu(e)",
+    "subject.review": "Merci pour votre visite !",
+    "subject.cancelled_by_restaurant": "Nous sommes sincèrement désolés...",
     "greeting": "Bonjour",
     "body.confirmed": "Réservation confirmée !",
-    "body.confirmed.subtitle": "La Moulinière vous attend.",
-    "body.confirmed.intro": "Votre table est prête. Voici le récapitulatif de votre réservation.",
+    "body.confirmed.subtitle": "Votre table est réservée.",
+    "body.confirmed.intro": "Tout est prêt pour vous recevoir.",
     "body.pending": "Demande en attente",
-    "body.pending.subtitle": "Nous avons bien reçu votre demande.",
-    "body.pending.intro": "Votre réservation est en cours de validation par notre équipe. Vous recevrez une confirmation sous peu.",
-    "body.validated": "Réservation validée !",
-    "body.validated.subtitle": "Notre équipe a confirmé votre réservation.",
-    "body.validated.intro": "Bonne nouvelle ! Votre réservation a été validée. Voici le récapitulatif.",
-    "body.refused": "Demande non acceptée",
-    "body.refused.subtitle": "Nous sommes désolés.",
-    "body.refused.intro": "Malheureusement, nous n'avons pas pu accepter votre demande de réservation.",
-    "body.cancelled": "Réservation annulée",
-    "body.cancelled.subtitle": "Votre réservation a été annulée.",
-    "body.cancelled.intro": "La réservation suivante a été annulée. Nous espérons vous revoir bientôt.",
-    "body.reminder": "Rappel de réservation",
-    "body.reminder.subtitle": "C'est demain !",
-    "body.reminder.intro": "Nous avons hâte de vous accueillir. Voici le rappel de votre réservation.",
-    "body.review": "Donnez-nous votre avis",
-    "body.review.subtitle": "Merci de votre visite !",
-    "body.review.intro": "Nous espérons que vous avez passé un agréable moment. Votre avis nous aide à nous améliorer.",
+    "body.pending.subtitle": "Nous vérifions la disponibilité pour votre groupe.",
+    "body.pending.intro": "Pour vous garantir un accueil soigné, et comme nous travaillons en duo, Allisson vérifie personnellement le planning avant de confirmer votre réservation.",
+    "body.validated": "Réservation confirmée !",
+    "body.validated.subtitle": "Votre table est réservée.",
+    "body.validated.intro": "Tout est prêt pour vous recevoir.",
+    "body.refused": "Demande non confirmée",
+    "body.refused.subtitle": "Nous revenons vers vous concernant votre réservation.",
+    "body.refused.intro": "Comme convenu, Allisson a vérifié personnellement notre planning. Malheureusement, nous sommes complets à cet horaire et la configuration de la salle ne nous permet pas de vous installer confortablement.",
+    "body.cancelled": "Annulation confirmée",
+    "body.cancelled.subtitle": "Votre réservation a bien été annulée.",
+    "body.cancelled.intro": "C'est bien noté. Merci de nous avoir prévenus — c'est précieux pour notre organisation.",
+    "body.reminder": "On vous attend !",
+    "body.reminder.subtitle": "Votre table est prête.",
+    "body.reminder.intro": "On s'active en cuisine : votre table est prête !",
+    "body.review": "Merci pour votre visite !",
+    "body.review.subtitle": "Votre avis compte pour nous.",
+    "body.review.intro": "Nous espérons que vous avez passé un bon moment à notre table. Si c'est le cas, un petit avis en ligne nous aide énormément.",
+    "body.modified": "Réservation modifiée",
+    "body.modified.subtitle": "Votre réservation a bien été mise à jour.",
+    "body.modified.intro": "Voici votre nouveau récapitulatif.",
+    "body.noshow": "On vous a attendu(e)",
+    "body.noshow.subtitle": "Votre table est restée vide.",
+    "body.noshow.intro": "Nous vous attendions, mais vous ne vous êtes pas présenté(e). Les imprévus font partie de la vie, nous le comprenons. Cependant, pour un duo comme le nôtre, chaque table compte.",
+    "body.cancelled_by_restaurant": "Nous sommes sincèrement désolés",
+    "body.cancelled_by_restaurant.subtitle": "Nous devons malheureusement annuler votre réservation.",
+    "body.cancelled_by_restaurant.intro": "C'est le message que nous détestons écrire, mais nous ne pourrons malheureusement pas vous accueillir comme prévu. Travaillant en duo, nous sommes contraints d'annuler pour cause de force majeure.",
     "details.date": "Date",
     "details.time": "Heure",
     "details.guests": "personnes",
@@ -150,35 +177,47 @@ const translations: Record<Language, Translations> = {
     "reason": "Raison",
   },
   nl: {
-    "subject.confirmed": "Uw reservering is bevestigd",
-    "subject.pending": "Uw reserveringsaanvraag",
-    "subject.validated": "Uw reservering is gevalideerd",
-    "subject.refused": "Uw reserveringsaanvraag kon niet worden geaccepteerd",
-    "subject.cancelled": "Uw reservering is geannuleerd",
-    "subject.reminder": "Herinnering aan uw reservering",
-    "subject.review": "Hoe was uw bezoek?",
+    "subject.confirmed": "Reservering bevestigd!",
+    "subject.pending": "Aanvraag ontvangen (Validatie bezig ⏳)",
+    "subject.validated": "Reservering bevestigd!",
+    "subject.refused": "Uw aanvraag kon niet worden bevestigd",
+    "subject.cancelled": "Annulering bevestigd",
+    "subject.modified": "Reservering gewijzigd",
+    "subject.reminder": "We verwachten u straks!",
+    "subject.noshow": "We hebben op u gewacht",
+    "subject.review": "Bedankt voor uw bezoek!",
+    "subject.cancelled_by_restaurant": "Het spijt ons oprecht...",
     "greeting": "Hallo",
     "body.confirmed": "Reservering bevestigd!",
-    "body.confirmed.subtitle": "La Moulinière verwacht u.",
-    "body.confirmed.intro": "Uw tafel is klaar. Hier is de samenvatting van uw reservering.",
+    "body.confirmed.subtitle": "Uw tafel is gereserveerd.",
+    "body.confirmed.intro": "Alles is klaar om u te ontvangen.",
     "body.pending": "Aanvraag in behandeling",
-    "body.pending.subtitle": "We hebben uw aanvraag ontvangen.",
-    "body.pending.intro": "Uw reservering wordt gevalideerd door ons team. U ontvangt binnenkort een bevestiging.",
-    "body.validated": "Reservering gevalideerd!",
-    "body.validated.subtitle": "Ons team heeft uw reservering bevestigd.",
-    "body.validated.intro": "Goed nieuws! Uw reservering is gevalideerd. Hier is de samenvatting.",
-    "body.refused": "Aanvraag niet geaccepteerd",
-    "body.refused.subtitle": "Het spijt ons.",
-    "body.refused.intro": "Helaas konden we uw reserveringsaanvraag niet accepteren.",
-    "body.cancelled": "Reservering geannuleerd",
+    "body.pending.subtitle": "We controleren de beschikbaarheid voor uw groep.",
+    "body.pending.intro": "Om u een verzorgde ontvangst te garanderen, controleert Allisson persoonlijk de planning voordat we uw reservering bevestigen.",
+    "body.validated": "Reservering bevestigd!",
+    "body.validated.subtitle": "Uw tafel is gereserveerd.",
+    "body.validated.intro": "Alles is klaar om u te ontvangen.",
+    "body.refused": "Aanvraag niet bevestigd",
+    "body.refused.subtitle": "We komen bij u terug over uw reservering.",
+    "body.refused.intro": "Zoals afgesproken heeft Allisson onze planning persoonlijk gecontroleerd. Helaas zijn we op dit tijdstip volgeboekt.",
+    "body.cancelled": "Annulering bevestigd",
     "body.cancelled.subtitle": "Uw reservering is geannuleerd.",
-    "body.cancelled.intro": "De volgende reservering is geannuleerd. We hopen u snel weer te zien.",
-    "body.reminder": "Reserveringsherinnering",
-    "body.reminder.subtitle": "Het is morgen!",
-    "body.reminder.intro": "We kijken ernaar uit u te verwelkomen. Hier is de herinnering van uw reservering.",
-    "body.review": "Geef ons uw mening",
-    "body.review.subtitle": "Bedankt voor uw bezoek!",
-    "body.review.intro": "We hopen dat u een aangename tijd heeft gehad. Uw feedback helpt ons te verbeteren.",
+    "body.cancelled.intro": "Begrepen. Bedankt dat u ons hebt laten weten — dat is waardevol voor onze organisatie.",
+    "body.reminder": "We verwachten u!",
+    "body.reminder.subtitle": "Uw tafel is klaar.",
+    "body.reminder.intro": "We zijn druk bezig in de keuken: uw tafel is klaar!",
+    "body.review": "Bedankt voor uw bezoek!",
+    "body.review.subtitle": "Uw mening is belangrijk voor ons.",
+    "body.review.intro": "We hopen dat u een fijne tijd heeft gehad. Een online review helpt ons enorm.",
+    "body.modified": "Reservering gewijzigd",
+    "body.modified.subtitle": "Uw reservering is bijgewerkt.",
+    "body.modified.intro": "Hier is uw nieuwe overzicht.",
+    "body.noshow": "We hebben op u gewacht",
+    "body.noshow.subtitle": "Uw tafel bleef leeg.",
+    "body.noshow.intro": "We verwachtten u, maar u bent niet verschenen. Onvoorziene omstandigheden gebeuren, dat begrijpen we.",
+    "body.cancelled_by_restaurant": "Het spijt ons oprecht",
+    "body.cancelled_by_restaurant.subtitle": "We moeten helaas uw reservering annuleren.",
+    "body.cancelled_by_restaurant.intro": "Dit is het bericht dat we haten te schrijven, maar we kunnen u helaas niet ontvangen zoals gepland.",
     "details.date": "Datum",
     "details.time": "Tijd",
     "details.guests": "personen",
@@ -193,35 +232,47 @@ const translations: Record<Language, Translations> = {
     "reason": "Reden",
   },
   en: {
-    "subject.confirmed": "Your reservation is confirmed",
-    "subject.pending": "Your reservation request",
-    "subject.validated": "Your reservation has been validated",
-    "subject.refused": "Your reservation request could not be accepted",
-    "subject.cancelled": "Your reservation has been cancelled",
-    "subject.reminder": "Reminder of your reservation",
-    "subject.review": "How was your visit?",
+    "subject.confirmed": "Reservation confirmed!",
+    "subject.pending": "Request received (Validation in progress ⏳)",
+    "subject.validated": "Reservation confirmed!",
+    "subject.refused": "Your request could not be confirmed",
+    "subject.cancelled": "Cancellation confirmed",
+    "subject.modified": "Reservation modified",
+    "subject.reminder": "We're expecting you soon!",
+    "subject.noshow": "We waited for you",
+    "subject.review": "Thank you for your visit!",
+    "subject.cancelled_by_restaurant": "We are sincerely sorry...",
     "greeting": "Hello",
     "body.confirmed": "Reservation confirmed!",
-    "body.confirmed.subtitle": "La Moulinière is expecting you.",
-    "body.confirmed.intro": "Your table is ready. Here is the summary of your reservation.",
+    "body.confirmed.subtitle": "Your table is reserved.",
+    "body.confirmed.intro": "Everything is ready to welcome you.",
     "body.pending": "Request pending",
-    "body.pending.subtitle": "We have received your request.",
-    "body.pending.intro": "Your reservation is being validated by our team. You will receive a confirmation shortly.",
-    "body.validated": "Reservation validated!",
-    "body.validated.subtitle": "Our team has confirmed your reservation.",
-    "body.validated.intro": "Good news! Your reservation has been validated. Here is the summary.",
-    "body.refused": "Request not accepted",
-    "body.refused.subtitle": "We are sorry.",
-    "body.refused.intro": "Unfortunately, we could not accept your reservation request.",
-    "body.cancelled": "Reservation cancelled",
+    "body.pending.subtitle": "We are checking availability for your group.",
+    "body.pending.intro": "To ensure a quality welcome, Allisson personally checks the schedule before confirming your reservation.",
+    "body.validated": "Reservation confirmed!",
+    "body.validated.subtitle": "Your table is reserved.",
+    "body.validated.intro": "Everything is ready to welcome you.",
+    "body.refused": "Request not confirmed",
+    "body.refused.subtitle": "We are getting back to you about your reservation.",
+    "body.refused.intro": "As agreed, Allisson personally checked our schedule. Unfortunately, we are fully booked at this time.",
+    "body.cancelled": "Cancellation confirmed",
     "body.cancelled.subtitle": "Your reservation has been cancelled.",
-    "body.cancelled.intro": "The following reservation has been cancelled. We hope to see you again soon.",
-    "body.reminder": "Reservation reminder",
-    "body.reminder.subtitle": "It's tomorrow!",
-    "body.reminder.intro": "We look forward to welcoming you. Here is the reminder of your reservation.",
-    "body.review": "Give us your feedback",
-    "body.review.subtitle": "Thank you for your visit!",
-    "body.review.intro": "We hope you had a pleasant time. Your feedback helps us improve.",
+    "body.cancelled.intro": "Noted. Thank you for letting us know — it's valuable for our organization.",
+    "body.reminder": "We're expecting you!",
+    "body.reminder.subtitle": "Your table is ready.",
+    "body.reminder.intro": "We're busy in the kitchen: your table is ready!",
+    "body.review": "Thank you for your visit!",
+    "body.review.subtitle": "Your opinion matters to us.",
+    "body.review.intro": "We hope you had a great time at our table. An online review helps us a lot.",
+    "body.modified": "Reservation modified",
+    "body.modified.subtitle": "Your reservation has been updated.",
+    "body.modified.intro": "Here is your new summary.",
+    "body.noshow": "We waited for you",
+    "body.noshow.subtitle": "Your table remained empty.",
+    "body.noshow.intro": "We were expecting you, but you didn't show up. Unexpected things happen, we understand.",
+    "body.cancelled_by_restaurant": "We are sincerely sorry",
+    "body.cancelled_by_restaurant.subtitle": "We must unfortunately cancel your reservation.",
+    "body.cancelled_by_restaurant.intro": "This is the message we hate to write, but we unfortunately cannot welcome you as planned.",
     "details.date": "Date",
     "details.time": "Time",
     "details.guests": "guests",
@@ -236,35 +287,47 @@ const translations: Record<Language, Translations> = {
     "reason": "Reason",
   },
   de: {
-    "subject.confirmed": "Ihre Reservierung ist bestätigt",
-    "subject.pending": "Ihre Reservierungsanfrage",
-    "subject.validated": "Ihre Reservierung wurde validiert",
-    "subject.refused": "Ihre Reservierungsanfrage konnte nicht angenommen werden",
-    "subject.cancelled": "Ihre Reservierung wurde storniert",
-    "subject.reminder": "Erinnerung an Ihre Reservierung",
-    "subject.review": "Wie war Ihr Besuch?",
+    "subject.confirmed": "Reservierung bestätigt!",
+    "subject.pending": "Anfrage erhalten (Validierung läuft ⏳)",
+    "subject.validated": "Reservierung bestätigt!",
+    "subject.refused": "Ihre Anfrage konnte nicht bestätigt werden",
+    "subject.cancelled": "Stornierung bestätigt",
+    "subject.modified": "Reservierung geändert",
+    "subject.reminder": "Wir erwarten Sie bald!",
+    "subject.noshow": "Wir haben auf Sie gewartet",
+    "subject.review": "Vielen Dank für Ihren Besuch!",
+    "subject.cancelled_by_restaurant": "Es tut uns aufrichtig leid...",
     "greeting": "Hallo",
     "body.confirmed": "Reservierung bestätigt!",
-    "body.confirmed.subtitle": "La Moulinière erwartet Sie.",
-    "body.confirmed.intro": "Ihr Tisch ist bereit. Hier ist die Zusammenfassung Ihrer Reservierung.",
+    "body.confirmed.subtitle": "Ihr Tisch ist reserviert.",
+    "body.confirmed.intro": "Alles ist bereit, um Sie zu empfangen.",
     "body.pending": "Anfrage in Bearbeitung",
-    "body.pending.subtitle": "Wir haben Ihre Anfrage erhalten.",
-    "body.pending.intro": "Ihre Reservierung wird von unserem Team validiert. Sie erhalten in Kürze eine Bestätigung.",
-    "body.validated": "Reservierung validiert!",
-    "body.validated.subtitle": "Unser Team hat Ihre Reservierung bestätigt.",
-    "body.validated.intro": "Gute Nachrichten! Ihre Reservierung wurde validiert. Hier ist die Zusammenfassung.",
-    "body.refused": "Anfrage nicht akzeptiert",
-    "body.refused.subtitle": "Es tut uns leid.",
-    "body.refused.intro": "Leider konnten wir Ihre Reservierungsanfrage nicht akzeptieren.",
-    "body.cancelled": "Reservierung storniert",
+    "body.pending.subtitle": "Wir prüfen die Verfügbarkeit für Ihre Gruppe.",
+    "body.pending.intro": "Um einen qualitativ hochwertigen Empfang zu gewährleisten, überprüft Allisson persönlich den Zeitplan.",
+    "body.validated": "Reservierung bestätigt!",
+    "body.validated.subtitle": "Ihr Tisch ist reserviert.",
+    "body.validated.intro": "Alles ist bereit, um Sie zu empfangen.",
+    "body.refused": "Anfrage nicht bestätigt",
+    "body.refused.subtitle": "Wir melden uns bezüglich Ihrer Reservierung.",
+    "body.refused.intro": "Wie vereinbart hat Allisson unseren Zeitplan persönlich überprüft. Leider sind wir zu dieser Zeit ausgebucht.",
+    "body.cancelled": "Stornierung bestätigt",
     "body.cancelled.subtitle": "Ihre Reservierung wurde storniert.",
-    "body.cancelled.intro": "Die folgende Reservierung wurde storniert. Wir hoffen, Sie bald wieder zu sehen.",
-    "body.reminder": "Reservierungserinnerung",
-    "body.reminder.subtitle": "Es ist morgen!",
-    "body.reminder.intro": "Wir freuen uns darauf, Sie zu begrüßen. Hier ist die Erinnerung an Ihre Reservierung.",
-    "body.review": "Geben Sie uns Ihr Feedback",
-    "body.review.subtitle": "Vielen Dank für Ihren Besuch!",
-    "body.review.intro": "Wir hoffen, Sie hatten eine angenehme Zeit. Ihr Feedback hilft uns, uns zu verbessern.",
+    "body.cancelled.intro": "Verstanden. Danke, dass Sie uns informiert haben — das ist wertvoll für unsere Organisation.",
+    "body.reminder": "Wir erwarten Sie!",
+    "body.reminder.subtitle": "Ihr Tisch ist bereit.",
+    "body.reminder.intro": "Wir sind in der Küche beschäftigt: Ihr Tisch ist bereit!",
+    "body.review": "Vielen Dank für Ihren Besuch!",
+    "body.review.subtitle": "Ihre Meinung ist uns wichtig.",
+    "body.review.intro": "Wir hoffen, Sie hatten eine tolle Zeit. Eine Online-Bewertung hilft uns sehr.",
+    "body.modified": "Reservierung geändert",
+    "body.modified.subtitle": "Ihre Reservierung wurde aktualisiert.",
+    "body.modified.intro": "Hier ist Ihre neue Zusammenfassung.",
+    "body.noshow": "Wir haben auf Sie gewartet",
+    "body.noshow.subtitle": "Ihr Tisch blieb leer.",
+    "body.noshow.intro": "Wir haben Sie erwartet, aber Sie sind nicht erschienen. Unvorhergesehenes passiert, wir verstehen das.",
+    "body.cancelled_by_restaurant": "Es tut uns aufrichtig leid",
+    "body.cancelled_by_restaurant.subtitle": "Wir müssen Ihre Reservierung leider stornieren.",
+    "body.cancelled_by_restaurant.intro": "Dies ist die Nachricht, die wir hassen zu schreiben, aber wir können Sie leider nicht wie geplant empfangen.",
     "details.date": "Datum",
     "details.time": "Uhrzeit",
     "details.guests": "Gäste",
@@ -279,35 +342,47 @@ const translations: Record<Language, Translations> = {
     "reason": "Grund",
   },
   it: {
-    "subject.confirmed": "La tua prenotazione è confermata",
-    "subject.pending": "La tua richiesta di prenotazione",
-    "subject.validated": "La tua prenotazione è stata convalidata",
-    "subject.refused": "La tua richiesta di prenotazione non è stata accettata",
-    "subject.cancelled": "La tua prenotazione è stata annullata",
-    "subject.reminder": "Promemoria della tua prenotazione",
-    "subject.review": "Com'è andata la tua visita?",
+    "subject.confirmed": "Prenotazione confermata!",
+    "subject.pending": "Richiesta ricevuta (Validazione in corso ⏳)",
+    "subject.validated": "Prenotazione confermata!",
+    "subject.refused": "La tua richiesta non ha potuto essere confermata",
+    "subject.cancelled": "Cancellazione confermata",
+    "subject.modified": "Prenotazione modificata",
+    "subject.reminder": "Ti aspettiamo presto!",
+    "subject.noshow": "Ti abbiamo aspettato",
+    "subject.review": "Grazie per la tua visita!",
+    "subject.cancelled_by_restaurant": "Siamo sinceramente dispiaciuti...",
     "greeting": "Ciao",
     "body.confirmed": "Prenotazione confermata!",
-    "body.confirmed.subtitle": "La Moulinière ti aspetta.",
-    "body.confirmed.intro": "Il tuo tavolo è pronto. Ecco il riepilogo della tua prenotazione.",
+    "body.confirmed.subtitle": "Il tuo tavolo è riservato.",
+    "body.confirmed.intro": "Tutto è pronto per accoglierti.",
     "body.pending": "Richiesta in attesa",
-    "body.pending.subtitle": "Abbiamo ricevuto la tua richiesta.",
-    "body.pending.intro": "La tua prenotazione è in fase di validazione dal nostro team. Riceverai una conferma a breve.",
-    "body.validated": "Prenotazione convalidata!",
-    "body.validated.subtitle": "Il nostro team ha confermato la tua prenotazione.",
-    "body.validated.intro": "Buone notizie! La tua prenotazione è stata convalidata. Ecco il riepilogo.",
-    "body.refused": "Richiesta non accettata",
-    "body.refused.subtitle": "Ci dispiace.",
-    "body.refused.intro": "Purtroppo non abbiamo potuto accettare la tua richiesta di prenotazione.",
-    "body.cancelled": "Prenotazione annullata",
-    "body.cancelled.subtitle": "La tua prenotazione è stata annullata.",
-    "body.cancelled.intro": "La seguente prenotazione è stata annullata. Speriamo di rivederti presto.",
-    "body.reminder": "Promemoria prenotazione",
-    "body.reminder.subtitle": "È domani!",
-    "body.reminder.intro": "Non vediamo l'ora di accoglierti. Ecco il promemoria della tua prenotazione.",
-    "body.review": "Dacci il tuo feedback",
-    "body.review.subtitle": "Grazie per la tua visita!",
-    "body.review.intro": "Speriamo che tu abbia trascorso un momento piacevole. Il tuo feedback ci aiuta a migliorare.",
+    "body.pending.subtitle": "Stiamo verificando la disponibilità per il tuo gruppo.",
+    "body.pending.intro": "Per garantirti un'accoglienza di qualità, Allisson verifica personalmente il programma.",
+    "body.validated": "Prenotazione confermata!",
+    "body.validated.subtitle": "Il tuo tavolo è riservato.",
+    "body.validated.intro": "Tutto è pronto per accoglierti.",
+    "body.refused": "Richiesta non confermata",
+    "body.refused.subtitle": "Ti ricontattiamo riguardo alla tua prenotazione.",
+    "body.refused.intro": "Come concordato, Allisson ha verificato personalmente il nostro programma. Purtroppo siamo al completo.",
+    "body.cancelled": "Cancellazione confermata",
+    "body.cancelled.subtitle": "La tua prenotazione è stata cancellata.",
+    "body.cancelled.intro": "Capito. Grazie per averci avvisato — è prezioso per la nostra organizzazione.",
+    "body.reminder": "Ti aspettiamo!",
+    "body.reminder.subtitle": "Il tuo tavolo è pronto.",
+    "body.reminder.intro": "Siamo impegnati in cucina: il tuo tavolo è pronto!",
+    "body.review": "Grazie per la tua visita!",
+    "body.review.subtitle": "La tua opinione è importante per noi.",
+    "body.review.intro": "Speriamo che tu abbia trascorso un bel momento. Una recensione online ci aiuta molto.",
+    "body.modified": "Prenotazione modificata",
+    "body.modified.subtitle": "La tua prenotazione è stata aggiornata.",
+    "body.modified.intro": "Ecco il tuo nuovo riepilogo.",
+    "body.noshow": "Ti abbiamo aspettato",
+    "body.noshow.subtitle": "Il tuo tavolo è rimasto vuoto.",
+    "body.noshow.intro": "Ti aspettavamo, ma non ti sei presentato. Gli imprevisti capitano, lo capiamo.",
+    "body.cancelled_by_restaurant": "Siamo sinceramente dispiaciuti",
+    "body.cancelled_by_restaurant.subtitle": "Dobbiamo purtroppo cancellare la tua prenotazione.",
+    "body.cancelled_by_restaurant.intro": "Questo è il messaggio che odiamo scrivere, ma purtroppo non possiamo accoglierti come previsto.",
     "details.date": "Data",
     "details.time": "Ora",
     "details.guests": "ospiti",
@@ -340,10 +415,16 @@ function getSubjectKey(type: EmailJobType): TranslationKey {
       return "subject.refused";
     case "reservation.cancelled":
       return "subject.cancelled";
+    case "reservation.modified":
+      return "subject.modified";
     case "reservation.reminder":
       return "subject.reminder";
+    case "reservation.noshow":
+      return "subject.noshow";
     case "reservation.review":
       return "subject.review";
+    case "reservation.cancelled_by_restaurant":
+      return "subject.cancelled_by_restaurant";
     case "admin.notification":
       return "subject.pending"; // Not used for admin emails
   }
@@ -361,10 +442,16 @@ function getBodyKey(type: EmailJobType): TranslationKey {
       return "body.refused";
     case "reservation.cancelled":
       return "body.cancelled";
+    case "reservation.modified":
+      return "body.modified";
     case "reservation.reminder":
       return "body.reminder";
+    case "reservation.noshow":
+      return "body.noshow";
     case "reservation.review":
       return "body.review";
+    case "reservation.cancelled_by_restaurant":
+      return "body.cancelled_by_restaurant";
     case "admin.notification":
       return "body.pending"; // Not used for admin emails
   }
@@ -376,8 +463,11 @@ const VALID_EMAIL_TYPES: EmailJobType[] = [
   "reservation.validated",
   "reservation.refused",
   "reservation.cancelled",
+  "reservation.modified",
   "reservation.reminder",
+  "reservation.noshow",
   "reservation.review",
+  "reservation.cancelled_by_restaurant",
   "admin.notification",
 ];
 
@@ -517,10 +607,16 @@ function getEmailTypeConfig(type: EmailJobType): { icon: string; bgColor: string
       return { icon: EMAIL_ICONS.refused, bgColor: "#fee2e2", iconBgColor: "#fee2e2" };
     case "reservation.cancelled":
       return { icon: EMAIL_ICONS.cancelled, bgColor: "#f3f4f6", iconBgColor: "#f3f4f6" };
+    case "reservation.modified":
+      return { icon: EMAIL_ICONS.check, bgColor: "#dbeafe", iconBgColor: "#dbeafe" };
     case "reservation.reminder":
       return { icon: EMAIL_ICONS.reminder, bgColor: "#dbeafe", iconBgColor: "#dbeafe" };
+    case "reservation.noshow":
+      return { icon: EMAIL_ICONS.cancelled, bgColor: "#f3f4f6", iconBgColor: "#f3f4f6" };
     case "reservation.review":
       return { icon: EMAIL_ICONS.review, bgColor: "#ede9fe", iconBgColor: "#ede9fe" };
+    case "reservation.cancelled_by_restaurant":
+      return { icon: EMAIL_ICONS.refused, bgColor: "#fee2e2", iconBgColor: "#fee2e2" };
     case "admin.notification":
       return { icon: EMAIL_ICONS.pending, bgColor: "#fef3c7", iconBgColor: "#fef3c7" };
   }
@@ -536,8 +632,11 @@ function getTitleKey(type: EmailJobType): TranslationKey {
     case "reservation.validated": return "body.validated";
     case "reservation.refused": return "body.refused";
     case "reservation.cancelled": return "body.cancelled";
+    case "reservation.modified": return "body.modified";
     case "reservation.reminder": return "body.reminder";
+    case "reservation.noshow": return "body.noshow";
     case "reservation.review": return "body.review";
+    case "reservation.cancelled_by_restaurant": return "body.cancelled_by_restaurant";
     case "admin.notification": return "body.pending";
   }
 }
@@ -552,8 +651,11 @@ function getSubtitleKey(type: EmailJobType): TranslationKey {
     case "reservation.validated": return "body.validated.subtitle";
     case "reservation.refused": return "body.refused.subtitle";
     case "reservation.cancelled": return "body.cancelled.subtitle";
+    case "reservation.modified": return "body.modified.subtitle";
     case "reservation.reminder": return "body.reminder.subtitle";
+    case "reservation.noshow": return "body.noshow.subtitle";
     case "reservation.review": return "body.review.subtitle";
+    case "reservation.cancelled_by_restaurant": return "body.cancelled_by_restaurant.subtitle";
     case "admin.notification": return "body.pending.subtitle";
   }
 }
@@ -568,8 +670,11 @@ function getIntroKey(type: EmailJobType): TranslationKey {
     case "reservation.validated": return "body.validated.intro";
     case "reservation.refused": return "body.refused.intro";
     case "reservation.cancelled": return "body.cancelled.intro";
+    case "reservation.modified": return "body.modified.intro";
     case "reservation.reminder": return "body.reminder.intro";
+    case "reservation.noshow": return "body.noshow.intro";
     case "reservation.review": return "body.review.intro";
+    case "reservation.cancelled_by_restaurant": return "body.cancelled_by_restaurant.intro";
     case "admin.notification": return "body.pending.intro";
   }
 }

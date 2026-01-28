@@ -43,8 +43,11 @@ const emailJobType = v.union(
   v.literal("reservation.validated"),
   v.literal("reservation.refused"),
   v.literal("reservation.cancelled"),
+  v.literal("reservation.modified"),
   v.literal("reservation.reminder"),
+  v.literal("reservation.noshow"),
   v.literal("reservation.review"),
+  v.literal("reservation.cancelled_by_restaurant"),
   v.literal("admin.notification")
 );
 

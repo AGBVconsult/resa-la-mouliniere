@@ -23,11 +23,11 @@ crons.interval(
   {}
 );
 
-// Enqueue reminder emails at 18:00 daily (J-1 reminders)
-// TICKET: Should be 18:00 in restaurant timezone, using UTC for now
-crons.cron(
+// Enqueue reminder emails every 15 minutes (H-2 reminders)
+// Sends reminders 2 hours before each reservation
+crons.interval(
   "enqueue-reminders",
-  "0 18 * * *",
+  { minutes: 15 },
   internal.emails.enqueueReminders,
   { now: Date.now() }
 );

@@ -22,7 +22,9 @@ import {
   buildReminderDedupeKey,
   buildReviewDedupeKey,
   computeTomorrowDateKey,
+  computeTodayDateKey,
   computeYesterdayDateKey,
+  computeReservationTimestamp,
   isStuck,
   isExpiredByRetention,
   DEFAULT_RETENTION_POLICY,
@@ -35,8 +37,11 @@ const emailJobType = v.union(
   v.literal("reservation.validated"),
   v.literal("reservation.refused"),
   v.literal("reservation.cancelled"),
+  v.literal("reservation.modified"),
   v.literal("reservation.reminder"),
+  v.literal("reservation.noshow"),
   v.literal("reservation.review"),
+  v.literal("reservation.cancelled_by_restaurant"),
   v.literal("admin.notification")
 );
 
@@ -97,6 +102,10 @@ export const enqueue = internalMutation({
 
     // Log without PII (no to, templateData)
     console.log("Email job enqueued", { jobId, type: args.type, dedupeKey: args.dedupeKey });
+
+    // Trigger immediate processing for faster delivery
+    // Schedule processQueue to run in 100ms to allow this mutation to complete
+    await ctx.scheduler.runAfter(100, internal.emails.processQueue, { limit: 5 });
 
     return { jobId, created: true };
   },
@@ -357,8 +366,10 @@ export const sendJob = internalAction({
 // ============================================================================
 
 /**
- * Enqueue reminder emails for confirmed reservations tomorrow (J-1).
- * Called by cron at 18:00 local time.
+ * Enqueue reminder emails for confirmed reservations H-2 (2 hours before).
+ * Called by cron every 15 minutes.
+ * 
+ * Finds reservations starting in the next 2-2.25 hours and sends reminders.
  * 
  * Contract: reservation.reminder email type exists.
  * Dedupe via dedupeKey = "reminder:{reservationId}"
@@ -376,22 +387,30 @@ export const enqueueReminders = internalMutation({
 
     if (activeRestaurants.length === 0) {
       console.log("enqueueReminders: no active restaurant");
-      return { scanned: 0, enqueued: 0, alreadyExists: 0, dateKey: null };
+      return { scanned: 0, enqueued: 0, alreadyExists: 0, skippedTooEarly: 0 };
     }
     if (activeRestaurants.length > 1) {
       console.log("enqueueReminders: multiple active restaurants, skipping");
-      return { scanned: 0, enqueued: 0, alreadyExists: 0, dateKey: null };
+      return { scanned: 0, enqueued: 0, alreadyExists: 0, skippedTooEarly: 0 };
     }
 
     const restaurant = activeRestaurants[0];
-    const tomorrowDateKey = computeTomorrowDateKey(restaurant.timezone, now);
+    const timezone = restaurant.timezone;
+    
+    // Get today's date key
+    const todayDateKey = computeTodayDateKey(timezone, now);
+    
+    // H-2 reminder window: 2 hours before reservation
+    // We check reservations starting between now+1h45 and now+2h15 (30 min window)
+    // This ensures we catch reservations even with cron timing variations
+    const reminderWindowStartMs = now + (1 * 60 + 45) * 60 * 1000; // 1h45 from now
+    const reminderWindowEndMs = now + (2 * 60 + 15) * 60 * 1000;   // 2h15 from now
 
-    // Find confirmed reservations for tomorrow
-    // Use by_restaurant_date_service index (can't filter by status in index, filter in memory)
+    // Find confirmed reservations for today
     const reservationsLunch = await ctx.db
       .query("reservations")
       .withIndex("by_restaurant_date_service", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("dateKey", tomorrowDateKey).eq("service", "lunch")
+        q.eq("restaurantId", restaurant._id).eq("dateKey", todayDateKey).eq("service", "lunch")
       )
       .filter((q) => q.eq(q.field("status"), "confirmed"))
       .collect();
@@ -399,7 +418,7 @@ export const enqueueReminders = internalMutation({
     const reservationsDinner = await ctx.db
       .query("reservations")
       .withIndex("by_restaurant_date_service", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("dateKey", tomorrowDateKey).eq("service", "dinner")
+        q.eq("restaurantId", restaurant._id).eq("dateKey", todayDateKey).eq("service", "dinner")
       )
       .filter((q) => q.eq(q.field("status"), "confirmed"))
       .collect();
@@ -408,8 +427,22 @@ export const enqueueReminders = internalMutation({
 
     let enqueued = 0;
     let alreadyExists = 0;
+    let skippedTooEarly = 0;
 
     for (const reservation of reservations) {
+      // Calculate reservation timestamp
+      const reservationTimestamp = computeReservationTimestamp(
+        reservation.dateKey,
+        reservation.timeKey,
+        timezone
+      );
+      
+      // Check if reservation is in the reminder window (H-2)
+      if (reservationTimestamp < reminderWindowStartMs || reservationTimestamp > reminderWindowEndMs) {
+        skippedTooEarly++;
+        continue;
+      }
+
       const dedupeKey = buildReminderDedupeKey(reservation._id);
 
       // Check if already exists via index
@@ -454,18 +487,19 @@ export const enqueueReminders = internalMutation({
     }
 
     // Log without PII
-    console.log("enqueueReminders completed", {
-      dateKey: tomorrowDateKey,
+    console.log("enqueueReminders H-2 completed", {
+      dateKey: todayDateKey,
       scanned: reservations.length,
       enqueued,
       alreadyExists,
+      skippedTooEarly,
     });
 
     return {
       scanned: reservations.length,
       enqueued,
       alreadyExists,
-      dateKey: tomorrowDateKey,
+      skippedTooEarly,
     };
   },
 });
