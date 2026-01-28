@@ -23,7 +23,7 @@ export function Step1Baby({ lang, data, onUpdate }: Step1BabyProps) {
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
-      <div className="flex-1 flex flex-col justify-center px-[4vw] py-[2vh]">
+      <div className="flex-1 flex flex-col justify-center px-4 py-[2vh]">
         <StepHeader
           title={t.step1_baby_title}
           subtitle={t.step1_baby_subtitle}

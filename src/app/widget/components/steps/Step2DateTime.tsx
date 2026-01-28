@@ -104,14 +104,14 @@ export function Step2DateTime({
   return (
     <div className="flex flex-col h-full bg-slate-50">
       <div className="flex-1 flex flex-col">
-        <div className="px-[4vw] pt-[2vh] pb-[1vh] text-center">
+        <div className="px-4 pt-[2vh] pb-[1vh] text-center">
           <StepHeader
             title={t.step2_title}
             subtitle={t.step2_subtitle}
           />
         </div>
 
-        <div className="px-[4vw]">
+        <div className="px-4">
           {!isCalendarCollapsed ? (
             <MonthCalendar
               year={year}
@@ -150,7 +150,7 @@ export function Step2DateTime({
         </div>
 
         {data.dateKey && isCalendarCollapsed && (
-          <div className="flex-1 overflow-y-auto px-[4vw] py-[1.5vh]">
+          <div className="flex-1 overflow-y-auto px-4 py-[1.5vh]">
             {lunchSlots.length > 0 && (
               <div className="mb-[2vh]">
                 <h3 className="text-[1.6vh] font-bold text-slate-700 mb-[1vh] flex items-center gap-2">

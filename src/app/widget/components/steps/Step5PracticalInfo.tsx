@@ -17,7 +17,7 @@ export function Step5PracticalInfo({
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Contenu sans scroll */}
-      <div className="flex-1 p-[2vh] flex flex-col">
+      <div className="flex-1 px-4 py-[2vh] flex flex-col">
         <StepHeader title={t.practical_info_title_line1} subtitle={t.practical_info_title_line2} className="mb-[1.5vh]" />
 
         {/* Card avec les informations */}

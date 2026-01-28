@@ -70,7 +70,7 @@ export function MiniCalendarStrip({
   };
 
   return (
-    <div className="flex gap-2 py-[1.5vh] justify-center">
+    <div className="flex gap-2 py-[1.5vh] justify-center px-2">
       {days.map((dateKey) => {
         const date = new Date(dateKey + "T12:00:00");
         const dayState = dayStateMap.get(dateKey);
@@ -90,7 +90,7 @@ export function MiniCalendarStrip({
             type="button"
             onClick={() => !isDisabled && onDateSelect(dateKey)}
             disabled={isDisabled}
-            className={`flex-shrink-0 w-[12vw] min-w-[48px] py-[1vh] rounded-xl flex flex-col items-center gap-1 transition-all ${
+            className={`flex-1 min-w-0 max-w-[72px] py-[1vh] rounded-xl flex flex-col items-center gap-1 transition-all ${
               isSelected
                 ? "bg-slate-900 text-white shadow-md scale-105"
                 : isDisabled

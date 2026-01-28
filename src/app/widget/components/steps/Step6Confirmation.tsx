@@ -106,7 +106,7 @@ END:VCALENDAR`;
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Contenu */}
-      <div className="flex-1 overflow-hidden p-[2vh] flex flex-col items-center justify-center text-center">
+      <div className="flex-1 overflow-hidden px-4 py-[2vh] flex flex-col items-center justify-center text-center">
         {/* Icon */}
         <div className="mb-[2vh]">
           {isConfirmed ? (

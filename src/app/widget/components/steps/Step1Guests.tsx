@@ -21,7 +21,7 @@ export function Step1Guests({ lang, data, onUpdate }: Step1GuestsProps) {
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Contenu - PAS DE SCROLL */}
-      <div className="flex-1 flex flex-col justify-center px-[4vw] py-[2vh]">
+      <div className="flex-1 flex flex-col justify-center px-4 py-[2vh]">
         <StepHeader
           title={t.step1_title}
           subtitle={t.step1_subtitle}

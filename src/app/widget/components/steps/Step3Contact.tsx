@@ -134,7 +134,7 @@ export function Step3Contact({
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Contenu scrollable */}
-      <div className="flex-1 overflow-hidden p-[2vh]">
+      <div className="flex-1 overflow-hidden px-4 py-[2vh]">
         <StepHeader title={t.step3_title} subtitle={t.step3_subtitle} className="mb-[2vh]" />
 
         <div className="bg-white rounded-2xl p-[2vh] shadow-sm">
