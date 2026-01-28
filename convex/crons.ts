@@ -92,12 +92,12 @@ crons.monthly(
 );
 
 // Generate slots from weekly templates daily at 01:00 UTC
-// Creates slots for the next 30 days based on template configuration
+// Creates slots for the next 6 months (180 days) based on template configuration
 crons.daily(
   "generate-slots-from-templates",
   { hourUTC: 1, minuteUTC: 0 },
   internalAny.weeklyTemplates.generateFromTemplates,
-  { daysAhead: 30 }
+  { daysAhead: 180 }
 );
 
 export default crons;

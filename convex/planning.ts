@@ -56,10 +56,34 @@ export const getMonthEffective = query({
       .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
       .collect();
 
+    // DEBUG: Also fetch ALL periods to check if any are missing restaurantId
+    const allPeriodsGlobal = await ctx.db.query("specialPeriods").collect();
+    console.log("[planning] DEBUG - Restaurant ID:", restaurant._id);
+    console.log("[planning] DEBUG - All periods (global):", allPeriodsGlobal.map(p => ({
+      name: p.name,
+      restaurantId: p.restaurantId,
+      startDate: p.startDate,
+      endDate: p.endDate,
+      status: p.applyRules.status,
+    })));
+    console.log("[planning] DEBUG - Periods for this restaurant:", allSpecialPeriods.length);
+
     // Filter periods that overlap with this month
     const monthPeriods = allSpecialPeriods.filter(
       (p) => p.startDate <= endDate && p.endDate >= startDate
     );
+
+    // DEBUG: Log periods found
+    if (monthPeriods.length > 0) {
+      console.log("[planning] Found periods for month:", year, month, monthPeriods.map(p => ({
+        name: p.name,
+        startDate: p.startDate,
+        endDate: p.endDate,
+        status: p.applyRules.status,
+        services: p.applyRules.services,
+        activeDays: p.applyRules.activeDays,
+      })));
+    }
 
     // Helper to parse dateKey to Date (local time, not UTC)
     const parseDateKey = (dateKey: string): Date => {

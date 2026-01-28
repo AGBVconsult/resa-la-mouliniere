@@ -252,6 +252,130 @@ export const upsert = mutation({
 });
 
 /**
+ * Trigger slot generation from templates.
+ * Called manually from admin UI to regenerate all slots.
+ */
+export const triggerSlotGeneration = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireRole(ctx, "admin");
+
+    // Get restaurant
+    const restaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(1);
+
+    if (restaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+
+    const restaurantId = restaurants[0]._id;
+    const now = Date.now();
+
+    // Get today
+    const today = new Date();
+    const daysAhead = 180; // 6 months
+
+    let created = 0;
+    let updated = 0;
+
+    // For each day in range
+    for (let i = 0; i <= daysAhead; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + i);
+
+      const dateKey = formatDateKey(date);
+      const dayOfWeek = getISOWeekday(date);
+
+      // For each service
+      for (const service of ["lunch", "dinner"] as Service[]) {
+        // Get template
+        const template = await ctx.db
+          .query("weeklyTemplates")
+          .withIndex("by_restaurant_day_service", (q) =>
+            q.eq("restaurantId", restaurantId).eq("dayOfWeek", dayOfWeek).eq("service", service)
+          )
+          .unique();
+
+        if (!template || !template.isOpen) {
+          continue;
+        }
+
+        // For each active slot in template
+        for (const templateSlot of template.slots) {
+          if (!templateSlot.isActive) {
+            continue;
+          }
+
+          const slotKey = makeSlotKey({ dateKey, service, timeKey: templateSlot.timeKey });
+
+          // Check if slot already exists
+          const existingSlot = await ctx.db
+            .query("slots")
+            .withIndex("by_restaurant_slotKey", (q) =>
+              q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
+            )
+            .unique();
+
+          if (existingSlot) {
+            // Check for period override
+            const periodOverride = await ctx.db
+              .query("slotOverrides")
+              .withIndex("by_restaurant_slotKey", (q) =>
+                q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
+              )
+              .filter((q) => q.eq(q.field("origin"), "period"))
+              .first();
+
+            if (periodOverride) {
+              continue;
+            }
+
+            // Update slot with template values
+            const needsUpdate =
+              existingSlot.capacity !== templateSlot.capacity ||
+              existingSlot.maxGroupSize !== templateSlot.maxGroupSize ||
+              existingSlot.largeTableAllowed !== templateSlot.largeTableAllowed;
+
+            if (needsUpdate) {
+              await ctx.db.patch(existingSlot._id, {
+                capacity: templateSlot.capacity,
+                maxGroupSize: templateSlot.maxGroupSize,
+                largeTableAllowed: templateSlot.largeTableAllowed,
+                updatedAt: now,
+              });
+              updated++;
+            }
+            continue;
+          }
+
+          // Create slot
+          await ctx.db.insert("slots", {
+            restaurantId,
+            dateKey,
+            service,
+            timeKey: templateSlot.timeKey,
+            slotKey,
+            isOpen: true,
+            capacity: templateSlot.capacity,
+            maxGroupSize: templateSlot.maxGroupSize,
+            largeTableAllowed: templateSlot.largeTableAllowed,
+            updatedAt: now,
+          });
+
+          created++;
+        }
+      }
+    }
+
+    console.log("Slots generated from templates (manual trigger)", { created, updated, daysAhead });
+
+    return { created, updated };
+  },
+});
+
+/**
  * Add a slot to a template.
  * §6.6
  */
@@ -728,8 +852,8 @@ export const syncSlotsWithTemplate = mutation({
       processedDates.add(slot.dateKey);
     }
 
-    // Also add dates for next 30 days that match this dayOfWeek
-    for (let i = 0; i <= 30; i++) {
+    // Also add dates for next 180 days (6 months) that match this dayOfWeek
+    for (let i = 0; i <= 180; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() + i);
       if (getISOWeekday(date) === dayOfWeek) {
@@ -840,7 +964,7 @@ export const generateFromTemplates = internalMutation({
   args: {
     daysAhead: v.optional(v.number()),
   },
-  handler: async (ctx, { daysAhead = 30 }) => {
+  handler: async (ctx, { daysAhead = 180 }) => { // 6 months by default
     // Get restaurant
     const restaurants = await ctx.db
       .query("restaurants")
@@ -899,7 +1023,35 @@ export const generateFromTemplates = internalMutation({
             .unique();
 
           if (existingSlot) {
-            // Never overwrite existing slots
+            // Update existing slot with template values (capacity, maxGroupSize, etc.)
+            // but only if it doesn't have a period override
+            const periodOverride = await ctx.db
+              .query("slotOverrides")
+              .withIndex("by_restaurant_slotKey", (q) =>
+                q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
+              )
+              .filter((q) => q.eq(q.field("origin"), "period"))
+              .first();
+
+            if (periodOverride) {
+              // Skip - this slot is controlled by a special period
+              continue;
+            }
+
+            // Update slot with template values
+            const needsUpdate =
+              existingSlot.capacity !== templateSlot.capacity ||
+              existingSlot.maxGroupSize !== templateSlot.maxGroupSize ||
+              existingSlot.largeTableAllowed !== templateSlot.largeTableAllowed;
+
+            if (needsUpdate) {
+              await ctx.db.patch(existingSlot._id, {
+                capacity: templateSlot.capacity,
+                maxGroupSize: templateSlot.maxGroupSize,
+                largeTableAllowed: templateSlot.largeTableAllowed,
+                updatedAt: now,
+              });
+            }
             continue;
           }
 

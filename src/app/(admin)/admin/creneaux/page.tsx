@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { ServicePanel } from "./components/ServicePanel";
-import { Loader2, AlertTriangle, Settings, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, AlertTriangle, Settings, ChevronDown, ChevronUp, Save, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
 
 function ProgressiveFillingSettings() {
   const settings = useQuery(api.admin.getSettings);
@@ -165,6 +166,49 @@ function ProgressiveFillingSettings() {
 
 export default function CreneauxPage() {
   const templates = useQuery(api.weeklyTemplates.list);
+  const triggerSlotGeneration = useMutation(api.weeklyTemplates.triggerSlotGeneration);
+  const { toast } = useToast();
+  
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const initialTemplatesRef = useRef<string | null>(null);
+
+  // Track changes by comparing current templates with initial state
+  useEffect(() => {
+    if (templates && initialTemplatesRef.current === null) {
+      initialTemplatesRef.current = JSON.stringify(templates);
+    }
+  }, [templates]);
+
+  useEffect(() => {
+    if (templates && initialTemplatesRef.current !== null) {
+      const currentState = JSON.stringify(templates);
+      setHasChanges(currentState !== initialTemplatesRef.current);
+    }
+  }, [templates]);
+
+  const handleSaveAll = async () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    try {
+      const result = await triggerSlotGeneration({});
+      toast.success(`Créneaux mis à jour: ${result.created} créés, ${result.updated} modifiés`);
+      setSaveSuccess(true);
+      // Update initial state after successful save
+      if (templates) {
+        initialTemplatesRef.current = JSON.stringify(templates);
+      }
+      setHasChanges(false);
+      // Reset success indicator after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error("Error generating slots:", err);
+      toast.error("Erreur lors de la génération des créneaux");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (templates === undefined) {
     return (
@@ -193,9 +237,35 @@ export default function CreneauxPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Configuration des créneaux</h1>
-        <p className="text-slate-600">Gérez les horaires d'ouverture et les créneaux de réservation</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Configuration des créneaux</h1>
+          <p className="text-slate-600">Gérez les horaires d'ouverture et les créneaux de réservation</p>
+        </div>
+        {hasChanges && (
+          <Button 
+            onClick={handleSaveAll} 
+            disabled={isSaving}
+            className="flex items-center gap-2"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Enregistrement...
+              </>
+            ) : saveSuccess ? (
+              <>
+                <Check className="h-4 w-4" />
+                Enregistré
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Enregistrer les modifications
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
