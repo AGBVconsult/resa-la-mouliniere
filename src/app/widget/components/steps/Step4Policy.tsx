@@ -9,6 +9,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import { formatDateDisplayFull, generateUUID } from "@/lib/utils";
+import { withRetry, parseError, isOnline, setupOnlineListener, type ApiError } from "@/lib/api-client";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
 
 interface Step4PolicyProps {
@@ -39,8 +40,19 @@ export function Step4Policy({
   const { t } = useTranslation(lang);
 
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Offline detection
+  useEffect(() => {
+    setIsOffline(!isOnline());
+    return setupOnlineListener(
+      () => setIsOffline(false),
+      () => setIsOffline(true)
+    );
+  }, []);
   const lastRequestTokenRef = useRef(requestPrimaryToken);
 
   const idemKeyRef = useRef<string>(generateUUID());
@@ -100,8 +112,13 @@ export function Step4Policy({
       }
     } catch (err: unknown) {
       console.error("Reservation error:", err);
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
-      idemKeyRef.current = generateUUID();
+      const apiError = parseError(err);
+      setError(apiError);
+      setRetryCount((c) => c + 1);
+      // Only regenerate idemKey for non-retryable errors to avoid duplicates
+      if (!apiError.retryable) {
+        idemKeyRef.current = generateUUID();
+      }
     } finally {
       setSubmitting(false);
       setLoading(false);
@@ -261,10 +278,32 @@ export function Step4Policy({
           />
         </div>
 
+        {/* Offline warning */}
+        {isOffline && (
+          <div style={{ backgroundColor: '#fefce8', border: '1px solid #fde047', borderRadius: '0.5rem', padding: '1vh', marginBottom: '1.5vh' }}>
+            <p style={{ fontSize: '0.875rem', color: '#a16207' }}>
+              {lang === 'fr' ? 'Vous êtes hors ligne. Veuillez vous reconnecter.' :
+               lang === 'nl' ? 'U bent offline. Maak opnieuw verbinding.' :
+               lang === 'de' ? 'Sie sind offline. Bitte verbinden Sie sich erneut.' :
+               lang === 'it' ? 'Sei offline. Per favore riconnettiti.' :
+               'You are offline. Please reconnect.'}
+            </p>
+          </div>
+        )}
+
         {/* Error message */}
-        {error && (
+        {error && !isOffline && (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.5rem', padding: '1vh', marginBottom: '1.5vh' }}>
-            <p style={{ fontSize: '0.875rem', color: '#dc2626' }}>{error}</p>
+            <p style={{ fontSize: '0.875rem', color: '#dc2626' }}>{error.userMessage[lang]}</p>
+            {error.retryable && retryCount > 0 && (
+              <p style={{ fontSize: '0.75rem', color: '#991b1b', marginTop: '0.5vh' }}>
+                {lang === 'fr' ? `Tentative ${retryCount}/3` :
+                 lang === 'nl' ? `Poging ${retryCount}/3` :
+                 lang === 'de' ? `Versuch ${retryCount}/3` :
+                 lang === 'it' ? `Tentativo ${retryCount}/3` :
+                 `Attempt ${retryCount}/3`}
+              </p>
+            )}
           </div>
         )}
       </div>
