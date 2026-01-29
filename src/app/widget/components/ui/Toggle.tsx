@@ -38,6 +38,34 @@ export function Toggle({
     return "border-slate-300 bg-white";
   };
 
+  const containerStyle: React.CSSProperties = {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '1.2vh',
+    minHeight: '5.5vh',
+    borderRadius: '0.5rem',
+    border: '1px solid',
+    cursor: 'pointer',
+    borderColor: checked ? '#0f172a' : highlighted ? '#fde68a' : '#e2e8f0',
+    backgroundColor: checked ? '#f8fafc' : highlighted ? 'rgba(255, 251, 235, 0.5)' : 'white',
+  };
+
+  const checkboxStyle: React.CSSProperties = {
+    width: '3vh',
+    height: '3vh',
+    minWidth: '20px',
+    minHeight: '20px',
+    borderRadius: '9999px',
+    border: '1px solid',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderColor: checked ? '#0f172a' : highlighted ? '#fcd34d' : '#cbd5e1',
+    backgroundColor: checked ? '#0f172a' : 'white',
+  };
+
   return (
     <button
       type="button"
@@ -50,20 +78,19 @@ export function Toggle({
       }}
       onMouseDown={(e) => e.preventDefault()}
       className={`w-full flex items-center justify-between p-[1.2vh] min-h-[5.5vh] rounded-lg border cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${getContainerClasses()}`}
+      style={containerStyle}
     >
-      <div className="flex items-center gap-3">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         {Icon && (
           <Icon
             size={18}
-            className={highlighted && !checked ? "text-amber-600" : "text-slate-600"}
+            style={{ color: highlighted && !checked ? '#d97706' : '#475569' }}
           />
         )}
-        <span className="text-[1.6vh] font-medium">{label}</span>
+        <span style={{ fontSize: '1.6vh', fontWeight: 500 }}>{label}</span>
       </div>
-      <div
-        className={`w-[3vh] h-[3vh] min-w-[20px] min-h-[20px] rounded-full border flex items-center justify-center transition-all ${getCheckboxClasses()}`}
-      >
-        {checked && <Check size={12} className="text-white" />}
+      <div style={checkboxStyle}>
+        {checked && <Check size={12} style={{ color: 'white' }} />}
       </div>
     </button>
   );

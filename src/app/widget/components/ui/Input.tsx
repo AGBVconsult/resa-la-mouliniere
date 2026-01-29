@@ -32,14 +32,17 @@ export function Input({
   const hasError = !!error;
 
   return (
-    <div className="mb-[1.5vh]">
-      <label htmlFor={id} className="block text-[1.4vh] font-semibold text-slate-600 mb-[0.5vh]">
+    <div style={{ marginBottom: '1.5vh' }}>
+      <label 
+        htmlFor={id} 
+        style={{ display: 'block', fontSize: '1.4vh', fontWeight: 600, color: '#475569', marginBottom: '0.5vh' }}
+      >
         {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
+        {required && <span style={{ color: '#ef4444', marginLeft: '0.125rem' }}>*</span>}
       </label>
-      <div className="relative">
+      <div style={{ position: 'relative' }}>
         {prefix && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg pointer-events-none">
+          <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.125rem', pointerEvents: 'none' }}>
             {prefix}
           </span>
         )}
@@ -60,10 +63,22 @@ export function Input({
               ? "border-red-300 focus:ring-red-500/20 focus:border-red-500"
               : "border-slate-200 focus:ring-slate-900/20 focus:border-slate-900"
           }`}
+          style={{
+            width: '100%',
+            paddingLeft: prefix ? '2.5rem' : '3vw',
+            paddingRight: '3vw',
+            paddingTop: '1.2vh',
+            paddingBottom: '1.2vh',
+            minHeight: '5vh',
+            border: `1px solid ${hasError ? '#fca5a5' : '#e2e8f0'}`,
+            borderRadius: '0.5rem',
+            backgroundColor: '#f8fafc',
+            fontSize: '1rem',
+          }}
         />
       </div>
       {hasError && (
-        <p id={errorId} className="mt-[0.3vh] text-[1.3vh] text-red-500" role="alert">
+        <p id={errorId} style={{ marginTop: '0.3vh', fontSize: '1.3vh', color: '#ef4444' }} role="alert">
           {error}
         </p>
       )}

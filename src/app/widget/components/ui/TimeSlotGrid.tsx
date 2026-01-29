@@ -40,8 +40,40 @@ export function TimeSlotGrid({ slots, selectedTime, onSelect, color }: TimeSlotG
     }`;
   };
 
+  const getButtonStyle = (slot: TimeSlot): React.CSSProperties => {
+    const isSelected = selectedTime === slot.timeKey;
+    const isDisabled = !slot.isOpen || slot.remainingCapacity <= 0;
+
+    const base: React.CSSProperties = {
+      paddingTop: '1.2vh',
+      paddingBottom: '1.2vh',
+      minHeight: '5vh',
+      borderRadius: '0.75rem',
+      textAlign: 'center',
+      fontWeight: 600,
+      fontSize: '1.6vh',
+      border: 'none',
+      cursor: isDisabled ? 'not-allowed' : 'pointer',
+    };
+
+    if (isDisabled) {
+      return { ...base, backgroundColor: '#f1f5f9', color: '#94a3b8' };
+    }
+
+    if (isSelected) {
+      return { 
+        ...base, 
+        backgroundColor: color === 'amber' ? '#f59e0b' : '#3b82f6', 
+        color: 'white',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+      };
+    }
+
+    return { ...base, backgroundColor: 'white', border: '1px solid #e2e8f0' };
+  };
+
   return (
-    <div className="grid grid-cols-3 gap-[1vh]">
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '1vh' }}>
       {slots.map((slot) => (
         <button
           key={slot.timeKey}
@@ -50,6 +82,7 @@ export function TimeSlotGrid({ slots, selectedTime, onSelect, color }: TimeSlotG
           disabled={!slot.isOpen || slot.remainingCapacity <= 0}
           aria-pressed={selectedTime === slot.timeKey}
           className={getButtonClasses(slot)}
+          style={getButtonStyle(slot)}
         >
           {slot.timeKey}
         </button>

@@ -32,29 +32,41 @@ export function CounterRow({
   const canIncrement = value < max;
 
   return (
-    <div className="flex items-center justify-between py-[1.2vh]">
+    <div 
+      className="flex items-center justify-between py-[1.2vh]"
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '1.2vh', paddingBottom: '1.2vh' }}
+    >
       <div>
-        <span className="text-[1.6vh] font-medium text-slate-700">{label}</span>
-        {sublabel && <p className="text-[1.3vh] text-slate-400">{sublabel}</p>}
+        <span style={{ fontSize: '1.6vh', fontWeight: 500, color: '#334155' }}>{label}</span>
+        {sublabel && <p style={{ fontSize: '1.3vh', color: '#94a3b8' }}>{sublabel}</p>}
       </div>
-      <div className="flex items-center gap-4">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <button
           type="button"
           onClick={handleDecrement}
           disabled={!canDecrement}
           aria-label={`Diminuer ${label}`}
-          className={`w-[5.5vh] h-[5.5vh] min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
-            canDecrement
-              ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
-              : "bg-slate-50 text-slate-400 cursor-not-allowed"
-          }`}
+          style={{
+            width: '5.5vh',
+            height: '5.5vh',
+            minWidth: '40px',
+            minHeight: '40px',
+            borderRadius: '9999px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: canDecrement ? '#f1f5f9' : '#f8fafc',
+            color: canDecrement ? '#334155' : '#94a3b8',
+            cursor: canDecrement ? 'pointer' : 'not-allowed',
+            border: 'none',
+          }}
         >
           <Minus size={16} />
         </button>
         <span
           aria-live="polite"
           aria-atomic="true"
-          className="w-[4vh] text-center text-[2.2vh] font-bold text-slate-900"
+          style={{ width: '4vh', textAlign: 'center', fontSize: '2.2vh', fontWeight: 700, color: '#0f172a' }}
         >
           {value}
         </span>
@@ -63,11 +75,20 @@ export function CounterRow({
           onClick={handleIncrement}
           disabled={!canIncrement}
           aria-label={`Augmenter ${label}`}
-          className={`w-[5.5vh] h-[5.5vh] min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
-            canIncrement
-              ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
-              : "bg-slate-50 text-slate-400 cursor-not-allowed"
-          }`}
+          style={{
+            width: '5.5vh',
+            height: '5.5vh',
+            minWidth: '40px',
+            minHeight: '40px',
+            borderRadius: '9999px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: canIncrement ? '#f1f5f9' : '#f8fafc',
+            color: canIncrement ? '#334155' : '#94a3b8',
+            cursor: canIncrement ? 'pointer' : 'not-allowed',
+            border: 'none',
+          }}
         >
           <Plus size={16} />
         </button>
