@@ -171,108 +171,191 @@
 
 /* ==========================================================================
    Safari/iPad CSS Fallbacks for Tailwind v4 compatibility
-   Fixes display issues with @layer and modern CSS features
+   Uses data-attributes for reliable element targeting on all browsers.
    ========================================================================== */
 
-/* Force flex-direction: column for nav elements (Safari flexbox fix) */
-.admin-sidebar-nav,
-nav.flex-1 {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-/* Explicit display rules for Safari - sidebar visibility */
-@media (max-width: 767px) {
-  /* Mobile: hide desktop sidebar, show mobile drawer */
-  aside.md\:flex {
-    display: none !important;
-  }
+/* ----------------------------------------
+   Mobile sidebar elements
+   Visible on mobile (<768px), hidden on tablet/desktop
+   ---------------------------------------- */
+[data-sidebar-mobile] {
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  flex-direction: column;
 }
 
 @media (min-width: 768px) {
-  /* Tablet/Desktop: show desktop sidebar, hide mobile elements */
-  aside.md\:hidden {
+  [data-sidebar-mobile] {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
-  
-  aside.md\:flex {
+
+  [data-sidebar-mobile-toggle] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  [data-sidebar-mobile-overlay] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+/* ----------------------------------------
+   Desktop sidebar
+   Hidden on mobile, visible on tablet/desktop (>=768px)
+   ---------------------------------------- */
+[data-sidebar-desktop] {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  [data-sidebar-desktop] {
+    display: -webkit-flex !important;
     display: flex !important;
-    flex-direction: column !important;
-  }
-  
-  /* Ensure fixed positioning works correctly on iPad Safari */
-  aside[class*="fixed"] {
+    visibility: visible !important;
+    opacity: 1 !important;
     position: fixed !important;
     top: 0 !important;
-    bottom: 0 !important;
     left: 0 !important;
+    bottom: 0 !important;
+    z-index: 40 !important;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    flex-direction: column !important;
+    background-color: white !important;
+    border-right: 1px solid #e2e8f0 !important;
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
   }
-  
-  /* Mobile toggle button hidden on tablet+ */
-  button.md\:hidden {
-    display: none !important;
+
+  [data-sidebar-desktop][data-collapsed="true"] {
+    width: 4rem !important;
   }
-  
-  /* Mobile overlay hidden on tablet+ */
-  div.md\:hidden[class*="fixed"][class*="inset-0"] {
-    display: none !important;
+
+  [data-sidebar-desktop][data-collapsed="false"] {
+    width: 16rem !important;
   }
 }
 
-/* Safari-specific fixes using @supports */
+/* ----------------------------------------
+   Navigation layout - ensure vertical stacking
+   ---------------------------------------- */
+[data-sidebar-desktop] nav,
+[data-sidebar-mobile] nav {
+  display: -webkit-flex !important;
+  display: flex !important;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  flex-direction: column !important;
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  overflow-y: auto;
+}
+
+[data-sidebar-desktop] nav > a,
+[data-sidebar-mobile] nav > a {
+  display: -webkit-flex !important;
+  display: flex !important;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center !important;
+  width: 100%;
+}
+
+/* Space between nav items (fallback for space-y-1) */
+[data-sidebar-desktop] nav > * + *,
+[data-sidebar-mobile] nav > * + * {
+  margin-top: 0.25rem;
+}
+
+/* ----------------------------------------
+   Sidebar header section
+   ---------------------------------------- */
+[data-sidebar-desktop] > div:first-child,
+[data-sidebar-mobile] > div:first-child {
+  display: -webkit-flex !important;
+  display: flex !important;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  height: 4rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* ----------------------------------------
+   Admin content area - padding for sidebar offset
+   ---------------------------------------- */
+@media (min-width: 768px) {
+  [data-admin-content][data-sidebar-collapsed="false"] {
+    padding-left: 16rem !important;
+  }
+
+  [data-admin-content][data-sidebar-collapsed="true"] {
+    padding-left: 4rem !important;
+  }
+}
+
+/* ----------------------------------------
+   Safari/iOS specific fixes
+   ---------------------------------------- */
 @supports (-webkit-touch-callout: none) {
-  /* iOS Safari specific fixes */
-  
-  /* Fix for position: fixed on iOS */
-  aside[class*="fixed"][class*="inset-y-0"] {
-    position: fixed !important;
-    height: 100% !important;
-    height: 100dvh !important;
-    overflow-y: auto !important;
+  [data-sidebar-desktop],
+  [data-sidebar-mobile] {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  [data-sidebar-desktop] {
+    height: 100%;
+    height: 100dvh;
     -webkit-overflow-scrolling: touch;
   }
-  
-  /* Ensure flex containers work correctly */
-  .flex-col,
-  [class*="flex-col"] {
-    flex-direction: column !important;
-  }
-  
-  /* Fix hidden/flex toggle issues */
-  .hidden {
-    display: none !important;
-  }
-  
-  /* Ensure space-y works (Safari sometimes ignores gap) */
-  nav[class*="space-y"] > * + * {
-    margin-top: 0.25rem;
-  }
 }
 
-/* Fallback for older Safari versions that don't support @layer properly */
-@media screen and (-webkit-min-device-pixel-ratio: 0) {
-  /* Admin sidebar explicit styles */
-  aside.md\:flex.fixed {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    background-color: white;
-    border-right: 1px solid #e2e8f0;
-    z-index: 40;
-  }
-  
-  /* Collapsed state */
-  aside.md\:flex.fixed.w-16 {
-    width: 4rem;
-  }
-  
-  /* Expanded state */
-  aside.md\:flex.fixed.w-64 {
-    width: 16rem;
-  }
+/* ----------------------------------------
+   Flexbox fallbacks for older Safari
+   ---------------------------------------- */
+.flex-col {
+  -webkit-box-orient: vertical !important;
+  -webkit-box-direction: normal !important;
+  -webkit-flex-direction: column !important;
+  flex-direction: column !important;
+}
+
+.flex-1 {
+  -webkit-box-flex: 1 !important;
+  -webkit-flex: 1 1 0% !important;
+  flex: 1 1 0% !important;
+}
+
+.items-center {
+  -webkit-box-align: center !important;
+  -webkit-align-items: center !important;
+  align-items: center !important;
+}
+
+.justify-center {
+  -webkit-box-pack: center !important;
+  -webkit-justify-content: center !important;
+  justify-content: center !important;
+}
+
+/* Gap fallbacks */
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+
+/* space-y-1 fallback */
+.space-y-1 > * + * {
+  margin-top: 0.25rem;
 }

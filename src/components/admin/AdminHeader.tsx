@@ -46,7 +46,7 @@ export function AdminHeader({ sidebarCollapsed, onToggleSidebarCollapsed }: Admi
   }, [showNotifications]);
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200">
+    <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200" data-admin-header>
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center gap-4 flex-1">
           <Button
