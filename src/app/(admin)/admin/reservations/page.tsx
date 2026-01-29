@@ -122,7 +122,7 @@ export default function ReservationsPage() {
   const isLoading = status === "LoadingFirstPage";
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <ReservationHeader
         selectedDate={selectedDate}
@@ -142,9 +142,10 @@ export default function ReservationsPage() {
         <>
           <div
             className="fixed inset-0 z-40"
+            style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, zIndex: 40 }}
             onClick={() => setShowDatePicker(false)}
           />
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50">
+          <div style={{ position: 'absolute', top: '5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}>
             <DatePickerCalendar
               selectedDate={selectedDate}
               onSelect={setSelectedDate}
@@ -155,17 +156,18 @@ export default function ReservationsPage() {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex min-h-0 gap-4">
+      <div className="flex-1 flex min-h-0 gap-4" style={{ flex: '1 1 0%', display: 'flex', minHeight: 0, gap: '1rem' }}>
         {/* Reservation List */}
         <div
           className={cn(
             "flex flex-col bg-white border rounded-lg transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden",
             showFloorPlan ? "flex-1 min-w-[350px]" : "w-full"
           )}
+          style={{ display: 'flex', flexDirection: 'column', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden', flex: showFloorPlan ? '1 1 0%' : undefined, minWidth: showFloorPlan ? '350px' : undefined, width: showFloorPlan ? undefined : '100%' }}
         >
           {isLoading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div style={{ flex: '1 1 0%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" style={{ width: '2rem', height: '2rem', color: '#9ca3af' }} />
             </div>
           ) : (
             <ReservationList
@@ -187,6 +189,7 @@ export default function ReservationsPage() {
             <button
               onClick={() => loadMore(50)}
               className="py-3 text-sm text-blue-600 hover:bg-gray-50 border-t"
+              style={{ paddingTop: '0.75rem', paddingBottom: '0.75rem', fontSize: '0.875rem', color: '#2563eb', backgroundColor: 'transparent', borderLeft: 'none', borderRight: 'none', borderBottom: 'none', borderTop: '1px solid #e2e8f0', cursor: 'pointer', width: '100%' }}
             >
               Charger plus de réservations
             </button>
@@ -195,7 +198,7 @@ export default function ReservationsPage() {
 
         {/* Floor Plan - shrink to fit content */}
         {showFloorPlan && (
-          <div className="shrink-0 bg-white border rounded-lg overflow-hidden animate-in slide-in-from-right-8 fade-in duration-500 p-4 flex flex-col">
+          <div style={{ flexShrink: 0, backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
             <ServiceFloorPlan
               dateKey={dateKey}
               service={currentService}
@@ -211,21 +214,21 @@ export default function ReservationsPage() {
 
       {/* Edit Modal (placeholder) */}
       {editingReservation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div
-            className="absolute inset-0 bg-black/50"
+            style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
             onClick={() => setEditingReservation(null)}
           />
-          <div className="relative bg-white rounded-xl p-6 w-[600px] max-h-[80vh] overflow-auto">
-            <h2 className="text-xl font-semibold mb-4">
+          <div style={{ position: 'relative', backgroundColor: 'white', borderRadius: '0.75rem', padding: '1.5rem', width: '600px', maxHeight: '80vh', overflow: 'auto' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>
               Modifier la réservation
             </h2>
-            <p className="text-gray-500">
+            <p style={{ color: '#6b7280' }}>
               {editingReservation.lastName} {editingReservation.firstName} - {editingReservation.partySize} pers.
             </p>
-            <p className="text-sm text-gray-400 mt-2">Formulaire d&apos;édition - À implémenter</p>
+            <p style={{ fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.5rem' }}>Formulaire d&apos;édition - À implémenter</p>
             <button
-              className="mt-4 px-4 py-2 bg-black text-white rounded-lg"
+              style={{ marginTop: '1rem', paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', backgroundColor: 'black', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}
               onClick={() => setEditingReservation(null)}
             >
               Fermer
