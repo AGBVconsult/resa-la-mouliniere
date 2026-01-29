@@ -1156,15 +1156,15 @@ export const importReservation = mutation({
       timeKey: args.timeKey,
     });
 
-    // Load or create slot if needed
-    let slot = await ctx.db
+    // Load slot - for import we don't require it to exist
+    const slot = await ctx.db
       .query("slots")
       .withIndex("by_restaurant_slotKey", (q) =>
         q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
       )
       .unique();
 
-    // For import, we don't check capacity - just create the reservation
+    // For import, we don't check capacity or slot existence - just create the reservation
     const partySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
     const now = Date.now();
 
