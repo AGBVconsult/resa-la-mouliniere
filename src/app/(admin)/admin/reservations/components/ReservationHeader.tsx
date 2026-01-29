@@ -2,7 +2,7 @@
 
 import { format, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Calendar, Settings, Map, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Settings, Map, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ interface ReservationHeaderProps {
   onOpenSettings: () => void;
   onOpenDatePicker: () => void;
   onCreateReservation: () => void;
+  onImportReservation?: () => void;
 }
 
 export function ReservationHeader({
@@ -28,6 +29,7 @@ export function ReservationHeader({
   onOpenSettings,
   onOpenDatePicker,
   onCreateReservation,
+  onImportReservation,
 }: ReservationHeaderProps) {
   const formattedDate = format(selectedDate, "EEEE d MMMM yyyy", { locale: fr });
 
@@ -72,6 +74,18 @@ export function ReservationHeader({
 
       {/* Service Toggle + Actions */}
       <div className="flex items-center gap-3">
+        {/* Import Button (Migration) */}
+        {onImportReservation && (
+          <Button
+            variant="outline"
+            className="rounded-full border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-700 px-4 gap-2"
+            onClick={onImportReservation}
+          >
+            <Upload className="h-4 w-4" />
+            Import
+          </Button>
+        )}
+
         {/* Create Reservation Button */}
         <Button
           variant="default"

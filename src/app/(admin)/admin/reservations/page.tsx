@@ -17,6 +17,7 @@ import {
   ReservationList,
   DatePickerCalendar,
   CreateReservationModal,
+  ImportReservationModal,
   DayOverrideModal,
   type Reservation,
 } from "./components";
@@ -45,6 +46,7 @@ export default function ReservationsPage() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
@@ -132,6 +134,7 @@ export default function ReservationsPage() {
         onOpenSettings={() => setShowSettings(true)}
         onOpenDatePicker={() => setShowDatePicker(true)}
         onCreateReservation={() => setShowCreateModal(true)}
+        onImportReservation={() => setShowImportModal(true)}
       />
 
       {/* Date Picker Overlay */}
@@ -245,6 +248,13 @@ export default function ReservationsPage() {
         <DayOverrideModal
           dateKey={dateKey}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Import Reservation Modal (Migration) */}
+      {showImportModal && (
+        <ImportReservationModal
+          onClose={() => setShowImportModal(false)}
         />
       )}
     </div>
