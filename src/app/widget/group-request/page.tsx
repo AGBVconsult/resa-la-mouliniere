@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle, Loader2 } from 'lucide-react';
+import { generateUUID } from '@/lib/utils';
 
 const Turnstile = dynamic(
   () => import('@marsidev/react-turnstile').then((mod) => mod.Turnstile),
@@ -39,7 +40,7 @@ function GroupRequestContent() {
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [idemKey] = useState(() => crypto.randomUUID());
+  const [idemKey] = useState(() => generateUUID());
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -30,6 +30,7 @@ import {
   Loader2,
   MapPin,
 } from "lucide-react";
+import { generateUUID } from "@/lib/utils";
 
 type Language = "fr" | "nl" | "en" | "de" | "it";
 
@@ -46,7 +47,7 @@ export default function ReservationPage({ params }: PageProps) {
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cancelled, setCancelled] = useState(false);
-  const [idemKey] = useState(() => crypto.randomUUID());
+  const [idemKey] = useState(() => generateUUID());
 
   const reservation = useQuery(api.reservations.getByToken, { token });
   const cancelByToken = useAction(api.reservations.cancelByToken);

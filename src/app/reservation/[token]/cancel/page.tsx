@@ -6,7 +6,7 @@ import { useQuery, useAction } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language } from "@/components/booking/types";
-import { formatDateShort } from "@/lib/utils";
+import { formatDateShort, generateUUID } from "@/lib/utils";
 import { BookingHeader } from "@/app/widget/components/BookingHeader";
 import { BookingFooter } from "@/app/widget/components/BookingFooter";
 import { StepHeader } from "@/app/widget/components/ui/StepHeader";
@@ -35,7 +35,7 @@ export default function CancelReservationPage({ params }: PageProps) {
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [idemKey] = useState(() => crypto.randomUUID());
+  const [idemKey] = useState(() => generateUUID());
 
   // Fetch reservation
   const reservation = useQuery(api.reservations.getByToken, { token });

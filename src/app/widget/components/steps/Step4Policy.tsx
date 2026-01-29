@@ -8,7 +8,7 @@ import { stroller } from "@lucide/lab";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
-import { formatDateDisplayFull } from "@/lib/utils";
+import { formatDateDisplayFull, generateUUID } from "@/lib/utils";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
 
 interface Step4PolicyProps {
@@ -43,7 +43,7 @@ export function Step4Policy({
   const [submitting, setSubmitting] = useState(false);
   const lastRequestTokenRef = useRef(requestPrimaryToken);
 
-  const idemKeyRef = useRef<string>(crypto.randomUUID());
+  const idemKeyRef = useRef<string>(generateUUID());
 
   const createReservation = useAction(api.reservations.create);
 
@@ -100,7 +100,7 @@ export function Step4Policy({
     } catch (err: unknown) {
       console.error("Reservation error:", err);
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
-      idemKeyRef.current = crypto.randomUUID();
+      idemKeyRef.current = generateUUID();
     } finally {
       setSubmitting(false);
       setLoading(false);
