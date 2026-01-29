@@ -58,6 +58,7 @@ export function Step4Policy({
 
     try {
       const options: string[] = [];
+      if (data.requiresStroller) options.push("stroller");
       if (data.requiresHighChair) options.push("highChair");
       if (data.requiresDogAccess) options.push("dogAccess");
       if (data.requiresWheelchair) options.push("wheelchair");
