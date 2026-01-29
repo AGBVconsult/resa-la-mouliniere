@@ -1,0 +1,16 @@
+# Browsers that we support
+# https://browsersl.ist
+
+# Production targets
+> 0.5%
+last 2 versions
+not dead
+
+# iOS Safari support (iPad Pro 2nd gen = iOS 15)
+iOS >= 15
+
+# Safari desktop
+Safari >= 14
+
+# Exclude IE
+not IE 11
