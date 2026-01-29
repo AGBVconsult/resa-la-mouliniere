@@ -770,7 +770,7 @@ function renderModernTemplate(
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                   <tr>
                     <td align="center">
-                      <a href="https://g.page/r/lamouliniere/review" class="btn" style="display: block; background-color: #8b5cf6; color: #ffffff; padding: 14px 20px; text-decoration: none; border-radius: 8px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 600; font-size: 15px; text-align: center; border: 1px solid #8b5cf6;">${reviewLabel}</a>
+                      <a href="https://g.page/r/CWTZKcbsJS1JEAE/review" class="btn" style="display: block; background-color: #8b5cf6; color: #ffffff; padding: 14px 20px; text-decoration: none; border-radius: 8px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 600; font-size: 15px; text-align: center; border: 1px solid #8b5cf6;">${reviewLabel}</a>
                     </td>
                   </tr>
                 </table>`;

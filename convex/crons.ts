@@ -32,11 +32,11 @@ crons.interval(
   { now: Date.now() }
 );
 
-// Enqueue review emails at 10:00 daily (J+1 review requests)
-// Excludes reservations with status "incident" to avoid sending review requests to clients who had issues
+// Enqueue review emails at 06:30 daily (J+1 review requests)
+// Excludes reservations with status: no-show, cancelled, refused, incident
 crons.cron(
   "enqueue-reviews",
-  "0 10 * * *",
+  "30 6 * * *",
   internal.emails.enqueueReviewEmails,
   { now: Date.now() }
 );

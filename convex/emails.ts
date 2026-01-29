@@ -506,10 +506,13 @@ export const enqueueReminders = internalMutation({
 
 /**
  * Enqueue review emails for completed reservations yesterday (J+1).
- * Called by cron at 10:00 local time.
+ * Called by cron at 06:30 local time.
  * 
- * IMPORTANT: Excludes reservations with status "incident" to avoid
- * sending review requests to clients who had issues.
+ * IMPORTANT: Excludes reservations with status:
+ * - "no-show": client didn't show up
+ * - "cancelled": client cancelled
+ * - "refused": reservation was refused
+ * - "incident": client had issues
  * 
  * Contract: reservation.review email type exists.
  * Dedupe via dedupeKey = "review:{reservationId}"
@@ -561,18 +564,27 @@ export const enqueueReviewEmails = internalMutation({
     let alreadyExists = 0;
     let skippedIncident = 0;
 
+    // Statuses to exclude from review emails
+    const excludedStatuses = ["no-show", "cancelled", "refused", "incident"];
+
     for (const reservation of reservations) {
-      // Check if reservation had an incident event (status was changed to "incident" at some point)
-      // We check the reservationEvents table for any incident status change
-      const incidentEvent = await ctx.db
+      // Check if reservation ever had an excluded status (via reservationEvents)
+      const excludedEvent = await ctx.db
         .query("reservationEvents")
         .withIndex("by_reservation", (q) => q.eq("reservationId", reservation._id))
-        .filter((q) => q.eq(q.field("toStatus"), "incident"))
+        .filter((q) =>
+          q.or(
+            q.eq(q.field("toStatus"), "no-show"),
+            q.eq(q.field("toStatus"), "cancelled"),
+            q.eq(q.field("toStatus"), "refused"),
+            q.eq(q.field("toStatus"), "incident")
+          )
+        )
         .first();
 
-      if (incidentEvent) {
+      if (excludedEvent) {
         skippedIncident++;
-        console.log("enqueueReviewEmails: skipping incident reservation", { reservationId: reservation._id });
+        console.log("enqueueReviewEmails: skipping excluded reservation", { reservationId: reservation._id, status: excludedEvent.toStatus });
         continue;
       }
 
