@@ -184,10 +184,11 @@ export function Step3Contact({
           />
 
           <div style={{ marginBottom: 0 }}>
-            <label style={{ display: 'block', fontSize: '1.4vh', fontWeight: 600, color: '#475569', marginBottom: '0.5vh' }}>
+            <label htmlFor="message-field" style={{ display: 'block', fontSize: '1.4vh', fontWeight: 600, color: '#475569', marginBottom: '0.5vh' }}>
               {t.message}
             </label>
             <textarea
+              id="message-field"
               value={data.message}
               onChange={(e) => onUpdate({ message: e.target.value })}
               placeholder={t.message_placeholder}

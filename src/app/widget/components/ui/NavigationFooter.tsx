@@ -52,6 +52,7 @@ export function NavigationFooter({
           type="button"
           onClick={onBack}
           disabled={backDisabled}
+          aria-label={`Retour : ${backLabel}`}
           className="flex-1 py-[1.5vh] min-h-[44px] rounded-xl font-bold text-slate-700 border border-slate-200 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ flex: '1 1 0%', paddingTop: '1.5vh', paddingBottom: '1.5vh', minHeight: '44px', borderRadius: '0.75rem', fontWeight: 700, color: '#334155', border: '1px solid #e2e8f0', backgroundColor: 'white', cursor: backDisabled ? 'not-allowed' : 'pointer', opacity: backDisabled ? 0.5 : 1 }}
         >
@@ -64,6 +65,8 @@ export function NavigationFooter({
         type="button"
         onClick={onPrimary}
         disabled={primaryDisabled}
+        aria-label={primaryLabel}
+        aria-disabled={primaryDisabled}
         className={`py-[1.5vh] min-h-[44px] rounded-xl font-bold text-white transition-all ${
           showBackButton || leftContent ? "flex-[2]" : "flex-1"
         } ${
