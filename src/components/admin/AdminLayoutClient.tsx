@@ -34,7 +34,7 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
   return (
     <ToastProvider>
       <PWARegister />
-      <div className="min-h-screen bg-slate-50">
+      <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
         <AdminSidebar collapsed={sidebarCollapsed} />
         <div
           className={cn(
@@ -43,12 +43,13 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
           )}
           data-admin-content
           data-sidebar-collapsed={sidebarCollapsed}
+          style={{ paddingLeft: sidebarCollapsed ? '4rem' : '16rem' }}
         >
           <AdminHeader
             sidebarCollapsed={sidebarCollapsed}
             onToggleSidebarCollapsed={toggleSidebarCollapsed}
           />
-          <main className="p-6">{children}</main>
+          <main style={{ padding: '1.5rem' }}>{children}</main>
         </div>
       </div>
     </ToastProvider>
