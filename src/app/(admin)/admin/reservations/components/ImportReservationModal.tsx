@@ -18,14 +18,16 @@ interface ImportReservationModalProps {
 }
 
 const LANGUAGES = [
-  { value: "fr", label: "FR" },
-  { value: "nl", label: "NL" },
-  { value: "en", label: "EN" },
-  { value: "de", label: "DE" },
-  { value: "it", label: "IT" },
+  { value: "fr", label: "FR", apiValue: "fr" },
+  { value: "be", label: "BE", apiValue: "fr" },  // Belgique francophone → fr
+  { value: "nl", label: "NL", apiValue: "nl" },
+  { value: "en", label: "EN", apiValue: "en" },
+  { value: "de", label: "DE", apiValue: "de" },
+  { value: "it", label: "IT", apiValue: "it" },
 ] as const;
 
 type LanguageValue = (typeof LANGUAGES)[number]["value"];
+type ApiLanguageValue = "fr" | "nl" | "en" | "de" | "it";
 
 const TIME_SLOTS_LUNCH = ["12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30"];
 const TIME_SLOTS_DINNER = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"];
@@ -82,6 +84,10 @@ export function ImportReservationModal({
     setError(null);
     setIsSubmitting(true);
 
+    // Get the API language value (BE maps to fr)
+    const selectedLang = LANGUAGES.find(l => l.value === language);
+    const apiLanguage = (selectedLang?.apiValue || "fr") as ApiLanguageValue;
+
     try {
       await importReservation({
         dateKey,
@@ -94,7 +100,7 @@ export function ImportReservationModal({
         lastName: lastName.trim(),
         email: email.trim() || undefined,
         phone: phone.trim() || undefined,
-        language,
+        language: apiLanguage,
         note: note.trim() || undefined,
       });
 
