@@ -41,6 +41,8 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
             "transition-[padding] duration-200",
             sidebarCollapsed ? "md:pl-16" : "md:pl-64"
           )}
+          data-admin-content
+          data-sidebar-expanded={!sidebarCollapsed}
         >
           <AdminHeader
             sidebarCollapsed={sidebarCollapsed}

@@ -168,3 +168,200 @@
 .animate-checkmark { animation: checkmark 0.4s ease-out 0.2s forwards; }
 .animate-slide-up-in { animation: slide-up-in 0.3s ease-out; }
 .animate-spin { animation: spin 1s linear infinite; }
+
+/* ========================================
+   Safari/iPad Compatibility Fixes
+   ----------------------------------------
+   These explicit CSS rules fix display issues on Safari iPad
+   where Tailwind CSS v4 classes may not be properly applied.
+   Uses data attributes for reliable element targeting.
+   ======================================== */
+
+/* Mobile sidebar elements - visible on mobile, hidden on tablet/desktop */
+[data-sidebar-mobile],
+[data-sidebar-mobile-toggle],
+[data-sidebar-mobile-overlay] {
+  /* Default: visible on mobile */
+}
+
+@media (min-width: 768px) {
+  /* Force hide mobile elements on tablet/desktop */
+  [data-sidebar-mobile] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  [data-sidebar-mobile-toggle] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  [data-sidebar-mobile-overlay] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+/* Desktop sidebar - hidden on mobile, visible on tablet/desktop */
+[data-sidebar-desktop] {
+  /* Default: hidden on mobile */
+  display: none;
+}
+
+@media (min-width: 768px) {
+  /* Force show desktop sidebar on tablet/desktop */
+  [data-sidebar-desktop] {
+    display: flex !important;
+    display: -webkit-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    z-index: 40 !important;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    flex-direction: column !important;
+    background-color: white !important;
+    border-right: 1px solid #e2e8f0 !important;
+  }
+}
+
+/* Navigation layout fix - ensure vertical stacking */
+[data-sidebar-desktop] nav,
+[data-sidebar-mobile] nav {
+  display: flex !important;
+  display: -webkit-flex !important;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  flex-direction: column !important;
+}
+
+/* Navigation links - ensure proper flex alignment */
+[data-sidebar-desktop] nav > a,
+[data-sidebar-mobile] nav > a {
+  display: flex !important;
+  display: -webkit-flex !important;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center !important;
+  width: 100%;
+}
+
+/* Sidebar header and footer sections */
+[data-sidebar-desktop] > div:first-child,
+[data-sidebar-mobile] > div:first-child {
+  display: flex !important;
+  display: -webkit-flex !important;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  height: 4rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Flex-1 for navigation area */
+[data-sidebar-desktop] nav,
+[data-sidebar-mobile] nav {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  overflow-y: auto;
+}
+
+/* Ensure proper stacking context */
+[data-sidebar-desktop],
+[data-sidebar-mobile] {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Admin content area - padding fix for sidebar offset */
+@media (min-width: 768px) {
+  /* When sidebar is expanded (256px / 16rem) */
+  [data-admin-content][data-sidebar-expanded="true"] {
+    padding-left: 16rem !important;
+  }
+
+  /* When sidebar is collapsed (64px / 4rem) */
+  [data-admin-content][data-sidebar-expanded="false"] {
+    padding-left: 4rem !important;
+  }
+}
+
+/* Safari-specific fixes using @supports */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific styles */
+
+  /* Fix for 100dvh on older Safari that doesn't support dvh */
+  .h-\[100dvh\] {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+
+  /* Ensure transforms are hardware accelerated */
+  .transform,
+  [class*="translate"],
+  [class*="transition"] {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Force GPU acceleration for fixed elements */
+  [data-sidebar-desktop],
+  [data-sidebar-mobile] {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Fallback for older browsers - ensure flex column works */
+.flex-col {
+  -webkit-box-orient: vertical !important;
+  -webkit-box-direction: normal !important;
+  -webkit-flex-direction: column !important;
+  flex-direction: column !important;
+}
+
+.flex-1 {
+  -webkit-box-flex: 1 !important;
+  -webkit-flex: 1 1 0% !important;
+  flex: 1 1 0% !important;
+}
+
+/* Ensure items-center works */
+.items-center {
+  -webkit-box-align: center !important;
+  -webkit-align-items: center !important;
+  align-items: center !important;
+}
+
+/* Ensure justify-center works */
+.justify-center {
+  -webkit-box-pack: center !important;
+  -webkit-justify-content: center !important;
+  justify-content: center !important;
+}
+
+/* Ensure gap works (Safari 14.1+, fallback for older) */
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+
+/* space-y-1 fallback - add margin between children */
+.space-y-1 > * + * {
+  margin-top: 0.25rem;
+}

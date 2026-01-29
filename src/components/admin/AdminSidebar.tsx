@@ -121,6 +121,7 @@ export function AdminSidebar({ collapsed = false }: AdminSidebarProps) {
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
         className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md border border-slate-200"
+        data-sidebar-mobile-toggle
       >
         {mobileOpen ? (
           <X className="h-5 w-5 text-slate-600" />
@@ -134,6 +135,7 @@ export function AdminSidebar({ collapsed = false }: AdminSidebarProps) {
         <div
           className="md:hidden fixed inset-0 z-30 bg-black/50"
           onClick={() => setMobileOpen(false)}
+          data-sidebar-mobile-overlay
         />
       )}
 
@@ -143,6 +145,7 @@ export function AdminSidebar({ collapsed = false }: AdminSidebarProps) {
           "md:hidden fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col transform transition-transform duration-200",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
+        data-sidebar-mobile
       >
         <SidebarContent />
       </aside>
@@ -153,6 +156,7 @@ export function AdminSidebar({ collapsed = false }: AdminSidebarProps) {
           "hidden md:flex fixed inset-y-0 left-0 z-40 flex-col bg-white border-r border-slate-200 transition-[width] duration-200",
           collapsed ? "w-16" : "w-64"
         )}
+        data-sidebar-desktop
       >
         {collapsed ? <CollapsedSidebarContent /> : <SidebarContent />}
       </aside>
