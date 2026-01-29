@@ -15,21 +15,24 @@ export function Step5PracticalInfo({
   const { t } = useTranslation(lang);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
+    <div 
+      className="flex flex-col h-full bg-slate-50"
+      style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#f8fafc' }}
+    >
       {/* Contenu sans scroll */}
-      <div className="flex-1 px-4 py-[2vh] flex flex-col">
+      <div style={{ flex: '1 1 0%', paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '2vh', paddingBottom: '2vh', display: 'flex', flexDirection: 'column' }}>
         <StepHeader title={t.practical_info_title_line1} subtitle={t.practical_info_title_line2} className="mb-[1.5vh]" />
 
         {/* Card avec les informations */}
-        <div className="bg-white rounded-2xl p-[2vh] shadow-sm flex-1 flex flex-col justify-between">
+        <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '2vh', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', flex: '1 1 0%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           {/* Blocs d'information */}
-          <div className="space-y-[1.5vh]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5vh' }}>
             {/* Bloc 1 - Hourglass */}
-            <div className="flex items-start gap-3">
-              <div className="w-[4vh] h-[4vh] min-w-[28px] min-h-[28px] rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                <Hourglass size={14} className="text-red-500" />
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <div style={{ width: '4vh', height: '4vh', minWidth: '28px', minHeight: '28px', borderRadius: '9999px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Hourglass size={14} style={{ color: '#ef4444' }} />
               </div>
-              <p className="text-slate-700 text-[1.6vh] leading-relaxed pt-1">
+              <p style={{ color: '#334155', fontSize: '1.6vh', lineHeight: 1.625, paddingTop: '0.25rem' }}>
                 {t.practical_info_delay_text_1}{" "}
                 <strong>{t.practical_info_15min}</strong>{" "}
                 {t.practical_info_delay_text_2}
@@ -37,35 +40,35 @@ export function Step5PracticalInfo({
             </div>
 
             {/* Bloc 2 - Euro/Paiement */}
-            <div className="flex items-start gap-3">
-              <div className="w-[4vh] h-[4vh] min-w-[28px] min-h-[28px] rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                <Euro size={14} className="text-orange-500" />
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <div style={{ width: '4vh', height: '4vh', minWidth: '28px', minHeight: '28px', borderRadius: '9999px', backgroundColor: '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Euro size={14} style={{ color: '#f97316' }} />
               </div>
-              <div className="pt-1">
-                <p className="text-slate-700 text-[1.6vh] leading-relaxed">
+              <div style={{ paddingTop: '0.25rem' }}>
+                <p style={{ color: '#334155', fontSize: '1.6vh', lineHeight: 1.625 }}>
                   {t.practical_info_payment_text_1}{" "}
                   <strong>Payconiq</strong>.{" "}
-                  <span className="inline-flex items-center bg-orange-500 text-white text-xs font-medium px-1.5 py-0.5 rounded">
+                  <span style={{ display: 'inline-flex', alignItems: 'center', backgroundColor: '#f97316', color: 'white', fontSize: '0.75rem', fontWeight: 500, paddingLeft: '0.375rem', paddingRight: '0.375rem', paddingTop: '0.125rem', paddingBottom: '0.125rem', borderRadius: '0.25rem' }}>
                     {t.practical_info_no_card}
                   </span>
                 </p>
-                <p className="text-slate-500 text-[1.3vh] mt-0.5">
+                <p style={{ color: '#64748b', fontSize: '1.3vh', marginTop: '0.125rem' }}>
                   {t.practical_info_cash}
                 </p>
               </div>
             </div>
 
             {/* Bloc 3 - Email */}
-            <div className="flex items-start gap-3">
-              <div className="w-[4vh] h-[4vh] min-w-[28px] min-h-[28px] rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <Mail size={14} className="text-blue-500" />
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <div style={{ width: '4vh', height: '4vh', minWidth: '28px', minHeight: '28px', borderRadius: '9999px', backgroundColor: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Mail size={14} style={{ color: '#3b82f6' }} />
               </div>
-              <div className="pt-1">
-                <p className="text-slate-700 text-[1.6vh] leading-relaxed">
+              <div style={{ paddingTop: '0.25rem' }}>
+                <p style={{ color: '#334155', fontSize: '1.6vh', lineHeight: 1.625 }}>
                   {t.practical_info_email_text_1}{" "}
                   <strong>{t.practical_info_email_confirm}</strong>.
                 </p>
-                <p className="text-slate-500 text-[1.3vh] mt-0.5">
+                <p style={{ color: '#64748b', fontSize: '1.3vh', marginTop: '0.125rem' }}>
                   {t.practical_info_email_text_2}
                 </p>
               </div>
@@ -73,11 +76,11 @@ export function Step5PracticalInfo({
           </div>
 
           {/* Signature */}
-          <div className="text-center pt-[1.5vh] mt-[1.5vh] border-t border-slate-100">
-            <p className="text-slate-700 text-[1.6vh]">
+          <div style={{ textAlign: 'center', paddingTop: '1.5vh', marginTop: '1.5vh', borderTop: '1px solid #f1f5f9' }}>
+            <p style={{ color: '#334155', fontSize: '1.6vh' }}>
               {t.practical_info_welcome}
             </p>
-            <p className="text-teal-600 font-semibold tracking-wider uppercase text-[1.3vh] mt-1">
+            <p style={{ color: '#0d9488', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '1.3vh', marginTop: '0.25rem' }}>
               ALLISSON & BENJAMIN
             </p>
           </div>

@@ -104,51 +104,54 @@ END:VCALENDAR`;
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
+    <div 
+      className="flex flex-col h-full bg-slate-50"
+      style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#f8fafc' }}
+    >
       {/* Contenu */}
-      <div className="flex-1 overflow-hidden px-4 py-[2vh] flex flex-col items-center justify-center text-center">
+      <div style={{ flex: '1 1 0%', overflow: 'hidden', paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '2vh', paddingBottom: '2vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
         {/* Icon */}
-        <div className="mb-[2vh]">
+        <div style={{ marginBottom: '2vh' }}>
           {isConfirmed ? (
-            <div className="w-[10vh] h-[10vh] rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle size={32} className="text-green-600" />
+            <div style={{ width: '10vh', height: '10vh', borderRadius: '9999px', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircle size={32} style={{ color: '#16a34a' }} />
             </div>
           ) : (
-            <div className="w-[10vh] h-[10vh] rounded-full bg-amber-100 flex items-center justify-center">
-              <Clock size={32} className="text-amber-600" />
+            <div style={{ width: '10vh', height: '10vh', borderRadius: '9999px', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Clock size={32} style={{ color: '#d97706' }} />
             </div>
           )}
         </div>
 
         {/* Title */}
-        <h2 className="text-[2.8vh] font-bold text-slate-900 mb-[0.5vh]">
+        <h2 style={{ fontSize: '2.8vh', fontWeight: 700, color: '#0f172a', marginBottom: '0.5vh' }}>
           {isConfirmed ? t.confirmed_title : t.pending_title}
         </h2>
-        <p className="text-[1.6vh] text-slate-500 mb-[2vh]">
+        <p style={{ fontSize: '1.6vh', color: '#64748b', marginBottom: '2vh' }}>
           {isConfirmed ? t.confirmed_subtitle : t.pending_subtitle}
         </p>
 
         {/* Card Récapitulatif */}
-        <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm w-full max-w-[90%] mb-[1.5vh]">
-          <h3 className="font-bold text-slate-900 mb-[0.8vh] text-[1.6vh]">{t.summary}</h3>
-          <div className="space-y-[0.6vh] text-[1.5vh]">
-            <div className="flex items-center gap-3">
-              <Users size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{guestDetails()}</span>
+        <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '1.5vh', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', width: '100%', maxWidth: '90%', marginBottom: '1.5vh' }}>
+          <h3 style={{ fontWeight: 700, color: '#0f172a', marginBottom: '0.8vh', fontSize: '1.6vh' }}>{t.summary}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6vh', fontSize: '1.5vh' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Users size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+              <span style={{ color: '#334155' }}>{guestDetails()}</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Calendar size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{data.dateKey && formatDateDisplay(data.dateKey, lang)}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Calendar size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+              <span style={{ color: '#334155' }}>{data.dateKey && formatDateDisplay(data.dateKey, lang)}</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Clock size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{serviceLabel} • {data.timeKey}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Clock size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+              <span style={{ color: '#334155' }}>{serviceLabel} • {data.timeKey}</span>
             </div>
             {selectedOptions().length > 0 && (
-              <div className="pt-2 border-t border-slate-100 mt-2">
-                <div className="flex flex-wrap gap-2">
+              <div style={{ paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9', marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                   {selectedOptions().map((opt, idx) => (
-                    <span key={idx} className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+                    <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', backgroundColor: '#f1f5f9', color: '#475569', paddingLeft: '0.5rem', paddingRight: '0.5rem', paddingTop: '0.25rem', paddingBottom: '0.25rem', borderRadius: '9999px' }}>
                       <opt.icon size={12} />
                       {opt.label}
                     </span>
@@ -160,46 +163,46 @@ END:VCALENDAR`;
         </div>
 
         {/* Card Infos client */}
-        <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm w-full max-w-[90%] mb-[1.5vh]">
-          <h3 className="font-bold text-slate-900 mb-[0.8vh] text-[1.6vh]">{t.client_info}</h3>
-          <div className="space-y-[0.6vh] text-[1.5vh]">
-            <div className="flex items-center gap-3">
-              <User size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{data.lastName} {data.firstName}</span>
+        <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '1.5vh', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', width: '100%', maxWidth: '90%', marginBottom: '1.5vh' }}>
+          <h3 style={{ fontWeight: 700, color: '#0f172a', marginBottom: '0.8vh', fontSize: '1.6vh' }}>{t.client_info}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6vh', fontSize: '1.5vh' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <User size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+              <span style={{ color: '#334155' }}>{data.lastName} {data.firstName}</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Phone size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{formatPhoneInternational(data.phone)}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Phone size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+              <span style={{ color: '#334155' }}>{formatPhoneInternational(data.phone)}</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Mail size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{data.email}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Mail size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+              <span style={{ color: '#334155' }}>{data.email}</span>
             </div>
           </div>
         </div>
 
         {/* Card Message (si renseigné) */}
         {data.message && data.message.trim() && (
-          <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm w-full max-w-[90%] mb-[1.5vh]">
-            <h3 className="font-bold text-slate-900 mb-[0.8vh] text-[1.6vh]">{t.message}</h3>
-            <div className="flex items-start gap-3">
-              <MessageSquare size={16} className="text-slate-400 flex-shrink-0 mt-0.5" />
-              <p className="text-slate-700 text-sm">{data.message}</p>
+          <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '1.5vh', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', width: '100%', maxWidth: '90%', marginBottom: '1.5vh' }}>
+            <h3 style={{ fontWeight: 700, color: '#0f172a', marginBottom: '0.8vh', fontSize: '1.6vh' }}>{t.message}</h3>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <MessageSquare size={16} style={{ color: '#94a3b8', flexShrink: 0, marginTop: '0.125rem' }} />
+              <p style={{ color: '#334155', fontSize: '0.875rem' }}>{data.message}</p>
             </div>
           </div>
         )}
 
         {/* Email confirmation */}
-        <p className="text-[1.4vh] text-slate-500 mb-[1.5vh]">
-          {t.email_sent} <span className="font-medium text-slate-700">{data.email}</span>
+        <p style={{ fontSize: '1.4vh', color: '#64748b', marginBottom: '1.5vh' }}>
+          {t.email_sent} <span style={{ fontWeight: 500, color: '#334155' }}>{data.email}</span>
         </p>
 
         {/* Actions */}
-        <div className="flex gap-[2vw] w-full max-w-[90%]">
+        <div style={{ display: 'flex', gap: '2vw', width: '100%', maxWidth: '90%' }}>
           <button
             type="button"
             onClick={handleAddToCalendar}
-            className="flex-1 py-[1.2vh] min-h-[44px] rounded-xl font-semibold border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+            style={{ flex: '1 1 0%', paddingTop: '1.2vh', paddingBottom: '1.2vh', minHeight: '44px', borderRadius: '0.75rem', fontWeight: 600, border: '1px solid #e2e8f0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}
           >
             <Calendar size={18} />
             {t.add_calendar}
@@ -208,7 +211,7 @@ END:VCALENDAR`;
             <button
               type="button"
               onClick={handleShare}
-              className="flex-1 py-[1.2vh] min-h-[44px] rounded-xl font-semibold border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+              style={{ flex: '1 1 0%', paddingTop: '1.2vh', paddingBottom: '1.2vh', minHeight: '44px', borderRadius: '0.75rem', fontWeight: 600, border: '1px solid #e2e8f0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}
             >
               <Share2 size={18} />
               {t.share}
@@ -221,7 +224,7 @@ END:VCALENDAR`;
           href="https://www.lamouliniere.be"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-[2vh] text-[1.3vh] text-slate-400 hover:text-slate-600 underline transition-colors"
+          style={{ marginTop: '2vh', fontSize: '1.3vh', color: '#94a3b8', textDecoration: 'underline' }}
         >
           {t.back_to_website || "Retour au site"}
         </a>

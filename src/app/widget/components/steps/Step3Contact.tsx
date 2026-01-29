@@ -132,13 +132,16 @@ export function Step3Contact({
   const phoneFlag = phoneCountry ? getCountryFlag(phoneCountry) : null;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
+    <div 
+      className="flex flex-col h-full bg-slate-50"
+      style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#f8fafc' }}
+    >
       {/* Contenu scrollable */}
-      <div className="flex-1 overflow-hidden px-4 py-[2vh]">
+      <div style={{ flex: '1 1 0%', overflow: 'hidden', paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '2vh', paddingBottom: '2vh' }}>
         <StepHeader title={t.step3_title} subtitle={t.step3_subtitle} className="mb-[2vh]" />
 
-        <div className="bg-white rounded-2xl p-[2vh] shadow-sm">
-          <div className="grid grid-cols-2 gap-[2vw]">
+        <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '2vh', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '2vw' }}>
             <Input
               label={t.first_name}
               value={data.firstName}
@@ -180,8 +183,8 @@ export function Step3Contact({
             prefix={phoneFlag}
           />
 
-          <div className="mb-0">
-            <label className="block text-[1.4vh] font-semibold text-slate-600 mb-[0.5vh]">
+          <div style={{ marginBottom: 0 }}>
+            <label style={{ display: 'block', fontSize: '1.4vh', fontWeight: 600, color: '#475569', marginBottom: '0.5vh' }}>
               {t.message}
             </label>
             <textarea
@@ -189,7 +192,7 @@ export function Step3Contact({
               onChange={(e) => onUpdate({ message: e.target.value })}
               placeholder={t.message_placeholder}
               rows={2}
-              className="w-full px-[3vw] py-[1.2vh] min-h-[8vh] border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 resize-none"
+              style={{ width: '100%', paddingLeft: '3vw', paddingRight: '3vw', paddingTop: '1.2vh', paddingBottom: '1.2vh', minHeight: '8vh', border: '1px solid #e2e8f0', borderRadius: '0.5rem', backgroundColor: '#f8fafc', resize: 'none', fontSize: '1rem' }}
             />
           </div>
         </div>

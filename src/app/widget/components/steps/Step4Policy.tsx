@@ -186,28 +186,31 @@ export function Step4Policy({
   const serviceLabel = data.service === "lunch" ? t.lunch : t.dinner;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
+    <div 
+      className="flex flex-col h-full bg-slate-50"
+      style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#f8fafc' }}
+    >
       {/* Contenu scrollable */}
-      <div className="flex-1 overflow-hidden px-4 py-[2vh]">
+      <div style={{ flex: '1 1 0%', overflow: 'hidden', paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '2vh', paddingBottom: '2vh' }}>
         <StepHeader title={t.step4_title} subtitle={t.step4_subtitle} className="mb-[1.5vh]" />
 
         {/* Card Récapitulatif */}
-        <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm mb-[1.5vh]">
-          <h3 className="font-bold text-slate-900 mb-[1vh] text-[1.6vh]">{t.summary}</h3>
-          <div className="space-y-[0.8vh] text-[1.5vh]">
-            <div className="flex items-center gap-3">
-              <Users size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{guestDetails()}</span>
+        <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '1.5vh', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', marginBottom: '1.5vh' }}>
+          <h3 style={{ fontWeight: 700, color: '#0f172a', marginBottom: '1vh', fontSize: '1.6vh' }}>{t.summary}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8vh', fontSize: '1.5vh' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Users size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+              <span style={{ color: '#334155' }}>{guestDetails()}</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Calendar size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{data.dateKey && formatDateDisplayFull(data.dateKey, lang)} • {serviceLabel} • {data.timeKey}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Calendar size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+              <span style={{ color: '#334155' }}>{data.dateKey && formatDateDisplayFull(data.dateKey, lang)} • {serviceLabel} • {data.timeKey}</span>
             </div>
             {selectedOptions().length > 0 && (
-              <div className="pt-2 border-t border-slate-100 mt-2">
-                <div className="flex flex-wrap gap-2">
+              <div style={{ paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9', marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                   {selectedOptions().map((opt, idx) => (
-                    <span key={idx} className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+                    <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', backgroundColor: '#f1f5f9', color: '#475569', paddingLeft: '0.5rem', paddingRight: '0.5rem', paddingTop: '0.25rem', paddingBottom: '0.25rem', borderRadius: '9999px' }}>
                       <opt.icon size={12} />
                       {opt.label}
                     </span>
@@ -219,35 +222,35 @@ export function Step4Policy({
         </div>
 
         {/* Card Infos client */}
-        <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm mb-[1.5vh]">
-          <h3 className="font-bold text-slate-900 mb-[1vh] text-[1.6vh]">{t.client_info}</h3>
-          <div className="space-y-[0.8vh] text-[1.5vh]">
-            <div className="flex items-center gap-3">
-              <User size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{data.lastName} {data.firstName}</span>
+        <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '1.5vh', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', marginBottom: '1.5vh' }}>
+          <h3 style={{ fontWeight: 700, color: '#0f172a', marginBottom: '1vh', fontSize: '1.6vh' }}>{t.client_info}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8vh', fontSize: '1.5vh' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <User size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+              <span style={{ color: '#334155' }}>{data.lastName} {data.firstName}</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Phone size={16} className="text-slate-400 flex-shrink-0" />
-              <span className="text-slate-700">{formatPhoneInternational(data.phone)}</span>
-              <Mail size={16} className="text-slate-400 flex-shrink-0 ml-2" />
-              <span className="text-slate-700">{data.email}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Phone size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />
+              <span style={{ color: '#334155' }}>{formatPhoneInternational(data.phone)}</span>
+              <Mail size={16} style={{ color: '#94a3b8', flexShrink: 0, marginLeft: '0.5rem' }} />
+              <span style={{ color: '#334155' }}>{data.email}</span>
             </div>
           </div>
         </div>
 
         {/* Card Message (si renseigné) */}
         {data.message && data.message.trim() && (
-          <div className="bg-white rounded-2xl p-[1.5vh] shadow-sm mb-[1.5vh]">
-            <h3 className="font-bold text-slate-900 mb-[1vh] text-[1.6vh]">Message</h3>
-            <div className="flex items-start gap-3">
-              <MessageSquare size={16} className="text-slate-400 flex-shrink-0 mt-0.5" />
-              <p className="text-slate-700 text-sm">{data.message}</p>
+          <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '1.5vh', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', marginBottom: '1.5vh' }}>
+            <h3 style={{ fontWeight: 700, color: '#0f172a', marginBottom: '1vh', fontSize: '1.6vh' }}>Message</h3>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <MessageSquare size={16} style={{ color: '#94a3b8', flexShrink: 0, marginTop: '0.125rem' }} />
+              <p style={{ color: '#334155', fontSize: '0.875rem' }}>{data.message}</p>
             </div>
           </div>
         )}
 
         {/* Turnstile */}
-        <div className="flex justify-center mb-[1.5vh]">
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5vh' }}>
           <Turnstile
             siteKey={settings.turnstileSiteKey}
             options={{ size: "normal" }}
@@ -259,8 +262,8 @@ export function Step4Policy({
 
         {/* Error message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-[1vh] mb-[1.5vh]">
-            <p className="text-sm text-red-600">{error}</p>
+          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.5rem', padding: '1vh', marginBottom: '1.5vh' }}>
+            <p style={{ fontSize: '0.875rem', color: '#dc2626' }}>{error}</p>
           </div>
         )}
       </div>

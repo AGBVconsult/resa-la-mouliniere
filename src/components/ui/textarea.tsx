@@ -12,6 +12,21 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         className
       )}
+      style={{
+        display: 'flex',
+        minHeight: '96px',
+        width: '100%',
+        minWidth: 0,
+        borderRadius: '0.375rem',
+        border: '1px solid #e2e8f0',
+        backgroundColor: 'transparent',
+        paddingLeft: '0.75rem',
+        paddingRight: '0.75rem',
+        paddingTop: '0.5rem',
+        paddingBottom: '0.5rem',
+        fontSize: '1rem',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+      }}
       {...props}
     />
   );

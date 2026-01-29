@@ -57,12 +57,14 @@ export function MiniCalendarStrip({
 
   const renderIndicator = (isOpen: boolean, type: "lunch" | "dinner") => {
     if (!isOpen) {
-      return <div className="w-[0.8vh] h-[0.8vh] rounded-full bg-slate-300" />;
+      return <div style={{ width: '0.8vh', height: '0.8vh', borderRadius: '9999px', backgroundColor: '#cbd5e1' }} />;
     }
     return (
       <div
-        className="w-[0.8vh] h-[0.8vh] rounded-full"
         style={{
+          width: '0.8vh',
+          height: '0.8vh',
+          borderRadius: '9999px',
           backgroundColor: type === "lunch" ? COLORS.lunch.available : COLORS.dinner.available,
         }}
       />
@@ -70,7 +72,7 @@ export function MiniCalendarStrip({
   };
 
   return (
-    <div className="flex gap-2 py-[1.5vh] justify-center px-2">
+    <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '1.5vh', paddingBottom: '1.5vh', justifyContent: 'center', paddingLeft: '0.5rem', paddingRight: '0.5rem' }}>
       {days.map((dateKey) => {
         const date = new Date(dateKey + "T12:00:00");
         const dayState = dayStateMap.get(dateKey);
@@ -90,19 +92,30 @@ export function MiniCalendarStrip({
             type="button"
             onClick={() => !isDisabled && onDateSelect(dateKey)}
             disabled={isDisabled}
-            className={`flex-1 min-w-0 max-w-[72px] py-[1vh] rounded-xl flex flex-col items-center gap-1 transition-all ${
-              isSelected
-                ? "bg-slate-900 text-white shadow-md scale-105"
-                : isDisabled
-                  ? "bg-white border border-slate-100 text-slate-300 cursor-not-allowed"
-                  : "bg-white border border-slate-100 text-slate-700 hover:border-slate-300"
-            }`}
+            style={{
+              flex: '1 1 0%',
+              minWidth: 0,
+              maxWidth: '72px',
+              paddingTop: '1vh',
+              paddingBottom: '1vh',
+              borderRadius: '0.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.25rem',
+              backgroundColor: isSelected ? '#0f172a' : 'white',
+              color: isSelected ? 'white' : isDisabled ? '#cbd5e1' : '#334155',
+              border: isSelected ? 'none' : '1px solid #f1f5f9',
+              cursor: isDisabled ? 'not-allowed' : 'pointer',
+              transform: isSelected ? 'scale(1.05)' : 'none',
+              boxShadow: isSelected ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none',
+            }}
           >
-            <span className="text-[1.2vh] uppercase font-bold tracking-wider">
+            <span style={{ fontSize: '1.2vh', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
               {daysShort[dayOfWeek]}
             </span>
-            <span className="text-[2.8vh] font-bold">{dayNumber}</span>
-            <div className="flex gap-1">
+            <span style={{ fontSize: '2.8vh', fontWeight: 700 }}>{dayNumber}</span>
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
               {renderIndicator(hasLunch, "lunch")}
               {renderIndicator(hasDinner, "dinner")}
             </div>

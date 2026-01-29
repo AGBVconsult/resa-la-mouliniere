@@ -68,12 +68,16 @@ export function MonthCalendar({
 
   const renderIndicator = (isOpen: boolean, type: "lunch" | "dinner") => {
     if (!isOpen) {
-      return <div className="w-[1vh] h-[1vh] min-w-[6px] min-h-[6px] rounded-full bg-slate-300" />;
+      return <div style={{ width: '1vh', height: '1vh', minWidth: '6px', minHeight: '6px', borderRadius: '9999px', backgroundColor: '#cbd5e1' }} />;
     }
     return (
       <div
-        className="w-[1vh] h-[1vh] min-w-[6px] min-h-[6px] rounded-full"
         style={{
+          width: '1vh',
+          height: '1vh',
+          minWidth: '6px',
+          minHeight: '6px',
+          borderRadius: '9999px',
           backgroundColor: type === "lunch" ? COLORS.lunch.available : COLORS.dinner.available,
         }}
       />
@@ -81,24 +85,24 @@ export function MonthCalendar({
   };
 
   return (
-    <div className="p-[2vh] bg-white rounded-2xl shadow-sm">
+    <div style={{ padding: '2vh', backgroundColor: 'white', borderRadius: '1rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
       {/* Navigation */}
-      <div className="flex justify-between items-center mb-[1.5vh]">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5vh' }}>
         <button
           type="button"
           onClick={onPrevMonth}
-          className="w-[5vh] h-[5vh] min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors"
+          style={{ width: '5vh', height: '5vh', minWidth: '36px', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '9999px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
           aria-label="Mois précédent"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="font-bold text-[2.2vh] capitalize">
+        <span style={{ fontWeight: 700, fontSize: '2.2vh', textTransform: 'capitalize' }}>
           {months[month - 1]} {year}
         </span>
         <button
           type="button"
           onClick={onNextMonth}
-          className="w-[5vh] h-[5vh] min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors"
+          style={{ width: '5vh', height: '5vh', minWidth: '36px', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '9999px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
           aria-label="Mois suivant"
         >
           <ChevronRight size={20} />
@@ -106,16 +110,16 @@ export function MonthCalendar({
       </div>
 
       {/* En-tête jours */}
-      <div className="grid grid-cols-7 mb-[0.5vh] text-center">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', marginBottom: '0.5vh', textAlign: 'center' }}>
         {daysShort.map((d, i) => (
-          <span key={i} className="text-[1.3vh] font-bold text-slate-500 uppercase">
+          <span key={i} style={{ fontSize: '1.3vh', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
             {d}
           </span>
         ))}
       </div>
 
       {/* Grille calendrier */}
-      <div className="grid grid-cols-7 gap-[0.5vh]">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '0.5vh' }}>
         {calendarDays.map((dateKey, idx) => {
           if (!dateKey) {
             return <div key={idx} className="aspect-square" />;
@@ -138,12 +142,23 @@ export function MonthCalendar({
               type="button"
               disabled={isDisabled}
               onClick={() => !isDisabled && onSelectDate(dateKey)}
-              className={`aspect-square rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${
-                isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"
-              } ${isSelected ? "bg-slate-900 text-white" : ""}`}
+              style={{
+                aspectRatio: '1 / 1',
+                borderRadius: '0.75rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.25rem',
+                opacity: isDisabled ? 0.4 : 1,
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                backgroundColor: isSelected ? '#0f172a' : 'transparent',
+                color: isSelected ? 'white' : 'inherit',
+                border: 'none',
+              }}
             >
-              <span className="text-[1.8vh] font-medium">{dayNumber}</span>
-              <div className="flex gap-1">
+              <span style={{ fontSize: '1.8vh', fontWeight: 500 }}>{dayNumber}</span>
+              <div style={{ display: 'flex', gap: '0.25rem' }}>
                 {renderIndicator(hasLunch, "lunch")}
                 {renderIndicator(hasDinner, "dinner")}
               </div>
@@ -153,14 +168,14 @@ export function MonthCalendar({
       </div>
 
       {/* Légende */}
-      <div className="mt-[1.5vh] pt-[1vh] border-t border-slate-100">
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-[1.4vh] text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+      <div style={{ marginTop: '1.5vh', paddingTop: '1vh', borderTop: '1px solid #f1f5f9' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: '1rem', rowGap: '0.5rem', fontSize: '1.4vh', color: '#64748b' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+            <div style={{ width: '0.625rem', height: '0.625rem', borderRadius: '9999px', backgroundColor: '#f59e0b' }} />
             <span>{legend.lunchAvailable}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+            <div style={{ width: '0.625rem', height: '0.625rem', borderRadius: '9999px', backgroundColor: '#3b82f6' }} />
             <span>{legend.dinnerAvailable}</span>
           </div>
         </div>
