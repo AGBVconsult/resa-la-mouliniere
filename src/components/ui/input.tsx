@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+function Input({ className, type, style, ...props }: React.ComponentProps<"input">) {
   return (
     <input
       type={type}
@@ -13,6 +13,21 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         className
       )}
+      style={{
+        display: 'flex',
+        height: '2.75rem',
+        width: '100%',
+        minWidth: 0,
+        borderRadius: '0.375rem',
+        border: '1px solid #e2e8f0',
+        backgroundColor: 'transparent',
+        paddingLeft: '0.75rem',
+        paddingRight: '0.75rem',
+        paddingTop: '0.25rem',
+        paddingBottom: '0.25rem',
+        fontSize: '1rem',
+        ...style,
+      }}
       {...props}
     />
   );

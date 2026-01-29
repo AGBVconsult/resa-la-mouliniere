@@ -40,6 +40,7 @@ function Button({
   variant,
   size,
   asChild = false,
+  style,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
@@ -47,10 +48,44 @@ function Button({
   }) {
   const Comp = asChild ? Slot : "button";
 
+  const baseStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    whiteSpace: 'nowrap',
+    borderRadius: '0.375rem',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    cursor: 'pointer',
+  };
+
+  const sizeStyles: Record<string, React.CSSProperties> = {
+    default: { height: '2.75rem', paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '0.5rem', paddingBottom: '0.5rem' },
+    sm: { height: '2.5rem', paddingLeft: '0.75rem', paddingRight: '0.75rem' },
+    lg: { height: '3rem', paddingLeft: '1.5rem', paddingRight: '1.5rem' },
+    icon: { width: '2.75rem', height: '2.75rem' },
+  };
+
+  const variantStyles: Record<string, React.CSSProperties> = {
+    default: { backgroundColor: '#0f172a', color: 'white' },
+    destructive: { backgroundColor: '#ef4444', color: 'white' },
+    outline: { backgroundColor: 'white', border: '1px solid #e2e8f0', color: '#0f172a' },
+    secondary: { backgroundColor: '#f1f5f9', color: '#0f172a' },
+    ghost: { backgroundColor: 'transparent', color: '#0f172a' },
+    link: { backgroundColor: 'transparent', color: '#0f172a', textDecoration: 'underline' },
+  };
+
   return (
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      style={{
+        ...baseStyle,
+        ...sizeStyles[size || 'default'],
+        ...variantStyles[variant || 'default'],
+        ...style,
+      }}
       {...props}
     />
   );

@@ -8,9 +8,9 @@ interface StepHeaderProps {
 
 export function StepHeader({ title, subtitle, className = "" }: StepHeaderProps) {
   return (
-    <div className={`text-center ${className}`}>
-      <h2 className="text-[2.5vh] font-bold text-slate-900 mb-[0.3vh]">{title}</h2>
-      <p className="text-[1.6vh] text-slate-500">{subtitle}</p>
+    <div className={`text-center ${className}`} style={{ textAlign: 'center' }}>
+      <h2 style={{ fontSize: '2.5vh', fontWeight: 700, color: '#0f172a', marginBottom: '0.3vh' }}>{title}</h2>
+      <p style={{ fontSize: '1.6vh', color: '#64748b' }}>{subtitle}</p>
     </div>
   );
 }

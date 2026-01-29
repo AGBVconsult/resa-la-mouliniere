@@ -27,17 +27,24 @@ export function BookingHeader({
   hideSummary = false,
 }: BookingHeaderProps) {
   return (
-    <div className="bg-slate-900 text-white px-[4vw] py-[1.5vh] min-h-[8vh] flex-shrink-0">
+    <div 
+      className="bg-slate-900 text-white px-[4vw] py-[1.5vh] min-h-[8vh] flex-shrink-0"
+      style={{ backgroundColor: '#0f172a', color: 'white', paddingLeft: '4vw', paddingRight: '4vw', paddingTop: '1.5vh', paddingBottom: '1.5vh', minHeight: '8vh', flexShrink: 0 }}
+    >
       {/* Ligne 1 : Progress centré + Langue à droite */}
-      <div className="flex items-center justify-between h-[4vh] min-h-[40px]">
+      <div 
+        className="flex items-center justify-between h-[4vh] min-h-[40px]"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '4vh', minHeight: '40px' }}
+      >
         <div className="w-16" />
         <ProgressIndicator currentStep={currentStep} totalSteps={6} />
-        <div className="flex items-center gap-1.5 w-16 justify-end">
-          <Globe size={16} className="text-slate-400" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', width: '4rem', justifyContent: 'flex-end' }}>
+          <Globe size={16} style={{ color: '#94a3b8' }} />
           <select
             value={lang}
             onChange={(e) => onLangChange(e.target.value as Language)}
             className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer"
+            style={{ backgroundColor: 'transparent', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', border: 'none', color: 'white' }}
           >
             {LANGUAGES.map((l) => (
               <option key={l.code} value={l.code} className="text-slate-900">
@@ -50,22 +57,25 @@ export function BookingHeader({
 
       {/* Ligne 2 : Récap progressif (masqué si hideSummary) */}
       {!hideSummary && (
-        <div className="flex items-center justify-center gap-4 mt-[0.5vh] text-sm whitespace-nowrap">
+        <div 
+          className="flex items-center justify-center gap-4 mt-[0.5vh] text-sm whitespace-nowrap"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginTop: '0.5vh', fontSize: '0.875rem', whiteSpace: 'nowrap' }}
+        >
           {guestCount !== undefined && guestLabel && (
-            <span className="flex items-center gap-1.5">
-              <Users size={14} className="text-slate-400 flex-shrink-0" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <Users size={14} style={{ color: '#94a3b8', flexShrink: 0 }} />
               <span>{guestCount} {guestLabel}</span>
             </span>
           )}
           {dateLabel && (
-            <span className="flex items-center gap-1.5">
-              <Calendar size={14} className="text-slate-400 flex-shrink-0" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <Calendar size={14} style={{ color: '#94a3b8', flexShrink: 0 }} />
               <span>{dateLabel}</span>
             </span>
           )}
           {timeLabel && (
-            <span className="flex items-center gap-1.5">
-              <Clock size={14} className="text-slate-400 flex-shrink-0" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <Clock size={14} style={{ color: '#94a3b8', flexShrink: 0 }} />
               <span>{timeLabel}</span>
             </span>
           )}

@@ -251,11 +251,15 @@ export default function Widget() {
   ]);
 
   return (
-    <div className="h-[100dvh] md:h-auto md:min-h-screen md:bg-slate-100 md:flex md:items-center md:justify-center md:p-4">
+    <div 
+      className="h-[100dvh] md:h-auto md:min-h-screen md:bg-slate-100 md:flex md:items-center md:justify-center md:p-4"
+      style={{ minHeight: '100vh', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+    >
       <div
         role="form"
         aria-label="Formulaire de réservation"
         className="w-full h-[100dvh] flex flex-col bg-white md:h-[100dvh] md:max-h-[850px] md:max-w-[480px] md:rounded-3xl md:shadow-2xl md:border md:border-slate-200 overflow-hidden"
+        style={{ width: '100%', maxWidth: '480px', height: '100vh', maxHeight: '850px', display: 'flex', flexDirection: 'column', backgroundColor: 'white', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid #e2e8f0', overflow: 'hidden' }}
       >
         {/* Header */}
         <BookingHeader
@@ -270,7 +274,10 @@ export default function Widget() {
         />
 
         {/* Content */}
-        <div className="flex-1 min-h-0 overflow-y-auto relative flex flex-col bg-slate-50">
+        <div 
+          className="flex-1 min-h-0 overflow-y-auto relative flex flex-col bg-slate-50"
+          style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'auto', position: 'relative', display: 'flex', flexDirection: 'column', backgroundColor: '#f8fafc', WebkitOverflowScrolling: 'touch' }}
+        >
           <LoadingSpinner visible={loading} />
 
           <AnimatePresence mode="wait" initial={false}>

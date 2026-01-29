@@ -11,32 +11,39 @@ export function ProgressIndicator({ currentStep, totalSteps = 5 }: ProgressIndic
   const isComplete = currentStep === totalSteps;
 
   return (
-    <div className="flex items-center gap-1">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
       {Array.from({ length: totalSteps }, (_, index) => {
         const stepNumber = index + 1;
         const isCompleted = isComplete || stepNumber < currentStep;
         const isCurrent = !isComplete && stepNumber === currentStep;
 
         return (
-          <div key={stepNumber} className="flex items-center">
+          <div key={stepNumber} style={{ display: 'flex', alignItems: 'center' }}>
             <div
-              className={`w-[2.5vh] h-[2.5vh] min-w-[16px] min-h-[16px] rounded-full flex items-center justify-center transition-all duration-300 ${
-                isCompleted
-                  ? "bg-slate-100"
-                  : isCurrent
-                    ? "border-2 border-white bg-transparent"
-                    : "border-[1.5px] border-slate-600 bg-transparent"
-              }`}
+              style={{
+                width: '2.5vh',
+                height: '2.5vh',
+                minWidth: '16px',
+                minHeight: '16px',
+                borderRadius: '9999px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: isCompleted ? '#f1f5f9' : 'transparent',
+                border: isCompleted ? 'none' : isCurrent ? '2px solid white' : '1.5px solid #475569',
+              }}
             >
-              {isCompleted && <Check size={10} className="text-slate-900" strokeWidth={3} />}
-              {isCurrent && <div className="w-[1vh] h-[1vh] rounded-full bg-white" />}
+              {isCompleted && <Check size={10} style={{ color: '#0f172a' }} strokeWidth={3} />}
+              {isCurrent && <div style={{ width: '1vh', height: '1vh', borderRadius: '9999px', backgroundColor: 'white' }} />}
             </div>
 
             {stepNumber < totalSteps && (
               <div
-                className={`w-[1.5vh] h-[0.3vh] transition-all duration-300 ${
-                  isComplete || stepNumber < currentStep ? "bg-slate-100" : "bg-slate-600"
-                }`}
+                style={{
+                  width: '1.5vh',
+                  height: '0.3vh',
+                  backgroundColor: isComplete || stepNumber < currentStep ? '#f1f5f9' : '#475569',
+                }}
               />
             )}
           </div>
