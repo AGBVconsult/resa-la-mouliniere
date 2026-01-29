@@ -24,6 +24,7 @@ interface TimeGroup {
   reservations: Reservation[];
   totalGuests: number;
   capacity: number;
+  validReservationCount: number;
 }
 
 export function ReservationList({
@@ -38,6 +39,9 @@ export function ReservationList({
   tables = [],
   slotCapacities = {},
 }: ReservationListProps) {
+  // Statuses that should NOT be counted (cancelled, no-show, refused)
+  const EXCLUDED_STATUSES = new Set(["cancelled", "noshow", "refused"]);
+
   // Group reservations by timeKey
   const timeGroups = useMemo(() => {
     const groups: Record<string, Reservation[]> = {};
@@ -50,14 +54,19 @@ export function ReservationList({
     }
 
     // Sort by timeKey and create TimeGroup objects
+    // Only count valid reservations (not cancelled, noshow, refused) for totals
     return Object.entries(groups)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([timeKey, resaList]): TimeGroup => ({
-        timeKey,
-        reservations: resaList,
-        totalGuests: resaList.reduce((sum, r) => sum + r.partySize, 0),
-        capacity: slotCapacities[timeKey] || 20,
-      }));
+      .map(([timeKey, resaList]): TimeGroup => {
+        const validReservations = resaList.filter(r => !EXCLUDED_STATUSES.has(r.status));
+        return {
+          timeKey,
+          reservations: resaList,
+          totalGuests: validReservations.reduce((sum, r) => sum + r.partySize, 0),
+          capacity: slotCapacities[timeKey] || 20,
+          validReservationCount: validReservations.length,
+        };
+      });
   }, [reservations, slotCapacities]);
 
   if (reservations.length === 0) {
@@ -80,7 +89,7 @@ export function ReservationList({
           <span className="w-7 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Hist.</span>
           <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pays</span>
           <span className="min-w-40 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
-          <span className="w-28 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Options</span>
+          <span className="w-32 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Options</span>
           <span className="flex-1 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Note</span>
           <span className="w-32 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Actions</span>
           <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider"></span>
@@ -106,7 +115,7 @@ export function ReservationList({
             timeKey={group.timeKey}
             totalGuests={group.totalGuests}
             capacity={group.capacity}
-            reservationCount={group.reservations.length}
+            reservationCount={group.validReservationCount}
           />
           {group.reservations.map((reservation) => (
             <ReservationRow
