@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Baby, Accessibility, PawPrint, ChevronDown, MoreHorizontal, X, UserX } from "lucide-react";
+import { Users, Baby, Accessibility, PawPrint, ChevronDown, MoreHorizontal, X, UserX, Icon } from "lucide-react";
+import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
@@ -574,7 +575,7 @@ export function ReservationRow({
 
         {/* Options - fixed order: stroller, highChair, wheelchair, dogAccess */}
         <div className="flex items-center gap-0.5 shrink-0">
-          <Baby className={cn("h-3.5 w-3.5", hasOption("stroller") ? "text-purple-600" : "text-transparent")} />
+          <Icon iconNode={stroller} className={cn("h-3.5 w-3.5", hasOption("stroller") ? "text-black" : "text-transparent")} />
           <Baby className={cn("h-3.5 w-3.5", hasOption("highChair") ? "text-black" : "text-transparent")} />
           <Accessibility className={cn("h-3.5 w-3.5", hasOption("wheelchair") ? "text-black" : "text-transparent")} />
           <PawPrint className={cn("h-3.5 w-3.5", hasOption("dogAccess") ? "text-black" : "text-transparent")} />
@@ -644,7 +645,7 @@ export function ReservationRow({
 
         {/* Options - fixed order: stroller, highChair, wheelchair, dogAccess */}
         <div className="w-32 flex items-center gap-1.5">
-          <Baby className={cn("h-4 w-4", hasOption("stroller") ? "text-purple-600" : "text-transparent")} strokeWidth={1.5} />
+          <Icon iconNode={stroller} className={cn("h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <Baby className={cn("h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <Accessibility className={cn("h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <PawPrint className={cn("h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
