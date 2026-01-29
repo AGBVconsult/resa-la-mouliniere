@@ -34,9 +34,12 @@ export function ReservationHeader({
   const formattedDate = format(selectedDate, "EEEE d MMMM yyyy", { locale: fr });
 
   return (
-    <div className="flex items-center justify-between py-4">
+    <div 
+      className="flex items-center justify-between py-4"
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '1rem', paddingBottom: '1rem' }}
+    >
       {/* Date Navigation */}
-      <div className="flex items-center gap-2">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <Button
           variant="ghost"
           size="icon"
@@ -49,6 +52,7 @@ export function ReservationHeader({
         <button
           onClick={onOpenDatePicker}
           className="text-3xl font-light capitalize hover:text-gray-600 transition-colors"
+          style={{ fontSize: '1.875rem', fontWeight: 300, textTransform: 'capitalize', background: 'none', border: 'none', cursor: 'pointer' }}
         >
           {formattedDate}
         </button>
@@ -73,7 +77,7 @@ export function ReservationHeader({
       </div>
 
       {/* Service Toggle + Actions */}
-      <div className="flex items-center gap-3">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         {/* Import Button (Migration) */}
         {onImportReservation && (
           <Button
@@ -97,7 +101,7 @@ export function ReservationHeader({
         </Button>
 
         {/* Service Toggle */}
-        <div className="bg-black p-1 rounded-full flex">
+        <div style={{ backgroundColor: 'black', padding: '0.25rem', borderRadius: '9999px', display: 'flex' }}>
           <button
             onClick={() => onServiceChange("lunch")}
             className={cn(
@@ -106,6 +110,7 @@ export function ReservationHeader({
                 ? "bg-white text-black shadow-sm"
                 : "text-gray-400 hover:text-white"
             )}
+            style={{ paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: 500, backgroundColor: currentService === 'lunch' ? 'white' : 'transparent', color: currentService === 'lunch' ? 'black' : '#9ca3af', border: 'none', cursor: 'pointer' }}
           >
             Déjeuner
           </button>
@@ -117,6 +122,7 @@ export function ReservationHeader({
                 ? "bg-white text-black shadow-sm"
                 : "text-gray-400 hover:text-white"
             )}
+            style={{ paddingLeft: '1rem', paddingRight: '1rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: 500, backgroundColor: currentService === 'dinner' ? 'white' : 'transparent', color: currentService === 'dinner' ? 'black' : '#9ca3af', border: 'none', cursor: 'pointer' }}
           >
             Dîner
           </button>
