@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { User, Mail, Phone, Users, Calendar, MessageSquare, Baby, Accessibility, PawPrint, Icon } from "lucide-react";
-import { stroller } from "@lucide/lab";
+import { User, Mail, Phone, Users, Calendar, MessageSquare, Baby, Accessibility, PawPrint } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
@@ -172,11 +171,9 @@ export function Step4Policy({
     return parts.join(" ");
   };
 
-  type IconType = typeof Baby | ((props: { size?: number }) => React.ReactElement);
-  
-  const selectedOptions = (): { icon: IconType; label: string }[] => {
-    const opts: { icon: IconType; label: string }[] = [];
-    if (data.requiresStroller) opts.push({ icon: (props: { size?: number }) => <Icon iconNode={stroller} {...props} />, label: t.stroller });
+  const selectedOptions = (): { icon: typeof Baby; label: string }[] => {
+    const opts: { icon: typeof Baby; label: string }[] = [];
+    if (data.requiresStroller) opts.push({ icon: Baby, label: t.stroller });
     if (data.requiresHighChair) opts.push({ icon: Baby, label: t.high_chair });
     if (data.requiresWheelchair) opts.push({ icon: Accessibility, label: t.wheelchair });
     if (data.requiresDogAccess) opts.push({ icon: PawPrint, label: t.dog });
