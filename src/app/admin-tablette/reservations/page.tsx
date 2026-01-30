@@ -11,20 +11,22 @@ import type { ReservationStatus } from "../../../../spec/contracts.generated";
 import {
   ChevronLeft,
   ChevronRight,
-  Users,
   UsersRound,
-  MessageSquare,
   MoreHorizontal,
-  Phone,
-  Mail,
   Loader2,
-  Settings,
+  X,
+  UserX,
+  Baby,
+  Accessibility,
+  PawPrint,
+  Icon,
 } from "lucide-react";
+import { stroller } from "@lucide/lab";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { getFlag } from "@/lib/getFlag";
-import { StatusPill } from "../components/StatusPill";
-import { ActionPopup } from "../components/ActionPopup";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -40,13 +42,27 @@ interface Reservation {
   lastName: string;
   email: string;
   phone: string;
-  language: string;
+  language: "fr" | "nl" | "en" | "de" | "it";
   note?: string;
-  tableId?: Id<"tables">;
+  tableIds: Id<"tables">[];
+  primaryTableId?: Id<"tables">;
   options?: string[];
   source: string;
   version: number;
 }
+
+const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
+  confirmed: { bg: "bg-emerald-500" },
+  seated: { bg: "bg-emerald-500" },
+  arrived: { bg: "bg-emerald-500" },
+  pending: { bg: "bg-orange-500", animate: true },
+  incident: { bg: "bg-black" },
+  cancelled: { bg: "bg-red-500" },
+  noshow: { bg: "bg-red-500" },
+  refused: { bg: "bg-red-500" },
+  completed: { bg: "bg-gray-300" },
+  finished: { bg: "bg-gray-300" },
+};
 
 export default function TabletReservationsPage() {
   const searchParams = useSearchParams();
@@ -149,9 +165,67 @@ export default function TabletReservationsPage() {
   }, [dinnerReservations]);
 
   const getTableName = (res: Reservation) => {
-    if (!res.tableId || !tablesData) return "-";
-    const table = tablesData.find((t) => t._id === res.tableId);
+    if (!tablesData) return "-";
+    const primaryId = res.primaryTableId || (res.tableIds?.length > 0 ? res.tableIds[0] : null);
+    if (!primaryId) return "-";
+    const table = tablesData.find((t) => t._id === primaryId);
     return table?.name || "-";
+  };
+
+  const getPrimaryAction = (status: string): { label: string; color: string; nextStatus: ReservationStatus } | null => {
+    switch (status) {
+      case "pending":
+        return { label: "À valider", color: "bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100", nextStatus: "confirmed" };
+      case "confirmed":
+        return { label: "Arrivé", color: "bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100", nextStatus: "seated" };
+      case "seated":
+        return { label: "Terminé", color: "bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100", nextStatus: "completed" };
+      default:
+        return null;
+    }
+  };
+
+  const getSecondaryAction = (status: string): { icon: React.ReactNode; color: string; nextStatus: ReservationStatus; tooltip: string } | null => {
+    switch (status) {
+      case "pending":
+        return { icon: <X size={18} />, color: "bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600", nextStatus: "refused", tooltip: "Refuser" };
+      case "confirmed":
+        return { icon: <UserX size={18} />, color: "bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600", nextStatus: "noshow", tooltip: "No-show" };
+      default:
+        return null;
+    }
+  };
+
+  const getMenuActions = (status: string): Array<{ label: string; nextStatus: ReservationStatus; textColor: string; hoverBg: string }> => {
+    const actions: Array<{ label: string; nextStatus: ReservationStatus; textColor: string; hoverBg: string }> = [];
+    switch (status) {
+      case "pending":
+        actions.push({ label: "Refuser", nextStatus: "refused", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
+        break;
+      case "confirmed":
+        actions.push({ label: "No-show", nextStatus: "noshow", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
+        actions.push({ label: "Annuler", nextStatus: "cancelled", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
+        break;
+      case "seated":
+        actions.push({ label: "Signaler Incident", nextStatus: "incident", textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
+        break;
+      case "noshow":
+        actions.push({ label: "Marquer Arrivé", nextStatus: "seated", textColor: "text-emerald-600", hoverBg: "hover:bg-emerald-50" });
+        actions.push({ label: "Restaurer", nextStatus: "confirmed", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
+        break;
+      case "cancelled":
+        actions.push({ label: "Marquer Arrivé", nextStatus: "seated", textColor: "text-emerald-600", hoverBg: "hover:bg-emerald-50" });
+        actions.push({ label: "Restaurer", nextStatus: "confirmed", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
+        break;
+      case "completed":
+        actions.push({ label: "Rouvrir", nextStatus: "seated", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
+        break;
+      case "incident":
+        actions.push({ label: "Rouvrir", nextStatus: "seated", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
+        actions.push({ label: "Terminer", nextStatus: "completed", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
+        break;
+    }
+    return actions;
   };
 
   const isLoading = lunchStatus === "LoadingFirstPage" || dinnerStatus === "LoadingFirstPage";
@@ -162,142 +236,134 @@ export default function TabletReservationsPage() {
 
   const renderReservationRow = (res: Reservation) => {
     const isExpanded = expandedId === res._id;
+    const statusStyle = STATUS_COLORS[res.status] || { bg: "bg-gray-400" };
+    const primaryAction = getPrimaryAction(res.status);
+    const secondaryAction = getSecondaryAction(res.status);
+    const menuActions = getMenuActions(res.status);
+    const hasOption = (opt: string) => res.options?.includes(opt);
 
     return (
       <div key={res._id} className="flex flex-col">
         <div
           onClick={() => toggleExpand(res._id)}
-          className={`group flex items-center gap-4 px-5 py-3 hover:bg-slate-50/50 transition-all cursor-pointer ${
-            isExpanded ? "bg-slate-50/70" : ""
-          }`}
+          className={cn(
+            "flex items-center px-4 py-3 hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 gap-4",
+            isExpanded && "bg-gray-50"
+          )}
         >
-          <StatusPill status={res.status} />
-
-          <span className="w-14 text-sm font-mono text-slate-500 font-medium shrink-0 tracking-tight">
-            {res.timeKey}
-          </span>
-
-          <div className="flex items-center justify-center w-12 shrink-0">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">
-              T{getTableName(res)}
-            </span>
+          {/* Status pill */}
+          <div className="w-6 flex justify-center">
+            <div className={cn("w-1 h-7 rounded-full", statusStyle.bg, statusStyle.animate && "animate-pulse")} />
           </div>
 
-          <div className="flex items-center gap-2 w-14 shrink-0">
-            <Users size={16} className="text-slate-400" strokeWidth={2.5} />
-            <span className="text-base font-bold text-slate-800">{res.partySize}</span>
+          {/* Time */}
+          <span className="w-14 text-sm font-mono text-gray-600">{res.timeKey}</span>
+
+          {/* Table */}
+          <span className="w-14 text-sm px-2.5 py-1 bg-gray-100 rounded text-center">{getTableName(res)}</span>
+
+          {/* Party size */}
+          <div className="w-16 flex items-center gap-1 text-sm text-gray-600">
+            <span className="font-medium">{res.partySize}</span>
+            {(res.childrenCount > 0 || res.babyCount > 0) && (
+              <span className="text-gray-400 text-xs">
+                ({res.childrenCount > 0 ? `${res.childrenCount}e` : ""}
+                {res.childrenCount > 0 && res.babyCount > 0 ? " + " : ""}
+                {res.babyCount > 0 ? `${res.babyCount}b` : ""})
+              </span>
+            )}
           </div>
 
-          <span className="text-base shrink-0">{getFlag(res.phone, res.language)}</span>
+          {/* Flag */}
+          <span className="w-10 text-lg text-center">{getFlag(res.phone, res.language)}</span>
 
-          <span
-            className={`flex-1 text-base font-semibold truncate ${
-              res.status === "cancelled" || res.status === "noshow"
-                ? "text-slate-300 line-through"
-                : "text-slate-700"
-            }`}
-          >
-            {res.lastName} {res.firstName.charAt(0).toUpperCase()}.
-          </span>
+          {/* Name */}
+          <div className="min-w-40 max-w-60 truncate">
+            <span className="font-semibold">{res.lastName}</span>{" "}
+            <span className="text-gray-600">{res.firstName}</span>
+          </div>
 
-          <div className="flex items-center gap-3 shrink-0 relative">
-            {res.note && (
-              <div className="p-2 bg-amber-50 rounded-full">
-                <MessageSquare size={14} className="text-amber-500" strokeWidth={2.5} />
-              </div>
+          {/* Options */}
+          <div className="w-32 flex items-center gap-1.5">
+            <Icon iconNode={stroller} className={cn("h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+            <Baby className={cn("h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+            <Accessibility className={cn("h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+            <PawPrint className={cn("h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+          </div>
+
+          {/* Note preview */}
+          <span className="flex-1 text-sm text-gray-500 truncate">{res.note || "-"}</span>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {primaryAction && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className={cn("w-28 h-11 min-h-[44px] rounded-full text-[11px] font-medium uppercase tracking-wide", primaryAction.color)}
+                onClick={() => handleStatusChange(res._id, primaryAction.nextStatus, res.version)}
+              >
+                {primaryAction.label}
+              </Button>
             )}
-
-            <button
-              onClick={(e) => togglePopup(e, res._id)}
-              className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all"
-            >
-              <MoreHorizontal size={20} />
-            </button>
-
-            {openPopupId === res._id && (
-              <ActionPopup
-                status={res.status}
-                onAction={(action, nextStatus) => {
-                  if (action === "status" && nextStatus) {
-                    handleStatusChange(res._id, nextStatus, res.version);
-                  }
-                }}
-                onClose={() => setOpenPopupId(null)}
-              />
+            {secondaryAction && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className={cn("w-11 min-w-[44px] h-11 min-h-[44px] rounded-full", secondaryAction.color)}
+                onClick={() => handleStatusChange(res._id, secondaryAction.nextStatus, res.version)}
+                title={secondaryAction.tooltip}
+              >
+                {secondaryAction.icon}
+              </Button>
             )}
+          </div>
+
+          {/* Menu */}
+          <div className="w-10 flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+            <div className="relative">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="w-10 h-10 rounded-full text-gray-400 hover:text-black hover:bg-gray-100"
+                onClick={(e) => togglePopup(e, res._id)}
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </Button>
+              {openPopupId === res._id && (
+                <>
+                  <div className="fixed inset-0 z-[99]" onClick={() => setOpenPopupId(null)} />
+                  <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border py-1 z-[100] min-w-[180px]">
+                    {menuActions.map((action) => (
+                      <button
+                        key={action.nextStatus}
+                        className={cn("w-full px-4 py-2 text-left text-xs", action.textColor, action.hoverBg)}
+                        onClick={() => { handleStatusChange(res._id, action.nextStatus, res.version); setOpenPopupId(null); }}
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
+        {/* Expanded details */}
         {isExpanded && (
-          <div className="px-5 pb-5 pt-4 bg-slate-50/70 border-b border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="grid grid-cols-4 gap-4">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nom</span>
-                <span className="text-sm font-bold text-slate-700">{res.lastName}</span>
+          <div className="bg-gray-50/50 px-4 py-4 ml-8 border-b border-gray-100">
+            <div className="grid grid-cols-3 gap-6">
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Contact</p>
+                <p className="text-sm">{res.phone}</p>
+                <p className="text-sm text-gray-600">{res.email}</p>
               </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prénom</span>
-                <span className="text-sm font-bold text-slate-700">{res.firstName}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Téléphone</span>
-                <a href={`tel:${res.phone}`} className="text-sm font-bold text-slate-600 underline decoration-slate-200">
-                  {res.phone}
-                </a>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</span>
-                <a href={`mailto:${res.email}`} className="text-sm font-bold text-slate-600 underline decoration-slate-200 truncate">
-                  {res.email}
-                </a>
+              <div className="col-span-2">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Note</p>
+                <p className="text-sm text-gray-700">{res.note || "Aucune note"}</p>
               </div>
             </div>
-
-            <div className="grid grid-cols-4 gap-4 mt-4">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Couverts</span>
-                <span className="text-sm font-bold text-slate-700">
-                  {res.adults} ad.{res.childrenCount > 0 && ` + ${res.childrenCount} enf.`}{res.babyCount > 0 && ` + ${res.babyCount} bb`}
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Table</span>
-                <span className="text-sm font-bold text-slate-700">{getTableName(res)}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Heure</span>
-                <span className="text-sm font-bold text-slate-700">{res.timeKey}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Source</span>
-                <span className="text-sm font-bold text-slate-700 capitalize">{res.source}</span>
-              </div>
-            </div>
-
-            {res.options && res.options.length > 0 && (
-              <div className="flex flex-col mt-4">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Options</span>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {res.options.map((opt) => (
-                    <span key={opt} className="text-xs px-3 py-1 bg-slate-100 rounded-full text-slate-600">
-                      {opt === "stroller" && "Poussette"}
-                      {opt === "highChair" && "Chaise haute"}
-                      {opt === "wheelchair" && "PMR"}
-                      {opt === "dogAccess" && "Chien"}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {res.note && (
-              <div className="flex flex-col mt-4">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Notes</span>
-                <div className="p-3 bg-white rounded-xl border border-slate-100 text-sm text-slate-600 italic leading-relaxed mt-1">
-                  {res.note}
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -344,32 +410,27 @@ export default function TabletReservationsPage() {
           </div>
         </div>
 
-        {/* Service Switch + Settings */}
-        <div className="flex items-center gap-4">
-          <div className="flex bg-white rounded-full p-1 border border-slate-200">
-            <button
-              onClick={() => setSelectedService("lunch")}
-              className={`px-6 py-2 text-xs font-black uppercase tracking-widest rounded-full transition-all ${
-                selectedService === "lunch"
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              Déjeuner
-            </button>
-            <button
-              onClick={() => setSelectedService("dinner")}
-              className={`px-6 py-2 text-xs font-black uppercase tracking-widest rounded-full transition-all ${
-                selectedService === "dinner"
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              Dîner
-            </button>
-          </div>
-          <button className="p-3 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-slate-700 transition-colors">
-            <Settings size={20} strokeWidth={2} />
+        {/* Service Switch */}
+        <div className="flex bg-white rounded-full p-1 border border-slate-200">
+          <button
+            onClick={() => setSelectedService("lunch")}
+            className={`px-6 py-2 text-xs font-black uppercase tracking-widest rounded-full transition-all ${
+              selectedService === "lunch"
+                ? "bg-slate-800 text-white"
+                : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            Déjeuner
+          </button>
+          <button
+            onClick={() => setSelectedService("dinner")}
+            className={`px-6 py-2 text-xs font-black uppercase tracking-widest rounded-full transition-all ${
+              selectedService === "dinner"
+                ? "bg-slate-800 text-white"
+                : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            Dîner
           </button>
         </div>
       </header>
