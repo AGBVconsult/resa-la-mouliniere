@@ -30,8 +30,8 @@ export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
     <ToastProvider>
       <div className="min-h-screen bg-[#FDFDFD] flex flex-col font-sans antialiased text-slate-900">
         <div className="w-full max-w-3xl mx-auto bg-white flex flex-col h-[100dvh] md:h-[85vh] md:my-auto md:rounded-[2.5rem] md:shadow-[0_20px_50px_rgba(0,0,0,0.05)] md:border md:border-slate-100 overflow-hidden">
-          {/* Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Content - padding top for safe area (status bar) */}
+          <div className="flex-1 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)]">
             {children}
           </div>
 
