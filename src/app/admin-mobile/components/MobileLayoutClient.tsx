@@ -35,8 +35,8 @@ export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
             {children}
           </div>
 
-          {/* Bottom Navigation */}
-          <nav className="px-6 py-4 border-t border-slate-100 flex justify-around items-center bg-white z-[200] shrink-0 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          {/* Bottom Navigation - sticky, no scroll below */}
+          <nav className="sticky bottom-0 px-6 py-3 border-t border-slate-100 flex justify-around items-center bg-white z-[200] shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             {NAV_ITEMS.map((item) => {
               const isActive = activeTab === item.id;
               const Icon = item.icon;
@@ -57,7 +57,7 @@ export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
                       isActive ? "scale-110" : "scale-100"
                     )}
                   />
-                  <span className="text-[9px] font-black uppercase tracking-widest">
+                  <span className="text-[8px] font-black uppercase tracking-widest">
                     {item.label}
                   </span>
                 </button>

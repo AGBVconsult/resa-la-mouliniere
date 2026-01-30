@@ -2,10 +2,10 @@
 
 interface SegmentedBarProps {
   value: number;
-  large?: boolean;
+  covers?: number;
 }
 
-export function SegmentedBar({ value, large = false }: SegmentedBarProps) {
+export function SegmentedBar({ value, covers = 0 }: SegmentedBarProps) {
   const segments = [1, 2, 3, 4];
 
   const getColorClass = (v: number) => {
@@ -14,11 +14,16 @@ export function SegmentedBar({ value, large = false }: SegmentedBarProps) {
     return "bg-emerald-500";
   };
 
+  // Si on a des couverts mais un pourcentage très faible, afficher au moins 1 segment
+  const hasActivity = covers > 0;
+  
   return (
-    <div className={`flex gap-[2px] w-full ${large ? "h-[3px]" : "h-1.5"}`}>
+    <div className="flex gap-[1px] w-full h-1">
       {segments.map((s) => {
+        // Premier segment actif dès qu'il y a des couverts (même 1)
+        // Ensuite progression: 25%, 50%, 75%, 100%
         const threshold = s * 25;
-        const isActive = value >= threshold - 12;
+        const isActive = hasActivity && (s === 1 || value >= threshold - 12);
         return (
           <div
             key={s}
