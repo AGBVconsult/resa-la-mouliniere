@@ -31,6 +31,9 @@ interface Reservation {
   dateKey: string;
   service: "lunch" | "dinner";
   timeKey: string;
+  adults: number;
+  childrenCount: number;
+  babyCount: number;
   partySize: number;
   firstName: string;
   lastName: string;
@@ -38,7 +41,9 @@ interface Reservation {
   email: string;
   language: "fr" | "nl" | "en" | "de" | "it";
   note?: string;
+  options?: string[];
   status: string;
+  source: "online" | "admin" | "phone" | "walkin";
   tableIds: Id<"tables">[];
   primaryTableId?: Id<"tables">;
   version: number;
@@ -254,51 +259,88 @@ export default function MobileReservationsPage() {
         </div>
 
         {isExpanded && (
-          <div className="px-4 pb-6 pt-2 bg-slate-50/50 border-b border-slate-100/50 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex flex-col gap-4 pl-4 border-l-2 border-slate-100 ml-0.5">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-white rounded-xl border border-slate-100">
-                    <Phone size={14} className="text-slate-400" strokeWidth={2.5} />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                      Téléphone
-                    </span>
-                    <a
-                      href={`tel:${res.phone}`}
-                      className="text-xs font-bold text-slate-600 underline decoration-slate-200"
-                    >
-                      {res.phone}
-                    </a>
-                  </div>
+          <div className="px-4 pb-4 pt-3 bg-slate-50/50 border-b border-slate-100/50 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex flex-col gap-3">
+              {/* Nom - Prénom */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Nom</span>
+                  <span className="text-xs font-bold text-slate-700">{res.lastName}</span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-white rounded-xl border border-slate-100">
-                    <Mail size={14} className="text-slate-400" strokeWidth={2.5} />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                      Email
-                    </span>
-                    <a
-                      href={`mailto:${res.email}`}
-                      className="text-xs font-bold text-slate-600 underline decoration-slate-200"
-                    >
-                      {res.email}
-                    </a>
-                  </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Prénom</span>
+                  <span className="text-xs font-bold text-slate-700">{res.firstName}</span>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                  Message & Notes
-                </span>
-                <div className="p-3 bg-white rounded-2xl border border-slate-100 text-xs text-slate-600 italic leading-relaxed">
-                  {res.note || "Aucune note particulière."}
+              {/* Téléphone - Email */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Téléphone</span>
+                  <a href={`tel:${res.phone}`} className="text-xs font-bold text-slate-600 underline decoration-slate-200">
+                    {res.phone}
+                  </a>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Email</span>
+                  <a href={`mailto:${res.email}`} className="text-xs font-bold text-slate-600 underline decoration-slate-200 truncate">
+                    {res.email}
+                  </a>
                 </div>
               </div>
+
+              {/* Couverts - Table */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Couverts</span>
+                  <span className="text-xs font-bold text-slate-700">
+                    {res.adults} ad.{res.childrenCount > 0 && ` + ${res.childrenCount} enf.`}{res.babyCount > 0 && ` + ${res.babyCount} bb`}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Table</span>
+                  <span className="text-xs font-bold text-slate-700">{getTableName(res)}</span>
+                </div>
+              </div>
+
+              {/* Heure - Source */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Heure</span>
+                  <span className="text-xs font-bold text-slate-700">{res.timeKey}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Source</span>
+                  <span className="text-xs font-bold text-slate-700 capitalize">{res.source}</span>
+                </div>
+              </div>
+
+              {/* Options */}
+              {res.options && res.options.length > 0 && (
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Options</span>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {res.options.map((opt) => (
+                      <span key={opt} className="text-[10px] px-2 py-0.5 bg-slate-100 rounded-full text-slate-600">
+                        {opt === "stroller" && "Poussette"}
+                        {opt === "highChair" && "Chaise haute"}
+                        {opt === "wheelchair" && "PMR"}
+                        {opt === "dogAccess" && "Chien"}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {res.note && (
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Notes</span>
+                  <div className="p-2 bg-white rounded-xl border border-slate-100 text-xs text-slate-600 italic leading-relaxed mt-1">
+                    {res.note}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -360,8 +402,9 @@ export default function MobileReservationsPage() {
               <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">
                 Service de Midi
               </h3>
-              <div className="w-20">
-                <SegmentedBar value={lunchPercent} />
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <UsersRound size={14} strokeWidth={2.5} />
+                <span className="text-[11px] font-bold">{lunchCovers}/{lunchCapacity}</span>
               </div>
             </div>
             <div className="divide-y divide-slate-50/50">
