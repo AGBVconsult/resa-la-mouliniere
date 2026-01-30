@@ -7,12 +7,12 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.lamouliniere.be",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.lamouliniere.be https://accounts.lamouliniere.be https://*.lamouliniere.be",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: https: blob:",
-  "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://challenges.cloudflare.com https://vitals.vercel-analytics.com https://*.clerk.accounts.dev https://clerk.lamouliniere.be",
-  "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.lamouliniere.be",
+  "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://challenges.cloudflare.com https://vitals.vercel-analytics.com https://*.clerk.accounts.dev https://clerk.lamouliniere.be https://accounts.lamouliniere.be https://*.lamouliniere.be",
+  "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.lamouliniere.be https://accounts.lamouliniere.be https://*.lamouliniere.be",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
