@@ -5,7 +5,7 @@ import { MobileLayoutClient } from "./components/MobileLayoutClient";
 export const metadata = {
   title: "Admin Mobile - La Moulinière",
   description: "Interface mobile d'administration La Moulinière",
-  manifest: "/admin-manifest.json",
+  manifest: "/admin-mobile-manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

@@ -141,7 +141,7 @@ export default function MobilePlanningPage() {
             return (
               <div
                 key={`empty-${index}`}
-                className="h-[56px] border-r border-b border-slate-50 bg-slate-50/5"
+                className="min-h-[80px] border-r border-b border-slate-50 bg-slate-50/5"
               />
             );
           }
@@ -162,16 +162,16 @@ export default function MobilePlanningPage() {
             <button
               key={`day-${day}`}
               onClick={() => !isClosed && handleDayClick(day)}
-              className={`relative h-[56px] border-r border-b border-slate-50 p-2 flex flex-col transition-all active:scale-[0.98] ${
+              className={`relative min-h-[80px] border-r border-b border-slate-50 p-3 flex flex-col transition-all active:scale-[0.98] ${
                 isClosed
                   ? "bg-slate-50/40 cursor-default"
                   : "hover:bg-slate-50/80 cursor-pointer"
               }`}
             >
               <span
-                className={`text-[10px] font-bold text-left ${
+                className={`text-xs font-bold text-left mb-auto ${
                   isToday
-                    ? "bg-slate-900 text-white rounded-full w-5 h-5 flex items-center justify-center text-[9px]"
+                    ? "bg-slate-900 text-white rounded-full w-6 h-6 flex items-center justify-center"
                     : isClosed
                       ? "text-slate-200"
                       : "text-slate-400"
@@ -180,7 +180,7 @@ export default function MobilePlanningPage() {
                 {day}
               </span>
               {!isClosed && dayData && (
-                <div className="space-y-1 w-full mt-auto">
+                <div className="space-y-1.5 w-full pt-3">
                   <SegmentedBar value={lunchPercent} covers={dayData.lunch.covers} />
                   <SegmentedBar value={dinnerPercent} covers={dayData.dinner.covers} />
                 </div>
