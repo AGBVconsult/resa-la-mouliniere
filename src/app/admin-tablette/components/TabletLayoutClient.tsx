@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Calendar, ClipboardList, LogOut } from "lucide-react";
+import { CalendarDays, ListChecks, LogOut } from "lucide-react";
 import { ToastProvider } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { useClerk } from "@clerk/nextjs";
@@ -12,8 +12,8 @@ interface TabletLayoutClientProps {
 }
 
 const NAV_ITEMS = [
-  { id: "planning", label: "Planning", icon: Calendar, href: "/admin-tablette" },
-  { id: "reservations", label: "Réservations", icon: ClipboardList, href: "/admin-tablette/reservations" },
+  { id: "planning", label: "Planning", icon: CalendarDays, href: "/admin-tablette" },
+  { id: "reservations", label: "Réservations", icon: ListChecks, href: "/admin-tablette/reservations" },
 ] as const;
 
 export function TabletLayoutClient({ children }: TabletLayoutClientProps) {
@@ -54,7 +54,7 @@ export function TabletLayoutClient({ children }: TabletLayoutClientProps) {
                       : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
                   )}
                 >
-                  <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                  <Icon size={28} strokeWidth={1.5} className="flex-shrink-0" />
                   <span className="text-[8px] font-black uppercase tracking-wider">
                     {item.label.slice(0, 4)}
                   </span>
