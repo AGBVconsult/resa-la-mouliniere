@@ -101,18 +101,18 @@ export default function MobilePlanningPage() {
       <header className="px-6 py-6 flex justify-between items-center">
         <h1 className="text-xl font-bold text-slate-800">
           {monthLabel.split(" ")[0]}{" "}
-          <span className="text-slate-300 font-light">{currentYear}</span>
+          <span className="text-slate-400 font-light">{currentYear}</span>
         </h1>
-        <div className="flex bg-slate-50 rounded-xl p-1 border border-slate-100/50">
+        <div className="flex bg-slate-50 rounded-full p-1 border border-slate-200">
           <button
             onClick={goToPreviousMonth}
-            className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
+            className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
           >
             <ChevronLeft size={18} />
           </button>
           <button
             onClick={goToNextMonth}
-            className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
+            className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
           >
             <ChevronRight size={18} />
           </button>
@@ -124,7 +124,7 @@ export default function MobilePlanningPage() {
         {DAYS_OF_WEEK.map((d, i) => (
           <div
             key={`weekday-${i}`}
-            className="py-3 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest"
+            className="py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest"
           >
             {d}
           </div>

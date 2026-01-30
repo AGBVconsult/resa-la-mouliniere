@@ -205,18 +205,18 @@ export default function MobileReservationsPage() {
         >
           <StatusPill status={res.status} />
 
-          <span className="w-11 text-xs font-mono text-slate-400 font-medium shrink-0 tracking-tighter uppercase">
+          <span className="w-11 text-xs font-mono text-slate-500 font-medium shrink-0 tracking-tighter uppercase">
             {res.timeKey}
           </span>
 
           <div className="flex items-center justify-center w-8 shrink-0">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">
               T{getTableName(res)}
             </span>
           </div>
 
           <div className="flex items-center gap-1.5 w-10 shrink-0">
-            <Users size={14} className="text-slate-300" strokeWidth={2.5} />
+            <Users size={14} className="text-slate-400" strokeWidth={2.5} />
             <span className="text-sm font-bold text-slate-800">{res.partySize}</span>
           </div>
 
@@ -234,14 +234,14 @@ export default function MobileReservationsPage() {
 
           <div className="flex items-center gap-3 shrink-0 relative">
             {res.note && (
-              <div className="p-1.5 bg-amber-50 rounded-lg">
+              <div className="p-1.5 bg-amber-50 rounded-full">
                 <MessageSquare size={12} className="text-amber-500" strokeWidth={2.5} />
               </div>
             )}
 
             <button
               onClick={(e) => togglePopup(e, res._id)}
-              className="p-1.5 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
+              className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all"
             >
               <MoreHorizontal size={18} />
             </button>
@@ -266,11 +266,11 @@ export default function MobileReservationsPage() {
               {/* Nom - Prénom */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Nom</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nom</span>
                   <span className="text-xs font-bold text-slate-700">{res.lastName}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Prénom</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Prénom</span>
                   <span className="text-xs font-bold text-slate-700">{res.firstName}</span>
                 </div>
               </div>
@@ -278,13 +278,13 @@ export default function MobileReservationsPage() {
               {/* Téléphone - Email */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Téléphone</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Téléphone</span>
                   <a href={`tel:${res.phone}`} className="text-xs font-bold text-slate-600 underline decoration-slate-200">
                     {res.phone}
                   </a>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Email</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Email</span>
                   <a href={`mailto:${res.email}`} className="text-xs font-bold text-slate-600 underline decoration-slate-200 truncate">
                     {res.email}
                   </a>
@@ -294,13 +294,13 @@ export default function MobileReservationsPage() {
               {/* Couverts - Table */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Couverts</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Couverts</span>
                   <span className="text-xs font-bold text-slate-700">
                     {res.adults} ad.{res.childrenCount > 0 && ` + ${res.childrenCount} enf.`}{res.babyCount > 0 && ` + ${res.babyCount} bb`}
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Table</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Table</span>
                   <span className="text-xs font-bold text-slate-700">{getTableName(res)}</span>
                 </div>
               </div>
@@ -308,11 +308,11 @@ export default function MobileReservationsPage() {
               {/* Heure - Source */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Heure</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Heure</span>
                   <span className="text-xs font-bold text-slate-700">{res.timeKey}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Source</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Source</span>
                   <span className="text-xs font-bold text-slate-700 capitalize">{res.source}</span>
                 </div>
               </div>
@@ -320,7 +320,7 @@ export default function MobileReservationsPage() {
               {/* Options */}
               {res.options && res.options.length > 0 && (
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Options</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Options</span>
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     {res.options.map((opt) => (
                       <span key={opt} className="text-[10px] px-2 py-0.5 bg-slate-100 rounded-full text-slate-600">
@@ -337,7 +337,7 @@ export default function MobileReservationsPage() {
               {/* Notes */}
               {res.note && (
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Notes</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Notes</span>
                   <div className="p-2 bg-white rounded-xl border border-slate-100 text-xs text-slate-600 italic leading-relaxed mt-1">
                     {res.note}
                   </div>
@@ -368,20 +368,20 @@ export default function MobileReservationsPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={goToToday}
-              className="text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 border border-slate-100 px-3 py-1.5 rounded-lg transition-all"
+              className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 border border-slate-200 px-3 py-1.5 rounded-full transition-all"
             >
               Aujourd&apos;hui
             </button>
-            <div className="flex bg-slate-50 rounded-xl p-1 border border-slate-100/50">
+            <div className="flex bg-slate-50 rounded-full p-1 border border-slate-200">
               <button
                 onClick={goToPreviousDay}
-                className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
+                className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={goToNextDay}
-                className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
+                className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
               >
                 <ChevronRight size={18} />
               </button>
@@ -391,13 +391,13 @@ export default function MobileReservationsPage() {
 
         {/* Service Switch + Settings */}
         <div className="flex items-center gap-3 mt-4">
-          <div className="flex-1 flex bg-white rounded-full p-1 border border-slate-100">
+          <div className="flex-1 flex bg-white rounded-full p-1 border border-slate-200">
             <button
               onClick={() => setSelectedService("lunch")}
               className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${
                 selectedService === "lunch"
                   ? "bg-slate-800 text-white"
-                  : "text-slate-300 hover:text-slate-500"
+                  : "text-slate-400 hover:text-slate-600"
               }`}
             >
               Déjeuner
@@ -407,13 +407,13 @@ export default function MobileReservationsPage() {
               className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${
                 selectedService === "dinner"
                   ? "bg-slate-800 text-white"
-                  : "text-slate-300 hover:text-slate-500"
+                  : "text-slate-400 hover:text-slate-600"
               }`}
             >
               Dîner
             </button>
           </div>
-          <button className="p-2.5 bg-white rounded-full border border-slate-100 text-slate-300 hover:text-slate-600 transition-colors">
+          <button className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-slate-700 transition-colors">
             <Settings size={18} strokeWidth={2} />
           </button>
         </div>
