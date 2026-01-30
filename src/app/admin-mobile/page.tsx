@@ -183,7 +183,7 @@ export default function MobilePlanningPage() {
                 </div>
               )}
               {isClosed && (
-                <span className="text-[8px] text-slate-300 uppercase tracking-wider mt-auto">
+                <span className="text-[8px] text-slate-400 uppercase tracking-wider mt-auto">
                   Fermé
                 </span>
               )}

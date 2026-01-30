@@ -45,7 +45,7 @@ export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
                   key={item.id}
                   onClick={() => router.push(item.href)}
                   className={cn(
-                    "flex flex-col items-center gap-2 flex-1 py-2 transition-all",
+                    "flex flex-col items-center gap-1 flex-1 py-1 transition-all",
                     isActive ? "text-slate-900" : "text-slate-400 hover:text-slate-600"
                   )}
                 >
