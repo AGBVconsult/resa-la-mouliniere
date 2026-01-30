@@ -18,6 +18,7 @@ import {
   Phone,
   Mail,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
@@ -63,6 +64,7 @@ export default function MobileReservationsPage() {
 
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [openPopupId, setOpenPopupId] = useState<Id<"reservations"> | null>(null);
+  const [selectedService, setSelectedService] = useState<"lunch" | "dinner">("lunch");
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -386,6 +388,35 @@ export default function MobileReservationsPage() {
             </div>
           </div>
         </div>
+
+        {/* Service Switch + Settings */}
+        <div className="flex items-center gap-3 mt-4">
+          <div className="flex-1 flex bg-white rounded-full p-1 border border-slate-100">
+            <button
+              onClick={() => setSelectedService("lunch")}
+              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${
+                selectedService === "lunch"
+                  ? "bg-slate-800 text-white"
+                  : "text-slate-300 hover:text-slate-500"
+              }`}
+            >
+              Déjeuner
+            </button>
+            <button
+              onClick={() => setSelectedService("dinner")}
+              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${
+                selectedService === "dinner"
+                  ? "bg-slate-800 text-white"
+                  : "text-slate-300 hover:text-slate-500"
+              }`}
+            >
+              Dîner
+            </button>
+          </div>
+          <button className="p-2.5 bg-white rounded-full border border-slate-100 text-slate-300 hover:text-slate-600 transition-colors">
+            <Settings size={18} strokeWidth={2} />
+          </button>
+        </div>
       </header>
 
       {isLoading ? (
@@ -394,57 +425,59 @@ export default function MobileReservationsPage() {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto">
-          <div className="mb-4">
-            <div
-              className="px-4 py-2.5 flex justify-between items-center border-y border-slate-100/50"
-              style={{ backgroundColor: "#F8F6F1" }}
-            >
-              <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">
-                Service de Midi
-              </h3>
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <UsersRound size={14} strokeWidth={2.5} />
-                <span className="text-[11px] font-bold">{lunchCovers}/{lunchCapacity}</span>
+          {selectedService === "lunch" ? (
+            <div className="mb-4">
+              <div
+                className="px-4 py-2.5 flex justify-between items-center border-y border-slate-100/50"
+                style={{ backgroundColor: "#F8F6F1" }}
+              >
+                <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">
+                  Service de Midi
+                </h3>
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <UsersRound size={14} strokeWidth={2.5} />
+                  <span className="text-[11px] font-bold">{lunchCovers}/{lunchCapacity}</span>
+                </div>
+              </div>
+              <div className="divide-y divide-slate-50/50">
+                {(lunchReservations as Reservation[])
+                  ?.slice()
+                  .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
+                  .map(renderReservationRow)}
+                {(!lunchReservations || lunchReservations.length === 0) && (
+                  <div className="px-4 py-8 text-center text-sm text-slate-400">
+                    Aucune réservation
+                  </div>
+                )}
               </div>
             </div>
-            <div className="divide-y divide-slate-50/50">
-              {(lunchReservations as Reservation[])
-              ?.slice()
-              .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
-              .map(renderReservationRow)}
-              {(!lunchReservations || lunchReservations.length === 0) && (
-                <div className="px-4 py-8 text-center text-sm text-slate-400">
-                  Aucune réservation
+          ) : (
+            <div className="mb-4">
+              <div
+                className="px-4 py-2.5 flex justify-between items-center border-y border-slate-100/50"
+                style={{ backgroundColor: "#F8F6F1" }}
+              >
+                <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">
+                  Service du Soir
+                </h3>
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <UsersRound size={14} strokeWidth={2.5} />
+                  <span className="text-[11px] font-bold">{dinnerCovers}/{dinnerCapacity}</span>
                 </div>
-              )}
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <div
-              className="px-4 py-2.5 flex justify-between items-center border-y border-slate-100/50"
-              style={{ backgroundColor: "#F8F6F1" }}
-            >
-              <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">
-                Service du Soir
-              </h3>
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <UsersRound size={14} strokeWidth={2.5} />
-                <span className="text-[11px] font-bold">{dinnerCovers}/{dinnerCapacity}</span>
+              </div>
+              <div className="divide-y divide-slate-50/50">
+                {(dinnerReservations as Reservation[])
+                  ?.slice()
+                  .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
+                  .map(renderReservationRow)}
+                {(!dinnerReservations || dinnerReservations.length === 0) && (
+                  <div className="px-4 py-8 text-center text-sm text-slate-400">
+                    Aucune réservation
+                  </div>
+                )}
               </div>
             </div>
-            <div className="divide-y divide-slate-50/50">
-              {(dinnerReservations as Reservation[])
-              ?.slice()
-              .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
-              .map(renderReservationRow)}
-              {(!dinnerReservations || dinnerReservations.length === 0) && (
-                <div className="px-4 py-8 text-center text-sm text-slate-400">
-                  Aucune réservation
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>
