@@ -6,16 +6,16 @@ import { Calendar, ClipboardList } from "lucide-react";
 import { ToastProvider } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 
-interface MobileLayoutProps {
+interface MobileLayoutClientProps {
   children: ReactNode;
 }
 
 const NAV_ITEMS = [
-  { id: "planning", label: "Planning", icon: Calendar, href: "/admin/mobile" },
-  { id: "reservations", label: "Réservations", icon: ClipboardList, href: "/admin/mobile/reservations" },
+  { id: "planning", label: "Planning", icon: Calendar, href: "/admin-mobile" },
+  { id: "reservations", label: "Réservations", icon: ClipboardList, href: "/admin-mobile/reservations" },
 ] as const;
 
-export default function MobileLayout({ children }: MobileLayoutProps) {
+export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -29,14 +29,14 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
   return (
     <ToastProvider>
       <div className="min-h-screen bg-[#FDFDFD] flex flex-col font-sans antialiased text-slate-900">
-        <div className="w-full max-w-3xl mx-auto bg-white flex flex-col h-screen md:h-[85vh] md:my-auto md:rounded-[2.5rem] md:shadow-[0_20px_50px_rgba(0,0,0,0.05)] md:border md:border-slate-100 overflow-hidden">
+        <div className="w-full max-w-3xl mx-auto bg-white flex flex-col h-[100dvh] md:h-[85vh] md:my-auto md:rounded-[2.5rem] md:shadow-[0_20px_50px_rgba(0,0,0,0.05)] md:border md:border-slate-100 overflow-hidden">
           {/* Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {children}
           </div>
 
           {/* Bottom Navigation */}
-          <nav className="px-6 py-4 border-t border-slate-100 flex justify-around items-center bg-white z-[200] shrink-0">
+          <nav className="px-6 py-4 border-t border-slate-100 flex justify-around items-center bg-white z-[200] shrink-0 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             {NAV_ITEMS.map((item) => {
               const isActive = activeTab === item.id;
               const Icon = item.icon;

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "../../../convex/_generated/api";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { SegmentedBar } from "./components/SegmentedBar";
 
@@ -84,7 +84,7 @@ export default function MobilePlanningPage() {
 
   const handleDayClick = (day: number) => {
     const dateKey = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    router.push(`/admin/mobile/reservations?date=${dateKey}`);
+    router.push(`/admin-mobile/reservations?date=${dateKey}`);
   };
 
   if (!isClient) {
@@ -151,7 +151,6 @@ export default function MobilePlanningPage() {
           const isToday = dateKey === todayDateKey;
           const isClosed = dayData && !dayData.lunch.isOpen && !dayData.dinner.isOpen;
 
-          // Calculate fill percentages
           const lunchPercent = dayData?.lunch.isOpen && dayData.lunch.capacityEffective > 0
             ? Math.min((dayData.lunch.covers / dayData.lunch.capacityEffective) * 100, 100)
             : 0;

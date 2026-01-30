@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePaginatedQuery, useMutation, useQuery } from "convex/react";
-import { api } from "../../../../../../convex/_generated/api";
-import type { Id } from "../../../../../../convex/_generated/dataModel";
-import type { ReservationStatus } from "../../../../../../spec/contracts.generated";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
+import type { ReservationStatus } from "../../../../spec/contracts.generated";
 import {
   ChevronLeft,
   ChevronRight,
@@ -16,7 +16,6 @@ import {
   MoreHorizontal,
   Phone,
   Mail,
-  Tag,
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +43,6 @@ interface Reservation {
 
 export default function MobileReservationsPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { toast } = useToast();
 
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -60,7 +58,6 @@ export default function MobileReservationsPage() {
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
-  // Fetch data
   const slotsData = useQuery(api.slots.listByDate, { dateKey });
   const tablesData = useQuery(api.tables.list, {});
 
@@ -78,7 +75,6 @@ export default function MobileReservationsPage() {
 
   const updateReservation = useMutation(api.admin.updateReservation);
 
-  // Calculate fill percentages
   const lunchPercent = useMemo(() => {
     if (!slotsData?.lunch) return 0;
     const totalCapacity = slotsData.lunch.reduce((sum, s) => sum + (s.isOpen ? s.capacity : 0), 0);
@@ -95,7 +91,6 @@ export default function MobileReservationsPage() {
     return totalCapacity > 0 ? Math.min((totalCovers / totalCapacity) * 100, 100) : 0;
   }, [slotsData, dinnerReservations]);
 
-  // Navigation
   const goToPreviousDay = () => {
     const prev = new Date(selectedDate);
     prev.setDate(prev.getDate() - 1);
@@ -135,7 +130,6 @@ export default function MobileReservationsPage() {
     setOpenPopupId(openPopupId === id ? null : id);
   };
 
-  // Close popup on outside click
   useEffect(() => {
     const handleClickOutside = () => setOpenPopupId(null);
     window.addEventListener("click", handleClickOutside);
@@ -193,25 +187,21 @@ export default function MobileReservationsPage() {
         >
           <StatusPill status={res.status} />
 
-          {/* Time */}
           <span className="w-11 text-xs font-mono text-slate-400 font-medium shrink-0 tracking-tighter uppercase">
             {res.timeKey}
           </span>
 
-          {/* Table */}
           <div className="flex items-center justify-center w-8 shrink-0">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">
               T{getTableName(res)}
             </span>
           </div>
 
-          {/* Party size */}
           <div className="flex items-center gap-1.5 w-10 shrink-0">
             <Users size={14} className="text-slate-300" strokeWidth={2.5} />
             <span className="text-sm font-bold text-slate-800">{res.partySize}</span>
           </div>
 
-          {/* Name */}
           <span
             className={`flex-1 text-sm font-semibold truncate ${
               res.status === "cancelled" || res.status === "noshow"
@@ -229,7 +219,6 @@ export default function MobileReservationsPage() {
               </div>
             )}
 
-            {/* Action menu */}
             <button
               onClick={(e) => togglePopup(e, res._id)}
               className="p-1.5 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
@@ -251,11 +240,9 @@ export default function MobileReservationsPage() {
           </div>
         </div>
 
-        {/* Expanded details */}
         {isExpanded && (
           <div className="px-4 pb-6 pt-2 bg-slate-50/50 border-b border-slate-100/50 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex flex-col gap-4 pl-4 border-l-2 border-slate-100 ml-0.5">
-              {/* Contact info */}
               <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-white rounded-xl border border-slate-100">
@@ -291,7 +278,6 @@ export default function MobileReservationsPage() {
                 </div>
               </div>
 
-              {/* Notes */}
               <div className="flex flex-col gap-2">
                 <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
                   Message & Notes
@@ -309,7 +295,6 @@ export default function MobileReservationsPage() {
 
   return (
     <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
-      {/* Header */}
       <header className="px-4 pt-6 pb-4">
         <div className="flex justify-between items-center w-full">
           <div className="relative cursor-pointer group">
@@ -348,14 +333,12 @@ export default function MobileReservationsPage() {
         </div>
       </header>
 
-      {/* Content */}
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto">
-          {/* Lunch service */}
           <div className="mb-4">
             <div
               className="px-4 py-2.5 flex justify-between items-center border-y border-slate-100/50"
@@ -378,7 +361,6 @@ export default function MobileReservationsPage() {
             </div>
           </div>
 
-          {/* Dinner service */}
           <div className="mb-4">
             <div
               className="px-4 py-2.5 flex justify-between items-center border-y border-slate-100/50"

@@ -1,7 +1,7 @@
 "use client";
 
 import { Edit2, CheckCircle2, Trash2 } from "lucide-react";
-import type { ReservationStatus } from "../../../../../../spec/contracts.generated";
+import type { ReservationStatus } from "../../../../spec/contracts.generated";
 
 interface ActionPopupProps {
   status: string;

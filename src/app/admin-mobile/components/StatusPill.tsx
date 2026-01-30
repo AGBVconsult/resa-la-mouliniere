@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils";
 
-// Couleurs identiques à ReservationRow.tsx
 const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
   confirmed: { bg: "bg-emerald-500" },
   seated: { bg: "bg-emerald-500" },
