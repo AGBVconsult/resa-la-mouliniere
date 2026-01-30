@@ -14,6 +14,7 @@ interface ServiceEffective {
   isOpen: boolean;
   capacityEffective: number;
   covers: number;
+  reservationCount: number;
 }
 
 interface DayEffective {
@@ -233,6 +234,7 @@ export const getMonthEffective = query({
             .filter((s) => s.isOpen)
             .reduce((sum, s) => sum + s.capacity, 0),
           covers: lunchReservations.reduce((sum, r) => sum + r.partySize, 0),
+          reservationCount: lunchReservations.length,
         },
         dinner: {
           isOpen: dinnerClosed ? false : dinnerSlots.some((s) => s.isOpen && s.capacity > 0),
@@ -240,6 +242,7 @@ export const getMonthEffective = query({
             .filter((s) => s.isOpen)
             .reduce((sum, s) => sum + s.capacity, 0),
           covers: dinnerReservations.reduce((sum, r) => sum + r.partySize, 0),
+          reservationCount: dinnerReservations.length,
         },
       };
     }

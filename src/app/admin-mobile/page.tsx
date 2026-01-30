@@ -88,14 +88,14 @@ export default function MobilePlanningPage() {
   };
 
   const monthStats = useMemo(() => {
-    if (!monthData) return { openDays: 0, covers: 0 };
-    let openDays = 0;
+    if (!monthData) return { reservations: 0, covers: 0 };
+    let reservations = 0;
     let covers = 0;
     Object.values(monthData).forEach((day) => {
-      if (day.lunch.isOpen || day.dinner.isOpen) openDays++;
+      reservations += (day.lunch.reservationCount || 0) + (day.dinner.reservationCount || 0);
       covers += (day.lunch.covers || 0) + (day.dinner.covers || 0);
     });
-    return { openDays, covers };
+    return { reservations, covers };
   }, [monthData]);
 
   if (!isClient) {
@@ -107,7 +107,7 @@ export default function MobilePlanningPage() {
   }
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in duration-500 py-4">
+    <div className="flex flex-col h-full animate-in fade-in duration-500 py-8">
       {/* Header */}
       <header className="px-6 py-4 flex justify-between items-center">
         <div className="flex flex-col">
@@ -115,14 +115,16 @@ export default function MobilePlanningPage() {
             {monthLabel.split(" ")[0]}{" "}
             <span className="text-slate-400 font-light">{currentYear}</span>
           </h1>
-          <div className="flex items-center gap-4 mt-1">
-            <div className="flex items-center gap-1.5 text-slate-500">
-              <CalendarDays size={12} strokeWidth={2.5} />
-              <span className="text-[11px] font-semibold">{monthStats.openDays} jours</span>
+          <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full">
+              <CalendarDays size={14} strokeWidth={2.5} className="text-slate-600" />
+              <span className="text-sm font-bold text-slate-700">{monthStats.reservations}</span>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wide">résa</span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-500">
-              <Users size={12} strokeWidth={2.5} />
-              <span className="text-[11px] font-semibold">{monthStats.covers} couverts</span>
+            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full">
+              <Users size={14} strokeWidth={2.5} className="text-slate-600" />
+              <span className="text-sm font-bold text-slate-700">{monthStats.covers}</span>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wide">couverts</span>
             </div>
           </div>
         </div>
