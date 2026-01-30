@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users, DoorOpen } from "lucide-react";
 import { SegmentedBar } from "./components/SegmentedBar";
 
 const DAYS_OF_WEEK = ["L", "M", "M", "J", "V", "S", "D"];
@@ -88,14 +88,16 @@ export default function MobilePlanningPage() {
   };
 
   const monthStats = useMemo(() => {
-    if (!monthData) return { reservations: 0, covers: 0 };
+    if (!monthData) return { reservations: 0, covers: 0, openDays: 0 };
     let reservations = 0;
     let covers = 0;
+    let openDays = 0;
     Object.values(monthData).forEach((day) => {
       reservations += (day.lunch.reservationCount || 0) + (day.dinner.reservationCount || 0);
       covers += (day.lunch.covers || 0) + (day.dinner.covers || 0);
+      if (day.lunch.isOpen || day.dinner.isOpen) openDays++;
     });
-    return { reservations, covers };
+    return { reservations, covers, openDays };
   }, [monthData]);
 
   if (!isClient) {
@@ -109,38 +111,43 @@ export default function MobilePlanningPage() {
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-500 py-8">
       {/* Header */}
-      <header className="px-6 py-4 flex justify-between items-center">
-        <div className="flex flex-col">
+      <header className="px-6 py-4">
+        <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold text-slate-800">
             {monthLabel.split(" ")[0]}{" "}
             <span className="text-slate-400 font-light">{currentYear}</span>
           </h1>
-          <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full">
-              <CalendarDays size={14} strokeWidth={2.5} className="text-slate-600" />
-              <span className="text-sm font-bold text-slate-700">{monthStats.reservations}</span>
-              <span className="text-[10px] text-slate-500 uppercase tracking-wide">résa</span>
-            </div>
-            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full">
-              <Users size={14} strokeWidth={2.5} className="text-slate-600" />
-              <span className="text-sm font-bold text-slate-700">{monthStats.covers}</span>
-              <span className="text-[10px] text-slate-500 uppercase tracking-wide">couverts</span>
-            </div>
+          <div className="flex bg-slate-50 rounded-full p-1 border border-slate-200">
+            <button
+              onClick={goToPreviousMonth}
+              className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={goToNextMonth}
+              className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
+            >
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
-        <div className="flex bg-slate-50 rounded-full p-1 border border-slate-200">
-          <button
-            onClick={goToPreviousMonth}
-            className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <button
-            onClick={goToNextMonth}
-            className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
-          >
-            <ChevronRight size={18} />
-          </button>
+        <div className="flex items-center gap-3 mt-3">
+          <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full">
+            <DoorOpen size={14} strokeWidth={2.5} className="text-slate-600" />
+            <span className="text-sm font-bold text-slate-700">{monthStats.openDays}</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wide">jours</span>
+          </div>
+          <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full">
+            <CalendarDays size={14} strokeWidth={2.5} className="text-slate-600" />
+            <span className="text-sm font-bold text-slate-700">{monthStats.reservations}</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wide">résa</span>
+          </div>
+          <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full">
+            <Users size={14} strokeWidth={2.5} className="text-slate-600" />
+            <span className="text-sm font-bold text-slate-700">{monthStats.covers}</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wide">couverts</span>
+          </div>
         </div>
       </header>
 
