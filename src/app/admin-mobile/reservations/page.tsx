@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
+import { getFlag } from "@/lib/getFlag";
 import { SegmentedBar } from "../components/SegmentedBar";
 import { StatusPill } from "../components/StatusPill";
 import { ActionPopup } from "../components/ActionPopup";
@@ -42,14 +43,6 @@ interface Reservation {
   primaryTableId?: Id<"tables">;
   version: number;
 }
-
-const LANGUAGE_FLAGS: Record<string, string> = {
-  fr: "🇫🇷",
-  nl: "🇳🇱",
-  en: "🇬🇧",
-  de: "🇩🇪",
-  it: "🇮🇹",
-};
 
 export default function MobileReservationsPage() {
   const searchParams = useSearchParams();
@@ -220,7 +213,7 @@ export default function MobileReservationsPage() {
             <span className="text-sm font-bold text-slate-800">{res.partySize}</span>
           </div>
 
-          <span className="text-sm shrink-0">{LANGUAGE_FLAGS[res.language] || "🏳️"}</span>
+          <span className="text-sm shrink-0">{getFlag(res.phone, res.language)}</span>
 
           <span
             className={`flex-1 text-sm font-semibold truncate ${
