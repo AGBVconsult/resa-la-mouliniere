@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users } from "lucide-react";
 import { SegmentedBar } from "./components/SegmentedBar";
 
 const DAYS_OF_WEEK = ["L", "M", "M", "J", "V", "S", "D"];
@@ -87,6 +87,17 @@ export default function MobilePlanningPage() {
     router.push(`/admin-mobile/reservations?date=${dateKey}`);
   };
 
+  const monthStats = useMemo(() => {
+    if (!monthData) return { openDays: 0, covers: 0 };
+    let openDays = 0;
+    let covers = 0;
+    Object.values(monthData).forEach((day) => {
+      if (day.lunch.isOpen || day.dinner.isOpen) openDays++;
+      covers += (day.lunch.covers || 0) + (day.dinner.covers || 0);
+    });
+    return { openDays, covers };
+  }, [monthData]);
+
   if (!isClient) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -96,13 +107,25 @@ export default function MobilePlanningPage() {
   }
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in duration-500">
+    <div className="flex flex-col h-full animate-in fade-in duration-500 py-4">
       {/* Header */}
-      <header className="px-6 py-6 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-slate-800">
-          {monthLabel.split(" ")[0]}{" "}
-          <span className="text-slate-400 font-light">{currentYear}</span>
-        </h1>
+      <header className="px-6 py-4 flex justify-between items-center">
+        <div className="flex flex-col">
+          <h1 className="text-xl font-bold text-slate-800">
+            {monthLabel.split(" ")[0]}{" "}
+            <span className="text-slate-400 font-light">{currentYear}</span>
+          </h1>
+          <div className="flex items-center gap-4 mt-1">
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <CalendarDays size={12} strokeWidth={2.5} />
+              <span className="text-[11px] font-semibold">{monthStats.openDays} jours</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <Users size={12} strokeWidth={2.5} />
+              <span className="text-[11px] font-semibold">{monthStats.covers} couverts</span>
+            </div>
+          </div>
+        </div>
         <div className="flex bg-slate-50 rounded-full p-1 border border-slate-200">
           <button
             onClick={goToPreviousMonth}
