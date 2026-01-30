@@ -99,26 +99,23 @@ export default function MobilePlanningPage() {
     <div className="flex flex-col h-full animate-in fade-in duration-500">
       {/* Header */}
       <header className="px-6 py-6 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold tracking-tight text-slate-800">{monthLabel}</h1>
-          <div className="flex bg-slate-50 rounded-xl p-1 border border-slate-100/50">
-            <button
-              onClick={goToPreviousMonth}
-              className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              onClick={goToNextMonth}
-              className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-        <div className="flex gap-1.5 items-center">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/30" />
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500/30" />
+        <h1 className="text-xl font-bold text-slate-800">
+          {monthLabel.split(" ")[0]}{" "}
+          <span className="text-slate-300 font-light">{currentYear}</span>
+        </h1>
+        <div className="flex bg-slate-50 rounded-xl p-1 border border-slate-100/50">
+          <button
+            onClick={goToPreviousMonth}
+            className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={goToNextMonth}
+            className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
       </header>
 

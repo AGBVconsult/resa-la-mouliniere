@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
+  UsersRound,
   MessageSquare,
   MoreHorizontal,
   Phone,
@@ -34,12 +35,21 @@ interface Reservation {
   lastName: string;
   phone: string;
   email: string;
+  language: "fr" | "nl" | "en" | "de" | "it";
   note?: string;
   status: string;
   tableIds: Id<"tables">[];
   primaryTableId?: Id<"tables">;
   version: number;
 }
+
+const LANGUAGE_FLAGS: Record<string, string> = {
+  fr: "🇫🇷",
+  nl: "🇳🇱",
+  en: "🇬🇧",
+  de: "🇩🇪",
+  it: "🇮🇹",
+};
 
 export default function MobileReservationsPage() {
   const searchParams = useSearchParams();
@@ -83,13 +93,21 @@ export default function MobileReservationsPage() {
     return totalCapacity > 0 ? Math.min((totalCovers / totalCapacity) * 100, 100) : 0;
   }, [slotsData, lunchReservations]);
 
-  const dinnerPercent = useMemo(() => {
-    if (!slotsData?.dinner) return 0;
+  const { dinnerCovers, dinnerCapacity } = useMemo(() => {
+    if (!slotsData?.dinner) return { dinnerCovers: 0, dinnerCapacity: 0 };
     const totalCapacity = slotsData.dinner.reduce((sum, s) => sum + (s.isOpen ? s.capacity : 0), 0);
     const totalCovers = (dinnerReservations as Reservation[])?.reduce((sum, r) => 
       ["confirmed", "seated", "arrived", "pending"].includes(r.status) ? sum + r.partySize : sum, 0) || 0;
-    return totalCapacity > 0 ? Math.min((totalCovers / totalCapacity) * 100, 100) : 0;
+    return { dinnerCovers: totalCovers, dinnerCapacity: totalCapacity };
   }, [slotsData, dinnerReservations]);
+
+  const { lunchCovers, lunchCapacity } = useMemo(() => {
+    if (!slotsData?.lunch) return { lunchCovers: 0, lunchCapacity: 0 };
+    const totalCapacity = slotsData.lunch.reduce((sum, s) => sum + (s.isOpen ? s.capacity : 0), 0);
+    const totalCovers = (lunchReservations as Reservation[])?.reduce((sum, r) => 
+      ["confirmed", "seated", "arrived", "pending"].includes(r.status) ? sum + r.partySize : sum, 0) || 0;
+    return { lunchCovers: totalCovers, lunchCapacity: totalCapacity };
+  }, [slotsData, lunchReservations]);
 
   const goToPreviousDay = () => {
     const prev = new Date(selectedDate);
@@ -202,6 +220,8 @@ export default function MobileReservationsPage() {
             <span className="text-sm font-bold text-slate-800">{res.partySize}</span>
           </div>
 
+          <span className="text-sm shrink-0">{LANGUAGE_FLAGS[res.language] || "🏳️"}</span>
+
           <span
             className={`flex-1 text-sm font-semibold truncate ${
               res.status === "cancelled" || res.status === "noshow"
@@ -209,7 +229,7 @@ export default function MobileReservationsPage() {
                 : "text-slate-700"
             }`}
           >
-            {res.lastName}
+            {res.lastName} {res.firstName.charAt(0).toUpperCase()}.
           </span>
 
           <div className="flex items-center gap-3 shrink-0 relative">
@@ -369,8 +389,9 @@ export default function MobileReservationsPage() {
               <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">
                 Service du Soir
               </h3>
-              <div className="w-20">
-                <SegmentedBar value={dinnerPercent} />
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <UsersRound size={14} strokeWidth={2.5} />
+                <span className="text-[11px] font-bold">{dinnerCovers}/{dinnerCapacity}</span>
               </div>
             </div>
             <div className="divide-y divide-slate-50/50">

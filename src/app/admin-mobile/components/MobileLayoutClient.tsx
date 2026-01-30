@@ -36,7 +36,7 @@ export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
           </div>
 
           {/* Bottom Navigation - sticky, no scroll below */}
-          <nav className="sticky bottom-0 px-6 py-3 border-t border-slate-100 flex justify-around items-center bg-white z-[200] shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <nav className="sticky bottom-0 px-6 py-5 border-t border-slate-100 flex justify-around items-center bg-white z-[200] shrink-0 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
             {NAV_ITEMS.map((item) => {
               const isActive = activeTab === item.id;
               const Icon = item.icon;
@@ -45,7 +45,7 @@ export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
                   key={item.id}
                   onClick={() => router.push(item.href)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 flex-1 transition-all",
+                    "flex flex-col items-center gap-2 flex-1 py-2 transition-all",
                     isActive ? "text-slate-900" : "text-slate-300 hover:text-slate-400"
                   )}
                 >
