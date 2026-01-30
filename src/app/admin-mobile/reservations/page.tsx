@@ -197,7 +197,7 @@ export default function MobileReservationsPage() {
       <div key={res._id} className="flex flex-col">
         <div
           onClick={() => toggleExpand(res._id)}
-          className={`group flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50/30 transition-all cursor-pointer ${
+          className={`group flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/30 transition-all cursor-pointer ${
             isExpanded ? "bg-slate-50/50" : ""
           }`}
         >
@@ -408,7 +408,10 @@ export default function MobileReservationsPage() {
               </div>
             </div>
             <div className="divide-y divide-slate-50/50">
-              {(lunchReservations as Reservation[])?.map(renderReservationRow)}
+              {(lunchReservations as Reservation[])
+              ?.slice()
+              .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
+              .map(renderReservationRow)}
               {(!lunchReservations || lunchReservations.length === 0) && (
                 <div className="px-4 py-8 text-center text-sm text-slate-400">
                   Aucune réservation
@@ -431,7 +434,10 @@ export default function MobileReservationsPage() {
               </div>
             </div>
             <div className="divide-y divide-slate-50/50">
-              {(dinnerReservations as Reservation[])?.map(renderReservationRow)}
+              {(dinnerReservations as Reservation[])
+              ?.slice()
+              .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
+              .map(renderReservationRow)}
               {(!dinnerReservations || dinnerReservations.length === 0) && (
                 <div className="px-4 py-8 text-center text-sm text-slate-400">
                   Aucune réservation
