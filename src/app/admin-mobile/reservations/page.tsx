@@ -55,9 +55,9 @@ interface Reservation {
 // Visit badge styles - New: 0 | Client: 1-4 | Regular: 5-9 | VIP: ≥10
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
   if (visits === 0) return { classes: "bg-emerald-50 text-emerald-700 border-emerald-200", fontWeight: "font-medium" }; // New (vert)
-  if (visits < 5) return { classes: "bg-blue-50 text-blue-700 border-blue-200", fontWeight: "font-medium" }; // Client (bleu)
-  if (visits < 10) return { classes: "bg-orange-50 text-orange-700 border-orange-200", fontWeight: "font-medium" }; // Regular (orange)
-  return { classes: "bg-slate-800 text-amber-400 border-amber-500", fontWeight: "font-bold" }; // VIP (noir & or)
+  if (visits < 5) return { classes: "bg-slate-100 text-slate-600 border-slate-200", fontWeight: "font-medium" }; // Client (gris)
+  if (visits < 10) return { classes: "bg-blue-50 text-blue-700 border-blue-200", fontWeight: "font-medium" }; // Regular (bleu)
+  return { classes: "bg-orange-100 text-orange-700 border-orange-300", fontWeight: "font-bold" }; // VIP (orange)
 }
 
 export default function MobileReservationsPage() {
