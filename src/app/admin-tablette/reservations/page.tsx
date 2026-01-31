@@ -21,6 +21,7 @@ import {
   PawPrint,
   Icon,
   CalendarCheck,
+  CalendarDays,
   Settings,
   Map,
   Clock,
@@ -190,6 +191,18 @@ export default function TabletReservationsPage() {
       .reduce((sum, r) => sum + r.partySize, 0);
   }, [dinnerReservations]);
 
+  const lunchReservationsCount = useMemo(() => {
+    if (!lunchReservations) return 0;
+    return (lunchReservations as Reservation[])
+      .filter((r) => !["cancelled", "noshow"].includes(r.status)).length;
+  }, [lunchReservations]);
+
+  const dinnerReservationsCount = useMemo(() => {
+    if (!dinnerReservations) return 0;
+    return (dinnerReservations as Reservation[])
+      .filter((r) => !["cancelled", "noshow"].includes(r.status)).length;
+  }, [dinnerReservations]);
+
   const getTableName = (res: Reservation) => {
     if (!tablesData) return "-";
     const primaryId = res.primaryTableId || (res.tableIds?.length > 0 ? res.tableIds[0] : null);
@@ -259,6 +272,7 @@ export default function TabletReservationsPage() {
   const currentReservations = selectedService === "lunch" ? lunchReservations : dinnerReservations;
   const currentCovers = selectedService === "lunch" ? lunchCovers : dinnerCovers;
   const currentCapacity = selectedService === "lunch" ? lunchCapacity : dinnerCapacity;
+  const currentReservationsCount = selectedService === "lunch" ? lunchReservationsCount : dinnerReservationsCount;
 
   const renderReservationRow = (res: Reservation) => {
     const isExpanded = expandedId === res._id;
@@ -314,10 +328,10 @@ export default function TabletReservationsPage() {
                   <span className={cn("text-gray-600", isCompact ? "text-sm" : "text-base")}>{res.firstName}</span>
                   <span className={cn("font-semibold", isCompact ? "text-sm" : "text-base")}>{res.lastName}</span>
                   <span className={cn(
-                    "px-1.5 py-0.5 rounded-full",
+                    "px-1 py-0.5 rounded-full",
                     visitBadge.classes,
                     visitBadge.fontWeight,
-                    isCompact ? "text-[8px]" : "text-[10px]"
+                    "text-[7px]"
                   )}>
                     {visits === 0 ? "NEW" : visits}
                   </span>
@@ -524,20 +538,23 @@ export default function TabletReservationsPage() {
           {/* Service stats bar */}
           <div
             className={cn(
-              "flex justify-between items-center rounded-t-2xl border border-b-0 border-slate-100",
+              "flex justify-center items-center gap-6 rounded-t-2xl border border-b-0 border-slate-100 bg-slate-900",
               showFloorPlan ? "px-3 py-2" : "px-5 py-3"
             )}
-            style={{ backgroundColor: "#F8F6F1" }}
           >
             <h3 className={cn(
-              "font-black uppercase tracking-[0.3em] text-slate-400",
+              "font-semibold uppercase tracking-wide text-white",
               showFloorPlan ? "text-[10px]" : "text-xs"
             )}>
-              {selectedService === "lunch" ? "Service de Midi" : "Service du Soir"}
+              {selectedService === "lunch" ? "Service du Midi" : "Service du Soir"}
             </h3>
-            <div className="flex items-center gap-2 text-slate-500">
-              <UsersRound size={showFloorPlan ? 14 : 16} strokeWidth={2.5} />
-              <span className={cn("font-bold", showFloorPlan ? "text-xs" : "text-sm")}>{currentCovers}/{currentCapacity}</span>
+            <div className="flex items-center gap-2 text-white">
+              <CalendarDays size={showFloorPlan ? 14 : 16} strokeWidth={1.5} />
+              <span><span className="font-bold">{currentReservationsCount}</span> <span className={cn(showFloorPlan ? "text-[10px]" : "text-xs")}>R\u00c9SA</span></span>
+            </div>
+            <div className="flex items-center gap-2 text-white">
+              <UsersRound size={showFloorPlan ? 14 : 16} strokeWidth={1.5} />
+              <span><span className="font-bold">{currentCovers}</span> <span className={cn(showFloorPlan ? "text-[10px]" : "text-xs")}>COUVERTS</span></span>
             </div>
           </div>
 
