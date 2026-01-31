@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { getFlag } from "@/lib/getFlag";
 import { ServiceFloorPlan } from "@/components/admin/floor-plan/ServiceFloorPlan";
+import { CalendarPopup } from "../components/CalendarPopup";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -93,6 +94,7 @@ export default function TabletReservationsPage() {
   const [showFloorPlan, setShowFloorPlan] = useState(false);
   const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
   const [highlightedReservationId, setHighlightedReservationId] = useState<Id<"reservations"> | null>(null);
+  const [showCalendarPopup, setShowCalendarPopup] = useState(false);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -445,17 +447,14 @@ export default function TabletReservationsPage() {
       {/* Header */}
       <header className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-6">
-          <div className="relative cursor-pointer group">
-            <h2 className="text-2xl font-bold text-slate-800 group-hover:text-slate-600 transition-colors pointer-events-none">
+          <button
+            onClick={() => setShowCalendarPopup(true)}
+            className="cursor-pointer group"
+          >
+            <h2 className="text-2xl font-bold text-slate-800 group-hover:text-slate-600 transition-colors">
               {formatDateLabel()}
             </h2>
-            <input
-              type="date"
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-              value={dateKey}
-              onChange={handleDateChange}
-            />
-          </div>
+          </button>
           <div className="flex items-center gap-2">
             <button
               onClick={goToToday}
@@ -589,6 +588,17 @@ export default function TabletReservationsPage() {
           </div>
         )}
       </div>
+
+      {/* Calendar Popup */}
+      <CalendarPopup
+        isOpen={showCalendarPopup}
+        onClose={() => setShowCalendarPopup(false)}
+        onSelectDate={(newDateKey) => {
+          const [year, month, day] = newDateKey.split("-").map(Number);
+          setSelectedDate(new Date(year, month - 1, day));
+        }}
+        selectedDateKey={dateKey}
+      />
     </div>
   );
 }
