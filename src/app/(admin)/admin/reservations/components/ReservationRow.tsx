@@ -549,39 +549,39 @@ export function ReservationRow({
         </div>
 
         {/* Nom complet (Prénom Nom) */}
-        <div className="w-32 shrink-0 truncate">
-          <span className="text-xs text-gray-600">{reservation.firstName}</span>{" "}
-          <span className="text-xs font-semibold">{reservation.lastName}</span>
+        <div className="w-36 shrink-0 truncate">
+          <span className="text-sm text-gray-600">{reservation.firstName}</span>{" "}
+          <span className="text-sm font-semibold">{reservation.lastName}</span>
         </div>
 
         {/* Visits badge - Hist */}
-        <span className={cn("w-9 h-5 text-[9px] flex items-center justify-center rounded-full border shrink-0", visitBadge.classes, visitBadge.fontWeight)}>
+        <span className={cn("w-10 h-6 text-[10px] flex items-center justify-center rounded-full border shrink-0", visitBadge.classes, visitBadge.fontWeight)}>
           {visits === 0 ? "NEW" : visits}
         </span>
 
         {/* Party size - Nbre */}
-        <div className="w-12 flex items-center gap-0.5 text-xs text-gray-600 shrink-0">
-          <Users className="h-3.5 w-3.5 text-gray-400" strokeWidth={1.25} />
+        <div className="w-14 flex items-center gap-1 text-sm text-gray-600 shrink-0">
+          <Users className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
           <span className="font-semibold">{reservation.partySize}</span>
         </div>
 
         {/* Table */}
         <span className={cn(
-          "w-10 text-xs px-1.5 py-0.5 rounded text-center shrink-0",
+          "w-12 text-sm px-2 py-0.5 rounded text-center shrink-0",
           isUnassignedCompact ? "bg-amber-100 text-amber-700" : "bg-gray-100"
         )}>
           {primaryTableName}
         </span>
 
         {/* Flag - Langue */}
-        <span className="w-6 text-sm text-center shrink-0">{getFlag(reservation.phone, reservation.language)}</span>
+        <span className="w-8 text-base text-center shrink-0">{getFlag(reservation.phone, reservation.language)}</span>
 
         {/* Options */}
-        <div className="w-12 flex items-center gap-0.5 shrink-0">
-          <Icon iconNode={stroller} className={cn("h-3.5 w-3.5", hasOption("stroller") ? "text-black" : "text-transparent")} />
-          <Baby className={cn("h-3.5 w-3.5", hasOption("highChair") ? "text-black" : "text-transparent")} />
-          <Accessibility className={cn("h-3.5 w-3.5", hasOption("wheelchair") ? "text-black" : "text-transparent")} />
-          <PawPrint className={cn("h-3.5 w-3.5", hasOption("dogAccess") ? "text-black" : "text-transparent")} />
+        <div className="w-20 flex items-center gap-1 shrink-0">
+          <Icon iconNode={stroller} className={cn("h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+          <Baby className={cn("h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+          <Accessibility className={cn("h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+          <PawPrint className={cn("h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
         </div>
       </div>
     );
@@ -614,11 +614,11 @@ export function ReservationRow({
           />
         </div>
 
-        {/* Prénom */}
-        <span className="w-24 text-gray-600 truncate">{reservation.firstName}</span>
-
-        {/* Nom */}
-        <span className="w-28 font-semibold truncate">{reservation.lastName}</span>
+        {/* Nom complet (Prénom Nom) */}
+        <div className="w-40 truncate">
+          <span className="text-gray-600">{reservation.firstName}</span>{" "}
+          <span className="font-semibold">{reservation.lastName}</span>
+        </div>
 
         {/* Visits badge - Hist */}
         <span className={cn("w-10 h-6 text-[10px] flex items-center justify-center rounded-full border", visitBadge.classes, visitBadge.fontWeight)}>
