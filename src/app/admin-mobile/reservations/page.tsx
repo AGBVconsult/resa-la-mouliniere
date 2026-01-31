@@ -56,7 +56,7 @@ interface Reservation {
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
   if (visits === 0) return { classes: "bg-emerald-50 text-emerald-700 border-emerald-200", fontWeight: "font-medium" }; // New (vert)
   if (visits < 5) return { classes: "bg-slate-100 text-slate-600 border-slate-200", fontWeight: "font-medium" }; // Client (gris)
-  if (visits < 10) return { classes: "bg-blue-50 text-blue-700 border-blue-200", fontWeight: "font-medium" }; // Regular (bleu)
+  if (visits < 10) return { classes: "bg-violet-50 text-violet-700 border-violet-200", fontWeight: "font-medium" }; // Regular (violet)
   return { classes: "bg-orange-100 text-orange-700 border-orange-300", fontWeight: "font-bold" }; // VIP (orange)
 }
 
