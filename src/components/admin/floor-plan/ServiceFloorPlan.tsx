@@ -25,6 +25,7 @@ interface ServiceFloorPlanProps {
   selectedReservationName?: string;
   onAssignmentComplete?: () => void;
   onTableClick?: (reservationId: Id<"reservations"> | null) => void;
+  hideHeader?: boolean;
 }
 
 type TableStatus = "seated" | "reserved" | "free" | "blocked";
@@ -45,6 +46,7 @@ export function ServiceFloorPlan({
   selectedReservationName,
   onAssignmentComplete,
   onTableClick,
+  hideHeader = false,
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
@@ -239,54 +241,59 @@ export function ServiceFloorPlan({
   return (
     <div className="h-full flex flex-col">
       {/* Header: Title left | Switch center | Legend right */}
-      <div className="flex items-center justify-between shrink-0">
-        {/* Left: Title */}
-        <h3 className="text-lg font-semibold whitespace-nowrap">Plan de salle</h3>
+      {!hideHeader && (
+        <div className="flex items-center justify-between shrink-0">
+          {/* Left: Title */}
+          <h3 className="text-lg font-semibold whitespace-nowrap">Plan de salle</h3>
 
-        {/* Center: Zone switch */}
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-          <button
-            className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-              activeZone === "salle"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            )}
-            onClick={() => setActiveZone("salle")}
-          >
-            Salle
-          </button>
-          <button
-            className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-              activeZone === "terrasse"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            )}
-            onClick={() => setActiveZone("terrasse")}
-          >
-            Terrasse
-          </button>
-        </div>
+          {/* Center: Zone switch */}
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <button
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                activeZone === "salle"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              )}
+              onClick={() => setActiveZone("salle")}
+            >
+              Salle
+            </button>
+            <button
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                activeZone === "terrasse"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              )}
+              onClick={() => setActiveZone("terrasse")}
+            >
+              Terrasse
+            </button>
+          </div>
 
-        {/* Right: Legend */}
-        <div className="flex items-center gap-3 text-xs">
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded bg-emerald-400" /> Libre
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded bg-orange-400" /> Réservée
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded bg-red-400" /> Occupée
-          </span>
+          {/* Right: Legend */}
+          <div className="flex items-center gap-3 text-xs">
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded bg-emerald-400" /> Libre
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded bg-orange-400" /> Réservée
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded bg-red-400" /> Occupée
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Floor plan grid */}
       <div
-        className="flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg overflow-auto mt-4 transition-all duration-300"
-        style={{ maxHeight: gridDimensions.height + 4 }}
+        className={cn(
+          "flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg transition-all duration-300",
+          hideHeader ? "overflow-hidden" : "overflow-auto mt-4"
+        )}
+        style={hideHeader ? undefined : { maxHeight: gridDimensions.height + 4 }}
       >
         <div
           className="relative"

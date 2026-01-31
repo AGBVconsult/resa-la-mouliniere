@@ -428,7 +428,7 @@ export default function TabletReservationsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 pt-4">
+    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 pt-8">
       {/* Header */}
       <header className="flex justify-between items-center mb-4 px-4">
         <div className="flex items-center gap-6">
@@ -599,7 +599,7 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="flex-shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden p-3 flex flex-col">
+          <div className="flex-shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden p-2 flex flex-col h-full">
             <ServiceFloorPlan
               dateKey={dateKey}
               service={selectedService}
@@ -609,6 +609,7 @@ export default function TabletReservationsPage() {
               selectedReservationName={selectedForAssignment ? `${selectedForAssignment.lastName} (${selectedForAssignment.partySize}p)` : undefined}
               onAssignmentComplete={handleAssignmentComplete}
               onTableClick={setHighlightedReservationId}
+              hideHeader
             />
           </div>
         )}
