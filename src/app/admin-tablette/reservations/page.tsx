@@ -353,7 +353,7 @@ export default function TabletReservationsPage() {
           {/* Table - après message, hauteur doublée */}
           <span className={cn(
             "rounded text-center shrink-0",
-            isCompact ? "w-10 text-xs px-1.5 py-2" : "w-14 text-sm px-2.5 py-3",
+            isCompact ? "w-10 text-xs px-1.5 py-3" : "w-14 text-sm px-2.5 py-3",
             isUnassigned ? "bg-amber-100 text-amber-700" : "bg-gray-100"
           )}>{getTableName(res)}</span>
 
@@ -436,7 +436,7 @@ export default function TabletReservationsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 pt-8">
+    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 pt-8 pb-4">
       {/* Header */}
       <header className="flex justify-between items-center mb-4 px-4">
         <div className="flex items-center gap-6">
@@ -607,7 +607,7 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="w-[340px] shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col h-full">
+          <div className="w-[30%] shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col h-full">
             <ServiceFloorPlan
               dateKey={dateKey}
               service={selectedService}
