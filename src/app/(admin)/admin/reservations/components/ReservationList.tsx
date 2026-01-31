@@ -85,7 +85,7 @@ export function ReservationList({
           <span className="w-6 text-[10px] font-medium text-gray-400 uppercase tracking-wider"></span>
           <span className="w-14 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Heure</span>
           <span className="w-14 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Table</span>
-          <span className="w-16 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
+          <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
           <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Hist.</span>
           <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pays</span>
           <span className="min-w-40 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>

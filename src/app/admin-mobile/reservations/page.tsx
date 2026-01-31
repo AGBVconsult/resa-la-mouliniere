@@ -54,7 +54,7 @@ interface Reservation {
 
 // Visit badge styles - New: <3 | Regular: 3-4 | VIP: ≥5
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
-  if (visits < 3) return { classes: "bg-blue-50 text-blue-700 border-blue-200", fontWeight: "font-medium" };
+  if (visits < 3) return { classes: "bg-emerald-50 text-emerald-700 border-emerald-200", fontWeight: "font-medium" }; // New (vert)
   if (visits < 5) return { classes: "bg-slate-100 text-slate-700 border-slate-200", fontWeight: "font-medium" };
   return { classes: "bg-amber-100 text-amber-800 border-amber-300", fontWeight: "font-bold" };
 }

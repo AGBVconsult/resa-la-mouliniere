@@ -56,7 +56,7 @@ interface Reservation {
 
 // Visit badge styles - New: <3 | Regular: 3-4 | VIP: ≥5
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
-  if (visits < 3) return { classes: "bg-blue-50 text-blue-700 border-blue-200", fontWeight: "font-medium" };
+  if (visits < 3) return { classes: "bg-emerald-50 text-emerald-700 border-emerald-200", fontWeight: "font-medium" }; // New (vert)
   if (visits < 5) return { classes: "bg-slate-100 text-slate-700 border-slate-200", fontWeight: "font-medium" };
   return { classes: "bg-amber-100 text-amber-800 border-amber-300", fontWeight: "font-bold" };
 }
@@ -273,7 +273,7 @@ export default function TabletReservationsPage() {
           <span className="w-14 text-sm px-2.5 py-1 bg-gray-100 rounded text-center">{getTableName(res)}</span>
 
           {/* Party size */}
-          <div className="w-28 flex items-center gap-1 text-sm text-gray-600">
+          <div className="flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
             <UsersRound className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
             <span className="font-semibold">{res.partySize}</span>
             {(res.childrenCount > 0 || res.babyCount > 0) && (

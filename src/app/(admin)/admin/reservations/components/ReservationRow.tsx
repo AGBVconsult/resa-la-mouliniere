@@ -25,7 +25,7 @@ const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
 // Visit badge styles - Design System
 // New: <3 visites | Regular: 3-4 visites | VIP: ≥5 visites
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
-  if (visits < 3) return { classes: "bg-blue-50 text-blue-700 border-blue-200", fontWeight: "font-medium" }; // New
+  if (visits < 3) return { classes: "bg-emerald-50 text-emerald-700 border-emerald-200", fontWeight: "font-medium" }; // New (vert)
   if (visits < 5) return { classes: "bg-slate-100 text-slate-700 border-slate-200", fontWeight: "font-medium" }; // Regular
   return { classes: "bg-amber-100 text-amber-800 border-amber-300", fontWeight: "font-bold" }; // VIP
 }
@@ -619,7 +619,7 @@ export function ReservationRow({
         </span>
 
         {/* Party size - detailed: total (Xe + Xb) */}
-        <div className="w-16 flex items-center gap-1 text-sm text-gray-600">
+        <div className="flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
           <Users className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
           <span className="font-semibold">{reservation.partySize}</span>
           {(reservation.childrenCount > 0 || reservation.babyCount > 0) && (
