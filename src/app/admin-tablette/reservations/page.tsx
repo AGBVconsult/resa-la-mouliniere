@@ -23,6 +23,7 @@ import {
   CalendarCheck,
   Settings,
   Map,
+  Clock,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -299,44 +300,18 @@ export default function TabletReservationsPage() {
           )}
         >
           {/* Status pill */}
-          <div className="w-4 flex justify-center">
+          <div className="w-4 flex justify-center shrink-0">
             <div className={cn("w-1 rounded-full", isCompact ? "h-5" : "h-7", statusStyle.bg, statusStyle.animate && "animate-pulse")} />
           </div>
 
-          {/* Time */}
-          <span className={cn("font-mono text-gray-600", isCompact ? "w-12 text-xs" : "w-14 text-sm")}>{res.timeKey}</span>
-
-          {/* Table */}
-          <span className={cn(
-            "rounded text-center",
-            isCompact ? "w-10 text-xs px-1.5 py-0.5" : "w-14 text-sm px-2.5 py-1",
-            isUnassigned ? "bg-amber-100 text-amber-700" : "bg-gray-100"
-          )}>{getTableName(res)}</span>
-
-          {/* Party size */}
-          <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap", isCompact ? "w-16 text-xs" : "w-24 text-sm")}>
-            <UsersRound className={cn("text-gray-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
-            <span className="font-semibold">{res.partySize}</span>
-            {!isCompact && (res.childrenCount > 0 || res.babyCount > 0) && (
-              <span className="text-gray-400 text-xs">
-                ({res.childrenCount > 0 ? `${res.childrenCount}e` : ""}
-                {res.childrenCount > 0 && res.babyCount > 0 ? " + " : ""}
-                {res.babyCount > 0 ? `${res.babyCount}b` : ""})
-              </span>
-            )}
-          </div>
-
-          {/* Flag */}
-          <span className={cn("text-center", isCompact ? "w-6 text-sm" : "w-10 text-lg")}>{getFlag(res.phone, res.language)}</span>
-
-          {/* Name + Badge Hist surélevé */}
+          {/* Name + Badge Hist + Flag */}
           {(() => {
             const visits = res.totalVisits ?? 0;
             const visitBadge = getVisitBadgeStyle(visits);
             return (
-              <div className={cn("flex items-start gap-1", isCompact ? "w-36" : "min-w-44 max-w-60")}>
-                <span className={cn("font-semibold", isCompact ? "text-xs" : "")}>{res.lastName}</span>{" "}
-                <span className={cn("text-gray-600", isCompact ? "text-xs" : "")}>{isCompact ? res.firstName.charAt(0).toUpperCase() + "." : res.firstName}</span>
+              <div className={cn("flex items-start gap-1 shrink-0", isCompact ? "w-40" : "w-52")}>
+                <span className={cn("text-gray-600", isCompact ? "text-xs" : "")}>{res.firstName}</span>{" "}
+                <span className={cn("font-semibold", isCompact ? "text-xs" : "")}>{res.lastName}</span>
                 <span className={cn(
                   "px-1.5 py-0.5 rounded-full -mt-1",
                   visitBadge.classes,
@@ -345,24 +320,41 @@ export default function TabletReservationsPage() {
                 )}>
                   {visits === 0 ? "NEW" : visits}
                 </span>
+                <span className={cn("text-center ml-1", isCompact ? "text-sm" : "text-lg")}>{getFlag(res.phone, res.language)}</span>
               </div>
             );
           })()}
 
-          {/* Options - hidden in compact mode */}
-          {!isCompact && (
-            <div className="w-32 flex items-center gap-1.5">
-              <Icon iconNode={stroller} className={cn("h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-              <Baby className={cn("h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-              <Accessibility className={cn("h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-              <PawPrint className={cn("h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-            </div>
-          )}
+          {/* Party size */}
+          <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap shrink-0", isCompact ? "w-12 text-xs" : "w-20 text-sm")}>
+            <UsersRound className={cn("text-gray-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
+            <span className="font-semibold">{res.partySize}</span>
+            {!isCompact && (res.childrenCount > 0 || res.babyCount > 0) && (
+              <span className="text-gray-400 text-xs">
+                ({res.childrenCount > 0 ? `${res.childrenCount}e` : ""}
+                {res.childrenCount > 0 && res.babyCount > 0 ? "+" : ""}
+                {res.babyCount > 0 ? `${res.babyCount}b` : ""})
+              </span>
+            )}
+          </div>
 
-          {/* Note preview - hidden in compact mode */}
-          {!isCompact && (
-            <span className="flex-1 text-sm text-gray-500 truncate">{res.note || "-"}</span>
-          )}
+          {/* Table */}
+          <span className={cn(
+            "rounded text-center shrink-0",
+            isCompact ? "w-10 text-xs px-1.5 py-0.5" : "w-14 text-sm px-2.5 py-1",
+            isUnassigned ? "bg-amber-100 text-amber-700" : "bg-gray-100"
+          )}>{getTableName(res)}</span>
+
+          {/* Options */}
+          <div className={cn("flex items-center shrink-0", isCompact ? "w-16 gap-1" : "w-24 gap-1.5")}>
+            <Icon iconNode={stroller} className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+            <Baby className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+            <Accessibility className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+            <PawPrint className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+          </div>
+
+          {/* Note preview */}
+          <span className={cn("flex-1 text-gray-500 truncate", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
 
           {/* Actions - hidden in compact mode */}
           {!isCompact && (
@@ -548,7 +540,7 @@ export default function TabletReservationsPage() {
             </div>
           </div>
 
-          {/* Reservations list */}
+          {/* Reservations list grouped by time */}
           <div className="flex-1 flex flex-col bg-white rounded-b-2xl border border-t-0 border-slate-100 overflow-hidden">
             {isLoading ? (
               <div className="flex-1 flex items-center justify-center">
@@ -556,17 +548,57 @@ export default function TabletReservationsPage() {
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto">
-                <div className="divide-y divide-slate-50">
-                  {(currentReservations as Reservation[])
-                    ?.slice()
-                    .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
-                    .map(renderReservationRow)}
-                  {(!currentReservations || currentReservations.length === 0) && (
-                    <div className="px-5 py-12 text-center text-base text-slate-400">
-                      Aucune réservation
-                    </div>
-                  )}
-                </div>
+                {(() => {
+                  const reservations = (currentReservations as Reservation[])?.slice().sort((a, b) => a.timeKey.localeCompare(b.timeKey)) || [];
+                  const timeGroups = reservations.reduce((groups, res) => {
+                    const time = res.timeKey;
+                    if (!groups[time]) groups[time] = [];
+                    groups[time].push(res);
+                    return groups;
+                  }, {} as Record<string, Reservation[]>);
+                  
+                  const sortedTimes = Object.keys(timeGroups).sort();
+                  
+                  if (sortedTimes.length === 0) {
+                    return (
+                      <div className="px-5 py-12 text-center text-base text-slate-400">
+                        Aucune réservation
+                      </div>
+                    );
+                  }
+                  
+                  return sortedTimes.map((time) => {
+                    const groupReservations = timeGroups[time];
+                    const activeReservations = groupReservations.filter(r => !["cancelled", "noshow"].includes(r.status));
+                    const groupCovers = activeReservations.reduce((sum, r) => sum + r.partySize, 0);
+                    const groupCapacity = slotsData?.[selectedService]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
+                    const resaCount = activeReservations.length;
+                    
+                    return (
+                      <div key={time}>
+                        {/* Time section header */}
+                        <div className={cn(
+                          "flex items-center gap-4 bg-slate-50/80 border-b border-slate-100",
+                          showFloorPlan ? "px-3 py-1.5" : "px-4 py-2"
+                        )}>
+                          <div className="flex items-center gap-1.5 text-slate-600">
+                            <Clock size={showFloorPlan ? 12 : 14} strokeWidth={2} />
+                            <span className={cn("font-bold", showFloorPlan ? "text-xs" : "text-sm")}>{time}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-500">
+                            <UsersRound size={showFloorPlan ? 12 : 14} strokeWidth={2} />
+                            <span className={cn(showFloorPlan ? "text-[10px]" : "text-xs")}>{groupCovers} / {groupCapacity}</span>
+                          </div>
+                          <span className={cn("text-slate-400", showFloorPlan ? "text-[10px]" : "text-xs")}>• {resaCount} résa{resaCount > 1 ? "s" : ""}</span>
+                        </div>
+                        {/* Reservations in this time slot */}
+                        <div className="divide-y divide-slate-50">
+                          {groupReservations.map(renderReservationRow)}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             )}
           </div>

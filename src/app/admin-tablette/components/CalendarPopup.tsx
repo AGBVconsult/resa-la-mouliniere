@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { ChevronLeft, ChevronRight, X, Loader2, CalendarDays, Users, DoorOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users, DoorOpen, Settings } from "lucide-react";
 import { SegmentedBar } from "./SegmentedBar";
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -128,16 +128,8 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
       {/* Popup */}
       <div 
         className="relative bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-        style={{ width: "70vw", height: "70vh" }}
+        style={{ width: "85vw", height: "85vh" }}
       >
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"
-        >
-          <X size={24} strokeWidth={1.5} />
-        </button>
-
         {/* Content */}
         <div className="flex flex-col h-full p-6">
           {/* Header */}
@@ -233,8 +225,14 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                         : "hover:bg-slate-50/80 cursor-pointer"
                     } ${isSelected ? "bg-blue-50 ring-2 ring-blue-400 ring-inset" : ""}`}
                   >
+                    {/* Settings icon */}
+                    {!isClosed && (
+                      <div className="absolute top-2 right-2">
+                        <Settings size={12} className="text-slate-300" strokeWidth={1.5} />
+                      </div>
+                    )}
                     <span
-                      className={`text-xs font-bold text-left mb-auto ${
+                      className={`text-sm font-bold text-left ${
                         isToday
                           ? "bg-slate-900 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]"
                           : isClosed
@@ -247,9 +245,43 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                       {day}
                     </span>
                     {!isClosed && dayData && (
-                      <div className="space-y-1 w-full pt-1">
-                        <SegmentedBar value={lunchPercent} covers={dayData.lunch.covers} />
-                        <SegmentedBar value={dinnerPercent} covers={dayData.dinner.covers} />
+                      <div className="space-y-2 w-full mt-auto">
+                        {/* Déjeuner */}
+                        {dayData.lunch.isOpen && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-slate-400 w-6 shrink-0">Déj</span>
+                            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full transition-all ${
+                                  lunchPercent >= 90 ? "bg-red-400" : lunchPercent >= 70 ? "bg-amber-400" : "bg-emerald-400"
+                                }`}
+                                style={{ width: `${lunchPercent}%` }}
+                              />
+                            </div>
+                            <div className="flex items-center gap-0.5 text-[10px] text-slate-500 shrink-0">
+                              <Users size={10} strokeWidth={2} />
+                              <span>{dayData.lunch.covers}/{dayData.lunch.capacityEffective}</span>
+                            </div>
+                          </div>
+                        )}
+                        {/* Dîner */}
+                        {dayData.dinner.isOpen && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-slate-400 w-6 shrink-0">Dîn</span>
+                            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full transition-all ${
+                                  dinnerPercent >= 90 ? "bg-red-400" : dinnerPercent >= 70 ? "bg-amber-400" : "bg-emerald-400"
+                                }`}
+                                style={{ width: `${dinnerPercent}%` }}
+                              />
+                            </div>
+                            <div className="flex items-center gap-0.5 text-[10px] text-slate-500 shrink-0">
+                              <Users size={10} strokeWidth={2} />
+                              <span>{dayData.dinner.covers}/{dayData.dinner.capacityEffective}</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                     {isClosed && (
