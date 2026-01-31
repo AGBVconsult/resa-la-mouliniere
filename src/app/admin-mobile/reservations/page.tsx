@@ -19,6 +19,7 @@ import {
   Mail,
   Loader2,
   Settings,
+  CalendarCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
@@ -48,6 +49,14 @@ interface Reservation {
   tableIds: Id<"tables">[];
   primaryTableId?: Id<"tables">;
   version: number;
+  totalVisits?: number;
+}
+
+// Visit badge styles - New: <3 | Regular: 3-4 | VIP: ≥5
+function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
+  if (visits < 3) return { classes: "bg-blue-50 text-blue-700 border-blue-200", fontWeight: "font-medium" };
+  if (visits < 5) return { classes: "bg-slate-100 text-slate-700 border-slate-200", fontWeight: "font-medium" };
+  return { classes: "bg-amber-100 text-amber-800 border-amber-300", fontWeight: "font-bold" };
 }
 
 export default function MobileReservationsPage() {
@@ -215,10 +224,21 @@ export default function MobileReservationsPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 w-10 shrink-0">
-            <Users size={14} className="text-slate-400" strokeWidth={2.5} />
+          <div className="flex items-center gap-1 w-8 shrink-0">
+            <Users size={14} className="text-slate-400" strokeWidth={1.5} />
             <span className="text-sm font-bold text-slate-800">{res.partySize}</span>
           </div>
+
+          {/* Visits badge - Hist */}
+          {(() => {
+            const visits = res.totalVisits ?? 0;
+            const visitBadge = getVisitBadgeStyle(visits);
+            return (
+              <span className={`w-8 h-5 text-[8px] flex items-center justify-center rounded-full border shrink-0 ${visitBadge.classes} ${visitBadge.fontWeight}`}>
+                {visits === 0 ? "NEW" : visits}
+              </span>
+            );
+          })()}
 
           <span className="text-sm shrink-0">{getFlag(res.phone, res.language)}</span>
 
@@ -368,9 +388,10 @@ export default function MobileReservationsPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={goToToday}
-              className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 border border-slate-200 px-3 py-1.5 rounded-full transition-all"
+              className="p-2 text-slate-500 hover:text-slate-900 border border-slate-200 rounded-full transition-all"
+              title="Aujourd'hui"
             >
-              Aujourd&apos;hui
+              <CalendarCheck size={18} strokeWidth={1.5} />
             </button>
             <div className="flex bg-slate-50 rounded-full p-1 border border-slate-200">
               <button

@@ -49,6 +49,14 @@ interface Reservation {
   options?: string[];
   source: string;
   version: number;
+  totalVisits?: number;
+}
+
+// Visit badge styles - New: <3 | Regular: 3-4 | VIP: ≥5
+function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
+  if (visits < 3) return { classes: "bg-blue-50 text-blue-700 border-blue-200", fontWeight: "font-medium" };
+  if (visits < 5) return { classes: "bg-slate-100 text-slate-700 border-slate-200", fontWeight: "font-medium" };
+  return { classes: "bg-amber-100 text-amber-800 border-amber-300", fontWeight: "font-bold" };
 }
 
 const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
@@ -264,7 +272,8 @@ export default function TabletReservationsPage() {
 
           {/* Party size */}
           <div className="w-16 flex items-center gap-1 text-sm text-gray-600">
-            <span className="font-medium">{res.partySize}</span>
+            <UsersRound className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
+            <span className="font-semibold">{res.partySize}</span>
             {(res.childrenCount > 0 || res.babyCount > 0) && (
               <span className="text-gray-400 text-xs">
                 ({res.childrenCount > 0 ? `${res.childrenCount}e` : ""}
@@ -273,6 +282,17 @@ export default function TabletReservationsPage() {
               </span>
             )}
           </div>
+
+          {/* Visits badge - Hist */}
+          {(() => {
+            const visits = res.totalVisits ?? 0;
+            const visitBadge = getVisitBadgeStyle(visits);
+            return (
+              <span className={`w-10 h-6 text-[10px] flex items-center justify-center rounded-full border ${visitBadge.classes} ${visitBadge.fontWeight}`}>
+                {visits === 0 ? "NEW" : visits}
+              </span>
+            );
+          })()}
 
           {/* Flag */}
           <span className="w-10 text-lg text-center">{getFlag(res.phone, res.language)}</span>
