@@ -20,7 +20,6 @@
     "seed": "convex run seed:seedAll"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.36.5",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -42,6 +41,7 @@
     "libphonenumber-js": "^1.12.35",
     "lucide-react": "^0.562.0",
     "next": "16.1.0",
+    "next-auth": "^5.0.0-beta.30",
     "react": "19.2.3",
     "react-day-picker": "^9.13.0",
     "react-dom": "19.2.3",
