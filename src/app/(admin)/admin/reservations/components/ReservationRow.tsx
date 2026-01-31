@@ -395,6 +395,7 @@ interface ReservationRowProps {
   isCompact?: boolean;
   isExpanded?: boolean;
   isSelectedForAssignment?: boolean;
+  isHighlighted?: boolean;
   onToggleExpand: () => void;
   onStatusChange: (status: ReservationStatus) => void;
   onEdit: () => void;
@@ -407,6 +408,7 @@ export function ReservationRow({
   isCompact = false,
   isExpanded = false,
   isSelectedForAssignment = false,
+  isHighlighted = false,
   onToggleExpand,
   onStatusChange,
   onEdit,
@@ -521,12 +523,17 @@ export function ReservationRow({
   const primaryAction = getPrimaryAction();
 
   if (isCompact) {
-    // Compact mode (with floor plan) - all info except action buttons, click to assign
+    // Compact mode (with floor plan) - Ordre: Nom complet, Hist, Nbre, Table, Langue, Options (pas de Message)
+    // Réservation non assignée = background coloré
+    const isUnassignedCompact = !reservation.primaryTableId && reservation.tableIds.length === 0;
+    
     return (
       <div
         className={cn(
           "flex items-center px-3 py-2 hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 gap-3",
-          isSelectedForAssignment && "bg-blue-50 border-blue-200"
+          isSelectedForAssignment && "bg-blue-50 border-blue-200",
+          isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
+          isUnassignedCompact && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
         )}
         onClick={() => onSelectForAssignment?.()}
       >
@@ -541,62 +548,58 @@ export function ReservationRow({
           />
         </div>
 
-        {/* Time */}
-        <span className="w-11 text-xs font-mono text-gray-600 shrink-0">{reservation.timeKey}</span>
-
-        {/* Table */}
-        <span className="w-10 text-xs px-1.5 py-0.5 bg-gray-100 rounded text-center shrink-0">
-          {primaryTableName}
-        </span>
-
-        {/* Party size */}
-        <div className="w-10 flex items-center gap-0.5 text-xs text-gray-600 shrink-0">
-          <Users className="h-3.5 w-3.5 text-gray-400" strokeWidth={1.25} />
-          <span className="font-semibold">{reservation.partySize}</span>
-          {(reservation.childrenCount > 0 || reservation.babyCount > 0) && (
-            <span className="text-gray-400 text-[10px]">
-              ({reservation.childrenCount > 0 ? `${reservation.childrenCount}e` : ""}
-              {reservation.babyCount > 0 ? `${reservation.babyCount}b` : ""})
-            </span>
-          )}
+        {/* Nom complet (Prénom Nom) */}
+        <div className="w-32 shrink-0 truncate">
+          <span className="text-xs text-gray-600">{reservation.firstName}</span>{" "}
+          <span className="text-xs font-semibold">{reservation.lastName}</span>
         </div>
 
-        {/* Visits badge */}
+        {/* Visits badge - Hist */}
         <span className={cn("w-9 h-5 text-[9px] flex items-center justify-center rounded-full border shrink-0", visitBadge.classes, visitBadge.fontWeight)}>
           {visits === 0 ? "NEW" : visits}
         </span>
 
-        {/* Flag */}
-        <span className="w-6 text-sm text-center shrink-0">{getFlag(reservation.phone, reservation.language)}</span>
-
-        {/* Name */}
-        <div className="w-24 shrink-0 truncate">
-          <span className="text-xs font-semibold">{reservation.lastName}</span>{" "}
-          <span className="text-xs text-gray-600">{reservation.firstName.charAt(0)}.</span>
+        {/* Party size - Nbre */}
+        <div className="w-12 flex items-center gap-0.5 text-xs text-gray-600 shrink-0">
+          <Users className="h-3.5 w-3.5 text-gray-400" strokeWidth={1.25} />
+          <span className="font-semibold">{reservation.partySize}</span>
         </div>
 
-        {/* Options - fixed order: stroller, highChair, wheelchair, dogAccess */}
-        <div className="flex items-center gap-0.5 shrink-0">
+        {/* Table */}
+        <span className={cn(
+          "w-10 text-xs px-1.5 py-0.5 rounded text-center shrink-0",
+          isUnassignedCompact ? "bg-amber-100 text-amber-700" : "bg-gray-100"
+        )}>
+          {primaryTableName}
+        </span>
+
+        {/* Flag - Langue */}
+        <span className="w-6 text-sm text-center shrink-0">{getFlag(reservation.phone, reservation.language)}</span>
+
+        {/* Options */}
+        <div className="w-12 flex items-center gap-0.5 shrink-0">
           <Icon iconNode={stroller} className={cn("h-3.5 w-3.5", hasOption("stroller") ? "text-black" : "text-transparent")} />
           <Baby className={cn("h-3.5 w-3.5", hasOption("highChair") ? "text-black" : "text-transparent")} />
           <Accessibility className={cn("h-3.5 w-3.5", hasOption("wheelchair") ? "text-black" : "text-transparent")} />
           <PawPrint className={cn("h-3.5 w-3.5", hasOption("dogAccess") ? "text-black" : "text-transparent")} />
         </div>
-
-        {/* Note preview */}
-        <span className="flex-1 text-[10px] text-gray-400 truncate">{reservation.note || ""}</span>
       </div>
     );
   }
 
-  // Full mode (list only)
+  // Full mode (list only) - Ordre: Prénom, Nom, Hist, Nbre, Table, Langue, Options, Message
+  // Réservation non assignée = background coloré
+  const isUnassigned = !reservation.primaryTableId && reservation.tableIds.length === 0;
+  
   return (
     <>
       <div
         className={cn(
           "flex items-center px-4 py-3 hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 gap-4",
           isExpanded && "bg-gray-50",
-          isSelectedForAssignment && "bg-blue-50 border-blue-200"
+          isSelectedForAssignment && "bg-blue-50 border-blue-200",
+          isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
+          isUnassigned && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
         )}
         onClick={onToggleExpand}
       >
@@ -611,50 +614,50 @@ export function ReservationRow({
           />
         </div>
 
-        {/* Time */}
-        <span className="w-14 text-sm font-mono text-gray-600">{reservation.timeKey}</span>
+        {/* Prénom */}
+        <span className="w-24 text-gray-600 truncate">{reservation.firstName}</span>
 
-        {/* Table */}
-        <span className="w-14 text-sm px-2.5 py-1 bg-gray-100 rounded text-center">
-          {primaryTableName}
+        {/* Nom */}
+        <span className="w-28 font-semibold truncate">{reservation.lastName}</span>
+
+        {/* Visits badge - Hist */}
+        <span className={cn("w-10 h-6 text-[10px] flex items-center justify-center rounded-full border", visitBadge.classes, visitBadge.fontWeight)}>
+          {visits === 0 ? "NEW" : visits}
         </span>
 
-        {/* Party size - detailed: total (Xe + Xb) */}
-        <div className="w-24 flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
+        {/* Party size - Nbre */}
+        <div className="w-20 flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
           <Users className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
           <span className="font-semibold">{reservation.partySize}</span>
           {(reservation.childrenCount > 0 || reservation.babyCount > 0) && (
             <span className="text-gray-400 text-xs">
               ({reservation.childrenCount > 0 ? `${reservation.childrenCount}e` : ""}
-              {reservation.childrenCount > 0 && reservation.babyCount > 0 ? " + " : ""}
+              {reservation.childrenCount > 0 && reservation.babyCount > 0 ? "+" : ""}
               {reservation.babyCount > 0 ? `${reservation.babyCount}b` : ""})
             </span>
           )}
         </div>
 
-        {/* Visits badge - pill format */}
-        <span className={cn("w-10 h-6 text-[10px] flex items-center justify-center rounded-full border", visitBadge.classes, visitBadge.fontWeight)}>
-          {visits === 0 ? "NEW" : visits}
+        {/* Table */}
+        <span className={cn(
+          "w-14 text-sm px-2.5 py-1 rounded text-center",
+          isUnassigned ? "bg-amber-100 text-amber-700" : "bg-gray-100"
+        )}>
+          {primaryTableName}
         </span>
 
-        {/* Flag based on phone + language */}
+        {/* Flag - Langue */}
         <span className="w-10 text-lg text-center">{getFlag(reservation.phone, reservation.language)}</span>
 
-        {/* Name - min width with auto expand */}
-        <div className="min-w-40 max-w-60 truncate">
-          <span className="font-semibold">{reservation.lastName}</span>{" "}
-          <span className="text-gray-600">{reservation.firstName}</span>
-        </div>
-
-        {/* Options - fixed order: stroller, highChair, wheelchair, dogAccess */}
-        <div className="w-32 flex items-center gap-1.5">
+        {/* Options */}
+        <div className="w-24 flex items-center gap-1.5">
           <Icon iconNode={stroller} className={cn("h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <Baby className={cn("h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <Accessibility className={cn("h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <PawPrint className={cn("h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
         </div>
 
-        {/* Note preview */}
+        {/* Message (Note) */}
         <span className="flex-1 text-sm text-gray-500 truncate">{reservation.note || "-"}</span>
 
         {/* Actions column - primary and secondary buttons - Design System */}

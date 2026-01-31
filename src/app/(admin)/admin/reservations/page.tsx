@@ -50,6 +50,7 @@ export default function ReservationsPage() {
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
+  const [highlightedReservationId, setHighlightedReservationId] = useState<Id<"reservations"> | null>(null);
 
   // Format date for API
   const dateKey = format(selectedDate, "yyyy-MM-dd");
@@ -175,6 +176,7 @@ export default function ReservationsPage() {
               isCompact={showFloorPlan}
               expandedId={expandedId}
               selectedForAssignmentId={selectedForAssignment?._id}
+              highlightedReservationId={highlightedReservationId}
               onToggleExpand={handleToggleExpand}
               onStatusChange={handleStatusChange}
               onEdit={handleEdit}
@@ -207,6 +209,7 @@ export default function ReservationsPage() {
               selectedPartySize={selectedForAssignment?.partySize}
               selectedReservationName={selectedForAssignment ? `${selectedForAssignment.lastName} (${selectedForAssignment.partySize}p)` : undefined}
               onAssignmentComplete={handleAssignmentComplete}
+              onTableClick={setHighlightedReservationId}
             />
           </div>
         )}

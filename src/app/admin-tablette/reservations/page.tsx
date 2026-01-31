@@ -94,6 +94,7 @@ export default function TabletReservationsPage() {
   const [selectedService, setSelectedService] = useState<"lunch" | "dinner">("lunch");
   const [showFloorPlan, setShowFloorPlan] = useState(false);
   const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
+  const [highlightedReservationId, setHighlightedReservationId] = useState<Id<"reservations"> | null>(null);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -267,6 +268,8 @@ export default function TabletReservationsPage() {
     const hasOption = (opt: string) => res.options?.includes(opt);
     const isCompact = showFloorPlan;
     const isSelectedForAssignment = selectedForAssignment?._id === res._id;
+    const isUnassigned = !res.primaryTableId && res.tableIds.length === 0;
+    const isHighlighted = highlightedReservationId === res._id;
 
     const handleRowClick = () => {
       if (isCompact) {
@@ -290,7 +293,9 @@ export default function TabletReservationsPage() {
             "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100",
             isCompact ? "px-2 py-1.5 gap-2" : "px-4 py-3 gap-4",
             isExpanded && "bg-gray-50",
-            isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500"
+            isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
+            isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
+            isUnassigned && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
           )}
         >
           {/* Status pill */}
@@ -302,7 +307,11 @@ export default function TabletReservationsPage() {
           <span className={cn("font-mono text-gray-600", isCompact ? "w-12 text-xs" : "w-14 text-sm")}>{res.timeKey}</span>
 
           {/* Table */}
-          <span className={cn("bg-gray-100 rounded text-center", isCompact ? "w-10 text-xs px-1.5 py-0.5" : "w-14 text-sm px-2.5 py-1")}>{getTableName(res)}</span>
+          <span className={cn(
+            "rounded text-center",
+            isCompact ? "w-10 text-xs px-1.5 py-0.5" : "w-14 text-sm px-2.5 py-1",
+            isUnassigned ? "bg-amber-100 text-amber-700" : "bg-gray-100"
+          )}>{getTableName(res)}</span>
 
           {/* Party size */}
           <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap", isCompact ? "w-16 text-xs" : "w-24 text-sm")}>
@@ -579,6 +588,7 @@ export default function TabletReservationsPage() {
               selectedPartySize={selectedForAssignment?.partySize}
               selectedReservationName={selectedForAssignment ? `${selectedForAssignment.lastName} (${selectedForAssignment.partySize}p)` : undefined}
               onAssignmentComplete={handleAssignmentComplete}
+              onTableClick={setHighlightedReservationId}
             />
           </div>
         )}

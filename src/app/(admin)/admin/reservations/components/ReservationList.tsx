@@ -11,6 +11,7 @@ interface ReservationListProps {
   isCompact?: boolean;
   expandedId: Id<"reservations"> | null;
   selectedForAssignmentId?: Id<"reservations"> | null;
+  highlightedReservationId?: Id<"reservations"> | null;
   onToggleExpand: (id: Id<"reservations">) => void;
   onStatusChange: (id: Id<"reservations">, status: ReservationStatus, version: number) => void;
   onEdit: (reservation: Reservation) => void;
@@ -32,6 +33,7 @@ export function ReservationList({
   isCompact = false,
   expandedId,
   selectedForAssignmentId,
+  highlightedReservationId,
   onToggleExpand,
   onStatusChange,
   onEdit,
@@ -79,32 +81,30 @@ export function ReservationList({
 
   return (
     <div className="flex-1 overflow-y-auto overflow-x-visible">
-      {/* Column headers */}
+      {/* Column headers - Ordre: Prénom, Nom, Hist, Nbre, Table, Langue, Options, Message */}
       {!isCompact ? (
         <div className="sticky top-0 z-10 bg-white flex items-center px-4 py-3 border-b border-gray-200 gap-4">
           <span className="w-6 text-[10px] font-medium text-gray-400 uppercase tracking-wider"></span>
-          <span className="w-14 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Heure</span>
-          <span className="w-14 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Table</span>
-          <span className="w-24 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
+          <span className="w-24 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Prénom</span>
+          <span className="w-28 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
           <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Hist.</span>
+          <span className="w-20 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
+          <span className="w-14 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Table</span>
           <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pays</span>
-          <span className="min-w-40 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
-          <span className="w-32 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Options</span>
-          <span className="flex-1 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Note</span>
+          <span className="w-24 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Options</span>
+          <span className="flex-1 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Message</span>
           <span className="w-32 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Actions</span>
           <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider"></span>
         </div>
       ) : (
         <div className="sticky top-0 z-10 bg-white flex items-center px-3 py-2 border-b border-gray-200 gap-3">
           <span className="w-4 text-[9px] font-medium text-gray-400 uppercase tracking-wider"></span>
-          <span className="w-11 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Heure</span>
-          <span className="w-10 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Table</span>
-          <span className="w-10 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
+          <span className="w-32 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
           <span className="w-9 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Hist</span>
+          <span className="w-12 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
+          <span className="w-10 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Table</span>
           <span className="w-6 text-[9px] font-medium text-gray-400 uppercase tracking-wider"></span>
-          <span className="w-24 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
           <span className="w-12 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Opt.</span>
-          <span className="flex-1 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Note</span>
         </div>
       )}
 
@@ -124,6 +124,7 @@ export function ReservationList({
               isCompact={isCompact}
               isExpanded={expandedId === reservation._id}
               isSelectedForAssignment={selectedForAssignmentId === reservation._id}
+              isHighlighted={highlightedReservationId === reservation._id}
               onToggleExpand={() => onToggleExpand(reservation._id)}
               onStatusChange={(status) => onStatusChange(reservation._id, status, reservation.version)}
               onEdit={() => onEdit(reservation)}

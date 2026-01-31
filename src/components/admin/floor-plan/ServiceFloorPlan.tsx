@@ -24,6 +24,7 @@ interface ServiceFloorPlanProps {
   selectedPartySize?: number;
   selectedReservationName?: string;
   onAssignmentComplete?: () => void;
+  onTableClick?: (reservationId: Id<"reservations"> | null) => void;
 }
 
 type TableStatus = "seated" | "reserved" | "free" | "blocked";
@@ -43,6 +44,7 @@ export function ServiceFloorPlan({
   selectedPartySize,
   selectedReservationName,
   onAssignmentComplete,
+  onTableClick,
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
@@ -182,10 +184,12 @@ export function ServiceFloorPlan({
     };
   }, [tableStates]);
 
-  // Handle table click - assign directly on click
-  const handleTableClick = async (tableId: string, status: TableStatus) => {
+  // Handle table click - assign directly on click or highlight reservation
+  const handleTableClick = async (tableId: string, status: TableStatus, reservationId?: Id<"reservations"> | null) => {
+    // Si pas de réservation sélectionnée pour assignation, on notifie la réservation de la table cliquée
     if (!selectedReservationId) {
-      toast.info("Sélectionnez d'abord une réservation à assigner");
+      // Notifier le parent de la réservation affectée à cette table (pour surbrillance)
+      onTableClick?.(reservationId ?? null);
       return;
     }
 
@@ -338,7 +342,7 @@ export function ServiceFloorPlan({
                   width,
                   height,
                 }}
-                onClick={() => handleTableClick(table.tableId, table.status as TableStatus)}
+                onClick={() => handleTableClick(table.tableId, table.status as TableStatus, table.reservation?.id)}
               >
                 {/* Table name */}
                 <span className={cn("text-xs font-semibold", statusColors.text)}>
