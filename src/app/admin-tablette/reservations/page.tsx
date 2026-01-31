@@ -56,12 +56,10 @@ interface Reservation {
   totalVisits?: number;
 }
 
-// Visit badge styles - New: 0 | Client: 1-4 | Regular: 5-9 | VIP: ≥10
+// Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
-  if (visits === 0) return { classes: "bg-emerald-50 text-emerald-700 border-emerald-200", fontWeight: "font-medium" }; // New (vert)
-  if (visits < 5) return { classes: "bg-slate-100 text-slate-600 border-slate-200", fontWeight: "font-medium" }; // Client (gris)
-  if (visits < 10) return { classes: "bg-violet-50 text-violet-700 border-violet-200", fontWeight: "font-medium" }; // Regular (violet)
-  return { classes: "bg-orange-100 text-orange-700 border-orange-300", fontWeight: "font-bold" }; // VIP (orange)
+  if (visits === 0) return { classes: "bg-emerald-500 text-white", fontWeight: "font-semibold" }; // New (vert)
+  return { classes: "bg-blue-600 text-white", fontWeight: "font-semibold" }; // Autres (bleu foncé)
 }
 
 const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
@@ -326,30 +324,28 @@ export default function TabletReservationsPage() {
             )}
           </div>
 
-          {/* Visits badge - Hist */}
+          {/* Flag */}
+          <span className={cn("text-center", isCompact ? "w-6 text-sm" : "w-10 text-lg")}>{getFlag(res.phone, res.language)}</span>
+
+          {/* Name + Badge Hist surélevé */}
           {(() => {
             const visits = res.totalVisits ?? 0;
             const visitBadge = getVisitBadgeStyle(visits);
             return (
-              <span className={cn(
-                "flex items-center justify-center rounded-full border",
-                visitBadge.classes,
-                visitBadge.fontWeight,
-                isCompact ? "w-8 h-5 text-[9px]" : "w-10 h-6 text-[10px]"
-              )}>
-                {visits === 0 ? "NEW" : visits}
-              </span>
+              <div className={cn("flex items-start gap-1", isCompact ? "w-36" : "min-w-44 max-w-60")}>
+                <span className={cn("font-semibold", isCompact ? "text-xs" : "")}>{res.lastName}</span>{" "}
+                <span className={cn("text-gray-600", isCompact ? "text-xs" : "")}>{isCompact ? res.firstName.charAt(0).toUpperCase() + "." : res.firstName}</span>
+                <span className={cn(
+                  "px-1.5 py-0.5 rounded-full -mt-1",
+                  visitBadge.classes,
+                  visitBadge.fontWeight,
+                  isCompact ? "text-[8px]" : "text-[10px]"
+                )}>
+                  {visits === 0 ? "NEW" : visits}
+                </span>
+              </div>
             );
           })()}
-
-          {/* Flag */}
-          <span className={cn("text-center", isCompact ? "w-6 text-sm" : "w-10 text-lg")}>{getFlag(res.phone, res.language)}</span>
-
-          {/* Name */}
-          <div className={cn("truncate", isCompact ? "w-28 text-xs" : "min-w-40 max-w-60")}>
-            <span className="font-semibold">{res.lastName}</span>{" "}
-            <span className="text-gray-600">{isCompact ? res.firstName.charAt(0).toUpperCase() + "." : res.firstName}</span>
-          </div>
 
           {/* Options - hidden in compact mode */}
           {!isCompact && (

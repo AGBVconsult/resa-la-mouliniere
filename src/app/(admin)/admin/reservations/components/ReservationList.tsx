@@ -85,8 +85,7 @@ export function ReservationList({
       {!isCompact ? (
         <div className="sticky top-0 z-10 bg-white flex items-center px-4 py-3 border-b border-gray-200 gap-4">
           <span className="w-6 text-[10px] font-medium text-gray-400 uppercase tracking-wider"></span>
-          <span className="w-40 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
-          <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Hist.</span>
+          <span className="w-48 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
           <span className="w-20 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
           <span className="w-14 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Table</span>
           <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pays</span>
@@ -98,8 +97,7 @@ export function ReservationList({
       ) : (
         <div className="sticky top-0 z-10 bg-white flex items-center px-3 py-2 border-b border-gray-200 gap-3">
           <span className="w-4 text-[10px] font-medium text-gray-400 uppercase tracking-wider shrink-0"></span>
-          <span className="w-36 text-[10px] font-medium text-gray-400 uppercase tracking-wider shrink-0">Nom</span>
-          <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider shrink-0">Hist</span>
+          <span className="w-44 text-[10px] font-medium text-gray-400 uppercase tracking-wider shrink-0">Nom</span>
           <span className="w-14 text-[10px] font-medium text-gray-400 uppercase tracking-wider shrink-0">Pers.</span>
           <span className="w-12 text-[10px] font-medium text-gray-400 uppercase tracking-wider shrink-0">Table</span>
           <span className="w-8 text-[10px] font-medium text-gray-400 uppercase tracking-wider shrink-0"></span>

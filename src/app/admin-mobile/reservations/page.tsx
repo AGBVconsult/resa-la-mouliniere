@@ -52,12 +52,10 @@ interface Reservation {
   totalVisits?: number;
 }
 
-// Visit badge styles - New: 0 | Client: 1-4 | Regular: 5-9 | VIP: ≥10
+// Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
-  if (visits === 0) return { classes: "bg-emerald-50 text-emerald-700 border-emerald-200", fontWeight: "font-medium" }; // New (vert)
-  if (visits < 5) return { classes: "bg-slate-100 text-slate-600 border-slate-200", fontWeight: "font-medium" }; // Client (gris)
-  if (visits < 10) return { classes: "bg-violet-50 text-violet-700 border-violet-200", fontWeight: "font-medium" }; // Regular (violet)
-  return { classes: "bg-orange-100 text-orange-700 border-orange-300", fontWeight: "font-bold" }; // VIP (orange)
+  if (visits === 0) return { classes: "bg-emerald-500 text-white", fontWeight: "font-semibold" }; // New (vert)
+  return { classes: "bg-blue-600 text-white", fontWeight: "font-semibold" }; // Autres (bleu foncé)
 }
 
 export default function MobileReservationsPage() {
@@ -224,28 +222,29 @@ export default function MobileReservationsPage() {
             <span className="text-sm font-bold text-slate-800">{res.partySize}</span>
           </div>
 
-          {/* Visits badge - Hist */}
+          <span className="text-sm shrink-0">{getFlag(res.phone, res.language)}</span>
+
+          {/* Name + Badge Hist surélevé */}
           {(() => {
             const visits = res.totalVisits ?? 0;
             const visitBadge = getVisitBadgeStyle(visits);
             return (
-              <span className={`w-8 h-5 text-[8px] flex items-center justify-center rounded-full border shrink-0 ${visitBadge.classes} ${visitBadge.fontWeight}`}>
-                {visits === 0 ? "NEW" : visits}
-              </span>
+              <div className="flex-1 flex items-start gap-1 truncate">
+                <span
+                  className={`text-sm font-semibold ${
+                    res.status === "cancelled" || res.status === "noshow"
+                      ? "text-slate-300 line-through"
+                      : "text-slate-700"
+                  }`}
+                >
+                  {res.lastName} {res.firstName.charAt(0).toUpperCase()}.
+                </span>
+                <span className={`px-1 py-0.5 text-[8px] rounded-full -mt-0.5 ${visitBadge.classes} ${visitBadge.fontWeight}`}>
+                  {visits === 0 ? "NEW" : visits}
+                </span>
+              </div>
             );
           })()}
-
-          <span className="text-sm shrink-0">{getFlag(res.phone, res.language)}</span>
-
-          <span
-            className={`flex-1 text-sm font-semibold truncate ${
-              res.status === "cancelled" || res.status === "noshow"
-                ? "text-slate-300 line-through"
-                : "text-slate-700"
-            }`}
-          >
-            {res.lastName} {res.firstName.charAt(0).toUpperCase()}.
-          </span>
 
           <div className="flex items-center gap-3 shrink-0 relative">
             {res.note && (

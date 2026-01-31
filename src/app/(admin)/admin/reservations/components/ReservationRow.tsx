@@ -23,12 +23,10 @@ const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
 };
 
 // Visit badge styles - Design System
-// New: 0 | Client: 1-4 | Regular: 5-9 | VIP: ≥10
+// New: 0 (vert) | Autres: bleu foncé + texte blanc
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
-  if (visits === 0) return { classes: "bg-emerald-50 text-emerald-700 border-emerald-200", fontWeight: "font-medium" }; // New (vert)
-  if (visits < 5) return { classes: "bg-slate-100 text-slate-600 border-slate-200", fontWeight: "font-medium" }; // Client (gris)
-  if (visits < 10) return { classes: "bg-violet-50 text-violet-700 border-violet-200", fontWeight: "font-medium" }; // Regular (violet)
-  return { classes: "bg-orange-100 text-orange-700 border-orange-300", fontWeight: "font-bold" }; // VIP (orange)
+  if (visits === 0) return { classes: "bg-emerald-500 text-white", fontWeight: "font-semibold" }; // New (vert)
+  return { classes: "bg-blue-600 text-white", fontWeight: "font-semibold" }; // Autres (bleu foncé)
 }
 
 // Phone prefix to country mapping (comprehensive list)
@@ -548,16 +546,14 @@ export function ReservationRow({
           />
         </div>
 
-        {/* Nom complet (Prénom Nom) */}
-        <div className="w-36 shrink-0 truncate">
+        {/* Nom complet (Prénom Nom) + Badge Hist surélevé */}
+        <div className="w-44 shrink-0 flex items-start gap-1">
           <span className="text-sm text-gray-600">{reservation.firstName}</span>{" "}
           <span className="text-sm font-semibold">{reservation.lastName}</span>
+          <span className={cn("px-1.5 py-0.5 text-[9px] rounded-full -mt-1", visitBadge.classes, visitBadge.fontWeight)}>
+            {visits === 0 ? "NEW" : visits}
+          </span>
         </div>
-
-        {/* Visits badge - Hist */}
-        <span className={cn("w-10 h-6 text-[10px] flex items-center justify-center rounded-full border shrink-0", visitBadge.classes, visitBadge.fontWeight)}>
-          {visits === 0 ? "NEW" : visits}
-        </span>
 
         {/* Party size - Nbre */}
         <div className="w-14 flex items-center gap-1 text-sm text-gray-600 shrink-0">
@@ -614,16 +610,14 @@ export function ReservationRow({
           />
         </div>
 
-        {/* Nom complet (Prénom Nom) */}
-        <div className="w-40 truncate">
+        {/* Nom complet (Prénom Nom) + Badge Hist surélevé */}
+        <div className="w-48 flex items-start gap-1">
           <span className="text-gray-600">{reservation.firstName}</span>{" "}
           <span className="font-semibold">{reservation.lastName}</span>
+          <span className={cn("px-1.5 py-0.5 text-[10px] rounded-full -mt-1", visitBadge.classes, visitBadge.fontWeight)}>
+            {visits === 0 ? "NEW" : visits}
+          </span>
         </div>
-
-        {/* Visits badge - Hist */}
-        <span className={cn("w-10 h-6 text-[10px] flex items-center justify-center rounded-full border", visitBadge.classes, visitBadge.fontWeight)}>
-          {visits === 0 ? "NEW" : visits}
-        </span>
 
         {/* Party size - Nbre */}
         <div className="w-20 flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
