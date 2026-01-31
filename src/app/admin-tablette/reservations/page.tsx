@@ -22,6 +22,7 @@ import {
   Icon,
   CalendarCheck,
   Settings,
+  Map,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { getFlag } from "@/lib/getFlag";
+import { ServiceFloorPlan } from "@/components/admin/floor-plan/ServiceFloorPlan";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -90,6 +92,8 @@ export default function TabletReservationsPage() {
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [openPopupId, setOpenPopupId] = useState<Id<"reservations"> | null>(null);
   const [selectedService, setSelectedService] = useState<"lunch" | "dinner">("lunch");
+  const [showFloorPlan, setShowFloorPlan] = useState(false);
+  const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -143,6 +147,15 @@ export default function TabletReservationsPage() {
       toast.error(formatConvexError(error));
     }
   };
+
+  const handleSelectForAssignment = useCallback((reservation: Reservation) => {
+    setSelectedForAssignment(reservation);
+    setShowFloorPlan(true);
+  }, []);
+
+  const handleAssignmentComplete = useCallback(() => {
+    setSelectedForAssignment(null);
+  }, []);
 
   const formatDateLabel = () => {
     const today = new Date();
@@ -461,6 +474,17 @@ export default function TabletReservationsPage() {
         <button className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-slate-700 transition-colors">
           <Settings size={20} strokeWidth={1.5} />
         </button>
+        <button
+          onClick={() => setShowFloorPlan(!showFloorPlan)}
+          className={cn(
+            "p-2.5 rounded-full border transition-colors",
+            showFloorPlan
+              ? "bg-slate-800 border-slate-800 text-white"
+              : "bg-white border-slate-200 text-slate-400 hover:text-slate-700"
+          )}
+        >
+          <Map size={20} strokeWidth={1.5} />
+        </button>
         </div>
       </header>
 
@@ -478,26 +502,49 @@ export default function TabletReservationsPage() {
         </div>
       </div>
 
-      {/* Reservations list */}
-      {isLoading ? (
-        <div className="flex-1 flex items-center justify-center bg-white rounded-b-2xl border border-t-0 border-slate-100">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto bg-white rounded-b-2xl border border-t-0 border-slate-100">
-          <div className="divide-y divide-slate-50">
-            {(currentReservations as Reservation[])
-              ?.slice()
-              .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
-              .map(renderReservationRow)}
-            {(!currentReservations || currentReservations.length === 0) && (
-              <div className="px-5 py-12 text-center text-base text-slate-400">
-                Aucune réservation
+      {/* Main content with floor plan */}
+      <div className="flex-1 flex gap-4 min-h-0">
+        {/* Reservations list */}
+        <div className={cn(
+          "flex flex-col bg-white rounded-b-2xl border border-t-0 border-slate-100 transition-all duration-300",
+          showFloorPlan ? "flex-1 min-w-[350px]" : "w-full"
+        )}>
+          {isLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
+              <div className="divide-y divide-slate-50">
+                {(currentReservations as Reservation[])
+                  ?.slice()
+                  .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
+                  .map(renderReservationRow)}
+                {(!currentReservations || currentReservations.length === 0) && (
+                  <div className="px-5 py-12 text-center text-base text-slate-400">
+                    Aucune réservation
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Floor Plan */}
+        {showFloorPlan && (
+          <div className="flex-shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden p-4 flex flex-col">
+            <ServiceFloorPlan
+              dateKey={dateKey}
+              service={selectedService}
+              selectedReservationId={selectedForAssignment?._id}
+              selectedReservationVersion={selectedForAssignment?.version}
+              selectedPartySize={selectedForAssignment?.partySize}
+              selectedReservationName={selectedForAssignment ? `${selectedForAssignment.lastName} (${selectedForAssignment.partySize}p)` : undefined}
+              onAssignmentComplete={handleAssignmentComplete}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
