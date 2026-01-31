@@ -453,8 +453,10 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
 }
 
 export const nightlyCheck = internalMutation({
-  args: { now: v.number() },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    
     const activeRestaurants = await ctx.db
       .query("restaurants")
       .withIndex("by_isActive", (q: any) => q.eq("isActive", true))
@@ -467,7 +469,7 @@ export const nightlyCheck = internalMutation({
     const restaurant = activeRestaurants[0];
     const timezone = restaurant.timezone ?? "Europe/Brussels";
 
-    const brusselsHour = getHourInTimezone(new Date(args.now), timezone);
+    const brusselsHour = getHourInTimezone(new Date(now), timezone);
     if (brusselsHour !== 4) {
       return { skipped: true, reason: `Hour is ${brusselsHour}, not 4`, timezone };
     }
@@ -479,9 +481,10 @@ export const nightlyCheck = internalMutation({
 });
 
 export const purgeOldClients = internalMutation({
-  args: { now: v.number() },
-  handler: async (ctx, args) => {
-    const threeYearsAgo = args.now - 3 * 365 * 24 * 60 * 60 * 1000;
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const threeYearsAgo = now - 3 * 365 * 24 * 60 * 60 * 1000;
 
     const oldClients = await ctx.db
       .query("clients")
@@ -499,9 +502,9 @@ export const purgeOldClients = internalMutation({
         emails: [],
         notes: [],
         searchText: "",
-        deletedAt: args.now,
+        deletedAt: now,
         deletionReason: "purge_3y",
-        lastUpdatedAt: args.now,
+        lastUpdatedAt: now,
       });
 
       const ledgerEntries = await ctx.db
@@ -514,7 +517,7 @@ export const purgeOldClients = internalMutation({
       }
     }
 
-    const ninetyDaysAgo = args.now - 90 * 24 * 60 * 60 * 1000;
+    const ninetyDaysAgo = now - 90 * 24 * 60 * 60 * 1000;
     const oldFinalizations = await ctx.db
       .query("crmDailyFinalizations")
       .filter((q: any) => q.lt(q.field("startedAt"), ninetyDaysAgo))
@@ -525,5 +528,17 @@ export const purgeOldClients = internalMutation({
     }
 
     return { anonymizedClients: oldClients.length, deletedFinalizations: oldFinalizations.length };
+  },
+});
+
+/**
+ * Force finalization for a specific date (admin only).
+ * Use this to manually trigger CRM processing for a past date.
+ */
+export const forceFinalize = internalMutation({
+  args: { dateKey: v.string() },
+  handler: async (ctx, { dateKey }) => {
+    await finalizeClientsForDate(ctx, dateKey);
+    return { ok: true, dateKey };
   },
 });

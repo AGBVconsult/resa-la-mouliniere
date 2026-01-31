@@ -69,18 +69,67 @@ function parseCSV(text: string): CSVRow[] {
   const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
   if (lines.length < 2) return [];
 
+  // Detect separator
+  const headerLine = lines[0];
+  const separator = headerLine.includes(";") ? ";" : headerLine.includes("\t") ? "\t" : ",";
+  
+  // Parse header to detect column positions
+  const headers = headerLine.split(separator).map(h => h.trim().toLowerCase());
+  
+  const firstNameIdx = headers.findIndex(h => h.includes("prénom") || h.includes("prenom") || h === "firstname");
+  const lastNameIdx = headers.findIndex(h => (h.includes("nom") && !h.includes("prénom") && !h.includes("prenom")) || h === "lastname");
+  const codeIdx = headers.findIndex(h => h === "code" || h.includes("indicatif"));
+  const phoneIdx = headers.findIndex(h => h.includes("téléphone") || h.includes("telephone") || h === "phone");
+  const emailIdx = headers.findIndex(h => h.includes("email") || h.includes("mail"));
+  const visitsIdx = headers.findIndex(h => h.includes("réservation") || h.includes("reservation") || h.includes("visite") || h === "totalvisits");
+
+  // Fallback to positional if headers not detected
+  const usePositional = firstNameIdx === -1 && lastNameIdx === -1;
+
   const rows: CSVRow[] = [];
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(/[,;\t]/);
+    const cols = lines[i].split(separator).map(c => c.trim());
     if (cols.length < 4) continue;
 
-    const firstName = cols[0]?.trim() ?? "";
-    const lastName = cols[1]?.trim() ?? "";
-    const phone = cols[2]?.trim() ?? "";
-    const email = cols[3]?.trim() ?? "";
-    const totalVisits = parseInt(cols[4]?.trim() ?? "0", 10) || 0;
+    let firstName: string, lastName: string, phone: string, email: string, totalVisits: number;
 
-    if (phone.length >= 5) {
+    if (usePositional) {
+      // Fallback: Prénom, Nom, Téléphone, email, Réservations (5 cols)
+      // or: Prénom, Nom, Code, Téléphone, email, Réservations (6 cols)
+      if (cols.length >= 6) {
+        // Format with Code column
+        firstName = cols[0] ?? "";
+        lastName = cols[1] ?? "";
+        const code = cols[2]?.replace(/[^0-9]/g, "") ?? "";
+        const phoneRaw = cols[3]?.replace(/[^0-9]/g, "") ?? "";
+        phone = code ? `+${code}${phoneRaw}` : `+${phoneRaw}`;
+        email = cols[4] ?? "";
+        totalVisits = parseInt(cols[5] ?? "0", 10) || 0;
+      } else {
+        // Format without Code column
+        firstName = cols[0] ?? "";
+        lastName = cols[1] ?? "";
+        phone = cols[2] ?? "";
+        email = cols[3] ?? "";
+        totalVisits = parseInt(cols[4] ?? "0", 10) || 0;
+      }
+    } else {
+      // Use detected column positions
+      firstName = firstNameIdx >= 0 ? cols[firstNameIdx] ?? "" : "";
+      lastName = lastNameIdx >= 0 ? cols[lastNameIdx] ?? "" : "";
+      const code = codeIdx >= 0 ? cols[codeIdx]?.replace(/[^0-9]/g, "") ?? "" : "";
+      const phoneRaw = phoneIdx >= 0 ? cols[phoneIdx]?.replace(/[^0-9]/g, "") ?? "" : "";
+      phone = code && phoneRaw ? `+${code}${phoneRaw}` : phoneRaw ? `+${phoneRaw}` : "";
+      email = emailIdx >= 0 ? cols[emailIdx] ?? "" : "";
+      totalVisits = visitsIdx >= 0 ? parseInt(cols[visitsIdx] ?? "0", 10) || 0 : 0;
+    }
+
+    // Normalize phone if not already formatted
+    if (phone && !phone.startsWith("+")) {
+      phone = `+${phone.replace(/[^0-9]/g, "")}`;
+    }
+
+    if (phone.length >= 8) {
       rows.push({ firstName, lastName, phone, email, totalVisits });
     }
   }

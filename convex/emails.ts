@@ -375,10 +375,9 @@ export const sendJob = internalAction({
  * Dedupe via dedupeKey = "reminder:{reservationId}"
  */
 export const enqueueReminders = internalMutation({
-  args: {
-    now: v.number(),
-  },
-  handler: async (ctx, { now }) => {
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
     // Get active restaurant
     const activeRestaurants = await ctx.db
       .query("restaurants")
@@ -518,10 +517,9 @@ export const enqueueReminders = internalMutation({
  * Dedupe via dedupeKey = "review:{reservationId}"
  */
 export const enqueueReviewEmails = internalMutation({
-  args: {
-    now: v.number(),
-  },
-  handler: async (ctx, { now }) => {
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
     // Get active restaurant
     const activeRestaurants = await ctx.db
       .query("restaurants")
@@ -658,10 +656,10 @@ export const enqueueReviewEmails = internalMutation({
  */
 export const cleanup = internalMutation({
   args: {
-    now: v.number(),
     batchSize: v.optional(v.number()),
   },
-  handler: async (ctx, { now, batchSize = 200 }) => {
+  handler: async (ctx, { batchSize = 200 }) => {
+    const now = Date.now();
     let deletedSent = 0;
     let deletedFailed = 0;
 
@@ -707,7 +705,7 @@ export const cleanup = internalMutation({
 
     // If batch was full, schedule continuation
     if (totalDeleted >= batchSize) {
-      await ctx.scheduler.runAfter(0, internal.emails.cleanup, { now, batchSize });
+      await ctx.scheduler.runAfter(0, internal.emails.cleanup, { batchSize });
     }
 
     return { deletedSent, deletedFailed };
@@ -726,10 +724,10 @@ export const cleanup = internalMutation({
  */
 export const reaper = internalMutation({
   args: {
-    now: v.number(),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { now, limit = 100 }) => {
+  handler: async (ctx, { limit = 100 }) => {
+    const now = Date.now();
     let reset = 0;
     let failed = 0;
     let orphaned = 0;

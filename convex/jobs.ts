@@ -41,10 +41,9 @@ function computeYesterdayDateKey(now: number, timezone: string): string {
  * This ensures no reservation stays in an intermediate state after the day ends.
  */
 export const dailyFinalize = internalMutation({
-  args: {
-    now: v.number(),
-  },
-  handler: async (ctx, { now }) => {
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
     // Get active restaurant
     const activeRestaurants = await ctx.db
       .query("restaurants")
@@ -150,10 +149,9 @@ export const dailyFinalize = internalMutation({
  * Runs at 04:00 daily.
  */
 export const cleanup = internalMutation({
-  args: {
-    now: v.number(),
-  },
-  handler: async (ctx, { now }) => {
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
     let tokensDeleted = 0;
     let idempotencyDeleted = 0;
 

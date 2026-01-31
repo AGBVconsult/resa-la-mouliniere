@@ -387,6 +387,7 @@ export interface Reservation {
   tableIds: Id<"tables">[];
   primaryTableId?: Id<"tables">;
   version: number;
+  totalVisits?: number;
 }
 
 interface ReservationRowProps {
@@ -415,7 +416,7 @@ export function ReservationRow({
   const [showMenu, setShowMenu] = useState(false);
 
   const statusStyle = STATUS_COLORS[reservation.status] || { bg: "bg-gray-400" };
-  const visits = 1; // TODO: Get from CRM
+  const visits = reservation.totalVisits ?? 0;
   const visitBadge = getVisitBadgeStyle(visits);
 
   // Get primary table name (the one clicked during assignment)

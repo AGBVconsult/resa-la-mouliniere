@@ -367,6 +367,7 @@ function buildReservationAdmin(doc: {
   status: string;
   source: "online" | "admin" | "phone" | "walkin";
   tableIds: Id<"tables">[];
+  primaryTableId?: Id<"tables">;
   version: number;
   createdAt: number;
   updatedAt: number;
@@ -375,7 +376,7 @@ function buildReservationAdmin(doc: {
   seatedAt: number | null;
   completedAt: number | null;
   noshowAt: number | null;
-}) {
+}, totalVisits: number = 0) {
   return {
     _id: doc._id,
     restaurantId: doc.restaurantId,
@@ -397,6 +398,7 @@ function buildReservationAdmin(doc: {
     status: doc.status as ReservationStatus,
     source: doc.source,
     tableIds: doc.tableIds,
+    primaryTableId: doc.primaryTableId ?? null,
     version: doc.version,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
@@ -405,6 +407,7 @@ function buildReservationAdmin(doc: {
     seatedAt: doc.seatedAt,
     completedAt: doc.completedAt,
     noshowAt: doc.noshowAt,
+    totalVisits,
   };
 }
 
@@ -496,8 +499,28 @@ export const listReservations = query({
       filteredDocs = filteredDocs.filter((doc) => doc.status === status);
     }
 
-    // Map to ReservationAdmin
-    const page = filteredDocs.map(buildReservationAdmin);
+    // Collect unique phone numbers to batch lookup clients
+    const phoneSet = new Set(filteredDocs.map((doc) => normalizePhone(doc.phone)));
+    const phones = Array.from(phoneSet);
+    
+    // Batch lookup clients by phone
+    const clientsMap = new Map<string, number>();
+    for (const phone of phones) {
+      const client = await ctx.db
+        .query("clients")
+        .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
+        .unique();
+      if (client) {
+        clientsMap.set(phone, client.totalVisits);
+      }
+    }
+
+    // Map to ReservationAdmin with totalVisits
+    const page = filteredDocs.map((doc) => {
+      const normalizedPhone = normalizePhone(doc.phone);
+      const totalVisits = clientsMap.get(normalizedPhone) ?? 0;
+      return buildReservationAdmin(doc, totalVisits);
+    });
 
     return {
       page,
@@ -526,7 +549,15 @@ export const getReservation = query({
       throw Errors.RESERVATION_NOT_FOUND(reservationId);
     }
 
-    return buildReservationAdmin(reservation);
+    // Lookup client totalVisits
+    const phone = normalizePhone(reservation.phone);
+    const client = await ctx.db
+      .query("clients")
+      .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
+      .unique();
+    const totalVisits = client?.totalVisits ?? 0;
+
+    return buildReservationAdmin(reservation, totalVisits);
   },
 });
 
@@ -1294,6 +1325,23 @@ export const listPendingReservations = query({
       .order("desc")
       .collect();
 
-    return pendingReservations.map(buildReservationAdmin);
+    // Batch lookup clients by phone for totalVisits
+    const phoneSet = new Set(pendingReservations.map((doc) => normalizePhone(doc.phone)));
+    const phones = Array.from(phoneSet);
+    const clientsMap = new Map<string, number>();
+    for (const phone of phones) {
+      const client = await ctx.db
+        .query("clients")
+        .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
+        .unique();
+      if (client) {
+        clientsMap.set(phone, client.totalVisits);
+      }
+    }
+
+    return pendingReservations.map((doc) => {
+      const totalVisits = clientsMap.get(normalizePhone(doc.phone)) ?? 0;
+      return buildReservationAdmin(doc, totalVisits);
+    });
   },
 });

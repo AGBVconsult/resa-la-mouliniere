@@ -29,7 +29,7 @@ crons.interval(
   "enqueue-reminders",
   { minutes: 15 },
   internal.emails.enqueueReminders,
-  { now: Date.now() }
+  {}
 );
 
 // Enqueue review emails at 06:30 daily (J+1 review requests)
@@ -38,7 +38,7 @@ crons.cron(
   "enqueue-reviews",
   "30 6 * * *",
   internal.emails.enqueueReviewEmails,
-  { now: Date.now() }
+  {}
 );
 
 // Cleanup old email jobs at 04:00 daily
@@ -47,7 +47,7 @@ crons.cron(
   "email-cleanup",
   "0 4 * * *",
   internal.emails.cleanup,
-  { now: Date.now() }
+  {}
 );
 
 // Reaper: reset stuck jobs every hour
@@ -56,7 +56,7 @@ crons.interval(
   "email-reaper",
   { hours: 1 },
   internal.emails.reaper,
-  { now: Date.now() }
+  {}
 );
 
 // Daily finalize at 03:00 - mark confirmed as noshow, seated as completed
@@ -64,7 +64,7 @@ crons.cron(
   "daily-finalize",
   "0 3 * * *",
   internal.jobs.dailyFinalize,
-  { now: Date.now() }
+  {}
 );
 
 // Daily cleanup at 04:00 - delete expired tokens and idempotency keys
@@ -72,7 +72,7 @@ crons.cron(
   "daily-cleanup",
   "0 4 * * *",
   internal.jobs.cleanup,
-  { now: Date.now() }
+  {}
 );
 
 // CRM nightly check (DST-safe): Convex runs in UTC, so run hourly and check local hour in handler
@@ -80,7 +80,7 @@ crons.hourly(
   "crm-nightly-check",
   { minuteUTC: 0 },
   internalAny.crm.nightlyCheck,
-  { now: Date.now() }
+  {}
 );
 
 // CRM purge/anonymisation: monthly job
@@ -88,7 +88,7 @@ crons.monthly(
   "crm-purge-old-clients",
   { day: 1, hourUTC: 2, minuteUTC: 0 },
   internalAny.crm.purgeOldClients,
-  { now: Date.now() }
+  {}
 );
 
 // Generate slots from weekly templates daily at 01:00 UTC
