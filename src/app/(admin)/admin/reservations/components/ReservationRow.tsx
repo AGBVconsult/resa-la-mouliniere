@@ -23,12 +23,11 @@ const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
 };
 
 // Visit badge styles - Design System
+// New: <3 visites | Regular: 3-4 visites | VIP: ≥5 visites
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
-  if (visits === 1) return { classes: "bg-blue-50 text-blue-700 border-blue-100", fontWeight: "font-medium" }; // Nouveau
-  if (visits <= 4) return { classes: "bg-gray-50 text-gray-500 border-gray-100", fontWeight: "font-medium" };
-  if (visits <= 14) return { classes: "bg-gray-100 text-gray-700 border-gray-200", fontWeight: "font-medium" };
-  if (visits <= 49) return { classes: "bg-amber-50 text-amber-700 border-amber-100", fontWeight: "font-bold" };
-  return { classes: "bg-amber-100 text-amber-800 border-amber-300", fontWeight: "font-bold" }; // VIP 50+
+  if (visits < 3) return { classes: "bg-blue-50 text-blue-700 border-blue-200", fontWeight: "font-medium" }; // New
+  if (visits < 5) return { classes: "bg-slate-100 text-slate-700 border-slate-200", fontWeight: "font-medium" }; // Regular
+  return { classes: "bg-amber-100 text-amber-800 border-amber-300", fontWeight: "font-bold" }; // VIP
 }
 
 // Phone prefix to country mapping (comprehensive list)
