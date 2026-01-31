@@ -291,8 +291,7 @@ export default function TabletReservationsPage() {
         <div
           onClick={handleRowClick}
           className={cn(
-            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100",
-            isCompact ? "px-2 py-1.5 gap-2" : "px-4 py-3 gap-4",
+            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 px-4 py-3 gap-4",
             isExpanded && "bg-gray-50",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
             isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
@@ -300,49 +299,51 @@ export default function TabletReservationsPage() {
           )}
         >
           {/* Status pill */}
-          <div className="w-4 flex justify-center shrink-0">
-            <div className={cn("w-1 rounded-full", isCompact ? "h-5" : "h-7", statusStyle.bg, statusStyle.animate && "animate-pulse")} />
+          <div className="w-4 flex justify-center shrink-0 self-stretch">
+            <div className={cn("w-1 rounded-full h-full", statusStyle.bg, statusStyle.animate && "animate-pulse")} />
           </div>
 
-          {/* Flag + Name + Badge Hist */}
-          {(() => {
-            const visits = res.totalVisits ?? 0;
-            const visitBadge = getVisitBadgeStyle(visits);
-            return (
-              <div className={cn("flex items-center gap-1.5 shrink-0", isCompact ? "w-44" : "w-56")}>
-                <span className={cn("shrink-0", isCompact ? "text-sm" : "text-base")}>{getFlag(res.phone, res.language)}</span>
-                <span className={cn("text-gray-600", isCompact ? "text-xs" : "")}>{res.firstName}</span>
-                <span className={cn("font-semibold", isCompact ? "text-xs" : "")}>{res.lastName}</span>
-                <span className={cn(
-                  "px-1.5 py-0.5 rounded-full -mt-1",
-                  visitBadge.classes,
-                  visitBadge.fontWeight,
-                  isCompact ? "text-[8px]" : "text-[10px]"
-                )}>
-                  {visits === 0 ? "NEW" : visits}
-                </span>
+          {/* Column: 2 lignes */}
+          <div className="flex flex-col gap-1 shrink-0" style={{ width: isCompact ? "160px" : "220px" }}>
+            {/* Ligne 1: Drapeau + Prénom + Nom + Badge */}
+            {(() => {
+              const visits = res.totalVisits ?? 0;
+              const visitBadge = getVisitBadgeStyle(visits);
+              return (
+                <div className="flex items-center gap-1.5">
+                  <span className={cn("shrink-0", isCompact ? "text-sm" : "text-base")}>{getFlag(res.phone, res.language)}</span>
+                  <span className={cn("text-gray-600", isCompact ? "text-xs" : "text-sm")}>{res.firstName}</span>
+                  <span className={cn("font-semibold", isCompact ? "text-xs" : "text-sm")}>{res.lastName}</span>
+                  <span className={cn(
+                    "px-1.5 py-0.5 rounded-full",
+                    visitBadge.classes,
+                    visitBadge.fontWeight,
+                    isCompact ? "text-[8px]" : "text-[10px]"
+                  )}>
+                    {visits === 0 ? "NEW" : visits}
+                  </span>
+                </div>
+              );
+            })()}
+            {/* Ligne 2: Couverts + Options */}
+            <div className="flex items-center gap-3">
+              <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap", isCompact ? "text-xs" : "text-sm")}>
+                <UsersRound className={cn("text-gray-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
+                <span className="font-semibold">{res.partySize}</span>
               </div>
-            );
-          })()}
-
-          {/* Party size - réduit de 1/4 */}
-          <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap shrink-0", isCompact ? "w-9 text-xs" : "w-14 text-sm")}>
-            <UsersRound className={cn("text-gray-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
-            <span className="font-semibold">{res.partySize}</span>
+              <div className="flex items-center gap-1">
+                <Icon iconNode={stroller} className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+                <Baby className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+                <Accessibility className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+                <PawPrint className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+              </div>
+            </div>
           </div>
 
           {/* Note preview - 2 lignes max */}
           <span className={cn("flex-1 text-gray-500 line-clamp-2", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
 
-          {/* Options - après message */}
-          <div className={cn("flex items-center shrink-0", isCompact ? "w-16 gap-1" : "w-24 gap-1.5")}>
-            <Icon iconNode={stroller} className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-            <Baby className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-            <Accessibility className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-            <PawPrint className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-          </div>
-
-          {/* Table - après options, hauteur doublée */}
+          {/* Table - après message, hauteur doublée */}
           <span className={cn(
             "rounded text-center shrink-0",
             isCompact ? "w-10 text-xs px-1.5 py-2" : "w-14 text-sm px-2.5 py-3",
@@ -599,7 +600,7 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="flex-shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden p-2 flex flex-col h-full">
+          <div className="flex-shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col h-full">
             <ServiceFloorPlan
               dateKey={dateKey}
               service={selectedService}

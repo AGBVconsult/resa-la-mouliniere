@@ -296,8 +296,13 @@ export function ServiceFloorPlan({
         style={hideHeader ? undefined : { maxHeight: gridDimensions.height + 4 }}
       >
         <div
-          className="relative"
-          style={{ width: gridDimensions.width, height: gridDimensions.height, minWidth: gridDimensions.width }}
+          className="relative origin-top-left"
+          style={{ 
+            width: gridDimensions.width, 
+            height: gridDimensions.height, 
+            minWidth: gridDimensions.width,
+            transform: hideHeader ? "scale(0.9)" : undefined,
+          }}
         >
           {/* Grid pattern */}
           <svg
