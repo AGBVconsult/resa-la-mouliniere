@@ -265,32 +265,34 @@ export default function TabletReservationsPage() {
     const secondaryAction = getSecondaryAction(res.status);
     const menuActions = getMenuActions(res.status);
     const hasOption = (opt: string) => res.options?.includes(opt);
+    const isCompact = showFloorPlan;
 
     return (
       <div key={res._id} className="flex flex-col">
         <div
           onClick={() => toggleExpand(res._id)}
           className={cn(
-            "flex items-center px-4 py-3 hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 gap-4",
+            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100",
+            isCompact ? "px-2 py-1.5 gap-2" : "px-4 py-3 gap-4",
             isExpanded && "bg-gray-50"
           )}
         >
           {/* Status pill */}
-          <div className="w-6 flex justify-center">
-            <div className={cn("w-1 h-7 rounded-full", statusStyle.bg, statusStyle.animate && "animate-pulse")} />
+          <div className="w-4 flex justify-center">
+            <div className={cn("w-1 rounded-full", isCompact ? "h-5" : "h-7", statusStyle.bg, statusStyle.animate && "animate-pulse")} />
           </div>
 
           {/* Time */}
-          <span className="w-14 text-sm font-mono text-gray-600">{res.timeKey}</span>
+          <span className={cn("font-mono text-gray-600", isCompact ? "w-12 text-xs" : "w-14 text-sm")}>{res.timeKey}</span>
 
           {/* Table */}
-          <span className="w-14 text-sm px-2.5 py-1 bg-gray-100 rounded text-center">{getTableName(res)}</span>
+          <span className={cn("bg-gray-100 rounded text-center", isCompact ? "w-10 text-xs px-1.5 py-0.5" : "w-14 text-sm px-2.5 py-1")}>{getTableName(res)}</span>
 
           {/* Party size */}
-          <div className="w-24 flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
-            <UsersRound className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
+          <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap", isCompact ? "w-16 text-xs" : "w-24 text-sm")}>
+            <UsersRound className={cn("text-gray-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
             <span className="font-semibold">{res.partySize}</span>
-            {(res.childrenCount > 0 || res.babyCount > 0) && (
+            {!isCompact && (res.childrenCount > 0 || res.babyCount > 0) && (
               <span className="text-gray-400 text-xs">
                 ({res.childrenCount > 0 ? `${res.childrenCount}e` : ""}
                 {res.childrenCount > 0 && res.babyCount > 0 ? " + " : ""}
@@ -304,67 +306,78 @@ export default function TabletReservationsPage() {
             const visits = res.totalVisits ?? 0;
             const visitBadge = getVisitBadgeStyle(visits);
             return (
-              <span className={`w-10 h-6 text-[10px] flex items-center justify-center rounded-full border ${visitBadge.classes} ${visitBadge.fontWeight}`}>
+              <span className={cn(
+                "flex items-center justify-center rounded-full border",
+                visitBadge.classes,
+                visitBadge.fontWeight,
+                isCompact ? "w-8 h-5 text-[9px]" : "w-10 h-6 text-[10px]"
+              )}>
                 {visits === 0 ? "NEW" : visits}
               </span>
             );
           })()}
 
           {/* Flag */}
-          <span className="w-10 text-lg text-center">{getFlag(res.phone, res.language)}</span>
+          <span className={cn("text-center", isCompact ? "w-6 text-sm" : "w-10 text-lg")}>{getFlag(res.phone, res.language)}</span>
 
           {/* Name */}
-          <div className="min-w-40 max-w-60 truncate">
+          <div className={cn("truncate", isCompact ? "w-28 text-xs" : "min-w-40 max-w-60")}>
             <span className="font-semibold">{res.lastName}</span>{" "}
-            <span className="text-gray-600">{res.firstName}</span>
+            <span className="text-gray-600">{isCompact ? res.firstName.charAt(0).toUpperCase() + "." : res.firstName}</span>
           </div>
 
-          {/* Options */}
-          <div className="w-32 flex items-center gap-1.5">
-            <Icon iconNode={stroller} className={cn("h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-            <Baby className={cn("h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-            <Accessibility className={cn("h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-            <PawPrint className={cn("h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-          </div>
+          {/* Options - hidden in compact mode */}
+          {!isCompact && (
+            <div className="w-32 flex items-center gap-1.5">
+              <Icon iconNode={stroller} className={cn("h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+              <Baby className={cn("h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+              <Accessibility className={cn("h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+              <PawPrint className={cn("h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+            </div>
+          )}
 
-          {/* Note preview */}
-          <span className="flex-1 text-sm text-gray-500 truncate">{res.note || "-"}</span>
+          {/* Note preview - hidden in compact mode */}
+          {!isCompact && (
+            <span className="flex-1 text-sm text-gray-500 truncate">{res.note || "-"}</span>
+          )}
 
-          {/* Actions */}
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            {primaryAction && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className={cn("w-28 h-11 min-h-[44px] rounded-full text-[11px] font-medium uppercase tracking-wide", primaryAction.color)}
-                onClick={() => handleStatusChange(res._id, primaryAction.nextStatus, res.version)}
-              >
-                {primaryAction.label}
-              </Button>
-            )}
-            {secondaryAction && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className={cn("w-11 min-w-[44px] h-11 min-h-[44px] rounded-full", secondaryAction.color)}
-                onClick={() => handleStatusChange(res._id, secondaryAction.nextStatus, res.version)}
-                title={secondaryAction.tooltip}
-              >
-                {secondaryAction.icon}
-              </Button>
-            )}
-          </div>
+          {/* Actions - hidden in compact mode */}
+          {!isCompact && (
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              {primaryAction && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className={cn("w-28 h-11 min-h-[44px] rounded-full text-[11px] font-medium uppercase tracking-wide", primaryAction.color)}
+                  onClick={() => handleStatusChange(res._id, primaryAction.nextStatus, res.version)}
+                >
+                  {primaryAction.label}
+                </Button>
+              )}
+              {secondaryAction && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className={cn("w-11 min-w-[44px] h-11 min-h-[44px] rounded-full", secondaryAction.color)}
+                  onClick={() => handleStatusChange(res._id, secondaryAction.nextStatus, res.version)}
+                  title={secondaryAction.tooltip}
+                >
+                  {secondaryAction.icon}
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Menu */}
-          <div className="w-10 flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+          <div className={cn("flex items-center justify-end", isCompact ? "w-6" : "w-10")} onClick={(e) => e.stopPropagation()}>
             <div className="relative">
               <Button
                 size="icon"
                 variant="ghost"
-                className="w-10 h-10 rounded-full text-gray-400 hover:text-black hover:bg-gray-100"
+                className={cn("rounded-full text-gray-400 hover:text-black hover:bg-gray-100", isCompact ? "w-6 h-6" : "w-10 h-10")}
                 onClick={(e) => togglePopup(e, res._id)}
               >
-                <MoreHorizontal className="h-5 w-5" />
+                <MoreHorizontal className={isCompact ? "h-4 w-4" : "h-5 w-5"} />
               </Button>
               {openPopupId === res._id && (
                 <>
@@ -488,51 +501,60 @@ export default function TabletReservationsPage() {
         </div>
       </header>
 
-      {/* Service stats bar */}
-      <div
-        className="px-5 py-3 flex justify-between items-center rounded-t-2xl border border-b-0 border-slate-100"
-        style={{ backgroundColor: "#F8F6F1" }}
-      >
-        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">
-          {selectedService === "lunch" ? "Service de Midi" : "Service du Soir"}
-        </h3>
-        <div className="flex items-center gap-2 text-slate-500">
-          <UsersRound size={16} strokeWidth={2.5} />
-          <span className="text-sm font-bold">{currentCovers}/{currentCapacity}</span>
-        </div>
-      </div>
-
       {/* Main content with floor plan */}
       <div className="flex-1 flex gap-4 min-h-0">
-        {/* Reservations list */}
+        {/* Reservations list with header */}
         <div className={cn(
-          "flex flex-col bg-white rounded-b-2xl border border-t-0 border-slate-100 transition-all duration-300",
-          showFloorPlan ? "flex-1 min-w-[350px]" : "w-full"
+          "flex flex-col transition-all duration-300",
+          showFloorPlan ? "flex-1 min-w-[300px]" : "w-full"
         )}>
-          {isLoading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          {/* Service stats bar */}
+          <div
+            className={cn(
+              "flex justify-between items-center rounded-t-2xl border border-b-0 border-slate-100",
+              showFloorPlan ? "px-3 py-2" : "px-5 py-3"
+            )}
+            style={{ backgroundColor: "#F8F6F1" }}
+          >
+            <h3 className={cn(
+              "font-black uppercase tracking-[0.3em] text-slate-400",
+              showFloorPlan ? "text-[10px]" : "text-xs"
+            )}>
+              {selectedService === "lunch" ? "Service de Midi" : "Service du Soir"}
+            </h3>
+            <div className="flex items-center gap-2 text-slate-500">
+              <UsersRound size={showFloorPlan ? 14 : 16} strokeWidth={2.5} />
+              <span className={cn("font-bold", showFloorPlan ? "text-xs" : "text-sm")}>{currentCovers}/{currentCapacity}</span>
             </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto">
-              <div className="divide-y divide-slate-50">
-                {(currentReservations as Reservation[])
-                  ?.slice()
-                  .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
-                  .map(renderReservationRow)}
-                {(!currentReservations || currentReservations.length === 0) && (
-                  <div className="px-5 py-12 text-center text-base text-slate-400">
-                    Aucune réservation
-                  </div>
-                )}
+          </div>
+
+          {/* Reservations list */}
+          <div className="flex-1 flex flex-col bg-white rounded-b-2xl border border-t-0 border-slate-100 overflow-hidden">
+            {isLoading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="flex-1 overflow-y-auto">
+                <div className="divide-y divide-slate-50">
+                  {(currentReservations as Reservation[])
+                    ?.slice()
+                    .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
+                    .map(renderReservationRow)}
+                  {(!currentReservations || currentReservations.length === 0) && (
+                    <div className="px-5 py-12 text-center text-base text-slate-400">
+                      Aucune réservation
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="flex-shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden p-4 flex flex-col">
+          <div className="flex-shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden p-3 flex flex-col">
             <ServiceFloorPlan
               dateKey={dateKey}
               service={selectedService}
