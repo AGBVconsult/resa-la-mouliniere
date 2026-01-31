@@ -216,11 +216,18 @@ export const getDay = query({
       reservations: dinnerReservations,
     });
 
+    // Filter out past slots for today
+    const now = new Date();
+    const todayKey = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const currentTimeKey = now.toTimeString().slice(0, 5); // HH:MM
+    const isToday = dateKey === todayKey;
+
     let lunch = effectiveLunchSlots
       .map((slot) => {
         const remainingCapacity = lunchRemaining.get(slot.slotKey) ?? slot.capacity;
         return toSlotDto({ slot, remainingCapacity });
       })
+      .filter((slot) => !isToday || slot.timeKey > currentTimeKey)
       .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
 
     let dinner = effectiveDinnerSlots
@@ -228,6 +235,7 @@ export const getDay = query({
         const remainingCapacity = dinnerRemaining.get(slot.slotKey) ?? slot.capacity;
         return toSlotDto({ slot, remainingCapacity });
       })
+      .filter((slot) => !isToday || slot.timeKey > currentTimeKey)
       .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
 
     // Apply progressive filling if enabled
