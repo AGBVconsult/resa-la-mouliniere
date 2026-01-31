@@ -304,13 +304,17 @@ export default function TabletReservationsPage() {
             <div className={cn("w-1 rounded-full", isCompact ? "h-5" : "h-7", statusStyle.bg, statusStyle.animate && "animate-pulse")} />
           </div>
 
-          {/* Name + Badge Hist + Flag */}
+          {/* Flag (rond) + Name + Badge Hist */}
           {(() => {
             const visits = res.totalVisits ?? 0;
             const visitBadge = getVisitBadgeStyle(visits);
             return (
-              <div className={cn("flex items-start gap-1 shrink-0", isCompact ? "w-40" : "w-52")}>
-                <span className={cn("text-gray-600", isCompact ? "text-xs" : "")}>{res.firstName}</span>{" "}
+              <div className={cn("flex items-center gap-1.5 shrink-0", isCompact ? "w-44" : "w-56")}>
+                <span className={cn(
+                  "flex items-center justify-center rounded-full bg-slate-100 shrink-0",
+                  isCompact ? "w-5 h-5 text-[10px]" : "w-6 h-6 text-xs"
+                )}>{getFlag(res.phone, res.language)}</span>
+                <span className={cn("text-gray-600", isCompact ? "text-xs" : "")}>{res.firstName}</span>
                 <span className={cn("font-semibold", isCompact ? "text-xs" : "")}>{res.lastName}</span>
                 <span className={cn(
                   "px-1.5 py-0.5 rounded-full -mt-1",
@@ -320,30 +324,15 @@ export default function TabletReservationsPage() {
                 )}>
                   {visits === 0 ? "NEW" : visits}
                 </span>
-                <span className={cn("text-center ml-1", isCompact ? "text-sm" : "text-lg")}>{getFlag(res.phone, res.language)}</span>
               </div>
             );
           })()}
 
-          {/* Party size */}
-          <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap shrink-0", isCompact ? "w-12 text-xs" : "w-20 text-sm")}>
+          {/* Party size - réduit de 1/4 */}
+          <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap shrink-0", isCompact ? "w-9 text-xs" : "w-14 text-sm")}>
             <UsersRound className={cn("text-gray-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
             <span className="font-semibold">{res.partySize}</span>
-            {!isCompact && (res.childrenCount > 0 || res.babyCount > 0) && (
-              <span className="text-gray-400 text-xs">
-                ({res.childrenCount > 0 ? `${res.childrenCount}e` : ""}
-                {res.childrenCount > 0 && res.babyCount > 0 ? "+" : ""}
-                {res.babyCount > 0 ? `${res.babyCount}b` : ""})
-              </span>
-            )}
           </div>
-
-          {/* Table */}
-          <span className={cn(
-            "rounded text-center shrink-0",
-            isCompact ? "w-10 text-xs px-1.5 py-0.5" : "w-14 text-sm px-2.5 py-1",
-            isUnassigned ? "bg-amber-100 text-amber-700" : "bg-gray-100"
-          )}>{getTableName(res)}</span>
 
           {/* Options */}
           <div className={cn("flex items-center shrink-0", isCompact ? "w-16 gap-1" : "w-24 gap-1.5")}>
@@ -355,6 +344,13 @@ export default function TabletReservationsPage() {
 
           {/* Note preview */}
           <span className={cn("flex-1 text-gray-500 truncate", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
+
+          {/* Table - après message, hauteur doublée */}
+          <span className={cn(
+            "rounded text-center shrink-0",
+            isCompact ? "w-10 text-xs px-1.5 py-2" : "w-14 text-sm px-2.5 py-3",
+            isUnassigned ? "bg-amber-100 text-amber-700" : "bg-gray-100"
+          )}>{getTableName(res)}</span>
 
           {/* Actions - hidden in compact mode */}
           {!isCompact && (
@@ -435,9 +431,9 @@ export default function TabletReservationsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-300 p-6">
+    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300">
       {/* Header */}
-      <header className="flex justify-between items-center mb-6">
+      <header className="flex justify-between items-center mb-4 px-4">
         <div className="flex items-center gap-6">
           <button
             onClick={() => setShowCalendarPopup(true)}

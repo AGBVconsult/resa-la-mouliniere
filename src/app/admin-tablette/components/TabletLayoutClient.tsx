@@ -30,52 +30,9 @@ export function TabletLayoutClient({ children }: TabletLayoutClientProps) {
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-[#FDFDFD] flex font-sans antialiased text-slate-900">
-        {/* Sidebar - Left navigation for landscape iPad */}
-        <nav className="w-20 bg-white border-r border-slate-100 flex flex-col items-center pt-10 pb-6 shrink-0 h-screen sticky top-0">
-          {/* Logo / Brand */}
-          <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center mb-8">
-            <span className="text-white font-black text-lg">LM</span>
-          </div>
-
-          {/* Navigation Items */}
-          <div className="flex-1 flex flex-col items-center gap-2">
-            {NAV_ITEMS.map((item) => {
-              const isActive = activeTab === item.id;
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => router.push(item.href)}
-                  className={cn(
-                    "w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all",
-                    isActive
-                      ? "bg-slate-100 text-slate-900"
-                      : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
-                  )}
-                >
-                  <Icon size={28} strokeWidth={1.5} className="flex-shrink-0" />
-                  <span className="text-[8px] font-black uppercase tracking-wider">
-                    {item.label.slice(0, 4)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Bottom actions */}
-          <div className="flex flex-col items-center gap-2 mt-auto">
-            <button
-              onClick={() => signOut({ redirectUrl: "/admin/login" })}
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"
-            >
-              <LogOut size={20} strokeWidth={2} />
-            </button>
-          </div>
-        </nav>
-
-        {/* Main Content */}
-        <main className="flex-1 h-screen overflow-hidden pt-4">
+      <div className="min-h-screen bg-[#FDFDFD] font-sans antialiased text-slate-900">
+        {/* Main Content - Full width, no sidebar */}
+        <main className="w-screen h-screen overflow-hidden">
           {children}
         </main>
       </div>
