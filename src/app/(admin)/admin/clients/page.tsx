@@ -74,11 +74,29 @@ function parseCSV(text: string): CSVRow[] {
     const cols = lines[i].split(/[,;\t]/);
     if (cols.length < 4) continue;
 
-    const firstName = cols[0]?.trim() ?? "";
-    const lastName = cols[1]?.trim() ?? "";
-    const phone = cols[2]?.trim() ?? "";
-    const email = cols[3]?.trim() ?? "";
-    const totalVisits = parseInt(cols[4]?.trim() ?? "0", 10) || 0;
+    let firstName: string;
+    let lastName: string;
+    let phone: string;
+    let email: string;
+    let totalVisits: number;
+
+    if (cols.length >= 6) {
+      // Format 6 colonnes: Prénom, Nom, Code, Téléphone, email, Réservations
+      firstName = cols[0]?.trim() ?? "";
+      lastName = cols[1]?.trim() ?? "";
+      const countryCode = cols[2]?.trim() ?? "";
+      const phoneNumber = cols[3]?.trim() ?? "";
+      phone = `+${countryCode}${phoneNumber}`;
+      email = cols[4]?.trim() ?? "";
+      totalVisits = parseInt(cols[5]?.trim() ?? "0", 10) || 0;
+    } else {
+      // Format 5 colonnes: Prénom, Nom, Téléphone_International, email, Réservations
+      firstName = cols[0]?.trim() ?? "";
+      lastName = cols[1]?.trim() ?? "";
+      phone = cols[2]?.trim() ?? "";
+      email = cols[3]?.trim() ?? "";
+      totalVisits = parseInt(cols[4]?.trim() ?? "0", 10) || 0;
+    }
 
     if (phone.length >= 5) {
       rows.push({ firstName, lastName, phone, email, totalVisits });
@@ -212,10 +230,16 @@ export default function AdminClientsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-slate-700">
-              <p className="mb-2">Format attendu (CSV avec séparateur <code>,</code> <code>;</code> ou <code>tab</code>) :</p>
-              <p className="font-mono text-xs bg-white p-2 rounded border border-blue-200">
-                Prénom, Nom, Téléphone_International, email, Réservations
-              </p>
+              <p className="mb-2">Formats acceptés (CSV avec séparateur <code>,</code> <code>;</code> ou <code>tab</code>) :</p>
+              <div className="space-y-1">
+                <p className="font-mono text-xs bg-white p-2 rounded border border-blue-200">
+                  Prénom, Nom, Code, Téléphone, email, Réservations
+                </p>
+                <p className="text-xs text-slate-500">ou</p>
+                <p className="font-mono text-xs bg-white p-2 rounded border border-blue-200">
+                  Prénom, Nom, Téléphone_International, email, Réservations
+                </p>
+              </div>
             </div>
 
             <input
