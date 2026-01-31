@@ -311,8 +311,8 @@ export default function TabletReservationsPage() {
               const visitBadge = getVisitBadgeStyle(visits);
               return (
                 <div className="flex items-center gap-1.5">
-                  <span className={cn("text-gray-600", isCompact ? "text-xs" : "text-sm")}>{res.firstName}</span>
-                  <span className={cn("font-semibold", isCompact ? "text-xs" : "text-sm")}>{res.lastName}</span>
+                  <span className={cn("text-gray-600", isCompact ? "text-sm" : "text-base")}>{res.firstName}</span>
+                  <span className={cn("font-semibold", isCompact ? "text-sm" : "text-base")}>{res.lastName}</span>
                   <span className={cn(
                     "px-1.5 py-0.5 rounded-full",
                     visitBadge.classes,
@@ -330,6 +330,13 @@ export default function TabletReservationsPage() {
               <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap", isCompact ? "text-xs" : "text-sm")}>
                 <UsersRound className={cn("text-gray-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
                 <span className="font-semibold">{res.partySize}</span>
+                {(res.childrenCount > 0 || res.babyCount > 0) && (
+                  <span className="text-gray-400">
+                    ({res.childrenCount > 0 ? `${res.childrenCount}e` : ""}
+                    {res.childrenCount > 0 && res.babyCount > 0 ? " + " : ""}
+                    {res.babyCount > 0 ? `${res.babyCount}b` : ""})
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <Icon iconNode={stroller} className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
