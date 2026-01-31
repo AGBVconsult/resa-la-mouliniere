@@ -266,15 +266,31 @@ export default function TabletReservationsPage() {
     const menuActions = getMenuActions(res.status);
     const hasOption = (opt: string) => res.options?.includes(opt);
     const isCompact = showFloorPlan;
+    const isSelectedForAssignment = selectedForAssignment?._id === res._id;
+
+    const handleRowClick = () => {
+      if (isCompact) {
+        // En mode compact (plan de salle visible), clic = sélection pour assignation
+        if (isSelectedForAssignment) {
+          setSelectedForAssignment(null);
+        } else {
+          setSelectedForAssignment(res);
+        }
+      } else {
+        // En mode normal, clic = expand
+        toggleExpand(res._id);
+      }
+    };
 
     return (
       <div key={res._id} className="flex flex-col">
         <div
-          onClick={() => toggleExpand(res._id)}
+          onClick={handleRowClick}
           className={cn(
             "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100",
             isCompact ? "px-2 py-1.5 gap-2" : "px-4 py-3 gap-4",
-            isExpanded && "bg-gray-50"
+            isExpanded && "bg-gray-50",
+            isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500"
           )}
         >
           {/* Status pill */}
