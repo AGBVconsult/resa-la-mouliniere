@@ -550,7 +550,8 @@ export function ReservationRow({
 
         {/* Party size */}
         <div className="w-10 flex items-center gap-0.5 text-xs text-gray-600 shrink-0">
-          <span className="font-medium">{reservation.partySize}</span>
+          <Users className="h-3.5 w-3.5 text-gray-400" strokeWidth={1.25} />
+          <span className="font-semibold">{reservation.partySize}</span>
           {(reservation.childrenCount > 0 || reservation.babyCount > 0) && (
             <span className="text-gray-400 text-[10px]">
               ({reservation.childrenCount > 0 ? `${reservation.childrenCount}e` : ""}
@@ -560,8 +561,8 @@ export function ReservationRow({
         </div>
 
         {/* Visits badge */}
-        <span className={cn("w-5 h-5 text-[9px] flex items-center justify-center rounded border shrink-0", visitBadge.classes, visitBadge.fontWeight)}>
-          {visits}
+        <span className={cn("h-5 px-1.5 text-[9px] flex items-center justify-center rounded border shrink-0", visitBadge.classes, visitBadge.fontWeight)}>
+          {visits === 0 ? "NEW" : visits}
         </span>
 
         {/* Flag */}
@@ -619,7 +620,8 @@ export function ReservationRow({
 
         {/* Party size - detailed: total (Xe + Xb) */}
         <div className="w-16 flex items-center gap-1 text-sm text-gray-600">
-          <span className="font-medium">{reservation.partySize}</span>
+          <Users className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
+          <span className="font-semibold">{reservation.partySize}</span>
           {(reservation.childrenCount > 0 || reservation.babyCount > 0) && (
             <span className="text-gray-400 text-xs">
               ({reservation.childrenCount > 0 ? `${reservation.childrenCount}e` : ""}
@@ -630,8 +632,8 @@ export function ReservationRow({
         </div>
 
         {/* Visits - square badge - Design System: text-[10px], px-2 py-0.5 */}
-        <span className={cn("w-7 h-7 text-[10px] flex items-center justify-center rounded border", visitBadge.classes, visitBadge.fontWeight)}>
-          {visits}
+        <span className={cn("h-7 px-2 text-[10px] flex items-center justify-center rounded border", visitBadge.classes, visitBadge.fontWeight)}>
+          {visits === 0 ? "NEW" : visits}
         </span>
 
         {/* Flag based on phone + language */}
