@@ -462,6 +462,19 @@ export default function TabletReservationsPage() {
               {formatDateLabel()}
             </h2>
           </button>
+          {/* Stats badges */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-slate-100 rounded-full px-4 py-2">
+              <CalendarDays size={18} strokeWidth={1.5} className="text-slate-600" />
+              <span className="font-bold text-slate-700">{currentReservationsCount}</span>
+              <span className="text-xs text-slate-500 uppercase">{currentReservationsCount > 1 ? "Réservations" : "Réservation"}</span>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-100 rounded-full px-4 py-2">
+              <UsersRound size={18} strokeWidth={1.5} className="text-slate-600" />
+              <span className="font-bold text-slate-700">{currentCovers}</span>
+              <span className="text-xs text-slate-500 uppercase">{currentCovers > 1 ? "Couverts" : "Couvert"}</span>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={goToToday}
@@ -535,31 +548,8 @@ export default function TabletReservationsPage() {
           "flex flex-col transition-all duration-300",
           showFloorPlan ? "flex-1 min-w-[300px]" : "w-full"
         )}>
-          {/* Service stats bar */}
-          <div
-            className={cn(
-              "flex justify-center items-center gap-6 rounded-t-2xl border border-b-0 border-slate-100 bg-slate-900",
-              showFloorPlan ? "px-3 py-2" : "px-5 py-3"
-            )}
-          >
-            <h3 className={cn(
-              "font-semibold uppercase tracking-wide text-white",
-              showFloorPlan ? "text-[10px]" : "text-xs"
-            )}>
-              {selectedService === "lunch" ? "Service du Midi" : "Service du Soir"}
-            </h3>
-            <div className="flex items-center gap-2 text-white">
-              <CalendarDays size={showFloorPlan ? 14 : 16} strokeWidth={1.5} />
-              <span><span className="font-bold">{currentReservationsCount}</span> <span className={cn(showFloorPlan ? "text-[10px]" : "text-xs")}>R\u00c9SA</span></span>
-            </div>
-            <div className="flex items-center gap-2 text-white">
-              <UsersRound size={showFloorPlan ? 14 : 16} strokeWidth={1.5} />
-              <span><span className="font-bold">{currentCovers}</span> <span className={cn(showFloorPlan ? "text-[10px]" : "text-xs")}>COUVERTS</span></span>
-            </div>
-          </div>
-
           {/* Reservations list grouped by time */}
-          <div className="flex-1 flex flex-col bg-white rounded-b-2xl border border-t-0 border-slate-100 overflow-hidden">
+          <div className="flex-1 flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden">
             {isLoading ? (
               <div className="flex-1 flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
