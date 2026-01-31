@@ -620,7 +620,7 @@ export function ReservationRow({
         </span>
 
         {/* Party size - detailed: total (Xe + Xb) */}
-        <div className="flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
+        <div className="w-24 flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
           <Users className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
           <span className="font-semibold">{reservation.partySize}</span>
           {(reservation.childrenCount > 0 || reservation.babyCount > 0) && (

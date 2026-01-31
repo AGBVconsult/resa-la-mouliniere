@@ -274,7 +274,7 @@ export default function TabletReservationsPage() {
           <span className="w-14 text-sm px-2.5 py-1 bg-gray-100 rounded text-center">{getTableName(res)}</span>
 
           {/* Party size */}
-          <div className="flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
+          <div className="w-24 flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
             <UsersRound className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
             <span className="font-semibold">{res.partySize}</span>
             {(res.childrenCount > 0 || res.babyCount > 0) && (
