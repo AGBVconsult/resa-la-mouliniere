@@ -218,12 +218,6 @@ export default function MobileReservationsPage() {
             {res.timeKey}
           </span>
 
-          <div className="flex items-center justify-center w-8 shrink-0">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">
-              T{getTableName(res)}
-            </span>
-          </div>
-
           <div className="flex items-center gap-1 w-8 shrink-0">
             <Users size={14} className="text-slate-400" strokeWidth={1.5} />
             <span className="text-sm font-bold text-slate-800">{res.partySize}</span>
@@ -388,7 +382,7 @@ export default function MobileReservationsPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={goToToday}
-              className="p-2 text-slate-500 hover:text-slate-900 border border-slate-200 rounded-full transition-all"
+              className="p-2.5 text-slate-500 hover:text-slate-900 border border-slate-200 rounded-full transition-all"
               title="Aujourd'hui"
             >
               <CalendarCheck size={18} strokeWidth={1.5} />

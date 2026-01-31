@@ -20,6 +20,8 @@ import {
   Accessibility,
   PawPrint,
   Icon,
+  CalendarCheck,
+  Settings,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -271,7 +273,7 @@ export default function TabletReservationsPage() {
           <span className="w-14 text-sm px-2.5 py-1 bg-gray-100 rounded text-center">{getTableName(res)}</span>
 
           {/* Party size */}
-          <div className="w-16 flex items-center gap-1 text-sm text-gray-600">
+          <div className="w-28 flex items-center gap-1 text-sm text-gray-600">
             <UsersRound className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
             <span className="font-semibold">{res.partySize}</span>
             {(res.childrenCount > 0 || res.babyCount > 0) && (
@@ -409,28 +411,30 @@ export default function TabletReservationsPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={goToToday}
-              className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 border border-slate-200 px-4 py-2 rounded-full transition-all"
+              className="p-2.5 text-slate-500 hover:text-slate-900 border border-slate-200 rounded-full transition-all"
+              title="Aujourd'hui"
             >
-              Aujourd&apos;hui
+              <CalendarCheck size={20} strokeWidth={1.5} />
             </button>
             <div className="flex bg-slate-50 rounded-full p-1 border border-slate-200">
               <button
                 onClick={goToPreviousDay}
-                className="p-2 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
+                className="p-2.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={20} strokeWidth={1.5} />
               </button>
               <button
                 onClick={goToNextDay}
-                className="p-2 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
+                className="p-2.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
               >
-                <ChevronRight size={20} />
+                <ChevronRight size={20} strokeWidth={1.5} />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Service Switch */}
+        {/* Service Switch + Settings */}
+        <div className="flex items-center gap-3">
         <div className="flex bg-white rounded-full p-1 border border-slate-200">
           <button
             onClick={() => setSelectedService("lunch")}
@@ -452,6 +456,10 @@ export default function TabletReservationsPage() {
           >
             Dîner
           </button>
+        </div>
+        <button className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-slate-700 transition-colors">
+          <Settings size={20} strokeWidth={1.5} />
+        </button>
         </div>
       </header>
 
