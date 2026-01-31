@@ -304,14 +304,13 @@ export default function TabletReservationsPage() {
           </div>
 
           {/* Column: 2 lignes */}
-          <div className="flex flex-col gap-1 shrink-0" style={{ width: isCompact ? "160px" : "220px" }}>
-            {/* Ligne 1: Drapeau + Prénom + Nom + Badge */}
+          <div className="flex flex-col gap-1 shrink-0" style={{ width: isCompact ? "180px" : "260px" }}>
+            {/* Ligne 1: Prénom + Nom + Badge */}
             {(() => {
               const visits = res.totalVisits ?? 0;
               const visitBadge = getVisitBadgeStyle(visits);
               return (
                 <div className="flex items-center gap-1.5">
-                  <span className={cn("shrink-0", isCompact ? "text-sm" : "text-base")}>{getFlag(res.phone, res.language)}</span>
                   <span className={cn("text-gray-600", isCompact ? "text-xs" : "text-sm")}>{res.firstName}</span>
                   <span className={cn("font-semibold", isCompact ? "text-xs" : "text-sm")}>{res.lastName}</span>
                   <span className={cn(
@@ -325,8 +324,9 @@ export default function TabletReservationsPage() {
                 </div>
               );
             })()}
-            {/* Ligne 2: Couverts + Options */}
+            {/* Ligne 2: Drapeau + Couverts + Options */}
             <div className="flex items-center gap-3">
+              <span className={cn("shrink-0", isCompact ? "text-sm" : "text-base")}>{getFlag(res.phone, res.language)}</span>
               <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap", isCompact ? "text-xs" : "text-sm")}>
                 <UsersRound className={cn("text-gray-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
                 <span className="font-semibold">{res.partySize}</span>
@@ -600,7 +600,7 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="flex-shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col h-full">
+          <div className="w-[340px] shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col h-full">
             <ServiceFloorPlan
               dateKey={dateKey}
               service={selectedService}
