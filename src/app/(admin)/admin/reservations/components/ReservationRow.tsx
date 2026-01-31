@@ -561,7 +561,7 @@ export function ReservationRow({
         </div>
 
         {/* Visits badge */}
-        <span className={cn("h-5 px-1.5 text-[9px] flex items-center justify-center rounded border shrink-0", visitBadge.classes, visitBadge.fontWeight)}>
+        <span className={cn("w-9 h-5 text-[9px] flex items-center justify-center rounded-full border shrink-0", visitBadge.classes, visitBadge.fontWeight)}>
           {visits === 0 ? "NEW" : visits}
         </span>
 
@@ -631,8 +631,8 @@ export function ReservationRow({
           )}
         </div>
 
-        {/* Visits - square badge - Design System: text-[10px], px-2 py-0.5 */}
-        <span className={cn("h-7 px-2 text-[10px] flex items-center justify-center rounded border", visitBadge.classes, visitBadge.fontWeight)}>
+        {/* Visits badge - pill format */}
+        <span className={cn("w-10 h-6 text-[10px] flex items-center justify-center rounded-full border", visitBadge.classes, visitBadge.fontWeight)}>
           {visits === 0 ? "NEW" : visits}
         </span>
 

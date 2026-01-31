@@ -86,7 +86,7 @@ export function ReservationList({
           <span className="w-14 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Heure</span>
           <span className="w-14 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Table</span>
           <span className="w-16 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
-          <span className="w-7 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Hist.</span>
+          <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Hist.</span>
           <span className="w-10 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Pays</span>
           <span className="min-w-40 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
           <span className="w-32 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Options</span>
@@ -100,7 +100,7 @@ export function ReservationList({
           <span className="w-11 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Heure</span>
           <span className="w-10 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Table</span>
           <span className="w-10 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Pers.</span>
-          <span className="w-5 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Hist</span>
+          <span className="w-9 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Hist</span>
           <span className="w-6 text-[9px] font-medium text-gray-400 uppercase tracking-wider"></span>
           <span className="w-24 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Nom</span>
           <span className="w-12 text-[9px] font-medium text-gray-400 uppercase tracking-wider">Opt.</span>
