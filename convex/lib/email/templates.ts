@@ -118,6 +118,7 @@ type TranslationKey =
   | "footer"
   | "footer.signature"
   | "footer.signature.negative"
+  | "footer.signature.review"
   | "payment.title"
   | "payment.text"
   | "address"
@@ -181,6 +182,7 @@ const translations: Record<Language, Translations> = {
     "footer": "Allisson & Benjamin",
     "footer.signature": "On se réjouit de vous accueillir,",
     "footer.signature.negative": "Bien à vous,",
+    "footer.signature.review": "Au plaisir de vous accueillir à nouveau,",
     "payment.title": "Bon à savoir pour le règlement :",
     "payment.text": "Nous n'avons pas de terminal bancaire. Pour un règlement simple et rapide, nous utilisons Payconiq (comptes belges), vous pouvez aussi payer en espèces.",
     "address": "Visserskaai 17, 8400 Oostende",
@@ -218,7 +220,7 @@ const translations: Record<Language, Translations> = {
     "body.reminder.intro": "We zijn druk bezig in de keuken: uw tafel is klaar!",
     "body.review": "Bedankt voor uw bezoek!",
     "body.review.subtitle": "Uw mening is belangrijk voor ons.",
-    "body.review.intro": "We hopen dat u een fijne tijd heeft gehad. Een online review helpt ons enorm.",
+    "body.review.intro": "We hopen dat u een fijne tijd aan onze tafel heeft gehad. Als dat het geval is, helpt een online review ons enorm.",
     "body.modified": "Reservering gewijzigd",
     "body.modified.subtitle": "Uw reservering is bijgewerkt.",
     "body.modified.intro": "Hier is uw nieuwe overzicht.",
@@ -241,6 +243,7 @@ const translations: Record<Language, Translations> = {
     "footer": "Allisson & Benjamin",
     "footer.signature": "We kijken ernaar uit u te verwelkomen,",
     "footer.signature.negative": "Met vriendelijke groeten,",
+    "footer.signature.review": "We hopen u snel weer te mogen verwelkomen,",
     "payment.title": "Goed om te weten voor de betaling:",
     "payment.text": "We hebben geen betaalterminal. Voor een snelle en eenvoudige betaling gebruiken we Payconiq (Belgische rekeningen), u kunt ook contant betalen.",
     "address": "Visserskaai 17, 8400 Oostende",
@@ -278,7 +281,7 @@ const translations: Record<Language, Translations> = {
     "body.reminder.intro": "We're busy in the kitchen: your table is ready!",
     "body.review": "Thank you for your visit!",
     "body.review.subtitle": "Your opinion matters to us.",
-    "body.review.intro": "We hope you had a great time at our table. An online review helps us a lot.",
+    "body.review.intro": "We hope you had a great time at our table. If so, an online review helps us tremendously.",
     "body.modified": "Reservation modified",
     "body.modified.subtitle": "Your reservation has been updated.",
     "body.modified.intro": "Here is your new summary.",
@@ -301,6 +304,7 @@ const translations: Record<Language, Translations> = {
     "footer": "Allisson & Benjamin",
     "footer.signature": "We look forward to welcoming you,",
     "footer.signature.negative": "Best regards,",
+    "footer.signature.review": "We hope to welcome you again soon,",
     "payment.title": "Good to know for payment:",
     "payment.text": "We don't have a card terminal. For quick and easy payment, we use Payconiq (Belgian accounts), you can also pay in cash.",
     "address": "Visserskaai 17, 8400 Oostende",
@@ -338,7 +342,7 @@ const translations: Record<Language, Translations> = {
     "body.reminder.intro": "Wir sind in der Küche beschäftigt: Ihr Tisch ist bereit!",
     "body.review": "Vielen Dank für Ihren Besuch!",
     "body.review.subtitle": "Ihre Meinung ist uns wichtig.",
-    "body.review.intro": "Wir hoffen, Sie hatten eine tolle Zeit. Eine Online-Bewertung hilft uns sehr.",
+    "body.review.intro": "Wir hoffen, Sie hatten eine tolle Zeit an unserem Tisch. Wenn ja, hilft uns eine Online-Bewertung sehr.",
     "body.modified": "Reservierung geändert",
     "body.modified.subtitle": "Ihre Reservierung wurde aktualisiert.",
     "body.modified.intro": "Hier ist Ihre neue Zusammenfassung.",
@@ -361,6 +365,7 @@ const translations: Record<Language, Translations> = {
     "footer": "Allisson & Benjamin",
     "footer.signature": "Wir freuen uns, Sie zu begrüßen,",
     "footer.signature.negative": "Mit freundlichen Grüßen,",
+    "footer.signature.review": "Wir hoffen, Sie bald wieder begrüßen zu dürfen,",
     "payment.title": "Gut zu wissen für die Zahlung:",
     "payment.text": "Wir haben kein Kartenterminal. Für eine schnelle und einfache Zahlung nutzen wir Payconiq (belgische Konten), Sie können auch bar bezahlen.",
     "address": "Visserskaai 17, 8400 Oostende",
@@ -398,7 +403,7 @@ const translations: Record<Language, Translations> = {
     "body.reminder.intro": "Siamo impegnati in cucina: il tuo tavolo è pronto!",
     "body.review": "Grazie per la tua visita!",
     "body.review.subtitle": "La tua opinione è importante per noi.",
-    "body.review.intro": "Speriamo che tu abbia trascorso un bel momento. Una recensione online ci aiuta molto.",
+    "body.review.intro": "Speriamo che tu abbia trascorso un bel momento al nostro tavolo. Se è così, una recensione online ci aiuta tantissimo.",
     "body.modified": "Prenotazione modificata",
     "body.modified.subtitle": "La tua prenotazione è stata aggiornata.",
     "body.modified.intro": "Ecco il tuo nuovo riepilogo.",
@@ -421,6 +426,7 @@ const translations: Record<Language, Translations> = {
     "footer": "Allisson & Benjamin",
     "footer.signature": "Non vediamo l'ora di accoglierti,",
     "footer.signature.negative": "Cordiali saluti,",
+    "footer.signature.review": "Speriamo di accoglierti di nuovo presto,",
     "payment.title": "Buono a sapersi per il pagamento:",
     "payment.text": "Non abbiamo un terminale per carte. Per un pagamento rapido e semplice, utilizziamo Payconiq (conti belgi), puoi anche pagare in contanti.",
     "address": "Visserskaai 17, 8400 Oostende",
@@ -706,9 +712,14 @@ function renderModernTemplate(
   const showPayment = type === "reservation.confirmed" || type === "reservation.validated" || type === "reservation.reminder" || type === "reservation.modified";
   // Show address only for positive emails (not for noshow, refused, cancelled_by_restaurant, cancelled)
   const showAddress = type === "reservation.confirmed" || type === "reservation.validated" || type === "reservation.reminder" || type === "reservation.modified" || type === "reservation.pending";
-  // Negative emails use different signature
+  // Different signatures for different email types
   const isNegativeEmail = type === "reservation.noshow" || type === "reservation.refused" || type === "reservation.cancelled_by_restaurant" || type === "reservation.cancelled";
-  const signatureText = isNegativeEmail ? t(locale, "footer.signature.negative") : footerSignature;
+  const isReviewEmail = type === "reservation.review";
+  const signatureText = isReviewEmail 
+    ? t(locale, "footer.signature.review") 
+    : isNegativeEmail 
+      ? t(locale, "footer.signature.negative") 
+      : footerSignature;
 
   // Build details section HTML
   let detailsHtml = "";
