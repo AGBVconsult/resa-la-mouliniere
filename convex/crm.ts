@@ -396,22 +396,26 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
       continue;
     }
 
-    const ledger = await ctx.db
+    // Get only the ledger entries created TODAY for this client (new entries from this run)
+    const todayLedger = await ctx.db
       .query("clientLedger")
       .withIndex("by_clientId", (q: any) => q.eq("clientId", clientId))
+      .filter((q: any) => q.eq(q.field("dateKey"), dateKey))
       .collect();
 
+    // Start from existing client totals (preserve historical data)
     const totals = {
-      totalVisits: 0,
-      totalNoShows: 0,
-      totalRehabilitatedNoShows: 0,
-      totalCancellations: 0,
-      totalLateCancellations: 0,
-      totalDeparturesBeforeOrder: 0,
-      lastVisitAt: undefined as number | undefined,
+      totalVisits: client.totalVisits ?? 0,
+      totalNoShows: client.totalNoShows ?? 0,
+      totalRehabilitatedNoShows: client.totalRehabilitatedNoShows ?? 0,
+      totalCancellations: client.totalCancellations ?? 0,
+      totalLateCancellations: client.totalLateCancellations ?? 0,
+      totalDeparturesBeforeOrder: client.totalDeparturesBeforeOrder ?? 0,
+      lastVisitAt: client.lastVisitAt as number | undefined,
     };
 
-    for (const e of ledger) {
+    // Increment with today's new entries only
+    for (const e of todayLedger) {
       if (e.outcome === "completed") {
         totals.totalVisits++;
         if (!totals.lastVisitAt || e.createdAt > totals.lastVisitAt) totals.lastVisitAt = e.createdAt;
