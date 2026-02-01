@@ -4,6 +4,7 @@ import type { Doc } from "./_generated/dataModel";
 import { computeEffectiveOpen } from "../spec/contracts.generated";
 import { Errors } from "./lib/errors";
 import { requireRole } from "./lib/rbac";
+import { getTodayDateKey, getCurrentTimeKey } from "./lib/dateUtils";
 
 type SlotRow = Pick<Doc<"slots">, "slotKey" | "dateKey" | "service" | "timeKey" | "isOpen" | "capacity" | "maxGroupSize">;
 type ReservationRow = Pick<Doc<"reservations">, "slotKey" | "status" | "partySize">;
@@ -216,10 +217,10 @@ export const getDay = query({
       reservations: dinnerReservations,
     });
 
-    // Filter out past slots for today
-    const now = new Date();
-    const todayKey = now.toISOString().slice(0, 10); // YYYY-MM-DD
-    const currentTimeKey = now.toTimeString().slice(0, 5); // HH:MM
+    // Filter out past slots for today (using restaurant timezone)
+    const timezone = restaurant.timezone ?? "Europe/Brussels";
+    const todayKey = getTodayDateKey(timezone);
+    const currentTimeKey = getCurrentTimeKey(timezone);
     const isToday = dateKey === todayKey;
 
     let lunch = effectiveLunchSlots

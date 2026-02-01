@@ -403,6 +403,12 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
       .filter((q: any) => q.eq(q.field("dateKey"), dateKey))
       .collect();
 
+    // Get all reservations for this client to calculate aggregations
+    const allReservations = await ctx.db
+      .query("reservations")
+      .filter((q: any) => q.eq(q.field("clientId"), clientId))
+      .collect();
+
     // Start from existing client totals (preserve historical data)
     const totals = {
       totalVisits: client.totalVisits ?? 0,
@@ -414,22 +420,116 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
       lastVisitAt: client.lastVisitAt as number | undefined,
     };
 
+    // Get today's reservations for lastVisitAt calculation (use completedAt, not createdAt)
+    const todayReservationIds = new Set(todayLedger.map((e: any) => e.reservationId));
+    const todayReservations = allReservations.filter((r: any) => todayReservationIds.has(r._id));
+
     // Increment with today's new entries only
     for (const e of todayLedger) {
-      if (e.outcome === "completed") {
+      const reservation = todayReservations.find((r: any) => r._id === e.reservationId);
+      
+      if (e.outcome === "completed" || e.outcome === "completed_rehabilitated") {
         totals.totalVisits++;
-        if (!totals.lastVisitAt || e.createdAt > totals.lastVisitAt) totals.lastVisitAt = e.createdAt;
-      }
-      if (e.outcome === "completed_rehabilitated") {
-        totals.totalVisits++;
-        totals.totalRehabilitatedNoShows++;
-        if (!totals.lastVisitAt || e.createdAt > totals.lastVisitAt) totals.lastVisitAt = e.createdAt;
+        if (e.outcome === "completed_rehabilitated") {
+          totals.totalRehabilitatedNoShows++;
+        }
+        // Bug fix: Use reservation.completedAt instead of e.createdAt for lastVisitAt
+        const visitTimestamp = reservation?.completedAt ?? e.createdAt;
+        if (!totals.lastVisitAt || visitTimestamp > totals.lastVisitAt) {
+          totals.lastVisitAt = visitTimestamp;
+        }
       }
       if (e.outcome === "noshow") totals.totalNoShows++;
       if (e.outcome === "cancelled") totals.totalCancellations++;
       if (e.outcome === "late_cancelled") totals.totalLateCancellations++;
       if (e.outcome === "departure_before_order") totals.totalDeparturesBeforeOrder++;
     }
+
+    // Calculate aggregated reservation stats (similar to rebuildStats in clients.ts)
+    const totalReservations = allReservations.length;
+
+    // Filter completed reservations for aggregation calculations
+    const completedReservations = allReservations
+      .filter((r: any) => r.status === "completed" && r.completedAt)
+      .sort((a: any, b: any) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
+
+    // lastTableId: table from the most recent completed reservation
+    const lastCompletedReservation = completedReservations[0];
+    const lastTableId = lastCompletedReservation?.primaryTableId ?? lastCompletedReservation?.tableIds?.[0];
+
+    // preferredTableId: most frequent table across all completed reservations
+    const tableFrequency: Record<string, number> = {};
+    for (const r of completedReservations) {
+      const tableId = r.primaryTableId ?? r.tableIds?.[0];
+      if (tableId) {
+        tableFrequency[tableId] = (tableFrequency[tableId] || 0) + 1;
+      }
+    }
+    let preferredTableId: string | undefined;
+    let maxTableFreq = 0;
+    for (const [tableId, freq] of Object.entries(tableFrequency)) {
+      if (freq > maxTableFreq) {
+        maxTableFreq = freq;
+        preferredTableId = tableId;
+      }
+    }
+
+    // preferredService: most frequent service (lunch or dinner)
+    const serviceFrequency: Record<string, number> = { lunch: 0, dinner: 0 };
+    for (const r of completedReservations) {
+      if (r.service === "lunch" || r.service === "dinner") {
+        serviceFrequency[r.service]++;
+      }
+    }
+    const preferredService = completedReservations.length > 0
+      ? (serviceFrequency.lunch >= serviceFrequency.dinner ? "lunch" : "dinner")
+      : undefined;
+
+    // avgPartySize: average party size across completed reservations
+    let totalPartySize = 0;
+    for (const r of completedReservations) {
+      totalPartySize += r.partySize;
+    }
+    const avgPartySize = completedReservations.length > 0
+      ? Math.round((totalPartySize / completedReservations.length) * 10) / 10
+      : undefined;
+
+    // avgMealDurationMinutes: average (completedAt - seatedAt) in minutes
+    // Ignore aberrant durations (< 15 min or > 480 min / 8 hours)
+    let totalDuration = 0;
+    let durationCount = 0;
+    for (const r of completedReservations) {
+      if (r.seatedAt && r.completedAt) {
+        const durationMinutes = (r.completedAt - r.seatedAt) / 60000;
+        if (durationMinutes >= 15 && durationMinutes <= 480) {
+          totalDuration += durationMinutes;
+          durationCount++;
+        }
+      }
+    }
+    const avgMealDurationMinutes = durationCount > 0
+      ? Math.round(totalDuration / durationCount)
+      : undefined;
+
+    // avgDelayMinutes: average delay from reservation events (status_change to seated)
+    const completedReservationIds = new Set(completedReservations.map((r: any) => r._id));
+    let totalDelay = 0;
+    let delayCount = 0;
+    for (const resId of completedReservationIds) {
+      const events = await ctx.db
+        .query("reservationEvents")
+        .withIndex("by_reservation", (q: any) => q.eq("reservationId", resId))
+        .collect();
+      for (const ev of events) {
+        if (ev.eventType === "status_change" && ev.toStatus === "seated" && typeof ev.delayMinutes === "number") {
+          totalDelay += ev.delayMinutes;
+          delayCount++;
+        }
+      }
+    }
+    const avgDelayMinutes = delayCount > 0
+      ? Math.round((totalDelay / delayCount) * 10) / 10
+      : undefined;
 
     const { score, breakdown } = computeScore({
       totalVisits: totals.totalVisits,
@@ -450,6 +550,14 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
       scoreBreakdown: breakdown,
       clientStatus,
       lastUpdatedAt: Date.now(),
+      // Aggregated reservation stats
+      totalReservations,
+      lastTableId: lastTableId as any,
+      preferredTableId: preferredTableId as any,
+      preferredService,
+      avgPartySize,
+      avgMealDurationMinutes,
+      avgDelayMinutes,
     });
   }
 
