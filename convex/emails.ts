@@ -273,7 +273,17 @@ export const processQueue = internalAction({
 
     let processedCount = 0;
 
-    for (const jobId of jobIds) {
+    // Helper to delay between API calls (Resend rate limit: 2 req/s)
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    for (let i = 0; i < jobIds.length; i++) {
+      const jobId = jobIds[i];
+      
+      // Add 600ms delay between emails to respect Resend rate limit (2 req/s)
+      if (i > 0) {
+        await delay(600);
+      }
+
       const job = await ctx.runQuery(internal.emails._getJob, { jobId });
       if (!job) continue;
 
