@@ -25,6 +25,8 @@ import {
   Settings,
   Map,
   Clock,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -203,6 +205,9 @@ export default function TabletReservationsPage() {
       .filter((r) => !["cancelled", "noshow"].includes(r.status)).length;
   }, [dinnerReservations]);
 
+  // Total journalier
+  const totalCovers = lunchCovers + dinnerCovers;
+
   const getTableName = (res: Reservation) => {
     if (!tablesData) return "-";
     const primaryId = res.primaryTableId || (res.tableIds?.length > 0 ? res.tableIds[0] : null);
@@ -364,17 +369,19 @@ export default function TabletReservationsPage() {
           {/* Note preview - 2 lignes max */}
           <span className={cn("flex-1 text-gray-500 line-clamp-2", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
 
-          {/* Table - après message, hauteur doublée */}
-          <span className={cn(
-            "rounded text-center shrink-0",
-            isCompact ? "w-10 text-xs px-1.5 py-3" : "w-14 text-sm px-2.5 py-3",
-            isUnassigned ? "bg-amber-100 text-amber-700" : "bg-gray-100"
-          )}>{getTableName(res)}</span>
+          {/* Table - largeur fixe */}
+          <div className={cn("shrink-0", isCompact ? "w-12" : "w-16")}>
+            <span className={cn(
+              "block rounded text-center",
+              isCompact ? "text-xs px-1.5 py-3" : "text-sm px-2.5 py-3",
+              isUnassigned ? "bg-amber-100 text-amber-700" : "bg-gray-100"
+            )}>{getTableName(res)}</span>
+          </div>
 
-          {/* Actions - hidden in compact mode */}
+          {/* Actions - largeur fixe, hidden in compact mode */}
           {!isCompact && (
-            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              {primaryAction && (
+            <div className="flex items-center gap-2 w-[180px] shrink-0" onClick={(e) => e.stopPropagation()}>
+              {primaryAction ? (
                 <Button
                   size="sm"
                   variant="ghost"
@@ -383,8 +390,10 @@ export default function TabletReservationsPage() {
                 >
                   {primaryAction.label}
                 </Button>
+              ) : (
+                <div className="w-28 h-11" />
               )}
-              {secondaryAction && (
+              {secondaryAction ? (
                 <Button
                   size="icon"
                   variant="ghost"
@@ -394,6 +403,8 @@ export default function TabletReservationsPage() {
                 >
                   {secondaryAction.icon}
                 </Button>
+              ) : (
+                <div className="w-11 h-11" />
               )}
             </div>
           )}
@@ -487,18 +498,21 @@ export default function TabletReservationsPage() {
           </div>
         </div>
 
-        {/* Stats badge - centré */}
+        {/* Stats badge - total journalier + détail midi/soir */}
         <div className="flex items-center gap-4 bg-slate-100 rounded-full px-5 py-2">
           <div className="flex items-center gap-2">
-            <CalendarDays size={18} strokeWidth={1.5} className="text-slate-600" />
-            <span className="font-bold text-slate-700">{currentReservationsCount}</span>
-            <span className="text-xs text-slate-500 uppercase">{currentReservationsCount > 1 ? "Réservations" : "Réservation"}</span>
+            <UsersRound size={18} strokeWidth={1.5} className="text-slate-600" />
+            <span className="font-bold text-slate-700">{totalCovers}</span>
+            <span className="text-xs text-slate-500 uppercase">Couverts</span>
           </div>
           <div className="w-px h-4 bg-slate-300" />
           <div className="flex items-center gap-2">
-            <UsersRound size={18} strokeWidth={1.5} className="text-slate-600" />
-            <span className="font-bold text-slate-700">{currentCovers}</span>
-            <span className="text-xs text-slate-500 uppercase">{currentCovers > 1 ? "Couverts" : "Couvert"}</span>
+            <Sun size={16} strokeWidth={1.5} className="text-amber-500" />
+            <span className="font-bold text-slate-700">{lunchCovers}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Moon size={16} strokeWidth={1.5} className="text-indigo-500" />
+            <span className="font-bold text-slate-700">{dinnerCovers}</span>
           </div>
         </div>
 
@@ -559,8 +573,13 @@ export default function TabletReservationsPage() {
             ) : (
               <div className="flex-1 overflow-y-auto">
                 {(() => {
-                  const reservations = (currentReservations as Reservation[])?.slice().sort((a, b) => a.timeKey.localeCompare(b.timeKey)) || [];
-                  const timeGroups = reservations.reduce((groups, res) => {
+                  const allReservations = (currentReservations as Reservation[])?.slice().sort((a, b) => a.timeKey.localeCompare(b.timeKey)) || [];
+                  
+                  // Séparer les réservations actives et annulées/noshow
+                  const activeReservations = allReservations.filter(r => !["cancelled", "noshow"].includes(r.status));
+                  const cancelledReservations = allReservations.filter(r => ["cancelled", "noshow"].includes(r.status));
+                  
+                  const timeGroups = activeReservations.reduce((groups, res) => {
                     const time = res.timeKey;
                     if (!groups[time]) groups[time] = [];
                     groups[time].push(res);
@@ -569,7 +588,7 @@ export default function TabletReservationsPage() {
                   
                   const sortedTimes = Object.keys(timeGroups).sort();
                   
-                  if (sortedTimes.length === 0) {
+                  if (sortedTimes.length === 0 && cancelledReservations.length === 0) {
                     return (
                       <div className="px-5 py-12 text-center text-base text-slate-400">
                         Aucune réservation
@@ -577,37 +596,63 @@ export default function TabletReservationsPage() {
                     );
                   }
                   
-                  return sortedTimes.map((time) => {
-                    const groupReservations = timeGroups[time];
-                    const activeReservations = groupReservations.filter(r => !["cancelled", "noshow"].includes(r.status));
-                    const groupCovers = activeReservations.reduce((sum, r) => sum + r.partySize, 0);
-                    const groupCapacity = slotsData?.[selectedService]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
-                    const resaCount = activeReservations.length;
-                    
-                    return (
-                      <div key={time}>
-                        {/* Time section header */}
-                        <div className={cn(
-                          "flex items-center gap-4 bg-slate-50/80 border-b border-slate-100",
-                          showFloorPlan ? "px-3 py-1.5" : "px-4 py-2"
-                        )}>
-                          <div className="flex items-center gap-1.5 text-slate-600">
-                            <Clock size={showFloorPlan ? 12 : 14} strokeWidth={2} />
-                            <span className={cn("font-bold", showFloorPlan ? "text-xs" : "text-sm")}>{time}</span>
+                  return (
+                    <>
+                      {sortedTimes.map((time) => {
+                        const groupReservations = timeGroups[time];
+                        const groupCovers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
+                        const groupCapacity = slotsData?.[selectedService]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
+                        const resaCount = groupReservations.length;
+                        
+                        return (
+                          <div key={time}>
+                            {/* Time section header */}
+                            <div className={cn(
+                              "flex items-center gap-4 bg-slate-50/80 border-b border-slate-100",
+                              showFloorPlan ? "px-3 py-1.5" : "px-4 py-2"
+                            )}>
+                              <div className="flex items-center gap-1.5 text-slate-600">
+                                <Clock size={showFloorPlan ? 12 : 14} strokeWidth={2} />
+                                <span className={cn("font-bold", showFloorPlan ? "text-xs" : "text-sm")}>{time}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-slate-500">
+                                <UsersRound size={showFloorPlan ? 12 : 14} strokeWidth={2} />
+                                <span className={cn(showFloorPlan ? "text-[10px]" : "text-xs")}>{groupCovers} / {groupCapacity}</span>
+                              </div>
+                              <span className={cn("text-slate-400", showFloorPlan ? "text-[10px]" : "text-xs")}>• {resaCount} résa{resaCount > 1 ? "s" : ""}</span>
+                            </div>
+                            {/* Reservations in this time slot */}
+                            <div className="divide-y divide-slate-50">
+                              {groupReservations.map(renderReservationRow)}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1.5 text-slate-500">
-                            <UsersRound size={showFloorPlan ? 12 : 14} strokeWidth={2} />
-                            <span className={cn(showFloorPlan ? "text-[10px]" : "text-xs")}>{groupCovers} / {groupCapacity}</span>
+                        );
+                      })}
+                      
+                      {/* Section Annulations / No-show */}
+                      {cancelledReservations.length > 0 && (
+                        <div className="mt-4 border-t-2 border-slate-200">
+                          <div className={cn(
+                            "flex items-center gap-4 bg-slate-100 border-b border-slate-200",
+                            showFloorPlan ? "px-3 py-1.5" : "px-4 py-2"
+                          )}>
+                            <div className="flex items-center gap-1.5 text-slate-500">
+                              <X size={showFloorPlan ? 12 : 14} strokeWidth={2} />
+                              <span className={cn("font-semibold uppercase tracking-wide", showFloorPlan ? "text-[10px]" : "text-xs")}>
+                                Annulations / No-show
+                              </span>
+                            </div>
+                            <span className={cn("text-slate-400", showFloorPlan ? "text-[10px]" : "text-xs")}>
+                              • {cancelledReservations.length} résa{cancelledReservations.length > 1 ? "s" : ""}
+                            </span>
                           </div>
-                          <span className={cn("text-slate-400", showFloorPlan ? "text-[10px]" : "text-xs")}>• {resaCount} résa{resaCount > 1 ? "s" : ""}</span>
+                          <div className="divide-y divide-slate-50 opacity-60">
+                            {cancelledReservations.map(renderReservationRow)}
+                          </div>
                         </div>
-                        {/* Reservations in this time slot */}
-                        <div className="divide-y divide-slate-50">
-                          {groupReservations.map(renderReservationRow)}
-                        </div>
-                      </div>
-                    );
-                  });
+                      )}
+                    </>
+                  );
                 })()}
               </div>
             )}
