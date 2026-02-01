@@ -910,6 +910,114 @@ export const updateReservation = mutation({
 });
 
 /**
+ * Cancel a reservation as if the client cancelled it.
+ * This sends the "reservation.cancelled" email (client cancellation) instead of
+ * "reservation.cancelled_by_restaurant" (admin cancellation).
+ */
+export const cancelByClient = mutation({
+  args: {
+    reservationId: v.id("reservations"),
+    expectedVersion: v.number(),
+  },
+  handler: async (ctx, { reservationId, expectedVersion }) => {
+    await requireRole(ctx, "admin");
+
+    const reservation = await ctx.db.get(reservationId);
+    if (!reservation) {
+      throw Errors.RESERVATION_NOT_FOUND(reservationId);
+    }
+
+    // Check optimistic concurrency
+    if (reservation.version !== expectedVersion) {
+      throw Errors.VERSION_CONFLICT(expectedVersion, reservation.version);
+    }
+
+    // Check status is cancellable
+    const cancellableStatuses = ["pending", "confirmed"];
+    if (!cancellableStatuses.includes(reservation.status)) {
+      throw Errors.INVALID_INPUT("status", "Reservation cannot be cancelled");
+    }
+
+    const now = Date.now();
+    const newVersion = reservation.version + 1;
+
+    // Update reservation
+    await ctx.db.patch(reservationId, {
+      status: "cancelled",
+      cancelledAt: now,
+      updatedAt: now,
+      version: newVersion,
+    });
+
+    // Get settings for email
+    const settings = await ctx.db
+      .query("settings")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", reservation.restaurantId))
+      .unique();
+
+    // Get manage token for URLs
+    const tokenDoc = await ctx.db
+      .query("reservationTokens")
+      .withIndex("by_reservation_type", (q) =>
+        q.eq("reservationId", reservationId).eq("type", "manage")
+      )
+      .unique();
+
+    const manageToken = tokenDoc?.token ?? "";
+    const appUrl = settings?.appUrl ?? "";
+
+    // Send client cancellation email (not restaurant cancellation)
+    if (settings) {
+      await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
+        restaurantId: reservation.restaurantId,
+        type: "reservation.cancelled",
+        to: reservation.email,
+        subjectKey: "email.reservation.cancelled.subject",
+        templateKey: "reservation.cancelled",
+        templateData: {
+          firstName: reservation.firstName,
+          lastName: reservation.lastName,
+          dateKey: reservation.dateKey,
+          timeKey: reservation.timeKey,
+          service: reservation.service,
+          partySize: reservation.partySize,
+          adults: reservation.adults,
+          childrenCount: reservation.childrenCount,
+          babyCount: reservation.babyCount,
+          language: reservation.language,
+          manageUrl: `${appUrl}/reservation/${manageToken}`,
+          editUrl: `${appUrl}/reservation/${manageToken}/edit`,
+          cancelUrl: `${appUrl}/reservation/${manageToken}/cancel`,
+          note: reservation.note ?? "",
+          options: reservation.options ?? [],
+        },
+        dedupeKey: `email:reservation.cancelled:${reservationId}:${newVersion}`,
+      });
+
+      console.log("Client cancellation email enqueued", { reservationId, newVersion });
+    }
+
+    // Track status change event
+    await ctx.db.insert("reservationEvents", {
+      reservationId,
+      restaurantId: reservation.restaurantId,
+      eventType: "status_change",
+      fromStatus: reservation.status,
+      toStatus: "cancelled",
+      scheduledTime: reservation.timeKey,
+      actualTime: now,
+      performedBy: (await ctx.auth.getUserIdentity())?.subject ?? "admin",
+      metadata: { cancelledBy: "client" },
+      createdAt: now,
+    });
+
+    console.log("Reservation cancelled by client (admin action)", { reservationId, newVersion });
+
+    return { reservationId, newVersion };
+  },
+});
+
+/**
  * Create a reservation from admin interface.
  * - No Turnstile validation
  * - Status is always "confirmed" (admin bypass pending)
