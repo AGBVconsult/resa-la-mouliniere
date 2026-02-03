@@ -1,17 +1,19 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { auth } from "@/auth"
+import { NextResponse } from "next/server"
 
-const isProtectedRoute = createRouteMatcher(["/admin(.*)"]);
-const isPublicRoute = createRouteMatcher(["/admin/login(.*)", "/", "/reservation(.*)", "/widget(.*)"]);
-
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req) && !isPublicRoute(req)) {
-    await auth.protect();
+export default auth((req) => {
+  const isLoggedIn = !!req.auth
+  const isAdminRoute = req.nextUrl.pathname.startsWith("/admin") ||
+                       req.nextUrl.pathname.startsWith("/admin-mobile") ||
+                       req.nextUrl.pathname.startsWith("/admin-tablette")
+  const isLoginPage = req.nextUrl.pathname.startsWith("/admin/login")
+  const isApiAuthRoute = req.nextUrl.pathname.startsWith("/api/auth")
+  
+  if (isAdminRoute && !isLoginPage && !isApiAuthRoute && !isLoggedIn) {
+    return NextResponse.redirect(new URL("/admin/login", req.url))
   }
-});
+})
 
 export const config = {
-  matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/(api|trpc)(.*)",
-  ],
-};
+  matcher: ["/admin/:path*", "/admin-mobile/:path*", "/admin-tablette/:path*"]
+}

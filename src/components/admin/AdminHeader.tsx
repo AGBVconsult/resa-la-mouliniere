@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { UserButton, useAuth } from "@clerk/nextjs";
-import { Bell, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
+import { Bell, PanelLeftClose, PanelLeftOpen, Search, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "convex/react";
@@ -20,10 +20,10 @@ export function AdminHeader({ sidebarCollapsed, onToggleSidebarCollapsed }: Admi
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   
-  const { isSignedIn } = useAuth();
+  const { data: session } = useSession();
   const pendingReservations = useQuery(
     api.admin.listPendingReservations,
-    isSignedIn ? {} : "skip"
+    session ? {} : "skip"
   );
   const pendingCount = pendingReservations?.length ?? 0;
 
@@ -110,15 +110,18 @@ export function AdminHeader({ sidebarCollapsed, onToggleSidebarCollapsed }: Admi
 
           <div style={{ height: '2rem', width: '1px', backgroundColor: '#e2e8f0' }} />
 
-          {mounted && (
-            <UserButton
-              afterSignOutUrl="/admin/login"
-              appearance={{
-                elements: {
-                  avatarBox: "w-9 h-9",
-                },
-              }}
-            />
+          {mounted && session && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => signOut({ callbackUrl: "/admin/login" })}
+              title="Se déconnecter"
+              className="relative"
+            >
+              <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center">
+                <User className="h-5 w-5 text-emerald-700" />
+              </div>
+            </Button>
           )}
           {!mounted && <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '9999px', backgroundColor: '#e2e8f0' }} />}
         </div>

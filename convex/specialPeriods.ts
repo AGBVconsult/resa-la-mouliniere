@@ -116,6 +116,55 @@ function validateApplyRules(rules: ApplyRules): void {
 // ============================================================================
 
 /**
+ * Get active closure for today (public query for widget).
+ * Returns the closure if today's date falls within a closure period.
+ */
+export const getActiveClosure = query({
+  args: {},
+  handler: async (ctx) => {
+    // Get active restaurant
+    const restaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(1);
+
+    if (restaurants.length === 0) {
+      return null;
+    }
+
+    const restaurantId = restaurants[0]._id;
+    const today = formatDateKey(new Date());
+
+    // Get all closures
+    const closures = await ctx.db
+      .query("specialPeriods")
+      .withIndex("by_restaurant_type", (q) =>
+        q.eq("restaurantId", restaurantId).eq("type", "closure")
+      )
+      .collect();
+
+    // Find closure that includes today
+    for (const closure of closures) {
+      if (closure.startDate <= today && today <= closure.endDate) {
+        // Calculate reopening date (endDate + 1 day)
+        const endDate = parseDateKey(closure.endDate);
+        endDate.setDate(endDate.getDate() + 1);
+        const reopenDate = formatDateKey(endDate);
+
+        return {
+          startDate: closure.startDate,
+          endDate: closure.endDate,
+          reopenDate,
+          name: closure.name,
+        };
+      }
+    }
+
+    return null;
+  },
+});
+
+/**
  * List special periods with optional filters.
  * §6.5
  */

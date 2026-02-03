@@ -140,6 +140,14 @@ export const translations = {
     // Persons
     person: "personne",
     persons: "personnes",
+    
+    // Closure notice
+    closure_title: "Fermeture",
+    closure_message_1: "Fermeture du",
+    closure_message_2: "au",
+    closure_message_3: "inclus.",
+    closure_thanks: "Merci pour votre compréhension — on vous accueille avec plaisir dès le",
+    closure_understood: "Compris",
   },
   
   nl: {
@@ -263,6 +271,14 @@ export const translations = {
     error_min_chars: "Minimaal 2 karakters",
     person: "persoon",
     persons: "personen",
+    
+    // Closure notice
+    closure_title: "Gesloten",
+    closure_message_1: "Gesloten van",
+    closure_message_2: "tot en met",
+    closure_message_3: ".",
+    closure_thanks: "Bedankt voor uw begrip — we verwelkomen u graag vanaf",
+    closure_understood: "Begrepen",
   },
   
   en: {
@@ -386,6 +402,14 @@ export const translations = {
     error_min_chars: "Minimum 2 characters",
     person: "person",
     persons: "persons",
+    
+    // Closure notice
+    closure_title: "Closed",
+    closure_message_1: "Closed from",
+    closure_message_2: "to",
+    closure_message_3: "inclusive.",
+    closure_thanks: "Thank you for your understanding — we look forward to welcoming you from",
+    closure_understood: "Got it",
   },
 
   de: {
@@ -527,6 +551,14 @@ export const translations = {
     // Persons
     person: "Person",
     persons: "Personen",
+    
+    // Closure notice
+    closure_title: "Geschlossen",
+    closure_message_1: "Geschlossen vom",
+    closure_message_2: "bis",
+    closure_message_3: "inklusive.",
+    closure_thanks: "Vielen Dank für Ihr Verständnis — wir freuen uns, Sie ab dem",
+    closure_understood: "Verstanden",
   },
 
   it: {
@@ -668,6 +700,14 @@ export const translations = {
     // Persons
     person: "persona",
     persons: "persone",
+    
+    // Closure notice
+    closure_title: "Chiuso",
+    closure_message_1: "Chiuso dal",
+    closure_message_2: "al",
+    closure_message_3: "incluso.",
+    closure_thanks: "Grazie per la comprensione — saremo lieti di accogliervi dal",
+    closure_understood: "Capito",
   },
 } as const;
 

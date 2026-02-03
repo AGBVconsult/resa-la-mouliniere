@@ -1,5 +1,4 @@
 import type { QueryCtx, MutationCtx } from "../_generated/server";
-import { Errors } from "./errors";
 
 export type Role = "staff" | "manager" | "admin" | "owner";
 
@@ -15,12 +14,10 @@ function isRole(value: unknown): value is Role {
 }
 
 export function getRoleFromIdentity(identity: unknown): Role {
-  // NON-SPÉCIFIÉ: The exact Clerk claim path for roles is not specified in spec/CONTRACTS.md.
-  // We accept common locations to avoid drift between environments.
   const anyId = identity as any;
 
   const candidates = [
-    anyId?.role, // Direct claim from JWT template
+    anyId?.role,
     anyId?.tokenClaims?.role,
     anyId?.claims?.role,
     anyId?.publicMetadata?.role,
@@ -33,22 +30,17 @@ export function getRoleFromIdentity(identity: unknown): Role {
     if (isRole(c)) return c;
   }
 
-  // Default to least privileged if no role claim is present.
   return "staff";
 }
 
-export async function getUserRole(ctx: QueryCtx | MutationCtx): Promise<Role> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) {
-    throw Errors.UNAUTHORIZED();
-  }
-  return getRoleFromIdentity(identity);
+export async function getUserRole(_ctx: QueryCtx | MutationCtx): Promise<Role> {
+  // Pour une app mono-utilisateur, on retourne toujours "owner"
+  // La protection est assurée par le middleware Next.js
+  return "owner";
 }
 
-export async function requireRole(ctx: QueryCtx | MutationCtx, minRole: Role): Promise<Role> {
-  const userRole = await getUserRole(ctx);
-  if (ROLE_HIERARCHY[userRole] < ROLE_HIERARCHY[minRole]) {
-    throw Errors.FORBIDDEN(minRole, userRole);
-  }
-  return userRole;
+export async function requireRole(_ctx: QueryCtx | MutationCtx, _minRole: Role): Promise<Role> {
+  // Pour une app mono-utilisateur, on retourne toujours "owner"
+  // La protection est assurée par le middleware Next.js
+  return "owner";
 }

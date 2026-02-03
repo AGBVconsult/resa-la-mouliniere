@@ -1,4 +1,4 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { TabletLayoutClient } from "./components/TabletLayoutClient";
 
@@ -22,25 +22,15 @@ export const viewport = {
   themeColor: "#0f172a",
 };
 
-const ALLOWED_ROLES = ["admin", "owner", "staff"];
-
 export default async function AdminTabletLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
+  const session = await auth();
 
-  if (!userId) {
+  if (!session) {
     redirect("/admin/login");
-  }
-
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const userRole = (user.publicMetadata?.role as string | undefined)?.toLowerCase();
-
-  if (!userRole || !ALLOWED_ROLES.includes(userRole)) {
-    redirect("/admin/access-denied");
   }
 
   return <TabletLayoutClient>{children}</TabletLayoutClient>;

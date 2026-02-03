@@ -19,6 +19,7 @@ import { Step3Contact } from "./steps/Step3Contact";
 import { Step4Policy } from "./steps/Step4Policy";
 import { Step5PracticalInfo } from "./steps/Step5PracticalInfo";
 import { Step6Confirmation } from "./steps/Step6Confirmation";
+import { ClosureNoticeModal } from "./ClosureNoticeModal";
 
 import { THRESHOLDS, DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from "@/components/booking/constants";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
@@ -65,6 +66,8 @@ export default function Widget() {
   } | null>(null);
 
   const settings = useQuery(api.widget.getSettings, { lang });
+  const activeClosure = useQuery(api.specialPeriods.getActiveClosure, {});
+  const [showClosureModal, setShowClosureModal] = useState(true);
   const { t } = useTranslation(lang);
 
   // Widget désactivé
@@ -277,6 +280,17 @@ export default function Widget() {
           style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'auto', position: 'relative', display: 'flex', flexDirection: 'column', backgroundColor: '#f8fafc', WebkitOverflowScrolling: 'touch' }}
         >
           <LoadingSpinner visible={loading} />
+
+          {/* Closure Notice Modal */}
+          {activeClosure && showClosureModal && (
+            <ClosureNoticeModal
+              lang={lang}
+              startDate={activeClosure.startDate}
+              endDate={activeClosure.endDate}
+              reopenDate={activeClosure.reopenDate}
+              onClose={() => setShowClosureModal(false)}
+            />
+          )}
 
           <AnimatePresence mode="wait" initial={false}>
             {step === 1 && (

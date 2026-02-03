@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { ShieldX, ArrowLeft, LogOut } from "lucide-react";
-import { useClerk } from "@clerk/nextjs";
+import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 export default function AccessDeniedPage() {
-  const { signOut } = useClerk();
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -40,7 +39,7 @@ export default function AccessDeniedPage() {
           <Button
             variant="ghost"
             className="w-full text-slate-500"
-            onClick={() => signOut({ redirectUrl: "/" })}
+            onClick={() => signOut({ callbackUrl: "/" })}
           >
             <LogOut className="w-4 h-4 mr-2" />
             Se déconnecter

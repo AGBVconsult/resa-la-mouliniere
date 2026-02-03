@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { CalendarDays, ListChecks, LogOut } from "lucide-react";
 import { ToastProvider } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
-import { useClerk } from "@clerk/nextjs";
+import { signOut } from "next-auth/react";
 
 interface TabletLayoutClientProps {
   children: ReactNode;
@@ -19,7 +19,6 @@ const NAV_ITEMS = [
 export function TabletLayoutClient({ children }: TabletLayoutClientProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { signOut } = useClerk();
 
   const getActiveTab = () => {
     if (pathname.includes("/reservations")) return "reservations";
