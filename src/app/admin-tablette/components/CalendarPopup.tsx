@@ -218,13 +218,14 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                   const isClosed = dayData && !dayData.lunch.isOpen && !dayData.dinner.isOpen;
                   const isPast = todayDateKey ? dateKey < todayDateKey : false;
                   const showMutedBackground = isClosed || isPast;
+                  const hasReservations = dayData && ((dayData.lunch.covers || 0) + (dayData.dinner.covers || 0)) > 0;
 
                   return (
                     <button
                       key={`day-${day}`}
                       onClick={() => !isClosed && handleDayClick(day)}
                       className={`relative min-h-[120px] p-3 border-r border-b border-slate-100 transition-all duration-200 flex flex-col text-left
-                        ${showMutedBackground ? "bg-slate-50/70" : "bg-white hover:bg-slate-50"}
+                        ${showMutedBackground ? "bg-slate-50/70" : hasReservations && !isClosed ? "bg-emerald-50/50 hover:bg-emerald-50" : "bg-white hover:bg-slate-50"}
                         ${isToday ? "ring-2 ring-inset ring-black z-10" : ""}
                         ${isPast ? "opacity-80" : ""}
                         ${isSelected ? "bg-blue-50 ring-2 ring-blue-400 ring-inset" : ""}
