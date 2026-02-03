@@ -122,7 +122,14 @@ export default function TabletReservationsPage() {
 
   const goToPreviousDay = () => setSelectedDate((d) => subDays(d, 1));
   const goToNextDay = () => setSelectedDate((d) => addDays(d, 1));
-  const goToToday = () => setSelectedDate(new Date());
+  const goToToday = () => {
+    setSelectedDate(new Date());
+    // Sélectionner automatiquement le service selon l'heure (16h = seuil)
+    const now = new Date();
+    const brusselsTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Brussels" }));
+    const hour = brusselsTime.getHours();
+    setSelectedService(hour >= 16 ? "dinner" : "lunch");
+  };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = parseISO(e.target.value);
