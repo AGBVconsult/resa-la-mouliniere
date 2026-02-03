@@ -247,7 +247,7 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                         {dayData.lunch.isOpen && (
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-medium text-slate-500 w-7 shrink-0">Déj</span>
-                            <div className="w-12 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
                               <div 
                                 className={`h-full rounded-full transition-all ${
                                   lunchPercent >= 90 ? "bg-red-500" : lunchPercent >= 70 ? "bg-amber-500" : "bg-emerald-500"
@@ -265,7 +265,7 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                         {dayData.dinner.isOpen && (
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-medium text-slate-500 w-7 shrink-0">Dîn</span>
-                            <div className="w-12 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
                               <div 
                                 className={`h-full rounded-full transition-all ${
                                   dinnerPercent >= 90 ? "bg-red-500" : dinnerPercent >= 70 ? "bg-amber-500" : "bg-emerald-500"
