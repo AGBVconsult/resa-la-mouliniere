@@ -207,6 +207,7 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                 const isToday = dateKey === todayDateKey;
                 const isSelected = dateKey === selectedDateKey;
                 const isClosed = dayData && !dayData.lunch.isOpen && !dayData.dinner.isOpen;
+                const isPast = todayDateKey ? dateKey < todayDateKey : false;
 
                 const lunchPercent = dayData?.lunch.isOpen && dayData.lunch.capacityEffective > 0
                   ? Math.min((dayData.lunch.covers / dayData.lunch.capacityEffective) * 100, 100)
@@ -221,8 +222,10 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                     onClick={() => !isClosed && handleDayClick(day)}
                     className={`relative border-r border-b border-slate-100 p-2 flex flex-col transition-all active:scale-[0.98] ${
                       isClosed
-                        ? "bg-slate-200 cursor-default"
-                        : "hover:bg-slate-50/80 cursor-pointer"
+                        ? "bg-slate-100 cursor-default"
+                        : isPast
+                          ? "bg-slate-100 cursor-pointer"
+                          : "hover:bg-slate-50/80 cursor-pointer"
                     } ${isSelected ? "bg-blue-50 ring-2 ring-blue-400 ring-inset" : ""}`}
                   >
                     <span
