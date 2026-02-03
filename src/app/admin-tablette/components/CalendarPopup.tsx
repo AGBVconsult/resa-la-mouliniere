@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users, DoorOpen, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users, DoorOpen } from "lucide-react";
 import { SegmentedBar } from "./SegmentedBar";
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -219,24 +219,18 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                   <button
                     key={`day-${day}`}
                     onClick={() => !isClosed && handleDayClick(day)}
-                    className={`relative border-r border-b border-slate-50 p-2 flex flex-col transition-all active:scale-[0.98] ${
+                    className={`relative border-r border-b border-slate-100 p-2 flex flex-col transition-all active:scale-[0.98] ${
                       isClosed
-                        ? "bg-slate-50/40 cursor-default"
+                        ? "bg-slate-200 cursor-default"
                         : "hover:bg-slate-50/80 cursor-pointer"
                     } ${isSelected ? "bg-blue-50 ring-2 ring-blue-400 ring-inset" : ""}`}
                   >
-                    {/* Settings icon */}
-                    {!isClosed && (
-                      <div className="absolute top-2 right-2">
-                        <Settings size={12} className="text-slate-300" strokeWidth={1.5} />
-                      </div>
-                    )}
                     <span
-                      className={`text-sm font-bold text-left ${
+                      className={`text-base font-bold text-left ${
                         isToday
-                          ? "bg-slate-900 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]"
+                          ? "bg-slate-900 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
                           : isClosed
-                            ? "text-slate-200"
+                            ? "text-slate-400"
                             : isSelected
                               ? "text-blue-600"
                               : "text-slate-500"
@@ -248,36 +242,36 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                       <div className="space-y-2 w-full mt-auto">
                         {/* Déjeuner */}
                         {dayData.lunch.isOpen && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-slate-400 w-6 shrink-0">Déj</span>
-                            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-medium text-slate-500 w-7 shrink-0">Déj</span>
+                            <div className="w-12 h-2 bg-slate-200 rounded-full overflow-hidden">
                               <div 
                                 className={`h-full rounded-full transition-all ${
-                                  lunchPercent >= 90 ? "bg-red-400" : lunchPercent >= 70 ? "bg-amber-400" : "bg-emerald-400"
+                                  lunchPercent >= 90 ? "bg-red-500" : lunchPercent >= 70 ? "bg-amber-500" : "bg-emerald-500"
                                 }`}
                                 style={{ width: `${lunchPercent}%` }}
                               />
                             </div>
-                            <div className="flex items-center gap-0.5 text-[10px] text-slate-500 shrink-0">
-                              <Users size={10} strokeWidth={2} />
+                            <div className="flex items-center gap-0.5 text-xs font-medium text-slate-600 shrink-0">
+                              <Users size={12} strokeWidth={2.5} />
                               <span>{dayData.lunch.covers}/{dayData.lunch.capacityEffective}</span>
                             </div>
                           </div>
                         )}
                         {/* Dîner */}
                         {dayData.dinner.isOpen && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-slate-400 w-6 shrink-0">Dîn</span>
-                            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-medium text-slate-500 w-7 shrink-0">Dîn</span>
+                            <div className="w-12 h-2 bg-slate-200 rounded-full overflow-hidden">
                               <div 
                                 className={`h-full rounded-full transition-all ${
-                                  dinnerPercent >= 90 ? "bg-red-400" : dinnerPercent >= 70 ? "bg-amber-400" : "bg-emerald-400"
+                                  dinnerPercent >= 90 ? "bg-red-500" : dinnerPercent >= 70 ? "bg-amber-500" : "bg-emerald-500"
                                 }`}
                                 style={{ width: `${dinnerPercent}%` }}
                               />
                             </div>
-                            <div className="flex items-center gap-0.5 text-[10px] text-slate-500 shrink-0">
-                              <Users size={10} strokeWidth={2} />
+                            <div className="flex items-center gap-0.5 text-xs font-medium text-slate-600 shrink-0">
+                              <Users size={12} strokeWidth={2.5} />
                               <span>{dayData.dinner.covers}/{dayData.dinner.capacityEffective}</span>
                             </div>
                           </div>
@@ -285,7 +279,7 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                       </div>
                     )}
                     {isClosed && (
-                      <span className="text-[8px] text-slate-400 uppercase tracking-wider mt-auto">
+                      <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-slate-500 uppercase tracking-wide">
                         Fermé
                       </span>
                     )}
