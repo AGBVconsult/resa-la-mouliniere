@@ -94,7 +94,13 @@ export default function TabletReservationsPage() {
 
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [openPopupId, setOpenPopupId] = useState<Id<"reservations"> | null>(null);
-  const [selectedService, setSelectedService] = useState<"lunch" | "dinner">("lunch");
+  const [selectedService, setSelectedService] = useState<"lunch" | "dinner">(() => {
+    // Sélectionner automatiquement le service selon l'heure au chargement
+    const now = new Date();
+    const brusselsTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Brussels" }));
+    const hour = brusselsTime.getHours();
+    return hour >= 16 ? "dinner" : "lunch";
+  });
   const [showFloorPlan, setShowFloorPlan] = useState(false);
   const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
   const [highlightedReservationId, setHighlightedReservationId] = useState<Id<"reservations"> | null>(null);
