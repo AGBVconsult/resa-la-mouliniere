@@ -244,7 +244,7 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
 
                       {/* Header de la case */}
                       <div className="flex justify-between items-start mb-4">
-                        <span className={`text-sm font-semibold ${isToday ? "text-black" : isPast ? "text-slate-300" : "text-slate-400"}`}>
+                        <span className={`text-sm font-semibold ${isToday ? "text-black" : isPast ? "text-slate-400" : "text-slate-500"}`}>
                           {day}
                         </span>
                         {isToday && (
@@ -261,12 +261,12 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                           {dayData.lunch.isOpen && (
                             <div className="group cursor-default">
                               <div className="flex justify-between items-baseline mb-1.5">
-                                <span className={`text-[10px] font-light uppercase tracking-[0.05em] ${isPast ? "text-slate-300" : "text-slate-400"}`}>
+                                <span className={`text-[10px] font-light uppercase tracking-[0.05em] ${isPast ? "text-slate-400" : "text-slate-500"}`}>
                                   Déjeuner
                                 </span>
-                                <span className={`text-sm font-bold tracking-tight ${isPast ? "text-slate-500" : "text-slate-900"}`}>
+                                <span className={`text-sm font-bold tracking-tight ${isPast ? "text-slate-600" : "text-slate-900"}`}>
                                   {dayData.lunch.covers}
-                                  <span className={`font-normal ml-0.5 ${isPast ? "text-slate-300" : "text-slate-300"}`}>
+                                  <span className={`font-normal ml-0.5 ${isPast ? "text-slate-400" : "text-slate-400"}`}>
                                     /{dayData.lunch.capacityEffective}
                                   </span>
                                 </span>
@@ -283,12 +283,12 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                           {dayData.dinner.isOpen && (
                             <div className="group cursor-default">
                               <div className="flex justify-between items-baseline mb-1.5">
-                                <span className={`text-[10px] font-light uppercase tracking-[0.05em] ${isPast ? "text-slate-300" : "text-slate-400"}`}>
+                                <span className={`text-[10px] font-light uppercase tracking-[0.05em] ${isPast ? "text-slate-400" : "text-slate-500"}`}>
                                   Dîner
                                 </span>
-                                <span className={`text-sm font-bold tracking-tight ${isPast ? "text-slate-500" : "text-slate-900"}`}>
+                                <span className={`text-sm font-bold tracking-tight ${isPast ? "text-slate-600" : "text-slate-900"}`}>
                                   {dayData.dinner.covers}
-                                  <span className={`font-normal ml-0.5 ${isPast ? "text-slate-300" : "text-slate-300"}`}>
+                                  <span className={`font-normal ml-0.5 ${isPast ? "text-slate-400" : "text-slate-400"}`}>
                                     /{dayData.dinner.capacityEffective}
                                   </span>
                                 </span>
@@ -310,23 +310,6 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
             </div>
           </div>
 
-          {/* Footer légende */}
-          <footer className="mt-4 flex items-center justify-between text-slate-400 border-t border-slate-200 pt-4 shrink-0">
-            <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Disponibilité
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Presque complet
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500" /> Complet
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" /> Passé
-              </div>
-            </div>
-          </footer>
         </div>
       </div>
     </div>
