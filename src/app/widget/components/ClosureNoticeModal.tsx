@@ -38,33 +38,30 @@ export function ClosureNoticeModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
-        <div className="bg-amber-50 px-6 py-4 border-b border-amber-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-amber-900">
-            {t.closure_title}
-          </h2>
+        {/* Close button */}
+        <div className="flex justify-end px-4 pt-4">
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-amber-100 transition-colors"
+            className="p-1 rounded-full hover:bg-slate-100 transition-colors"
             aria-label="Fermer"
           >
-            <X className="w-5 h-5 text-amber-700" />
+            <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5">
+        <div className="px-6 pb-2 pt-0">
           <p className="text-slate-700 text-base leading-relaxed">
             {t.closure_message_1}{" "}
-            <span className="font-semibold">{startFormatted}</span>{" "}
+            <span className="font-semibold text-slate-900">{startFormatted}</span>{" "}
             {t.closure_message_2}{" "}
-            <span className="font-semibold">{endFormatted}</span>{" "}
+            <span className="font-semibold text-slate-900">{endFormatted}</span>{" "}
             {t.closure_message_3}
           </p>
           
           <p className="text-slate-600 text-base leading-relaxed mt-3">
             {t.closure_thanks}{" "}
-            <span className="font-semibold text-emerald-600">{reopenFormatted}</span>.
+            <span className="font-semibold text-slate-900">{reopenFormatted}</span>.
           </p>
         </div>
 
@@ -72,7 +69,7 @@ export function ClosureNoticeModal({
         <div className="px-6 pb-5">
           <button
             onClick={onClose}
-            className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl transition-colors"
+            className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl transition-colors"
           >
             {t.closure_understood}
           </button>

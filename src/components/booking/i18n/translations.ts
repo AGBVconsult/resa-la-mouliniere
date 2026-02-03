@@ -143,7 +143,7 @@ export const translations = {
     
     // Closure notice
     closure_title: "Fermeture",
-    closure_message_1: "Fermeture du",
+    closure_message_1: "Nous sommes fermés du",
     closure_message_2: "au",
     closure_message_3: "inclus.",
     closure_thanks: "Merci pour votre compréhension — on vous accueille avec plaisir dès le",
@@ -274,7 +274,7 @@ export const translations = {
     
     // Closure notice
     closure_title: "Gesloten",
-    closure_message_1: "Gesloten van",
+    closure_message_1: "Wij zijn gesloten van",
     closure_message_2: "tot en met",
     closure_message_3: ".",
     closure_thanks: "Bedankt voor uw begrip — we verwelkomen u graag vanaf",
@@ -405,7 +405,7 @@ export const translations = {
     
     // Closure notice
     closure_title: "Closed",
-    closure_message_1: "Closed from",
+    closure_message_1: "We are closed from",
     closure_message_2: "to",
     closure_message_3: "inclusive.",
     closure_thanks: "Thank you for your understanding — we look forward to welcoming you from",
@@ -554,7 +554,7 @@ export const translations = {
     
     // Closure notice
     closure_title: "Geschlossen",
-    closure_message_1: "Geschlossen vom",
+    closure_message_1: "Wir sind geschlossen vom",
     closure_message_2: "bis",
     closure_message_3: "inklusive.",
     closure_thanks: "Vielen Dank für Ihr Verständnis — wir freuen uns, Sie ab dem",
@@ -703,7 +703,7 @@ export const translations = {
     
     // Closure notice
     closure_title: "Chiuso",
-    closure_message_1: "Chiuso dal",
+    closure_message_1: "Siamo chiusi dal",
     closure_message_2: "al",
     closure_message_3: "incluso.",
     closure_thanks: "Grazie per la comprensione — saremo lieti di accogliervi dal",
