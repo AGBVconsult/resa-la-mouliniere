@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users, DoorOpen } from "lucide-react";
-import { SegmentedBar } from "./SegmentedBar";
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const TIMEZONE = "Europe/Brussels";
@@ -16,6 +15,18 @@ interface CalendarPopupProps {
   selectedDateKey?: string;
 }
 
+function getStatusColor(count: number, total: number, isPast: boolean): string {
+  const ratio = count / total;
+  if (isPast) {
+    if (count === 0) return "bg-slate-200";
+    return "bg-slate-400";
+  }
+  if (ratio >= 0.95) return "bg-red-500";
+  if (ratio >= 0.7) return "bg-orange-500";
+  if (count > 0) return "bg-emerald-500";
+  return "bg-slate-200";
+}
+
 export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }: CalendarPopupProps) {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [currentMonth, setCurrentMonth] = useState<number | null>(null);
@@ -23,7 +34,6 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
 
   useEffect(() => {
     if (isOpen) {
-      // Si une date est sélectionnée, ouvrir sur ce mois
       if (selectedDateKey) {
         const [year, month] = selectedDateKey.split("-").map(Number);
         setCurrentYear(year);
@@ -92,7 +102,7 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
   const monthLabel = useMemo(() => {
     if (!currentYear || !currentMonth) return "";
     const date = new Date(currentYear, currentMonth - 1, 1);
-    const formatted = date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    const formatted = date.toLocaleDateString("fr-FR", { month: "long" });
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   }, [currentYear, currentMonth]);
 
@@ -127,170 +137,196 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
       
       {/* Popup */}
       <div 
-        className="relative bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-        style={{ width: "85vw", height: "85vh" }}
+        className="relative bg-slate-50 rounded-[32px] shadow-2xl flex flex-col overflow-hidden"
+        style={{ width: "90vw", height: "90vh" }}
       >
         {/* Content */}
         <div className="flex flex-col h-full p-6">
           {/* Header */}
-          <header className="flex justify-between items-center mb-4 shrink-0">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-bold text-slate-800">
-                {monthLabel.split(" ")[0]}{" "}
-                <span className="text-slate-400 font-light">{currentYear}</span>
+          <header className="flex flex-row items-center justify-between mb-6 shrink-0">
+            <div className="flex items-center gap-6">
+              <h1 className="text-3xl font-bold tracking-tighter text-slate-900">
+                {monthLabel}{" "}
+                <span className="text-slate-300 font-normal">{currentYear}</span>
               </h1>
-              <div className="flex bg-slate-50 rounded-full p-1 border border-slate-200">
+              <div className="flex bg-white rounded-2xl shadow-sm border border-slate-200/60 p-1.5">
                 <button
                   onClick={goToPreviousMonth}
-                  className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
+                  className="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-400 hover:text-black"
                 >
                   <ChevronLeft size={18} />
                 </button>
                 <button
                   onClick={goToNextMonth}
-                  className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
+                  className="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-400 hover:text-black"
                 >
                   <ChevronRight size={18} />
                 </button>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-full">
-                <DoorOpen size={14} strokeWidth={2.5} className="text-slate-600" />
-                <span className="text-sm font-bold text-slate-700">{monthStats.openDays}</span>
-                <span className="text-[10px] text-slate-500 uppercase tracking-wide">jours</span>
+              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-slate-200 shadow-sm bg-white text-slate-500 text-[11px] font-bold tracking-tight">
+                <DoorOpen size={14} />
+                {monthStats.openDays} JOURS
               </div>
-              <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-full">
-                <CalendarDays size={14} strokeWidth={2.5} className="text-slate-600" />
-                <span className="text-sm font-bold text-slate-700">{monthStats.reservations}</span>
-                <span className="text-[10px] text-slate-500 uppercase tracking-wide">résa</span>
+              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-slate-200 shadow-sm bg-white text-slate-500 text-[11px] font-bold tracking-tight">
+                <CalendarDays size={14} />
+                {monthStats.reservations} RÉSA
               </div>
-              <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-full">
-                <Users size={14} strokeWidth={2.5} className="text-slate-600" />
-                <span className="text-sm font-bold text-slate-700">{monthStats.covers}</span>
-                <span className="text-[10px] text-slate-500 uppercase tracking-wide">couverts</span>
+              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-black shadow-sm bg-black text-white text-[11px] font-bold tracking-tight">
+                <Users size={14} />
+                {monthStats.covers} COUVERTS
               </div>
             </div>
           </header>
 
-          {/* Days of week header */}
-          <div className="grid grid-cols-7 border-y border-slate-100 bg-slate-50/30 rounded-t-xl shrink-0">
-            {DAYS_OF_WEEK.map((d, i) => (
-              <div
-                key={`weekday-${i}`}
-                className="py-2 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest"
-              >
-                {d}
-              </div>
-            ))}
-          </div>
+          {/* Calendar container */}
+          <div className="bg-white rounded-[32px] shadow-2xl shadow-slate-200/40 border border-slate-200/80 overflow-hidden flex-1 flex flex-col">
+            {/* Days of week header */}
+            <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/30 shrink-0">
+              {DAYS_OF_WEEK.map((d, i) => (
+                <div
+                  key={`weekday-${i}`}
+                  className="py-4 px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 text-center"
+                >
+                  {d}
+                </div>
+              ))}
+            </div>
 
-          {/* Calendar grid */}
-          <div className="grid grid-cols-7 flex-1 bg-white rounded-b-xl border border-t-0 border-slate-100 overflow-hidden">
-            {!monthData ? (
-              <div className="col-span-7 flex items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-              </div>
-            ) : (
-              calendarDays.map((day, index) => {
-                if (day === null) {
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 flex-1">
+              {!monthData ? (
+                <div className="col-span-7 flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : (
+                calendarDays.map((day, index) => {
+                  if (day === null) {
+                    return (
+                      <div
+                        key={`empty-${index}`}
+                        className="bg-slate-50/10 border-r border-b border-slate-100 min-h-[120px]"
+                      />
+                    );
+                  }
+
+                  const dateKey = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                  const dayData = monthData?.[dateKey];
+                  const isToday = dateKey === todayDateKey;
+                  const isSelected = dateKey === selectedDateKey;
+                  const isClosed = dayData && !dayData.lunch.isOpen && !dayData.dinner.isOpen;
+                  const isPast = todayDateKey ? dateKey < todayDateKey : false;
+                  const showMutedBackground = isClosed || isPast;
+
                   return (
-                    <div
-                      key={`empty-${index}`}
-                      className="border-r border-b border-slate-50 bg-slate-50/20"
-                    />
-                  );
-                }
-
-                const dateKey = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                const dayData = monthData?.[dateKey];
-                const isToday = dateKey === todayDateKey;
-                const isSelected = dateKey === selectedDateKey;
-                const isClosed = dayData && !dayData.lunch.isOpen && !dayData.dinner.isOpen;
-                const isPast = todayDateKey ? dateKey < todayDateKey : false;
-
-                const lunchPercent = dayData?.lunch.isOpen && dayData.lunch.capacityEffective > 0
-                  ? Math.min((dayData.lunch.covers / dayData.lunch.capacityEffective) * 100, 100)
-                  : 0;
-                const dinnerPercent = dayData?.dinner.isOpen && dayData.dinner.capacityEffective > 0
-                  ? Math.min((dayData.dinner.covers / dayData.dinner.capacityEffective) * 100, 100)
-                  : 0;
-
-                return (
-                  <button
-                    key={`day-${day}`}
-                    onClick={() => !isClosed && handleDayClick(day)}
-                    className={`relative border-r border-b border-slate-100 p-2 flex flex-col transition-all active:scale-[0.98] ${
-                      isClosed
-                        ? "bg-slate-100 cursor-default"
-                        : isPast
-                          ? "bg-slate-100 cursor-pointer"
-                          : "hover:bg-slate-50/80 cursor-pointer"
-                    } ${isSelected ? "bg-blue-50 ring-2 ring-blue-400 ring-inset" : ""}`}
-                  >
-                    <span
-                      className={`text-base font-bold text-left ${
-                        isToday
-                          ? "bg-slate-900 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                          : isClosed
-                            ? "text-slate-400"
-                            : isSelected
-                              ? "text-blue-600"
-                              : "text-slate-500"
-                      }`}
+                    <button
+                      key={`day-${day}`}
+                      onClick={() => !isClosed && handleDayClick(day)}
+                      className={`relative min-h-[120px] p-3 border-r border-b border-slate-100 transition-all duration-200 flex flex-col text-left
+                        ${showMutedBackground ? "bg-slate-50/70" : "bg-white hover:bg-slate-50"}
+                        ${isToday ? "ring-2 ring-inset ring-black z-10" : ""}
+                        ${isPast ? "opacity-80" : ""}
+                        ${isSelected ? "bg-blue-50 ring-2 ring-blue-400 ring-inset" : ""}
+                        ${isClosed ? "cursor-default" : "cursor-pointer"}
+                      `}
                     >
-                      {day}
-                    </span>
-                    {!isClosed && dayData && (
-                      <div className="space-y-2 w-full mt-auto">
-                        {/* Déjeuner */}
-                        {dayData.lunch.isOpen && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-medium text-slate-500 w-7 shrink-0">Déj</span>
-                            <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                              <div 
-                                className={`h-full rounded-full transition-all ${
-                                  lunchPercent >= 90 ? "bg-red-500" : lunchPercent >= 70 ? "bg-amber-500" : "bg-emerald-500"
-                                }`}
-                                style={{ width: `${lunchPercent}%` }}
-                              />
-                            </div>
-                            <div className="flex items-center gap-0.5 text-xs font-medium text-slate-600 shrink-0">
-                              <Users size={12} strokeWidth={2.5} />
-                              <span>{dayData.lunch.covers}/{dayData.lunch.capacityEffective}</span>
-                            </div>
-                          </div>
-                        )}
-                        {/* Dîner */}
-                        {dayData.dinner.isOpen && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-medium text-slate-500 w-7 shrink-0">Dîn</span>
-                            <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                              <div 
-                                className={`h-full rounded-full transition-all ${
-                                  dinnerPercent >= 90 ? "bg-red-500" : dinnerPercent >= 70 ? "bg-amber-500" : "bg-emerald-500"
-                                }`}
-                                style={{ width: `${dinnerPercent}%` }}
-                              />
-                            </div>
-                            <div className="flex items-center gap-0.5 text-xs font-medium text-slate-600 shrink-0">
-                              <Users size={12} strokeWidth={2.5} />
-                              <span>{dayData.dinner.covers}/{dayData.dinner.capacityEffective}</span>
-                            </div>
-                          </div>
+                      {/* Pattern rayé pour jours fermés */}
+                      {isClosed && (
+                        <div 
+                          className="absolute inset-0 opacity-5 pointer-events-none"
+                          style={{ 
+                            backgroundImage: "linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%, transparent)", 
+                            backgroundSize: "10px 10px" 
+                          }}
+                        />
+                      )}
+
+                      {/* Header de la case */}
+                      <div className="flex justify-between items-start mb-4">
+                        <span className={`text-sm font-semibold ${isToday ? "text-black" : isPast ? "text-slate-300" : "text-slate-400"}`}>
+                          {day}
+                        </span>
+                        {isToday && (
+                          <span className="text-[9px] font-bold uppercase tracking-widest bg-black text-white px-2 py-0.5 rounded-full">
+                            Aujourd&apos;hui
+                          </span>
                         )}
                       </div>
-                    )}
-                    {isClosed && (
-                      <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                        Fermé
-                      </span>
-                    )}
-                  </button>
-                );
-              })
-            )}
+
+                      {/* Contenu pour jours ouverts */}
+                      {!isClosed && dayData && (
+                        <div className="space-y-4 mt-auto">
+                          {/* Déjeuner */}
+                          {dayData.lunch.isOpen && (
+                            <div className="group cursor-default">
+                              <div className="flex justify-between items-baseline mb-1.5">
+                                <span className={`text-[10px] font-light uppercase tracking-[0.05em] ${isPast ? "text-slate-300" : "text-slate-400"}`}>
+                                  Déjeuner
+                                </span>
+                                <span className={`text-sm font-bold tracking-tight ${isPast ? "text-slate-500" : "text-slate-900"}`}>
+                                  {dayData.lunch.covers}
+                                  <span className={`font-normal ml-0.5 ${isPast ? "text-slate-300" : "text-slate-300"}`}>
+                                    /{dayData.lunch.capacityEffective}
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.lunch.covers, dayData.lunch.capacityEffective, isPast)}`}
+                                  style={{ width: `${dayData.lunch.capacityEffective > 0 ? (dayData.lunch.covers / dayData.lunch.capacityEffective) * 100 : 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          {/* Dîner */}
+                          {dayData.dinner.isOpen && (
+                            <div className="group cursor-default">
+                              <div className="flex justify-between items-baseline mb-1.5">
+                                <span className={`text-[10px] font-light uppercase tracking-[0.05em] ${isPast ? "text-slate-300" : "text-slate-400"}`}>
+                                  Dîner
+                                </span>
+                                <span className={`text-sm font-bold tracking-tight ${isPast ? "text-slate-500" : "text-slate-900"}`}>
+                                  {dayData.dinner.covers}
+                                  <span className={`font-normal ml-0.5 ${isPast ? "text-slate-300" : "text-slate-300"}`}>
+                                    /{dayData.dinner.capacityEffective}
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.dinner.covers, dayData.dinner.capacityEffective, isPast)}`}
+                                  style={{ width: `${dayData.dinner.capacityEffective > 0 ? (dayData.dinner.covers / dayData.dinner.capacityEffective) * 100 : 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
           </div>
+
+          {/* Footer légende */}
+          <footer className="mt-4 flex items-center justify-between text-slate-400 border-t border-slate-200 pt-4 shrink-0">
+            <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Disponibilité
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Presque complet
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500" /> Complet
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" /> Passé
+              </div>
+            </div>
+          </footer>
         </div>
       </div>
     </div>
