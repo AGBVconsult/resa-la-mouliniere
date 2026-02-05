@@ -206,7 +206,7 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                     return (
                       <div
                         key={`empty-${index}`}
-                        className="bg-slate-50/10 border-r border-b border-slate-100 min-h-[80px] tablet-lg:min-h-[120px]"
+                        className="bg-slate-50/10 border-r border-b border-slate-100 min-h-[80px]"
                       />
                     );
                   }
@@ -224,7 +224,7 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                     <button
                       key={`day-${day}`}
                       onClick={() => !isClosed && handleDayClick(day)}
-                      className={`relative min-h-[80px] tablet-lg:min-h-[120px] p-2 tablet-lg:p-3 border-r border-b border-slate-100 transition-all duration-200 flex flex-col text-left
+                      className={`relative min-h-[80px] p-2 border-r border-b border-slate-100 transition-all duration-200 flex flex-col text-left
                         ${showMutedBackground ? "bg-slate-50/70" : hasReservations && !isClosed ? "bg-emerald-50/50 hover:bg-emerald-50" : "bg-white hover:bg-slate-50"}
                         ${isToday ? "ring-2 ring-inset ring-black z-10" : ""}
                         ${isPast ? "opacity-80" : ""}
@@ -244,12 +244,12 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                       )}
 
                       {/* Header de la case */}
-                      <div className="flex justify-between items-start mb-2 tablet-lg:mb-4">
-                        <span className={`text-xs tablet-lg:text-sm font-semibold ${isToday ? "text-black" : isPast ? "text-slate-400" : "text-slate-500"}`}>
+                      <div className="flex items-start mb-2">
+                        <span className={`text-sm font-semibold ${isToday ? "text-black" : isPast ? "text-slate-400" : "text-slate-500"}`}>
                           {day}
                         </span>
                         {isToday && (
-                          <span className="text-[7px] tablet-lg:text-[9px] font-bold uppercase tracking-widest bg-black text-white px-1.5 tablet-lg:px-2 py-0.5 rounded-full ml-auto">
+                          <span className="text-[8px] font-bold uppercase tracking-widest bg-black text-white px-1.5 py-0.5 rounded-full ml-auto">
                             Aujourd&apos;hui
                           </span>
                         )}
@@ -257,85 +257,39 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
 
                       {/* Contenu pour jours ouverts */}
                       {!isClosed && dayData && (
-                        <div className="space-y-1.5 tablet-lg:space-y-4 mt-auto">
+                        <div className="space-y-1.5 mt-auto w-full">
                           {/* Déjeuner */}
                           {dayData.lunch.isOpen && (
-                            <div className="group cursor-default">
-                              {/* Layout compact iPad mini */}
-                              <div className="flex tablet-lg:hidden items-center gap-2 w-full">
-                                <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
-                                  Déj
-                                </span>
-                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.lunch.covers, dayData.lunch.capacityEffective, isPast)}`}
-                                    style={{ width: `${dayData.lunch.capacityEffective > 0 ? (dayData.lunch.covers / dayData.lunch.capacityEffective) * 100 : 0}%` }}
-                                  />
-                                </div>
-                                <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
-                                  {dayData.lunch.covers}<span className="font-normal text-slate-400">/{dayData.lunch.capacityEffective}</span>
-                                </span>
+                            <div className="flex items-center gap-2 w-full">
+                              <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
+                                Déj
+                              </span>
+                              <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.lunch.covers, dayData.lunch.capacityEffective, isPast)}`}
+                                  style={{ width: `${dayData.lunch.capacityEffective > 0 ? (dayData.lunch.covers / dayData.lunch.capacityEffective) * 100 : 0}%` }}
+                                />
                               </div>
-                              {/* Layout complet iPad Pro */}
-                              <div className="hidden tablet-lg:block">
-                                <div className="flex justify-between items-baseline mb-1.5">
-                                  <span className={`text-[10px] font-light uppercase tracking-[0.05em] ${isPast ? "text-slate-400" : "text-slate-500"}`}>
-                                    Déjeuner
-                                  </span>
-                                  <span className={`text-sm font-bold tracking-tight ${isPast ? "text-slate-600" : "text-slate-900"}`}>
-                                    {dayData.lunch.covers}
-                                    <span className={`font-normal ml-0.5 ${isPast ? "text-slate-400" : "text-slate-400"}`}>
-                                      /{dayData.lunch.capacityEffective}
-                                    </span>
-                                  </span>
-                                </div>
-                                <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.lunch.covers, dayData.lunch.capacityEffective, isPast)}`}
-                                    style={{ width: `${dayData.lunch.capacityEffective > 0 ? (dayData.lunch.covers / dayData.lunch.capacityEffective) * 100 : 0}%` }}
-                                  />
-                                </div>
-                              </div>
+                              <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
+                                {dayData.lunch.covers}<span className="font-normal text-slate-400">/{dayData.lunch.capacityEffective}</span>
+                              </span>
                             </div>
                           )}
                           {/* Dîner */}
                           {dayData.dinner.isOpen && (
-                            <div className="group cursor-default">
-                              {/* Layout compact iPad mini */}
-                              <div className="flex tablet-lg:hidden items-center gap-2 w-full">
-                                <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
-                                  Dîn
-                                </span>
-                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.dinner.covers, dayData.dinner.capacityEffective, isPast)}`}
-                                    style={{ width: `${dayData.dinner.capacityEffective > 0 ? (dayData.dinner.covers / dayData.dinner.capacityEffective) * 100 : 0}%` }}
-                                  />
-                                </div>
-                                <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
-                                  {dayData.dinner.covers}<span className="font-normal text-slate-400">/{dayData.dinner.capacityEffective}</span>
-                                </span>
+                            <div className="flex items-center gap-2 w-full">
+                              <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
+                                Dîn
+                              </span>
+                              <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.dinner.covers, dayData.dinner.capacityEffective, isPast)}`}
+                                  style={{ width: `${dayData.dinner.capacityEffective > 0 ? (dayData.dinner.covers / dayData.dinner.capacityEffective) * 100 : 0}%` }}
+                                />
                               </div>
-                              {/* Layout complet iPad Pro */}
-                              <div className="hidden tablet-lg:block">
-                                <div className="flex justify-between items-baseline mb-1.5">
-                                  <span className={`text-[10px] font-light uppercase tracking-[0.05em] ${isPast ? "text-slate-400" : "text-slate-500"}`}>
-                                    Dîner
-                                  </span>
-                                  <span className={`text-sm font-bold tracking-tight ${isPast ? "text-slate-600" : "text-slate-900"}`}>
-                                    {dayData.dinner.covers}
-                                    <span className={`font-normal ml-0.5 ${isPast ? "text-slate-400" : "text-slate-400"}`}>
-                                      /{dayData.dinner.capacityEffective}
-                                    </span>
-                                  </span>
-                                </div>
-                                <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.dinner.covers, dayData.dinner.capacityEffective, isPast)}`}
-                                    style={{ width: `${dayData.dinner.capacityEffective > 0 ? (dayData.dinner.covers / dayData.dinner.capacityEffective) * 100 : 0}%` }}
-                                  />
-                                </div>
-                              </div>
+                              <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
+                                {dayData.dinner.covers}<span className="font-normal text-slate-400">/{dayData.dinner.capacityEffective}</span>
+                              </span>
                             </div>
                           )}
                         </div>

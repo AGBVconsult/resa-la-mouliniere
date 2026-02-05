@@ -7,14 +7,6 @@ module.exports = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    screens: {
-      'sm': '640px',
-      'md': '768px',
-      'lg': '1024px',
-      'tablet-lg': '1100px',
-      'xl': '1280px',
-      '2xl': '1536px',
-    },
     extend: {
       colors: {
         border: "hsl(var(--border))",
