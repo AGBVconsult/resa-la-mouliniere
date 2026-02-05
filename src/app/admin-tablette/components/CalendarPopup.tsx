@@ -249,7 +249,7 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                           {day}
                         </span>
                         {isToday && (
-                          <span className="text-[7px] xl:text-[9px] font-bold uppercase tracking-widest bg-black text-white px-1.5 xl:px-2 py-0.5 rounded-full">
+                          <span className="text-[7px] xl:text-[9px] font-bold uppercase tracking-widest bg-black text-white px-1.5 xl:px-2 py-0.5 rounded-full ml-auto">
                             Aujourd&apos;hui
                           </span>
                         )}
@@ -262,17 +262,17 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                           {dayData.lunch.isOpen && (
                             <div className="group cursor-default">
                               {/* Layout compact iPad mini */}
-                              <div className="flex xl:hidden items-center gap-1.5 w-full">
-                                <span className={`text-[8px] font-medium uppercase shrink-0 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
+                              <div className="flex xl:hidden items-center gap-2 w-full">
+                                <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
                                   Déj
                                 </span>
-                                <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                   <div 
                                     className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.lunch.covers, dayData.lunch.capacityEffective, isPast)}`}
                                     style={{ width: `${dayData.lunch.capacityEffective > 0 ? (dayData.lunch.covers / dayData.lunch.capacityEffective) * 100 : 0}%` }}
                                   />
                                 </div>
-                                <span className={`text-[9px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
+                                <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
                                   {dayData.lunch.covers}<span className="font-normal text-slate-400">/{dayData.lunch.capacityEffective}</span>
                                 </span>
                               </div>
@@ -302,17 +302,17 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                           {dayData.dinner.isOpen && (
                             <div className="group cursor-default">
                               {/* Layout compact iPad mini */}
-                              <div className="flex xl:hidden items-center gap-1.5 w-full">
-                                <span className={`text-[8px] font-medium uppercase shrink-0 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
+                              <div className="flex xl:hidden items-center gap-2 w-full">
+                                <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
                                   Dîn
                                 </span>
-                                <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                   <div 
                                     className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.dinner.covers, dayData.dinner.capacityEffective, isPast)}`}
                                     style={{ width: `${dayData.dinner.capacityEffective > 0 ? (dayData.dinner.covers / dayData.dinner.capacityEffective) * 100 : 0}%` }}
                                   />
                                 </div>
-                                <span className={`text-[9px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
+                                <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
                                   {dayData.dinner.covers}<span className="font-normal text-slate-400">/{dayData.dinner.capacityEffective}</span>
                                 </span>
                               </div>
