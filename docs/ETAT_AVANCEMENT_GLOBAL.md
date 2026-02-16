@@ -1,10 +1,10 @@
 # État d'Avancement Global — Resa La Moulinière
 
-**Date de génération :** 22 janvier 2026
-**Version :** 1.3
+**Date de génération :** 16 février 2026
+**Version :** 1.5
 **Auteur :** Audit automatisé Cascade
 **Objectif :** Base de référence pour le planning d'implémentation futur
-**Dernière mise à jour :** 24 janvier 2026 (Code review + fixes)
+**Dernière mise à jour :** 16 février 2026 (Audit complet post-release)
 
 ---
 
@@ -13,20 +13,25 @@
 | Indicateur | Valeur |
 |------------|--------|
 | **Progression globale** | **100%** |
-| **Statut MVP** | ✅ **Complet — Production-ready** |
+| **Statut MVP** | ✅ **EN PRODUCTION** |
 | **Tests** | 257 unit + 42 E2E passing |
 | **Deploy** | https://resa-la-mouliniere.vercel.app |
-| **Dernière release** | 2026-01-24 |
+| **Dernière release** | 2026-02-16 |
 | **Sprint Hardening** | ✅ Terminé |
-| **Notifications Admin** | ✅ Implémenté |
+| **Interface Tablette** | ✅ Implémenté |
+| **Interface Mobile** | ✅ Implémenté |
+| **Auth** | NextAuth (migration Clerk terminée) |
 
 ### Verdict
-Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardening a été complété avec succès :
-- ✅ Système de toast réel (visible sur iPad)
-- ✅ Gestion d'erreurs Convex unifiée
-- ✅ Role gate frontend
-- ✅ Tests E2E améliorés
-- ✅ **Notifications réservations en attente** (24/01/2026)
+Le projet **Resa La Moulinière** est **en production**. Depuis le MVP initial, les améliorations suivantes ont été déployées :
+- ✅ **Interface Tablette** (`/admin-tablette`) - iPad paysage optimisé
+- ✅ **Interface Mobile** (`/admin-mobile`) - iPhone optimisé
+- ✅ **Migration NextAuth** - Remplacement de Clerk
+- ✅ **Popup fermeture widget** - ClosureNoticeModal multilingue
+- ✅ **Calendrier tablette responsive** - iPad mini/Pro
+- ✅ **Badges CRM** - NEW/Regular/VIP selon totalVisits
+- ✅ **Sélection automatique service** - Selon l'heure (>=16h = dîner)
+- ✅ **PWA icons** - Logo La Moulinière
 
 ---
 
@@ -37,7 +42,7 @@ Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardeni
 | **Frontend** | Next.js + React | 16 / 19 |
 | **Styling** | TailwindCSS + Radix UI | - |
 | **Backend** | Convex (serverless real-time) | - |
-| **Auth** | Clerk (RBAC: admin/owner/staff) | - |
+| **Auth** | NextAuth (credentials) | - |
 | **Emails** | Resend (queue + retry) | - |
 | **CAPTCHA** | Cloudflare Turnstile | - |
 | **Push** | Pushover | - |
@@ -85,6 +90,8 @@ Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardeni
 | Page modification (`/reservation/[token]/edit`) | ✅ | Prod-ready |
 | Page annulation (`/reservation/[token]/cancel`) | ✅ | Prod-ready |
 | Routage groupe (>15 pers) | ✅ | Prod-ready |
+| **Popup fermeture** | ✅ | Prod-ready |
+| **Filtrage créneaux passés** | ✅ | Prod-ready |
 
 ### 3.3 Frontend Admin
 
@@ -101,6 +108,11 @@ Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardeni
 | Config tables (drag & drop) | ✅ | Prod-ready | - |
 | Recherche client | ❌ | Non fait | Nice-to-have |
 | Tracking ponctualité | ✅ | Prod-ready | - |
+| **Interface Tablette** | ✅ | Prod-ready | `/admin-tablette` iPad paysage |
+| **Interface Mobile** | ✅ | Prod-ready | `/admin-mobile` iPhone |
+| **Badges CRM** | ✅ | Prod-ready | NEW/Regular/VIP selon totalVisits |
+| **Annulation client** | ✅ | Prod-ready | Option dans menu contextuel |
+| **Calendrier popup tablette** | ✅ | Prod-ready | CalendarPopup responsive |
 
 **Points d'attention frontend (audit détaillé) :**
 - ✅ **Toast réel** implémenté dans `ServiceFloorPlan.tsx` (Framer Motion)
@@ -224,7 +236,11 @@ Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardeni
 | 4b | Plan de Salle (PRD-004) | ✅ Terminé | 100% |
 | 4c | Shadow Learning (PRD-011) | ✅ Terminé | 100% |
 | 5 | Polish & Tests | ✅ Terminé | 100% |
-| 6 | **Hardening MVP (PRD-012)** | ✅ Terminé | 100% |
+| 6 | Hardening MVP (PRD-012) | ✅ Terminé | 100% |
+| 7 | **Interface Tablette** | ✅ Terminé | 100% |
+| 8 | **Interface Mobile** | ✅ Terminé | 100% |
+| 9 | **Migration NextAuth** | ✅ Terminé | 100% |
+| 10 | **Améliorations UX** | ✅ Terminé | 100% |
 
 ---
 
@@ -241,7 +257,11 @@ Le projet **Resa La Moulinière** est **production-ready**. Le sprint de hardeni
 | 2026-01-22 | MVP | 98% | Audit maturité complet (backend + frontend) |
 | 2026-01-22 | MVP | **100%** | **Sprint Hardening terminé** (PRD-012) |
 | 2026-01-24 | MVP | **100%** | Notifications réservations en attente (header) |
-| 2026-01-24 | MVP | **100%** | Code review adversariale + 6 fixes (memory leak, `as any`) |
+| 2026-01-24 | MVP | 100% | Code review adversariale + 6 fixes (memory leak, `as any`) |
+| 2026-02-02 | MVP+ | 100% | Interface Tablette + Mobile + Migration NextAuth |
+| 2026-02-03 | MVP+ | 100% | Popup fermeture widget + CRM badges |
+| 2026-02-05 | MVP+ | 100% | Calendrier tablette responsive iPad mini/Pro |
+| 2026-02-16 | MVP+ | **100%** | **EN PRODUCTION** — Audit complet |
 
 ---
 
@@ -313,4 +333,4 @@ Le projet **Resa La Moulinière** est **production-ready** :
 
 ---
 
-*Document mis à jour par Barry (Quick Flow Solo Dev) — 24 janvier 2026 (v1.3)*
+*Document mis à jour par Barry (Quick Flow Solo Dev) — 16 février 2026 (v1.5)*

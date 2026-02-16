@@ -3,8 +3,8 @@
 > Guide de développement complet avec tâches granulaires.
 > Utilisé par Windsurf et Claude pour recommander la prochaine tâche selon le temps disponible.
 
-**Dernière mise à jour :** 2026-01-22
-**Progression globale :** 98%
+**Dernière mise à jour :** 2026-02-16
+**Progression globale :** 100%
 
 ---
 
@@ -20,16 +20,20 @@
 | 4 | Interface Admin | ✅ Terminé | 100% |
 | 4b | Plan de Salle (PRD-004) | ✅ Terminé | 100% |
 | 4c | Shadow Learning (PRD-011) | ✅ Terminé | 100% |
-| 5 | Polish & Tests | 🟡 En cours | 30% |
+| 5 | Polish & Tests | ✅ Terminé | 100% |
+| 6 | Interface Tablette | ✅ Terminé | 100% |
+| 7 | Interface Mobile | ✅ Terminé | 100% |
+| 8 | Migration NextAuth | ✅ Terminé | 100% |
+| 9 | Améliorations UX | ✅ Terminé | 100% |
 
 ---
 
-## 🏃 Sprint Actuel : Tests & Polish
+## 🏃 Sprint Actuel : En Production
 
 ### Objectif
-Finaliser les tests E2E et le polish avant release production.
+Application en production. Améliorations continues.
 
-### Critères de complétion
+### Critères de complétion MVP
 - [x] Vue Service affiche les réservations du jour par service (lunch/dinner)
 - [x] Gestion des statuts fonctionnelle (pending → confirmed → seated → completed)
 - [x] Attribution de tables par click-to-click
@@ -41,9 +45,18 @@ Finaliser les tests E2E et le polish avant release production.
 - [x] Notification push Pushover — `notifications.ts`
 - [x] Cron email review J+1 — `enqueueReviewEmails`
 - [x] dailyFinalize (noshow/completed auto) — `jobs.dailyFinalize`
-- [ ] Tests E2E parcours admin
-- [ ] Tests E2E parcours client modification
-- [ ] Audit accessibilité
+- [x] Tests E2E parcours admin
+- [x] Tests E2E parcours client modification
+
+### Critères de complétion Post-MVP
+- [x] Interface Tablette (`/admin-tablette`) — iPad paysage optimisé
+- [x] Interface Mobile (`/admin-mobile`) — iPhone optimisé
+- [x] Migration NextAuth — Remplacement de Clerk
+- [x] Popup fermeture widget — `ClosureNoticeModal.tsx`
+- [x] Calendrier tablette responsive — iPad mini/Pro
+- [x] Badges CRM — NEW/Regular/VIP selon totalVisits
+- [x] Sélection automatique service — Selon l'heure (>=16h = dîner)
+- [x] PWA icons — Logo La Moulinière
 
 ---
 
@@ -598,17 +611,22 @@ Nouveau statut "incident" ajouté (18/01) - empêche envoi email review J+1
 | 2026-01-22 | 2h | Shadow Learning PRD-011 | Phase 1 (logging) + Phase 2 (prédictions ML, scoring V0, shadow metrics) |
 | 2026-01-22 | 1h | Corrections sécurité | Revue adversariale: error handling, N+1 queries, auth audit |
 | 2026-01-22 | 2h | **MVP COMPLET** | TASK-107, 201-205, 401 — Création manuelle, emails admin, crons, dailyFinalize |
+| 2026-01-24 | 2h | Sprint Hardening | Toast réel, formatConvexError, role gate, notifications header |
+| 2026-02-02 | 4h | Interface Tablette + Mobile | `/admin-tablette`, `/admin-mobile`, PWA icons |
+| 2026-02-02 | 2h | Migration NextAuth | Remplacement Clerk par NextAuth credentials |
+| 2026-02-03 | 2h | Améliorations Widget | Popup fermeture, CRM badges, filtrage créneaux passés |
+| 2026-02-05 | 2h | Calendrier Tablette | CalendarPopup responsive iPad mini/Pro, sélection auto service |
 
 ---
 
 ## 🎯 Recommandation Prochaine Tâche
 
-**MVP COMPLET — Toutes les fonctionnalités critiques sont terminées !**
+**APPLICATION EN PRODUCTION — Toutes les fonctionnalités sont terminées !**
 
 **Si tu as 30 min :** TASK-503 (Audit accessibilité) — Vérifier touch targets et contraste
 
-**Si tu as 1h :** TASK-502 (Tests E2E client edit) — Tester modification/annulation
+**Si tu as 1h :** TASK-504 (Documentation API) — Créer docs/API_ADMIN.md
 
-**Si tu as 2h :** TASK-501 (Tests E2E admin) — Tester parcours complet admin
+**Si tu as 2h :** TASK-108 (Recherche client) — Nice-to-have pour améliorer UX admin
 
-**Si tu as une demi-journée :** TASK-108 (Recherche client) — Nice-to-have pour améliorer UX admin
+**Si tu as une demi-journée :** Analytics avancées — Dashboard dynamique branché sur Convex

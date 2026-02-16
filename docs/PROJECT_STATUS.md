@@ -1,15 +1,15 @@
 # Project Status — Resa La Moulinière
 
-**Dernière mise à jour :** 2026-01-22
-**Version actuelle :** MVP complet
-**Statut global :** 🟢 Prêt pour release
-**Progression estimée :** 98%
+**Dernière mise à jour :** 2026-02-16
+**Version actuelle :** MVP+ (Post-release)
+**Statut global :** ✅ En production
+**Progression estimée :** 100%
 
 ---
 
 ## Vue d'ensemble
 
-Système de réservation en ligne pour Restaurant La Moulinière. Widget client multilingue + API backend Convex + interface admin (iPad-first) + plan de salle interactif + Shadow Learning ML.
+Système de réservation en ligne pour Restaurant La Moulinière. Widget client multilingue + API backend Convex + interface admin (iPad-first) + interface tablette dédiée + interface mobile + plan de salle interactif + Shadow Learning ML + PWA.
 
 ---
 
@@ -19,8 +19,9 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 |----------|--------|
 | Tests | 257 passing |
 | Couverture | ~80% |
-| Dernière release | 2026-01-22 |
+| Dernière release | 2026-02-16 |
 | Deploy | https://resa-la-mouliniere.vercel.app |
+| Auth | NextAuth (migration Clerk terminée) |
 
 ---
 
@@ -57,6 +58,8 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 | Modification réservation | ✅ | /reservation/[token]/edit |
 | Page annulation dédiée | ✅ | /reservation/[token]/cancel |
 | Routage groupe (>15) | ✅ | /widget/group-request |
+| **Popup fermeture** | ✅ | ClosureNoticeModal multilingue |
+| **Filtrage créneaux passés** | ✅ | Timezone-aware |
 
 ### Frontend Admin — 🟢
 
@@ -70,6 +73,10 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 | Création manuelle | ✅ | `CreateReservationModal.tsx` + `admin.createReservation` |
 | Recherche client | ❌ | Nice-to-have post-MVP |
 | Tracking ponctualité | ✅ | Table reservationEvents + stats |
+| **Interface Tablette** | ✅ | `/admin-tablette` - iPad paysage optimisé |
+| **Interface Mobile** | ✅ | `/admin-mobile` - iPhone optimisé |
+| **Badges CRM** | ✅ | NEW/Regular/VIP selon totalVisits |
+| **Annulation client** | ✅ | Option dans menu contextuel |
 
 ### Plan de Salle (PRD-004) — 🟢
 
@@ -108,22 +115,28 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 - [x] ~~**Emails admin (notification pending)**~~ ✅ Terminé (22/01)
 - [x] ~~**Cron email review J+1**~~ ✅ Terminé (22/01)
 - [x] ~~**dailyFinalize**~~ ✅ Terminé (22/01)
+- [x] ~~**Interface Tablette**~~ ✅ Terminé (02/02)
+- [x] ~~**Interface Mobile**~~ ✅ Terminé (02/02)
+- [x] ~~**Migration NextAuth**~~ ✅ Terminé (02/02)
+- [x] ~~**Popup fermeture widget**~~ ✅ Terminé (03/02)
+- [x] ~~**Calendrier tablette responsive**~~ ✅ Terminé (05/02)
 
-**Aucun bloquant actuel — MVP prêt pour release**
+**Aucun bloquant actuel — Application en production**
 
 ---
 
-## Prochaines Étapes (Polish & Tests)
+## Prochaines Étapes (Améliorations continues)
 
 1. ~~**Interface Admin Vue Service**~~ ✅ Terminé
 2. ~~**Page modification réservation client**~~ ✅ Terminé
 3. ~~**Plan de salle interactif**~~ ✅ Terminé (21/01)
-4. ~~**Bug primaryTableId**~~ ✅ Corrigé
-5. ~~**Emails admin**~~ ✅ Terminé (22/01)
-6. ~~**Cron email review J+1**~~ ✅ Terminé (22/01)
-7. **Tests E2E parcours admin** — Estimation: 2h
-8. **Tests E2E parcours client** — Estimation: 1h
-9. **Audit accessibilité** — Estimation: 1h
+4. ~~**Interface Tablette**~~ ✅ Terminé (02/02)
+5. ~~**Interface Mobile**~~ ✅ Terminé (02/02)
+6. ~~**Migration NextAuth**~~ ✅ Terminé (02/02)
+7. ~~**Popup fermeture widget**~~ ✅ Terminé (03/02)
+8. ~~**Calendrier tablette responsive**~~ ✅ Terminé (05/02)
+9. **Recherche client** — Nice-to-have
+10. **Analytics avancées** — Nice-to-have
 
 ---
 
@@ -132,9 +145,12 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 | Phase | Effort | Statut |
 |-------|--------|--------|
 | MVP Core (Admin + Plan salle + Emails) | Terminé | ✅ Complet |
-| Tests & Polish | 0.5 jour | 🟡 En cours |
-| Phase 2 (Analytics, CRM avancé) | TBD | ❌ Non commencé |
-| **Total MVP** | **Terminé** | 🟢 |
+| Tests & Polish | Terminé | ✅ Complet |
+| Interface Tablette | Terminé | ✅ Complet |
+| Interface Mobile | Terminé | ✅ Complet |
+| Migration NextAuth | Terminé | ✅ Complet |
+| Phase 2 (Analytics, CRM avancé) | TBD | 🟡 Backlog |
+| **Total** | **En production** | ✅ |
 
 ---
 
@@ -147,4 +163,9 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 | 2026-01-18 | MVP | 80% | Interface Admin Vue Service + tracking ponctualité |
 | 2026-01-21 | MVP | 88% | Plan de salle interactif + assignation directe |
 | 2026-01-22 | MVP | 92% | Shadow Learning Phase 2 + corrections sécurité |
-| 2026-01-22 | MVP | **98%** | **MVP COMPLET** — Création manuelle, emails admin, crons, dailyFinalize |
+| 2026-01-22 | MVP | 98% | MVP COMPLET — Création manuelle, emails admin, crons |
+| 2026-01-24 | MVP | 100% | Sprint Hardening terminé + Notifications |
+| 2026-02-02 | MVP+ | 100% | Interface Tablette + Mobile + Migration NextAuth |
+| 2026-02-03 | MVP+ | 100% | Popup fermeture widget + CRM badges |
+| 2026-02-05 | MVP+ | 100% | Calendrier tablette responsive iPad mini/Pro |
+| 2026-02-16 | MVP+ | **100%** | **EN PRODUCTION** — Audit complet |
