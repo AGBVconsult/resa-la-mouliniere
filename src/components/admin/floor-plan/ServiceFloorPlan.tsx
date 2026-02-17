@@ -330,19 +330,26 @@ export function ServiceFloorPlan({
         ref={containerRef}
         className={cn(
           "flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg transition-all duration-300",
-          hideHeader ? "overflow-hidden flex items-center justify-center" : "overflow-auto mt-4"
+          hideHeader ? "overflow-hidden" : "overflow-auto mt-4"
         )}
         style={hideHeader ? undefined : { maxHeight: gridDimensions.height + 4 }}
       >
+        {/* Wrapper to contain the scaled content */}
         <div
-          className={cn("relative", hideHeader ? "origin-center" : "origin-top-left")}
-          style={{ 
-            width: gridDimensions.width, 
-            height: gridDimensions.height, 
-            minWidth: gridDimensions.width,
-            transform: hideHeader ? `scale(${dynamicScale})` : undefined,
-          }}
+          style={hideHeader ? { 
+            width: gridDimensions.width * dynamicScale, 
+            height: gridDimensions.height * dynamicScale,
+          } : undefined}
         >
+          <div
+            className="relative origin-top-left"
+            style={{ 
+              width: gridDimensions.width, 
+              height: gridDimensions.height, 
+              minWidth: hideHeader ? undefined : gridDimensions.width,
+              transform: hideHeader ? `scale(${dynamicScale})` : undefined,
+            }}
+          >
           {/* Grid pattern */}
           <svg
             className="absolute inset-0 pointer-events-none"
@@ -414,6 +421,7 @@ export function ServiceFloorPlan({
               </div>
             );
           })}
+          </div>
         </div>
       </div>
 
