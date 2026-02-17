@@ -129,8 +129,8 @@ export function ServiceFloorPlan({
     // For tablet mode, use a fixed scale that works for iPad mini
     // iPad mini in landscape: ~1024x768, floor plan card is ~45% width = ~460px
     // Grid dimensions are typically ~800x600, so we need ~0.70-0.75 scale
-    // Use 0.72 as a balanced value
-    return 0.72;
+    // Use 0.78 as a balanced value
+    return 0.78;
   }, [hideHeader]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
