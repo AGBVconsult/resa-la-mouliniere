@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
       if (result?.error) {
         setError("Identifiants invalides");
       } else {
-        router.push("/admin");
+        router.push("/admin-tablette/reservations");
         router.refresh();
       }
     } catch {
