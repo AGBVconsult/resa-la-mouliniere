@@ -183,8 +183,14 @@ export default function TabletReservationsPage() {
   const formatDateLabel = () => {
     const today = new Date();
     const isToday = format(today, "yyyy-MM-dd") === dateKey;
-    const formatted = format(selectedDate, "EEEE d MMMM", { locale: fr });
-    return isToday ? `Aujourd'hui` : formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    if (isToday) return "Aujourd'hui";
+    // Format: "Mer. 18 Fév."
+    const dayName = format(selectedDate, "EEE", { locale: fr });
+    const dayNum = format(selectedDate, "d", { locale: fr });
+    const monthName = format(selectedDate, "MMM", { locale: fr });
+    const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    return `${capitalizedDay} ${dayNum} ${capitalizedMonth}`;
   };
 
   const lunchCapacity = useMemo(() => {
@@ -512,14 +518,14 @@ export default function TabletReservationsPage() {
     <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 pt-8 pb-4">
       {/* Header */}
       <header className="flex justify-between items-center mb-4 px-4">
-        <div className="flex items-center gap-1 bg-white/80 backdrop-blur-xl rounded-full p-1 pl-5 border border-slate-200/60 shadow-sm">
+        <div className="flex items-center bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
           <button
             onClick={() => setShowCalendarPopup(true)}
-            className="cursor-pointer group mr-2"
+            className="w-[120px] h-11 flex items-center justify-center cursor-pointer group"
           >
-            <h2 className="text-base font-semibold text-slate-800 group-hover:text-slate-600 transition-colors">
+            <span className="text-sm font-semibold text-slate-800 group-hover:text-slate-600 transition-colors text-center">
               {formatDateLabel()}
-            </h2>
+            </span>
           </button>
           <div className="w-px h-5 bg-slate-200/80" />
           <button
