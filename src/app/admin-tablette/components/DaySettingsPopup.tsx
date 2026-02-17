@@ -180,7 +180,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
       <div className="fixed inset-0 bg-black/40 z-[200]" onClick={onClose} />
       <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[600px] md:max-h-[90vh] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-5">
           <h2 className="text-lg font-bold text-slate-900 capitalize">{formattedDate}</h2>
           <button
             onClick={onClose}
@@ -244,7 +244,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 px-6 py-5 border-t border-slate-100 bg-slate-50">
+        <div className="flex gap-3 px-6 py-5 bg-white">
           <Button
             variant="outline"
             onClick={onClose}
@@ -306,23 +306,25 @@ function ServiceSection({
   onConfirmAddSlot,
 }: ServiceSectionProps) {
   return (
-    <div className="border border-slate-200 rounded-2xl overflow-hidden">
+    <div className="bg-slate-50 rounded-3xl overflow-hidden">
       {/* Service Header */}
-      <div className="bg-slate-50 px-5 py-4 flex items-center justify-between">
+      <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
         <span className="font-semibold text-slate-900">{title}</span>
         <Switch checked={isOpen} onCheckedChange={onToggle} />
       </div>
 
       {/* Slots */}
       <div className="p-4 space-y-2">
-        {/* Add Slot Button */}
-        <button
-          onClick={onStartAddSlot}
-          className="w-full flex items-center justify-center gap-2 py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
-        >
-          <Plus size={16} />
-          Ajouter un créneau
-        </button>
+        {/* Créneaux horaires header */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm text-slate-500">Créneaux horaires</span>
+          <button
+            onClick={onStartAddSlot}
+            className="p-1 hover:bg-slate-200 rounded-lg transition-colors"
+          >
+            <Plus size={16} className="text-slate-600" />
+          </button>
+        </div>
 
         {/* Add Slot Form */}
         {isAddingSlot && (
@@ -375,8 +377,8 @@ function ServiceSection({
             <div
               key={slot._id}
               className={cn(
-                "flex items-center gap-4 px-4 py-3 rounded-xl transition-colors",
-                slot.isOpen ? "bg-white border border-slate-200" : "bg-slate-100"
+                "flex items-center gap-4 px-4 py-3 rounded-full transition-colors",
+                slot.isOpen ? "bg-white" : "bg-slate-200/50"
               )}
             >
               <div className="flex items-center gap-2 text-slate-600">
@@ -392,7 +394,7 @@ function ServiceSection({
                   max={100}
                   value={slot.capacity}
                   onChange={(e) => onCapacityChange(slot._id, parseInt(e.target.value) || 0)}
-                  className="w-16 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-16 px-2 py-1.5 text-sm bg-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   disabled={!slot.isOpen}
                 />
               </div>
