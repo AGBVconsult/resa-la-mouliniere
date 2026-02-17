@@ -125,16 +125,16 @@ export function ServiceFloorPlan({
       return 1;
     }
     
-    const padding = 16; // Reduced padding for smaller screens
+    const padding = 24; // Padding to ensure all tables are visible
     const availableWidth = containerSize.width - padding;
     const availableHeight = containerSize.height - padding;
     
     const scaleX = availableWidth / gridDimensions.width;
     const scaleY = availableHeight / gridDimensions.height;
     
-    // Use the smaller scale to fit both dimensions, min 0.4 max 1.6
-    const scale = Math.min(scaleX, scaleY, 1.6);
-    return Math.max(scale, 0.4); // Allow scaling down to 40% for small screens
+    // Use the smaller scale to fit both dimensions, apply 5% reduction for safety margin
+    const scale = Math.min(scaleX, scaleY, 1.6) * 0.95;
+    return Math.max(scale, 0.35); // Allow scaling down to 35% for small screens
   }, [containerSize, gridDimensions, hideHeader]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
