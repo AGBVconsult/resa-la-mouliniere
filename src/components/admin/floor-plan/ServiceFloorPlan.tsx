@@ -92,17 +92,23 @@ export function ServiceFloorPlan({
   }, [tableStates, activeZone]);
 
   // Calculate dynamic grid dimensions and offset based on filtered table positions
+  // Only active (non-blocked) tables drive the bounding box — blocked tables at
+  // default position (0,0) would otherwise stretch the grid to the origin.
   const gridLayout = useMemo(() => {
     if (filteredTables.length === 0) {
       return { width: 400, height: 200, offsetX: 0, offsetY: 0 };
     }
+
+    // Use only active tables for the bounding box
+    const activeTables = filteredTables.filter((t) => t.status !== "blocked");
+    const bboxTables = activeTables.length > 0 ? activeTables : filteredTables;
 
     let minX = Infinity;
     let minY = Infinity;
     let maxX = 0;
     let maxY = 0;
 
-    for (const table of filteredTables) {
+    for (const table of bboxTables) {
       const tableWidth = (table.width ?? 1) * TABLE_GRID_SPAN;
       const tableHeight = (table.height ?? 1) * TABLE_GRID_SPAN;
       const tableEndX = table.positionX + tableWidth;
@@ -115,33 +121,18 @@ export function ServiceFloorPlan({
     }
 
     const paddingCells = 2;
-
-    // In tablet mode (hideHeader), crop to the occupied area only
-    if (hideHeader) {
-      const originX = Math.max(minX - paddingCells, 0);
-      const originY = Math.max(minY - paddingCells, 0);
-      const croppedWidth = Math.max((maxX - originX + paddingCells) * GRID_CELL_SIZE, 400);
-      const croppedHeight = Math.max((maxY - originY + paddingCells) * GRID_CELL_SIZE, 200);
-
-      return {
-        width: Math.min(croppedWidth, GRID_WIDTH),
-        height: Math.min(croppedHeight, GRID_HEIGHT),
-        offsetX: originX * GRID_CELL_SIZE,
-        offsetY: originY * GRID_CELL_SIZE,
-      };
-    }
-
-    // In admin mode, keep full grid from origin (no cropping)
-    const calculatedWidth = Math.max((maxX + paddingCells) * GRID_CELL_SIZE, 400);
-    const calculatedHeight = Math.max((maxY + paddingCells) * GRID_CELL_SIZE, 200);
+    const originX = Math.max(minX - paddingCells, 0);
+    const originY = Math.max(minY - paddingCells, 0);
+    const croppedWidth = Math.max((maxX - originX + paddingCells) * GRID_CELL_SIZE, 400);
+    const croppedHeight = Math.max((maxY - originY + paddingCells) * GRID_CELL_SIZE, 200);
 
     return {
-      width: Math.min(calculatedWidth, GRID_WIDTH),
-      height: Math.min(calculatedHeight, GRID_HEIGHT),
-      offsetX: 0,
-      offsetY: 0,
+      width: Math.min(croppedWidth, GRID_WIDTH),
+      height: Math.min(croppedHeight, GRID_HEIGHT),
+      offsetX: originX * GRID_CELL_SIZE,
+      offsetY: originY * GRID_CELL_SIZE,
     };
-  }, [filteredTables, hideHeader]);
+  }, [filteredTables]);
 
   // Calculate dynamic scale to fit container
   const dynamicScale = useMemo(() => {
