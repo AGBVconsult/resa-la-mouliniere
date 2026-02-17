@@ -459,6 +459,18 @@ export const _create = internalMutation({
     // Log without PII
     console.log("Reservation created", { reservationId, slotKey, status, partySize });
 
+    // Log event for activity feed
+    await ctx.db.insert("reservationEvents", {
+      reservationId,
+      restaurantId: args.restaurantId,
+      eventType: "created",
+      toStatus: status,
+      actualTime: now,
+      scheduledTime: args.timeKey,
+      performedBy: "client",
+      createdAt: now,
+    });
+
     // Enqueue email job based on status
     const emailType = status === "confirmed" 
       ? "reservation.confirmed" 
@@ -563,6 +575,21 @@ export const _cancel = internalMutation({
       updatedAt: now,
       version: newVersion,
     });
+
+    // Log event for activity feed (only for client cancellations)
+    if (cancelledBy === "token") {
+      await ctx.db.insert("reservationEvents", {
+        reservationId,
+        restaurantId: reservation.restaurantId,
+        eventType: "status_change",
+        fromStatus: reservation.status,
+        toStatus: "cancelled",
+        actualTime: now,
+        scheduledTime: reservation.timeKey,
+        performedBy: "client",
+        createdAt: now,
+      });
+    }
 
     // Log without PII
     console.log("Reservation cancelled", { reservationId, cancelledBy, newVersion });
@@ -966,6 +993,19 @@ export const _update = internalMutation({
       newStatus,
       newPartySize,
       newVersion
+    });
+
+    // Log event for activity feed (client modification)
+    await ctx.db.insert("reservationEvents", {
+      reservationId: args.reservationId,
+      restaurantId: reservation.restaurantId,
+      eventType: "updated",
+      fromStatus: reservation.status,
+      toStatus: newStatus,
+      actualTime: args.now,
+      scheduledTime: args.timeKey,
+      performedBy: "client",
+      createdAt: args.now,
     });
 
     // Enqueue confirmation email
