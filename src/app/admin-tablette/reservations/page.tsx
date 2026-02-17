@@ -354,7 +354,7 @@ export default function TabletReservationsPage() {
           </div>
 
           {/* Column: 2 lignes */}
-          <div className="flex flex-col gap-1 shrink-0" style={{ width: isCompact ? "180px" : "260px" }}>
+          <div className="flex flex-col gap-1 shrink-0" style={{ width: isCompact ? "200px" : "320px" }}>
             {/* Ligne 1: Prénom + Nom + Badge */}
             {(() => {
               const visits = res.totalVisits ?? 0;
@@ -517,7 +517,7 @@ export default function TabletReservationsPage() {
   return (
     <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F2F2F2]">
       {/* Header */}
-      <header className="flex justify-between items-center pt-6 pb-4 px-4">
+      <header className="flex justify-between items-center pt-6 pb-8 px-4">
         <div className="flex items-center h-[52px] bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
           <button
             onClick={() => setShowCalendarPopup(true)}
