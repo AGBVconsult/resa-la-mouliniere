@@ -264,7 +264,6 @@ export default function TabletReservationsPage() {
         actions.push({ label: "Annulation client", nextStatus: "cancelled_by_client" as ReservationStatus, textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
         break;
       case "confirmed":
-        actions.push({ label: "No-show", nextStatus: "noshow", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
         actions.push({ label: "Annuler", nextStatus: "cancelled", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
         actions.push({ label: "Annulation client", nextStatus: "cancelled_by_client" as ReservationStatus, textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
         break;
@@ -441,7 +440,7 @@ export default function TabletReservationsPage() {
               {openPopupId === res._id && (
                 <>
                   <div className="fixed inset-0 z-[99]" onClick={() => setOpenPopupId(null)} />
-                  <div className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 py-3 z-[100] min-w-[200px] animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 top-full mt-2 bg-white rounded-3xl shadow-2xl border border-slate-100 py-4 z-[100] min-w-[200px] animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* Option Modifier */}
                     <button
                       className="w-full px-5 py-3 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors"
