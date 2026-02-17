@@ -512,100 +512,97 @@ export default function TabletReservationsPage() {
     <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 pt-8 pb-4">
       {/* Header */}
       <header className="flex justify-between items-center mb-4 px-4">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-1 bg-white/80 backdrop-blur-xl rounded-full p-1 pl-5 border border-slate-200/60 shadow-sm">
           <button
             onClick={() => setShowCalendarPopup(true)}
-            className="cursor-pointer group"
+            className="cursor-pointer group mr-2"
           >
-            <h2 className="text-2xl font-bold text-slate-800 group-hover:text-slate-600 transition-colors">
+            <h2 className="text-base font-semibold text-slate-800 group-hover:text-slate-600 transition-colors">
               {formatDateLabel()}
             </h2>
           </button>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={goToToday}
-              className="p-2.5 text-slate-500 hover:text-slate-900 border border-slate-200 rounded-full transition-all"
-              title="Aujourd'hui"
-            >
-              <CalendarCheck size={20} strokeWidth={1.5} />
-            </button>
-            <div className="flex bg-slate-50 rounded-full p-1 border border-slate-200">
-              <button
-                onClick={goToPreviousDay}
-                className="p-2.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
-              >
-                <ChevronLeft size={20} strokeWidth={1.5} />
-              </button>
-              <button
-                onClick={goToNextDay}
-                className="p-2.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
-              >
-                <ChevronRight size={20} strokeWidth={1.5} />
-              </button>
-            </div>
-          </div>
+          <div className="w-px h-5 bg-slate-200/80" />
+          <button
+            onClick={goToToday}
+            className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
+            title="Aujourd'hui"
+          >
+            <CalendarCheck size={20} strokeWidth={1.5} />
+          </button>
+          <button
+            onClick={goToPreviousDay}
+            className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
+          >
+            <ChevronLeft size={20} strokeWidth={1.5} />
+          </button>
+          <button
+            onClick={goToNextDay}
+            className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
+          >
+            <ChevronRight size={20} strokeWidth={1.5} />
+          </button>
         </div>
 
         {/* Stats badge - total journalier + détail midi/soir */}
-        <div className="flex items-center gap-3 bg-slate-100 rounded-full px-5 py-2">
+        <div className="flex items-center gap-3 bg-white/80 backdrop-blur-xl rounded-full px-5 py-2.5 border border-slate-200/60 shadow-sm">
           <div className="flex items-center gap-2">
-            <UsersRound size={18} strokeWidth={1.5} className="text-slate-600" />
+            <UsersRound size={16} strokeWidth={1.5} className="text-slate-500" />
             <span className="font-bold text-slate-700">{totalCovers}</span>
-            <span className="text-xs text-slate-500 uppercase">Total</span>
+            <span className="text-xs text-slate-400 uppercase tracking-wide">Total</span>
           </div>
-          <div className="w-px h-4 bg-slate-300" />
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500 uppercase">Midi</span>
-            <Sun size={14} strokeWidth={1.5} className="text-amber-500" />
+          <div className="w-px h-4 bg-slate-200/80" />
+          <div className="flex items-center gap-1.5 text-xs tracking-wide">
+            <span className="text-slate-400 uppercase">Midi</span>
+            <Sun size={14} strokeWidth={1.5} className="text-amber-400" />
             <span className="font-bold text-slate-700">{lunchCovers}</span>
-            <span className="text-slate-400 mx-1">-</span>
-            <span className="text-xs text-slate-500 uppercase">Soir</span>
-            <Moon size={14} strokeWidth={1.5} className="text-indigo-500" />
+            <span className="text-slate-300 mx-1">-</span>
+            <span className="text-slate-400 uppercase">Soir</span>
+            <Moon size={14} strokeWidth={1.5} className="text-indigo-400" />
             <span className="font-bold text-slate-700">{dinnerCovers}</span>
           </div>
         </div>
 
         {/* Service Switch + Settings */}
-        <div className="flex items-center gap-3">
-        <div className="flex bg-white rounded-full p-1 border border-slate-200">
+        <div className="flex items-center gap-2">
+          <div className="flex bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
+            <button
+              onClick={() => setSelectedService("lunch")}
+              className={`px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider rounded-full transition-all ${
+                selectedService === "lunch"
+                  ? "bg-slate-800 text-white shadow-md"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              Déjeuner
+            </button>
+            <button
+              onClick={() => setSelectedService("dinner")}
+              className={`px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider rounded-full transition-all ${
+                selectedService === "dinner"
+                  ? "bg-slate-800 text-white shadow-md"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              Dîner
+            </button>
+          </div>
           <button
-            onClick={() => setSelectedService("lunch")}
-            className={`px-6 py-2 text-xs font-black uppercase tracking-widest rounded-full transition-all ${
-              selectedService === "lunch"
-                ? "bg-slate-800 text-white"
-                : "text-slate-400 hover:text-slate-600"
-            }`}
+            onClick={() => setShowSettings(true)}
+            className="w-11 h-11 bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
           >
-            Déjeuner
+            <Settings size={20} strokeWidth={1.5} />
           </button>
           <button
-            onClick={() => setSelectedService("dinner")}
-            className={`px-6 py-2 text-xs font-black uppercase tracking-widest rounded-full transition-all ${
-              selectedService === "dinner"
-                ? "bg-slate-800 text-white"
-                : "text-slate-400 hover:text-slate-600"
-            }`}
+            onClick={() => setShowFloorPlan(!showFloorPlan)}
+            className={cn(
+              "w-11 h-11 rounded-full border shadow-sm flex items-center justify-center transition-all active:scale-95",
+              showFloorPlan
+                ? "bg-slate-800 border-slate-800 text-white"
+                : "bg-white/80 backdrop-blur-xl border-slate-200/60 text-slate-500 hover:text-slate-900 hover:bg-white"
+            )}
           >
-            Dîner
+            <Map size={20} strokeWidth={1.5} />
           </button>
-        </div>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-slate-700 transition-colors"
-        >
-          <Settings size={20} strokeWidth={1.5} />
-        </button>
-        <button
-          onClick={() => setShowFloorPlan(!showFloorPlan)}
-          className={cn(
-            "p-2.5 rounded-full border transition-colors",
-            showFloorPlan
-              ? "bg-slate-800 border-slate-800 text-white"
-              : "bg-white border-slate-200 text-slate-400 hover:text-slate-700"
-          )}
-        >
-          <Map size={20} strokeWidth={1.5} />
-        </button>
         </div>
       </header>
 
