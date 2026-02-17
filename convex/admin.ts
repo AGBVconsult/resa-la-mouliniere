@@ -1453,3 +1453,70 @@ export const listPendingReservations = query({
     });
   },
 });
+
+/**
+ * List recent reservation activity (created, status changes).
+ * Returns the most recent events for the activity feed.
+ * 
+ * Autorisation: admin|owner
+ */
+export const listRecentActivity = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
+
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      return [];
+    }
+
+    const restaurant = activeRestaurants[0];
+    const limit = args.limit ?? 50;
+
+    // Get recent events
+    const events = await ctx.db
+      .query("reservationEvents")
+      .withIndex("by_restaurant_date", (q) => q.eq("restaurantId", restaurant._id))
+      .order("desc")
+      .take(limit);
+
+    // Get reservation details for each event
+    const reservationIds = [...new Set(events.map((e) => e.reservationId))];
+    const reservationsMap = new Map<string, any>();
+    
+    for (const resId of reservationIds) {
+      const reservation = await ctx.db.get(resId);
+      if (reservation) {
+        reservationsMap.set(resId, reservation);
+      }
+    }
+
+    return events.map((event) => {
+      const reservation = reservationsMap.get(event.reservationId);
+      return {
+        _id: event._id,
+        eventType: event.eventType,
+        fromStatus: event.fromStatus,
+        toStatus: event.toStatus,
+        createdAt: event.createdAt,
+        reservation: reservation ? {
+          _id: reservation._id,
+          firstName: reservation.firstName,
+          lastName: reservation.lastName,
+          dateKey: reservation.dateKey,
+          service: reservation.service,
+          timeKey: reservation.timeKey,
+          partySize: reservation.partySize,
+          status: reservation.status,
+          source: reservation.source,
+        } : null,
+      };
+    });
+  },
+});

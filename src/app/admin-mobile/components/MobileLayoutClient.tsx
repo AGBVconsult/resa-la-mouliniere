@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Calendar, ClipboardList } from "lucide-react";
+import { Calendar, ClipboardList, Bell } from "lucide-react";
 import { ToastProvider } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ interface MobileLayoutClientProps {
 const NAV_ITEMS = [
   { id: "planning", label: "Planning", icon: Calendar, href: "/admin-mobile" },
   { id: "reservations", label: "Réservations", icon: ClipboardList, href: "/admin-mobile/reservations" },
+  { id: "activity", label: "Activité", icon: Bell, href: "/admin-mobile/activity" },
 ] as const;
 
 export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
@@ -20,6 +21,7 @@ export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
   const router = useRouter();
 
   const getActiveTab = () => {
+    if (pathname.includes("/activity")) return "activity";
     if (pathname.includes("/reservations")) return "reservations";
     return "planning";
   };
