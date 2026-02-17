@@ -549,49 +549,60 @@ export default function TabletReservationsPage() {
           </button>
         </div>
 
-        {/* Stats badge - total journalier + détail midi/soir */}
-        <div className="flex items-center gap-3 h-[52px] bg-white/80 backdrop-blur-xl rounded-full px-5 border border-slate-200/60 shadow-sm">
-          <div className="flex items-center gap-2">
-            <UsersRound size={16} strokeWidth={1.5} className="text-slate-500" />
-            <span className="font-bold text-slate-700">{totalCovers}</span>
-            <span className="text-xs text-slate-400 uppercase tracking-wide">Total</span>
+        {/* Stats badge avec switch intégré */}
+        <div className="flex items-center gap-2 h-[52px] bg-white/80 backdrop-blur-xl rounded-full pl-5 pr-1 border border-slate-200/60 shadow-sm">
+          {/* Total */}
+          <div className="flex items-center gap-2 mr-1">
+            <UsersRound size={16} strokeWidth={1.5} className="text-slate-400" />
+            <span className="font-bold text-lg text-slate-700">{totalCovers}</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</span>
           </div>
-          <div className="w-px h-4 bg-slate-200/80" />
-          <div className="flex items-center gap-1.5 text-xs tracking-wide">
-            <span className="text-slate-400 uppercase">Midi</span>
-            <Sun size={14} strokeWidth={1.5} className="text-amber-400" />
-            <span className="font-bold text-slate-700">{lunchCovers}</span>
-            <span className="text-slate-300 mx-1">-</span>
-            <span className="text-slate-400 uppercase">Soir</span>
-            <Moon size={14} strokeWidth={1.5} className="text-indigo-400" />
-            <span className="font-bold text-slate-700">{dinnerCovers}</span>
+          
+          {/* Diviseur */}
+          <div className="w-px h-6 bg-slate-200/80 mr-1" />
+          
+          {/* Switch Midi/Soir */}
+          <div className="relative bg-slate-100/80 rounded-full p-1 h-[44px] flex items-center">
+            {/* Fond animé */}
+            <div 
+              className="absolute top-1 h-[36px] bg-slate-700 rounded-full transition-transform duration-300 ease-out shadow-md"
+              style={{
+                width: 'calc(50% - 4px)',
+                left: '4px',
+                transform: selectedService === "dinner" ? 'translateX(100%)' : 'translateX(0)'
+              }}
+            />
+            
+            {/* Bouton Midi */}
+            <button
+              onClick={() => setSelectedService("lunch")}
+              className={cn(
+                "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-28 gap-1.5",
+                selectedService === "lunch" ? "text-white" : "text-slate-500"
+              )}
+            >
+              <Sun size={14} strokeWidth={1.5} className="text-amber-400" />
+              <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "lunch" ? "opacity-100" : "opacity-60")}>Midi</span>
+              <span className="font-bold text-base">{lunchCovers}</span>
+            </button>
+            
+            {/* Bouton Soir */}
+            <button
+              onClick={() => setSelectedService("dinner")}
+              className={cn(
+                "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-28 gap-1.5",
+                selectedService === "dinner" ? "text-white" : "text-slate-500"
+              )}
+            >
+              <Moon size={14} strokeWidth={1.5} className="text-indigo-400" />
+              <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "dinner" ? "opacity-100" : "opacity-60")}>Soir</span>
+              <span className="font-bold text-base">{dinnerCovers}</span>
+            </button>
           </div>
         </div>
 
-        {/* Service Switch + Settings */}
+        {/* Settings + Map */}
         <div className="flex items-center gap-2">
-          <div className="flex h-[52px] bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm items-center">
-            <button
-              onClick={() => setSelectedService("lunch")}
-              className={`px-5 h-[44px] flex items-center text-[11px] font-bold uppercase tracking-wider rounded-full transition-all ${
-                selectedService === "lunch"
-                  ? "bg-slate-800 text-white shadow-md"
-                  : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              Déjeuner
-            </button>
-            <button
-              onClick={() => setSelectedService("dinner")}
-              className={`px-5 h-[44px] flex items-center text-[11px] font-bold uppercase tracking-wider rounded-full transition-all ${
-                selectedService === "dinner"
-                  ? "bg-slate-800 text-white shadow-md"
-                  : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              Dîner
-            </button>
-          </div>
           <button
             onClick={() => setShowSettings(true)}
             className="w-[52px] h-[52px] bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
