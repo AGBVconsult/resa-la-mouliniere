@@ -91,19 +91,24 @@ export function ServiceFloorPlan({
     });
   }, [tableStates, activeZone]);
 
-  // Calculate dynamic grid layout based on filtered table positions
-  // In tablet mode (hideHeader), we crop to the actual occupied area
+  // Calculate dynamic grid dimensions and offset based on filtered table positions
+  // Only active (non-blocked) tables drive the bounding box — blocked tables at
+  // default position (0,0) would otherwise stretch the grid to the origin.
   const gridLayout = useMemo(() => {
     if (filteredTables.length === 0) {
       return { width: 400, height: 200, offsetX: 0, offsetY: 0 };
     }
+
+    // Use only active tables for the bounding box
+    const activeTables = filteredTables.filter((t) => t.status !== "blocked");
+    const bboxTables = activeTables.length > 0 ? activeTables : filteredTables;
 
     let minX = Infinity;
     let minY = Infinity;
     let maxX = 0;
     let maxY = 0;
 
-    for (const table of filteredTables) {
+    for (const table of bboxTables) {
       const tableWidth = (table.width ?? 1) * TABLE_GRID_SPAN;
       const tableHeight = (table.height ?? 1) * TABLE_GRID_SPAN;
       const tableEndX = table.positionX + tableWidth;
@@ -116,52 +121,36 @@ export function ServiceFloorPlan({
     }
 
     const paddingCells = 2;
-    
-    // In tablet mode, crop to occupied area; in admin mode, keep full grid from origin
-    if (hideHeader) {
-      // Crop: use minX/minY as offset, calculate dimensions from occupied area only
-      const croppedMinX = Math.max(0, minX - paddingCells);
-      const croppedMinY = Math.max(0, minY - paddingCells);
-      const calculatedWidth = Math.max((maxX - croppedMinX + paddingCells) * GRID_CELL_SIZE, 400);
-      const calculatedHeight = Math.max((maxY - croppedMinY + paddingCells) * GRID_CELL_SIZE, 200);
-      
-      return {
-        width: Math.min(calculatedWidth, GRID_WIDTH),
-        height: Math.min(calculatedHeight, GRID_HEIGHT),
-        offsetX: croppedMinX * GRID_CELL_SIZE,
-        offsetY: croppedMinY * GRID_CELL_SIZE,
-      };
-    } else {
-      // Admin mode: full grid from origin
-      const calculatedWidth = Math.max((maxX + paddingCells) * GRID_CELL_SIZE, 400);
-      const calculatedHeight = Math.max((maxY + paddingCells) * GRID_CELL_SIZE, 200);
-      
-      return {
-        width: Math.min(calculatedWidth, GRID_WIDTH),
-        height: Math.min(calculatedHeight, GRID_HEIGHT),
-        offsetX: 0,
-        offsetY: 0,
-      };
-    }
-  }, [filteredTables, hideHeader]);
+    const originX = Math.max(minX - paddingCells, 0);
+    const originY = Math.max(minY - paddingCells, 0);
+    const croppedWidth = Math.max((maxX - originX + paddingCells) * GRID_CELL_SIZE, 400);
+    const croppedHeight = Math.max((maxY - originY + paddingCells) * GRID_CELL_SIZE, 200);
+
+    return {
+      width: Math.min(croppedWidth, GRID_WIDTH),
+      height: Math.min(croppedHeight, GRID_HEIGHT),
+      offsetX: originX * GRID_CELL_SIZE,
+      offsetY: originY * GRID_CELL_SIZE,
+    };
+  }, [filteredTables]);
 
   // Calculate dynamic scale to fit container
   const dynamicScale = useMemo(() => {
     if (!hideHeader) return 1;
-    
+
     // containerSize is measured by ResizeObserver on the wrapper
     if (containerSize.width === 0 || containerSize.height === 0) return 0.78; // fallback initial
-    
+
     // Account for border/padding of the grid container
-    const availableWidth = containerSize.width - 8;   // border + some margin
+    const availableWidth = containerSize.width - 8;
     const availableHeight = containerSize.height - 8;
-    
+
     const scaleX = availableWidth / gridLayout.width;
     const scaleY = availableHeight / gridLayout.height;
-    
+
     // Use the minimum to ensure the plan fits entirely (contain strategy)
     const scale = Math.min(scaleX, scaleY);
-    
+
     // Clamp between a min/max to avoid extremes
     return Math.min(Math.max(scale, 0.4), 1.2);
   }, [hideHeader, containerSize, gridLayout]);
@@ -366,16 +355,16 @@ export function ServiceFloorPlan({
         {/* Wrapper to contain the scaled content - centered */}
         <div
           className={hideHeader ? "flex-shrink-0" : undefined}
-          style={hideHeader ? { 
-            width: gridLayout.width * dynamicScale, 
+          style={hideHeader ? {
+            width: gridLayout.width * dynamicScale,
             height: gridLayout.height * dynamicScale,
           } : undefined}
         >
           <div
             className="relative origin-top-left"
-            style={{ 
-              width: gridLayout.width, 
-              height: gridLayout.height, 
+            style={{
+              width: gridLayout.width,
+              height: gridLayout.height,
               minWidth: hideHeader ? undefined : gridLayout.width,
               transform: hideHeader ? `scale(${dynamicScale})` : undefined,
             }}
@@ -425,8 +414,8 @@ export function ServiceFloorPlan({
                   isAssigning && "pointer-events-none opacity-70"
                 )}
                 style={{
-                  left: table.positionX * GRID_CELL_SIZE + 2 - gridLayout.offsetX,
-                  top: table.positionY * GRID_CELL_SIZE + 2 - gridLayout.offsetY,
+                  left: table.positionX * GRID_CELL_SIZE - gridLayout.offsetX + 2,
+                  top: table.positionY * GRID_CELL_SIZE - gridLayout.offsetY + 2,
                   width,
                   height,
                 }}
