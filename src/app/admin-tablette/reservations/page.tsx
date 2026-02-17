@@ -260,13 +260,18 @@ export default function TabletReservationsPage() {
 
   const getMenuActions = (status: string): Array<{ label: string; nextStatus: ReservationStatus; textColor: string; hoverBg: string }> => {
     const actions: Array<{ label: string; nextStatus: ReservationStatus; textColor: string; hoverBg: string }> = [];
+    
+    // No-show is always available (except if already noshow)
+    if (status !== "noshow") {
+      actions.push({ label: "No-show", nextStatus: "noshow", textColor: "text-amber-600", hoverBg: "hover:bg-amber-50" });
+    }
+    
     switch (status) {
       case "pending":
         actions.push({ label: "Refuser", nextStatus: "refused", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
         actions.push({ label: "Annulation client", nextStatus: "cancelled_by_client" as ReservationStatus, textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
         break;
       case "confirmed":
-        actions.push({ label: "No-show", nextStatus: "noshow", textColor: "text-amber-600", hoverBg: "hover:bg-amber-50" });
         actions.push({ label: "Annuler", nextStatus: "cancelled", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
         actions.push({ label: "Annulation client", nextStatus: "cancelled_by_client" as ReservationStatus, textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
         break;
