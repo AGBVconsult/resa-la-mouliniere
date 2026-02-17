@@ -51,13 +51,14 @@ export function ServiceFloorPlan({
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Measure container size for dynamic scaling
+  // Measure wrapper size for dynamic scaling (wrapper has fixed dimensions from parent)
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const wrapper = wrapperRef.current;
+    if (!wrapper || !hideHeader) return;
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -68,9 +69,9 @@ export function ServiceFloorPlan({
       }
     });
 
-    resizeObserver.observe(container);
+    resizeObserver.observe(wrapper);
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [hideHeader]);
 
   // Query table states for this service
   const tableStates = useQuery(api.floorplan.getTableStates, { dateKey, service });
@@ -125,16 +126,17 @@ export function ServiceFloorPlan({
       return 1;
     }
     
-    const padding = 32; // Padding to ensure all tables are visible
+    // Use wrapper dimensions directly - it has the actual available space
+    const padding = 48; // Larger padding to ensure all tables are visible
     const availableWidth = containerSize.width - padding;
     const availableHeight = containerSize.height - padding;
     
     const scaleX = availableWidth / gridDimensions.width;
     const scaleY = availableHeight / gridDimensions.height;
     
-    // Use the smaller scale to fit both dimensions, apply 10% reduction for safety margin
-    const scale = Math.min(scaleX, scaleY, 1.6) * 0.90;
-    return Math.max(scale, 0.3); // Allow scaling down to 30% for small screens
+    // Use the smaller scale to fit both dimensions, apply 15% reduction for safety margin
+    const scale = Math.min(scaleX, scaleY, 1.6) * 0.85;
+    return Math.max(scale, 0.25); // Allow scaling down to 25% for small screens
   }, [containerSize, gridDimensions, hideHeader]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
@@ -277,7 +279,7 @@ export function ServiceFloorPlan({
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div ref={wrapperRef} className="h-full flex flex-col">
       {/* Header: Title left | Switch center | Legend right */}
       {!hideHeader && (
         <div className="flex items-center justify-between shrink-0">
