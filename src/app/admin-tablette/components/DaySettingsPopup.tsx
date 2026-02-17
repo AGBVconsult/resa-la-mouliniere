@@ -178,7 +178,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-[200]" onClick={onClose} />
-      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[600px] md:max-h-[90vh] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
+      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[800px] md:max-h-[90vh] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5">
           <h2 className="text-lg font-bold text-slate-900 capitalize">{formattedDate}</h2>
@@ -204,7 +204,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
           </div>
 
           {/* Services */}
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <ServiceSection
               title="Déjeuner"
               service="lunch"
