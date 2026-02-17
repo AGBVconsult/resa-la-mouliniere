@@ -125,16 +125,16 @@ export function ServiceFloorPlan({
       return 1;
     }
     
-    const padding = 24; // Padding to ensure all tables are visible
+    const padding = 32; // Padding to ensure all tables are visible
     const availableWidth = containerSize.width - padding;
     const availableHeight = containerSize.height - padding;
     
     const scaleX = availableWidth / gridDimensions.width;
     const scaleY = availableHeight / gridDimensions.height;
     
-    // Use the smaller scale to fit both dimensions, apply 5% reduction for safety margin
-    const scale = Math.min(scaleX, scaleY, 1.6) * 0.95;
-    return Math.max(scale, 0.35); // Allow scaling down to 35% for small screens
+    // Use the smaller scale to fit both dimensions, apply 10% reduction for safety margin
+    const scale = Math.min(scaleX, scaleY, 1.6) * 0.90;
+    return Math.max(scale, 0.3); // Allow scaling down to 30% for small screens
   }, [containerSize, gridDimensions, hideHeader]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
@@ -330,12 +330,13 @@ export function ServiceFloorPlan({
         ref={containerRef}
         className={cn(
           "flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg transition-all duration-300",
-          hideHeader ? "overflow-hidden" : "overflow-auto mt-4"
+          hideHeader ? "overflow-hidden flex items-center justify-center" : "overflow-auto mt-4"
         )}
         style={hideHeader ? undefined : { maxHeight: gridDimensions.height + 4 }}
       >
-        {/* Wrapper to contain the scaled content */}
+        {/* Wrapper to contain the scaled content - centered */}
         <div
+          className={hideHeader ? "flex-shrink-0" : undefined}
           style={hideHeader ? { 
             width: gridDimensions.width * dynamicScale, 
             height: gridDimensions.height * dynamicScale,
