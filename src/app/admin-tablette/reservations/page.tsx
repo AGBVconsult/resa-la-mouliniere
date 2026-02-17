@@ -515,13 +515,13 @@ export default function TabletReservationsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 pt-8 pb-4">
+    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F2F2F2]">
       {/* Header */}
-      <header className="flex justify-between items-center mb-4 px-4">
-        <div className="flex items-center bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
+      <header className="flex justify-between items-center pt-6 pb-4 px-4">
+        <div className="flex items-center h-[52px] bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
           <button
             onClick={() => setShowCalendarPopup(true)}
-            className="w-[120px] h-11 flex items-center justify-center cursor-pointer group"
+            className="w-[120px] h-[44px] flex items-center justify-center cursor-pointer group"
           >
             <span className="text-sm font-semibold text-slate-800 group-hover:text-slate-600 transition-colors text-center">
               {formatDateLabel()}
@@ -530,27 +530,27 @@ export default function TabletReservationsPage() {
           <div className="w-px h-5 bg-slate-200/80" />
           <button
             onClick={goToToday}
-            className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
+            className="w-[44px] h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
             title="Aujourd'hui"
           >
             <CalendarCheck size={20} strokeWidth={1.5} />
           </button>
           <button
             onClick={goToPreviousDay}
-            className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
+            className="w-[44px] h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
           >
             <ChevronLeft size={20} strokeWidth={1.5} />
           </button>
           <button
             onClick={goToNextDay}
-            className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
+            className="w-[44px] h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
           >
             <ChevronRight size={20} strokeWidth={1.5} />
           </button>
         </div>
 
         {/* Stats badge - total journalier + détail midi/soir */}
-        <div className="flex items-center gap-3 bg-white/80 backdrop-blur-xl rounded-full px-5 py-2.5 border border-slate-200/60 shadow-sm">
+        <div className="flex items-center gap-3 h-[52px] bg-white/80 backdrop-blur-xl rounded-full px-5 border border-slate-200/60 shadow-sm">
           <div className="flex items-center gap-2">
             <UsersRound size={16} strokeWidth={1.5} className="text-slate-500" />
             <span className="font-bold text-slate-700">{totalCovers}</span>
@@ -570,10 +570,10 @@ export default function TabletReservationsPage() {
 
         {/* Service Switch + Settings */}
         <div className="flex items-center gap-2">
-          <div className="flex bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
+          <div className="flex h-[52px] bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm items-center">
             <button
               onClick={() => setSelectedService("lunch")}
-              className={`px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider rounded-full transition-all ${
+              className={`px-5 h-[44px] flex items-center text-[11px] font-bold uppercase tracking-wider rounded-full transition-all ${
                 selectedService === "lunch"
                   ? "bg-slate-800 text-white shadow-md"
                   : "text-slate-400 hover:text-slate-600"
@@ -583,7 +583,7 @@ export default function TabletReservationsPage() {
             </button>
             <button
               onClick={() => setSelectedService("dinner")}
-              className={`px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider rounded-full transition-all ${
+              className={`px-5 h-[44px] flex items-center text-[11px] font-bold uppercase tracking-wider rounded-full transition-all ${
                 selectedService === "dinner"
                   ? "bg-slate-800 text-white shadow-md"
                   : "text-slate-400 hover:text-slate-600"
@@ -594,14 +594,14 @@ export default function TabletReservationsPage() {
           </div>
           <button
             onClick={() => setShowSettings(true)}
-            className="w-11 h-11 bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
+            className="w-[52px] h-[52px] bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
           >
             <Settings size={20} strokeWidth={1.5} />
           </button>
           <button
             onClick={() => setShowFloorPlan(!showFloorPlan)}
             className={cn(
-              "w-11 h-11 rounded-full border shadow-sm flex items-center justify-center transition-all active:scale-95",
+              "w-[52px] h-[52px] rounded-full border shadow-sm flex items-center justify-center transition-all active:scale-95",
               showFloorPlan
                 ? "bg-slate-800 border-slate-800 text-white"
                 : "bg-white/80 backdrop-blur-xl border-slate-200/60 text-slate-500 hover:text-slate-900 hover:bg-white"
