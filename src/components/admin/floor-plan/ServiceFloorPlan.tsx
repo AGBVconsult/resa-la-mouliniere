@@ -132,8 +132,8 @@ export function ServiceFloorPlan({
     const scaleX = availableWidth / gridDimensions.width;
     const scaleY = availableHeight / gridDimensions.height;
     
-    // Use the smaller scale to fit both dimensions, max 1.2
-    return Math.min(scaleX, scaleY, 1.2);
+    // Use the smaller scale to fit both dimensions, max 1.6
+    return Math.min(scaleX, scaleY, 1.6);
   }, [containerSize, gridDimensions, hideHeader]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
