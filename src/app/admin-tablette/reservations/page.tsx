@@ -36,6 +36,7 @@ import { formatConvexError } from "@/lib/formatError";
 import { getFlag } from "@/lib/getFlag";
 import { ServiceFloorPlan } from "@/components/admin/floor-plan/ServiceFloorPlan";
 import { CalendarPopup } from "../components/CalendarPopup";
+import { EditReservationPopup } from "../components/EditReservationPopup";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -105,6 +106,7 @@ export default function TabletReservationsPage() {
   const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
   const [highlightedReservationId, setHighlightedReservationId] = useState<Id<"reservations"> | null>(null);
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -440,6 +442,17 @@ export default function TabletReservationsPage() {
                 <>
                   <div className="fixed inset-0 z-[99]" onClick={() => setOpenPopupId(null)} />
                   <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border py-1 z-[100] min-w-[180px]">
+                    {/* Option Modifier */}
+                    <button
+                      className="w-full px-4 py-2 text-left text-xs text-slate-600 hover:bg-slate-50"
+                      onClick={() => {
+                        setOpenPopupId(null);
+                        setEditingReservation(res);
+                      }}
+                    >
+                      Modifier
+                    </button>
+                    {menuActions.length > 0 && <div className="border-t border-slate-100 my-1" />}
                     {menuActions.map((action) => (
                       <button
                         key={action.nextStatus}
@@ -716,6 +729,15 @@ export default function TabletReservationsPage() {
         }}
         selectedDateKey={dateKey}
       />
+
+      {/* Edit Reservation Popup */}
+      {editingReservation && (
+        <EditReservationPopup
+          reservation={editingReservation}
+          onClose={() => setEditingReservation(null)}
+          onSuccess={() => setEditingReservation(null)}
+        />
+      )}
     </div>
   );
 }

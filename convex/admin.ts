@@ -910,6 +910,91 @@ export const updateReservation = mutation({
 });
 
 /**
+ * Full update of a reservation (all fields).
+ * Used by tablet mode for complete reservation editing.
+ * 
+ * Autorisation: admin|owner
+ */
+export const updateReservationFull = mutation({
+  args: {
+    reservationId: v.id("reservations"),
+    expectedVersion: v.number(),
+    dateKey: v.optional(v.string()),
+    service: v.optional(v.union(v.literal("lunch"), v.literal("dinner"))),
+    timeKey: v.optional(v.string()),
+    adults: v.optional(v.number()),
+    childrenCount: v.optional(v.number()),
+    babyCount: v.optional(v.number()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    note: v.optional(v.string()),
+    options: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
+
+    const reservation = await ctx.db.get(args.reservationId);
+    if (!reservation) {
+      throw Errors.RESERVATION_NOT_FOUND(args.reservationId);
+    }
+
+    if (reservation.version !== args.expectedVersion) {
+      throw Errors.VERSION_CONFLICT(args.expectedVersion, reservation.version);
+    }
+
+    const now = Date.now();
+    const patch: Record<string, unknown> = {
+      updatedAt: now,
+      version: reservation.version + 1,
+    };
+
+    // Update fields if provided
+    if (args.dateKey !== undefined) patch.dateKey = args.dateKey;
+    if (args.service !== undefined) patch.service = args.service;
+    if (args.timeKey !== undefined) patch.timeKey = args.timeKey;
+    if (args.firstName !== undefined) patch.firstName = args.firstName;
+    if (args.lastName !== undefined) patch.lastName = args.lastName;
+    if (args.phone !== undefined) patch.phone = args.phone;
+    if (args.email !== undefined) patch.email = args.email;
+    if (args.note !== undefined) patch.note = args.note;
+    if (args.options !== undefined) patch.options = args.options;
+
+    // Update party size if any count changed
+    if (args.adults !== undefined || args.childrenCount !== undefined || args.babyCount !== undefined) {
+      const adults = args.adults ?? reservation.adults;
+      const childrenCount = args.childrenCount ?? reservation.childrenCount;
+      const babyCount = args.babyCount ?? reservation.babyCount;
+      
+      patch.adults = adults;
+      patch.childrenCount = childrenCount;
+      patch.babyCount = babyCount;
+      patch.partySize = adults + childrenCount;
+    }
+
+    // Update slotKey if date/service/time changed
+    if (args.dateKey !== undefined || args.service !== undefined || args.timeKey !== undefined) {
+      const dateKey = args.dateKey ?? reservation.dateKey;
+      const service = args.service ?? reservation.service;
+      const timeKey = args.timeKey ?? reservation.timeKey;
+      patch.slotKey = `${dateKey}:${service}:${timeKey}`;
+    }
+
+    await ctx.db.patch(args.reservationId, patch);
+
+    // Log without PII
+    const updatedFields = Object.keys(patch).filter((k) => k !== "updatedAt" && k !== "version");
+    console.log("Reservation fully updated", { reservationId: args.reservationId, updatedFields, newVersion: patch.version });
+
+    return {
+      reservationId: args.reservationId,
+      newVersion: patch.version as number,
+    };
+  },
+});
+
+/**
  * Cancel a reservation as if the client cancelled it.
  * This sends the "reservation.cancelled" email (client cancellation) instead of
  * "reservation.cancelled_by_restaurant" (admin cancellation).
