@@ -707,8 +707,9 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="w-[45%] shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col h-full">
-            <ServiceFloorPlan
+          <div className="w-[45%] shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden relative h-full">
+            <div className="absolute inset-2">
+              <ServiceFloorPlan
               dateKey={dateKey}
               service={selectedService}
               selectedReservationId={selectedForAssignment?._id}
@@ -719,6 +720,7 @@ export default function TabletReservationsPage() {
               onTableClick={setHighlightedReservationId}
               hideHeader
             />
+            </div>
           </div>
         )}
       </div>
