@@ -122,16 +122,24 @@ export function ServiceFloorPlan({
 
   // Calculate dynamic scale to fit container
   const dynamicScale = useMemo(() => {
-    if (!hideHeader) {
-      return 1;
-    }
+    if (!hideHeader) return 1;
     
-    // For tablet mode, use a fixed scale that works for iPad mini
-    // iPad mini in landscape: ~1024x768, floor plan card is ~45% width = ~460px
-    // Grid dimensions are typically ~800x600, so we need ~0.70-0.75 scale
-    // Use 0.78 as a balanced value
-    return 0.78;
-  }, [hideHeader]);
+    // containerSize is measured by ResizeObserver on the wrapper
+    if (containerSize.width === 0 || containerSize.height === 0) return 0.78; // fallback initial
+    
+    // Account for border/padding of the grid container
+    const availableWidth = containerSize.width - 8;   // border + some margin
+    const availableHeight = containerSize.height - 8;
+    
+    const scaleX = availableWidth / gridDimensions.width;
+    const scaleY = availableHeight / gridDimensions.height;
+    
+    // Use the minimum to ensure the plan fits entirely (contain strategy)
+    const scale = Math.min(scaleX, scaleY);
+    
+    // Clamp between a min/max to avoid extremes
+    return Math.min(Math.max(scale, 0.4), 1.2);
+  }, [hideHeader, containerSize, gridDimensions]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
   // The clicked table is always included, then we find the best combination (forward or backward)
