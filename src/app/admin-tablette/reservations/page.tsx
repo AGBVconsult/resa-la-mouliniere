@@ -37,6 +37,7 @@ import { getFlag } from "@/lib/getFlag";
 import { ServiceFloorPlan } from "@/components/admin/floor-plan/ServiceFloorPlan";
 import { CalendarPopup } from "../components/CalendarPopup";
 import { EditReservationPopup } from "../components/EditReservationPopup";
+import { DaySettingsPopup } from "../components/DaySettingsPopup";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -107,6 +108,7 @@ export default function TabletReservationsPage() {
   const [highlightedReservationId, setHighlightedReservationId] = useState<Id<"reservations"> | null>(null);
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -581,7 +583,10 @@ export default function TabletReservationsPage() {
             Dîner
           </button>
         </div>
-        <button className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-slate-700 transition-colors">
+        <button
+          onClick={() => setShowSettings(true)}
+          className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-slate-700 transition-colors"
+        >
           <Settings size={20} strokeWidth={1.5} />
         </button>
         <button
@@ -735,6 +740,14 @@ export default function TabletReservationsPage() {
           reservation={editingReservation}
           onClose={() => setEditingReservation(null)}
           onSuccess={() => setEditingReservation(null)}
+        />
+      )}
+
+      {/* Day Settings Popup */}
+      {showSettings && (
+        <DaySettingsPopup
+          dateKey={dateKey}
+          onClose={() => setShowSettings(false)}
         />
       )}
     </div>
