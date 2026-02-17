@@ -91,12 +91,15 @@ export function ServiceFloorPlan({
     });
   }, [tableStates, activeZone]);
 
-  // Calculate dynamic grid dimensions based on filtered table positions
-  const gridDimensions = useMemo(() => {
+  // Calculate dynamic grid layout based on filtered table positions
+  // In tablet mode (hideHeader), we crop to the actual occupied area
+  const gridLayout = useMemo(() => {
     if (filteredTables.length === 0) {
-      return { width: 400, height: 200 };
+      return { width: 400, height: 200, offsetX: 0, offsetY: 0 };
     }
 
+    let minX = Infinity;
+    let minY = Infinity;
     let maxX = 0;
     let maxY = 0;
 
@@ -106,19 +109,41 @@ export function ServiceFloorPlan({
       const tableEndX = table.positionX + tableWidth;
       const tableEndY = table.positionY + tableHeight;
 
+      if (table.positionX < minX) minX = table.positionX;
+      if (table.positionY < minY) minY = table.positionY;
       if (tableEndX > maxX) maxX = tableEndX;
       if (tableEndY > maxY) maxY = tableEndY;
     }
 
     const paddingCells = 2;
-    const calculatedWidth = Math.max((maxX + paddingCells) * GRID_CELL_SIZE, 400);
-    const calculatedHeight = Math.max((maxY + paddingCells) * GRID_CELL_SIZE, 200);
-
-    return {
-      width: Math.min(calculatedWidth, GRID_WIDTH),
-      height: Math.min(calculatedHeight, GRID_HEIGHT),
-    };
-  }, [filteredTables]);
+    
+    // In tablet mode, crop to occupied area; in admin mode, keep full grid from origin
+    if (hideHeader) {
+      // Crop: use minX/minY as offset, calculate dimensions from occupied area only
+      const croppedMinX = Math.max(0, minX - paddingCells);
+      const croppedMinY = Math.max(0, minY - paddingCells);
+      const calculatedWidth = Math.max((maxX - croppedMinX + paddingCells) * GRID_CELL_SIZE, 400);
+      const calculatedHeight = Math.max((maxY - croppedMinY + paddingCells) * GRID_CELL_SIZE, 200);
+      
+      return {
+        width: Math.min(calculatedWidth, GRID_WIDTH),
+        height: Math.min(calculatedHeight, GRID_HEIGHT),
+        offsetX: croppedMinX * GRID_CELL_SIZE,
+        offsetY: croppedMinY * GRID_CELL_SIZE,
+      };
+    } else {
+      // Admin mode: full grid from origin
+      const calculatedWidth = Math.max((maxX + paddingCells) * GRID_CELL_SIZE, 400);
+      const calculatedHeight = Math.max((maxY + paddingCells) * GRID_CELL_SIZE, 200);
+      
+      return {
+        width: Math.min(calculatedWidth, GRID_WIDTH),
+        height: Math.min(calculatedHeight, GRID_HEIGHT),
+        offsetX: 0,
+        offsetY: 0,
+      };
+    }
+  }, [filteredTables, hideHeader]);
 
   // Calculate dynamic scale to fit container
   const dynamicScale = useMemo(() => {
@@ -131,15 +156,15 @@ export function ServiceFloorPlan({
     const availableWidth = containerSize.width - 8;   // border + some margin
     const availableHeight = containerSize.height - 8;
     
-    const scaleX = availableWidth / gridDimensions.width;
-    const scaleY = availableHeight / gridDimensions.height;
+    const scaleX = availableWidth / gridLayout.width;
+    const scaleY = availableHeight / gridLayout.height;
     
     // Use the minimum to ensure the plan fits entirely (contain strategy)
     const scale = Math.min(scaleX, scaleY);
     
     // Clamp between a min/max to avoid extremes
     return Math.min(Math.max(scale, 0.4), 1.2);
-  }, [hideHeader, containerSize, gridDimensions]);
+  }, [hideHeader, containerSize, gridLayout]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
   // The clicked table is always included, then we find the best combination (forward or backward)
@@ -336,30 +361,30 @@ export function ServiceFloorPlan({
           "flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg transition-all duration-300",
           hideHeader ? "overflow-hidden flex items-center justify-center" : "overflow-auto mt-4"
         )}
-        style={hideHeader ? undefined : { maxHeight: gridDimensions.height + 4 }}
+        style={hideHeader ? undefined : { maxHeight: gridLayout.height + 4 }}
       >
         {/* Wrapper to contain the scaled content - centered */}
         <div
           className={hideHeader ? "flex-shrink-0" : undefined}
           style={hideHeader ? { 
-            width: gridDimensions.width * dynamicScale, 
-            height: gridDimensions.height * dynamicScale,
+            width: gridLayout.width * dynamicScale, 
+            height: gridLayout.height * dynamicScale,
           } : undefined}
         >
           <div
             className="relative origin-top-left"
             style={{ 
-              width: gridDimensions.width, 
-              height: gridDimensions.height, 
-              minWidth: hideHeader ? undefined : gridDimensions.width,
+              width: gridLayout.width, 
+              height: gridLayout.height, 
+              minWidth: hideHeader ? undefined : gridLayout.width,
               transform: hideHeader ? `scale(${dynamicScale})` : undefined,
             }}
           >
           {/* Grid pattern */}
           <svg
             className="absolute inset-0 pointer-events-none"
-            width={gridDimensions.width}
-            height={gridDimensions.height}
+            width={gridLayout.width}
+            height={gridLayout.height}
           >
             <defs>
               <pattern
@@ -400,8 +425,8 @@ export function ServiceFloorPlan({
                   isAssigning && "pointer-events-none opacity-70"
                 )}
                 style={{
-                  left: table.positionX * GRID_CELL_SIZE + 2,
-                  top: table.positionY * GRID_CELL_SIZE + 2,
+                  left: table.positionX * GRID_CELL_SIZE + 2 - gridLayout.offsetX,
+                  top: table.positionY * GRID_CELL_SIZE + 2 - gridLayout.offsetY,
                   width,
                   height,
                 }}
