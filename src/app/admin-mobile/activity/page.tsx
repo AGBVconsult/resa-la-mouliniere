@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import { api } from "../../../../convex/_generated/api";
 import { 
   Bell, 
@@ -37,15 +38,15 @@ interface ActivityEvent {
 
 function getEventIcon(event: ActivityEvent) {
   if (event.eventType === "created") {
-    return <UserPlus className="w-4 h-4 text-emerald-600" />;
+    return <UserPlus className="w-5 h-5 text-emerald-600" />;
   }
   if (event.eventType === "updated") {
-    return <Clock className="w-4 h-4 text-blue-600" />;
+    return <Clock className="w-5 h-5 text-blue-600" />;
   }
   if (event.eventType === "status_change" && event.toStatus === "cancelled") {
-    return <XCircle className="w-4 h-4 text-red-500" />;
+    return <XCircle className="w-5 h-5 text-red-500" />;
   }
-  return <Bell className="w-4 h-4 text-slate-400" />;
+  return <Bell className="w-5 h-5 text-slate-400" />;
 }
 
 function getEventLabel(event: ActivityEvent): string {
@@ -53,10 +54,10 @@ function getEventLabel(event: ActivityEvent): string {
     return "Nouvelle réservation";
   }
   if (event.eventType === "updated") {
-    return "Modification client";
+    return "Modification";
   }
   if (event.eventType === "status_change" && event.toStatus === "cancelled") {
-    return "Annulation client";
+    return "Annulée";
   }
   return "Activité";
 }
@@ -81,7 +82,15 @@ function formatDate(dateKey: string): string {
 }
 
 export default function ActivityPage() {
+  const router = useRouter();
   const activity = useQuery(api.admin.listRecentActivity, { limit: 50 });
+
+  const handleEventClick = (event: ActivityEvent) => {
+    if (event.reservation) {
+      const { dateKey, service } = event.reservation;
+      router.push(`/admin-mobile/reservations?date=${dateKey}&service=${service}`);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -94,7 +103,7 @@ export default function ActivityPage() {
       </header>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-3">
         {activity === undefined ? (
           <div className="flex items-center justify-center h-40">
             <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
@@ -105,18 +114,20 @@ export default function ActivityPage() {
             <p className="text-sm">Aucune activité récente</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {activity.map((event: ActivityEvent) => (
-              <div
+              <button
                 key={event._id}
-                className={`p-3 rounded-xl border ${getEventColor(event)} transition-all`}
+                onClick={() => handleEventClick(event)}
+                className={`w-full p-3 rounded-xl border ${getEventColor(event)} transition-all active:scale-[0.98] text-left`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5">
+                  <div className="mt-0.5 shrink-0">
                     {getEventIcon(event)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    {/* Ligne 1: Type + Temps + Nom + Couverts */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-xs font-semibold text-slate-700">
                         {getEventLabel(event)}
                       </span>
@@ -127,30 +138,34 @@ export default function ActivityPage() {
                         })}
                       </span>
                     </div>
+                    {/* Ligne 2: Nom + Couverts + Date + Service + Heure */}
                     {event.reservation && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="font-medium text-slate-900 truncate">
+                      <div className="flex items-center gap-1.5 mt-1 text-sm">
+                        <span className="font-medium text-slate-900 truncate max-w-[140px]">
                           {event.reservation.firstName} {event.reservation.lastName}
                         </span>
                         <span className="text-slate-400">•</span>
-                        <span className="text-slate-600 flex items-center gap-1">
+                        <span className="text-slate-600 flex items-center gap-0.5 shrink-0">
                           <Users className="w-3 h-3" />
                           {event.reservation.partySize}
                         </span>
-                      </div>
-                    )}
-                    {event.reservation && (
-                      <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
-                        <span>{formatDate(event.reservation.dateKey)}</span>
-                        <span className="text-slate-300">•</span>
-                        <span>{event.reservation.service === "lunch" ? "Midi" : "Soir"}</span>
-                        <span className="text-slate-300">•</span>
-                        <span>{event.reservation.timeKey}</span>
+                        <span className="text-slate-400">•</span>
+                        <span className="text-xs text-slate-500 shrink-0">
+                          {formatDate(event.reservation.dateKey)}
+                        </span>
+                        <span className="text-slate-400">•</span>
+                        <span className="text-xs text-slate-500 shrink-0">
+                          {event.reservation.service === "lunch" ? "Midi" : "Soir"}
+                        </span>
+                        <span className="text-slate-400">•</span>
+                        <span className="text-xs text-slate-500 shrink-0">
+                          {event.reservation.timeKey}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}

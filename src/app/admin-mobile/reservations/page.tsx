@@ -72,7 +72,13 @@ export default function MobileReservationsPage() {
 
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [openPopupId, setOpenPopupId] = useState<Id<"reservations"> | null>(null);
-  const [selectedService, setSelectedService] = useState<"lunch" | "dinner">("lunch");
+  const [selectedService, setSelectedService] = useState<"lunch" | "dinner">(() => {
+    const serviceParam = searchParams.get("service");
+    if (serviceParam === "lunch" || serviceParam === "dinner") {
+      return serviceParam;
+    }
+    return "lunch";
+  });
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
