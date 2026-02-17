@@ -441,10 +441,10 @@ export default function TabletReservationsPage() {
               {openPopupId === res._id && (
                 <>
                   <div className="fixed inset-0 z-[99]" onClick={() => setOpenPopupId(null)} />
-                  <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border py-1 z-[100] min-w-[180px]">
+                  <div className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 py-3 z-[100] min-w-[200px] animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* Option Modifier */}
                     <button
-                      className="w-full px-4 py-2 text-left text-xs text-slate-600 hover:bg-slate-50"
+                      className="w-full px-5 py-3 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                       onClick={() => {
                         setOpenPopupId(null);
                         setEditingReservation(res);
@@ -452,11 +452,11 @@ export default function TabletReservationsPage() {
                     >
                       Modifier
                     </button>
-                    {menuActions.length > 0 && <div className="border-t border-slate-100 my-1" />}
+                    {menuActions.length > 0 && <div className="border-t border-slate-100 my-2 mx-3" />}
                     {menuActions.map((action) => (
                       <button
                         key={action.nextStatus}
-                        className={cn("w-full px-4 py-2 text-left text-xs", action.textColor, action.hoverBg)}
+                        className={cn("w-full px-5 py-3 text-left text-sm transition-colors", action.textColor, action.hoverBg)}
                         onClick={async () => {
                           setOpenPopupId(null);
                           if ((action.nextStatus as string) === "cancelled_by_client") {
