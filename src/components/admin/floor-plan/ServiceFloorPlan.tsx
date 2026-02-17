@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -50,7 +50,27 @@ export function ServiceFloorPlan({
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Measure container size for dynamic scaling
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        });
+      }
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Query table states for this service
   const tableStates = useQuery(api.floorplan.getTableStates, { dateKey, service });
@@ -98,6 +118,23 @@ export function ServiceFloorPlan({
       height: Math.min(calculatedHeight, GRID_HEIGHT),
     };
   }, [filteredTables]);
+
+  // Calculate dynamic scale to fit container
+  const dynamicScale = useMemo(() => {
+    if (!hideHeader || containerSize.width === 0 || containerSize.height === 0) {
+      return 1;
+    }
+    
+    const padding = 32; // Padding inside container
+    const availableWidth = containerSize.width - padding;
+    const availableHeight = containerSize.height - padding;
+    
+    const scaleX = availableWidth / gridDimensions.width;
+    const scaleY = availableHeight / gridDimensions.height;
+    
+    // Use the smaller scale to fit both dimensions, max 1.2
+    return Math.min(scaleX, scaleY, 1.2);
+  }, [containerSize, gridDimensions, hideHeader]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
   // The clicked table is always included, then we find the best combination (forward or backward)
@@ -289,19 +326,20 @@ export function ServiceFloorPlan({
 
       {/* Floor plan grid */}
       <div
+        ref={containerRef}
         className={cn(
           "flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg transition-all duration-300",
-          hideHeader ? "overflow-hidden" : "overflow-auto mt-4"
+          hideHeader ? "overflow-hidden flex items-center justify-center" : "overflow-auto mt-4"
         )}
         style={hideHeader ? undefined : { maxHeight: gridDimensions.height + 4 }}
       >
         <div
-          className="relative origin-top-left"
+          className={cn("relative", hideHeader ? "origin-center" : "origin-top-left")}
           style={{ 
             width: gridDimensions.width, 
             height: gridDimensions.height, 
             minWidth: gridDimensions.width,
-            transform: hideHeader ? "scale(0.9)" : undefined,
+            transform: hideHeader ? `scale(${dynamicScale})` : undefined,
           }}
         >
           {/* Grid pattern */}
