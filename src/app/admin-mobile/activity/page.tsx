@@ -5,11 +5,9 @@ import { api } from "../../../../convex/_generated/api";
 import { 
   Bell, 
   UserPlus, 
-  CheckCircle, 
   XCircle, 
   Clock, 
   Users,
-  ArrowRight,
   Loader2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -41,25 +39,11 @@ function getEventIcon(event: ActivityEvent) {
   if (event.eventType === "created") {
     return <UserPlus className="w-4 h-4 text-emerald-600" />;
   }
-  if (event.eventType === "status_change") {
-    if (event.toStatus === "confirmed") {
-      return <CheckCircle className="w-4 h-4 text-emerald-600" />;
-    }
-    if (event.toStatus === "cancelled" || event.toStatus === "refused") {
-      return <XCircle className="w-4 h-4 text-red-500" />;
-    }
-    if (event.toStatus === "seated") {
-      return <Users className="w-4 h-4 text-blue-600" />;
-    }
-    if (event.toStatus === "completed") {
-      return <CheckCircle className="w-4 h-4 text-slate-500" />;
-    }
-    if (event.toStatus === "noshow") {
-      return <XCircle className="w-4 h-4 text-orange-500" />;
-    }
-    if (event.toStatus === "pending") {
-      return <Clock className="w-4 h-4 text-amber-500" />;
-    }
+  if (event.eventType === "updated") {
+    return <Clock className="w-4 h-4 text-blue-600" />;
+  }
+  if (event.eventType === "status_change" && event.toStatus === "cancelled") {
+    return <XCircle className="w-4 h-4 text-red-500" />;
   }
   return <Bell className="w-4 h-4 text-slate-400" />;
 }
@@ -68,34 +52,24 @@ function getEventLabel(event: ActivityEvent): string {
   if (event.eventType === "created") {
     return "Nouvelle réservation";
   }
-  if (event.eventType === "status_change") {
-    const statusLabels: Record<string, string> = {
-      pending: "En attente",
-      confirmed: "Confirmée",
-      seated: "Installé",
-      completed: "Terminée",
-      noshow: "No-show",
-      cancelled: "Annulée",
-      refused: "Refusée",
-    };
-    return statusLabels[event.toStatus ?? ""] ?? "Statut modifié";
+  if (event.eventType === "updated") {
+    return "Modification client";
   }
-  if (event.eventType === "table_assignment") {
-    return "Table assignée";
+  if (event.eventType === "status_change" && event.toStatus === "cancelled") {
+    return "Annulation client";
   }
-  return "Mise à jour";
+  return "Activité";
 }
 
 function getEventColor(event: ActivityEvent): string {
   if (event.eventType === "created") {
     return "bg-emerald-50 border-emerald-200";
   }
-  if (event.eventType === "status_change") {
-    if (event.toStatus === "confirmed") return "bg-emerald-50 border-emerald-200";
-    if (event.toStatus === "cancelled" || event.toStatus === "refused") return "bg-red-50 border-red-200";
-    if (event.toStatus === "seated") return "bg-blue-50 border-blue-200";
-    if (event.toStatus === "noshow") return "bg-orange-50 border-orange-200";
-    if (event.toStatus === "pending") return "bg-amber-50 border-amber-200";
+  if (event.eventType === "updated") {
+    return "bg-blue-50 border-blue-200";
+  }
+  if (event.eventType === "status_change" && event.toStatus === "cancelled") {
+    return "bg-red-50 border-red-200";
   }
   return "bg-slate-50 border-slate-200";
 }
@@ -172,13 +146,6 @@ export default function ActivityPage() {
                         <span>{event.reservation.service === "lunch" ? "Midi" : "Soir"}</span>
                         <span className="text-slate-300">•</span>
                         <span>{event.reservation.timeKey}</span>
-                      </div>
-                    )}
-                    {event.eventType === "status_change" && event.fromStatus && (
-                      <div className="flex items-center gap-1 mt-1.5 text-[10px] text-slate-400">
-                        <span className="capitalize">{event.fromStatus}</span>
-                        <ArrowRight className="w-3 h-3" />
-                        <span className="capitalize font-medium text-slate-600">{event.toStatus}</span>
                       </div>
                     )}
                   </div>

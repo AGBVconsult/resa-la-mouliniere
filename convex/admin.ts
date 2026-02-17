@@ -1455,8 +1455,10 @@ export const listPendingReservations = query({
 });
 
 /**
- * List recent reservation activity (created, status changes).
- * Returns the most recent events for the activity feed.
+ * List recent reservation activity for client-facing events only:
+ * - New reservations (created)
+ * - Client modifications (updated by client)
+ * - Client cancellations (cancelled status)
  * 
  * Autorisation: admin|owner
  */
@@ -1479,15 +1481,36 @@ export const listRecentActivity = query({
     const restaurant = activeRestaurants[0];
     const limit = args.limit ?? 50;
 
-    // Get recent events
-    const events = await ctx.db
+    // Get recent events - fetch more to filter
+    const allEvents = await ctx.db
       .query("reservationEvents")
       .withIndex("by_restaurant_date", (q) => q.eq("restaurantId", restaurant._id))
       .order("desc")
-      .take(limit);
+      .take(limit * 3);
+
+    // Filter to only show:
+    // 1. New reservations (created)
+    // 2. Client modifications (updated, not by admin/system)
+    // 3. Client cancellations (status_change to cancelled, not by admin)
+    const filteredEvents = allEvents.filter((event) => {
+      // New reservations
+      if (event.eventType === "created") return true;
+      
+      // Client modifications
+      if (event.eventType === "updated" && event.performedBy !== "admin" && event.performedBy !== "system") {
+        return true;
+      }
+      
+      // Client cancellations
+      if (event.eventType === "status_change" && event.toStatus === "cancelled" && event.performedBy !== "admin") {
+        return true;
+      }
+      
+      return false;
+    }).slice(0, limit);
 
     // Get reservation details for each event
-    const reservationIds = [...new Set(events.map((e) => e.reservationId))];
+    const reservationIds = [...new Set(filteredEvents.map((e) => e.reservationId))];
     const reservationsMap = new Map<string, any>();
     
     for (const resId of reservationIds) {
@@ -1497,7 +1520,7 @@ export const listRecentActivity = query({
       }
     }
 
-    return events.map((event) => {
+    return filteredEvents.map((event) => {
       const reservation = reservationsMap.get(event.reservationId);
       return {
         _id: event._id,
@@ -1505,6 +1528,7 @@ export const listRecentActivity = query({
         fromStatus: event.fromStatus,
         toStatus: event.toStatus,
         createdAt: event.createdAt,
+        performedBy: event.performedBy,
         reservation: reservation ? {
           _id: reservation._id,
           firstName: reservation.firstName,
