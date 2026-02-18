@@ -275,6 +275,53 @@ export function ServiceFloorPlan({
     }
   };
 
+  // Render tables content (shared between desktop and tablet modes)
+  const renderTables = () => (
+    <>
+      {filteredTables.map((table) => {
+        const statusColors = STATUS_COLORS[table.status as TableStatus];
+        const width = (table.width ?? 1) * TABLE_SIZE - 4;
+        const height = (table.height ?? 1) * TABLE_SIZE - 4;
+
+        return (
+          <div
+            key={table.tableId}
+            className={cn(
+              "absolute flex flex-col items-center justify-center rounded-lg border-2 transition-all duration-150",
+              statusColors.bg,
+              statusColors.border,
+              table.status === "blocked" && "opacity-50",
+              selectedReservationId &&
+                table.status !== "blocked" &&
+                table.status !== "seated" &&
+                "cursor-pointer hover:scale-[1.02] hover:shadow-md",
+              isAssigning && "pointer-events-none opacity-70"
+            )}
+            style={{
+              left: table.positionX * GRID_CELL_SIZE - gridLayout.offsetX + 2,
+              top: table.positionY * GRID_CELL_SIZE - gridLayout.offsetY + 2,
+              width,
+              height,
+            }}
+            onClick={() => handleTableClick(table.tableId, table.status as TableStatus, table.reservation?.id)}
+          >
+            <span className={cn("text-xs font-semibold", statusColors.text)}>
+              {table.name}
+            </span>
+            <span className={cn("text-[10px] flex items-center gap-0.5", statusColors.text, "opacity-75")}>
+              {table.capacity} <Users className="w-2.5 h-2.5" />
+            </span>
+            {table.reservation && (
+              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white px-1 rounded text-[8px] font-medium shadow truncate max-w-full">
+                {table.reservation.lastName}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
+
   if (!tableStates) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-500">
@@ -283,11 +330,45 @@ export function ServiceFloorPlan({
     );
   }
 
+  // Tablet mode: simplified rendering with auto-scaling
+  if (hideHeader) {
+    const hasSize = containerSize.width > 0 && containerSize.height > 0;
+    const scaledW = gridLayout.width * dynamicScale;
+    const scaledH = gridLayout.height * dynamicScale;
+    const offsetX = hasSize ? Math.max(0, (containerSize.width - scaledW) / 2) : 0;
+    const offsetY = hasSize ? Math.max(0, (containerSize.height - scaledH) / 2) : 0;
+
+    return (
+      <div ref={wrapperRef} className="absolute inset-0 overflow-hidden">
+        {hasSize ? (
+          <div
+            className="relative"
+            style={{
+              width: gridLayout.width,
+              height: gridLayout.height,
+              transform: `scale(${dynamicScale})`,
+              transformOrigin: '0 0',
+              position: 'absolute',
+              left: offsetX,
+              top: offsetY,
+            }}
+          >
+            {renderTables()}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            Chargement...
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop mode
   return (
-    <div ref={wrapperRef} className={cn(hideHeader ? "absolute inset-0" : "h-full flex flex-col")}>
+    <div ref={wrapperRef} className="h-full flex flex-col">
       {/* Header: Title left | Switch center | Legend right */}
-      {!hideHeader && (
-        <div className="flex items-center justify-between shrink-0">
+      <div className="flex items-center justify-between shrink-0">
           {/* Left: Title */}
           <h3 className="text-lg font-semibold whitespace-nowrap">Plan de salle</h3>
 
@@ -329,109 +410,47 @@ export function ServiceFloorPlan({
               <span className="w-2.5 h-2.5 rounded bg-red-400" /> Occupée
             </span>
           </div>
-        </div>
-      )}
+      </div>
 
       {/* Floor plan grid */}
       <div
         ref={containerRef}
-        className={cn(
-          hideHeader 
-            ? "absolute inset-0 overflow-hidden" 
-            : "flex-1 relative rounded-lg transition-all duration-300 overflow-auto mt-4 bg-gray-50 border-2 border-gray-200"
-        )}
-        style={hideHeader ? undefined : { maxHeight: gridLayout.height + 4 }}
+        className="flex-1 relative rounded-lg transition-all duration-300 overflow-auto mt-4 bg-gray-50 border-2 border-gray-200"
+        style={{ maxHeight: gridLayout.height + 4 }}
       >
-        {/* Floor plan content with dynamic scaling for tablet mode */}
         <div
           className="relative"
-          style={hideHeader ? {
-            width: gridLayout.width,
-            height: gridLayout.height,
-            transform: `scale(${dynamicScale})`,
-            transformOrigin: '0 0',
-            position: 'absolute',
-            left: `${(containerSize.width - gridLayout.width * dynamicScale) / 2}px`,
-            top: `${(containerSize.height - gridLayout.height * dynamicScale) / 2}px`,
-          } : {
+          style={{
             width: gridLayout.width,
             height: gridLayout.height,
             minWidth: gridLayout.width,
           }}
         >
-          {/* Grid pattern - only show in admin mode (not tablet) */}
-          {!hideHeader && (
-            <svg
-              className="absolute inset-0 pointer-events-none"
-              width={gridLayout.width}
-              height={gridLayout.height}
-            >
-              <defs>
-                <pattern
-                  id="service-grid"
-                  width={GRID_CELL_SIZE}
-                  height={GRID_CELL_SIZE}
-                  patternUnits="userSpaceOnUse"
-                >
-                  <path
-                    d={`M ${GRID_CELL_SIZE} 0 L 0 0 0 ${GRID_CELL_SIZE}`}
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="0.5"
-                  />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#service-grid)" />
-            </svg>
-          )}
-
-          {/* Tables */}
-          {filteredTables.map((table) => {
-            const statusColors = STATUS_COLORS[table.status as TableStatus];
-            const width = (table.width ?? 1) * TABLE_SIZE - 4;
-            const height = (table.height ?? 1) * TABLE_SIZE - 4;
-
-            return (
-              <div
-                key={table.tableId}
-                className={cn(
-                  "absolute flex flex-col items-center justify-center rounded-lg border-2 transition-all duration-150",
-                  statusColors.bg,
-                  statusColors.border,
-                  table.status === "blocked" && "opacity-50",
-                  selectedReservationId &&
-                    table.status !== "blocked" &&
-                    table.status !== "seated" &&
-                    "cursor-pointer hover:scale-[1.02] hover:shadow-md",
-                  isAssigning && "pointer-events-none opacity-70"
-                )}
-                style={{
-                  left: table.positionX * GRID_CELL_SIZE - gridLayout.offsetX + 2,
-                  top: table.positionY * GRID_CELL_SIZE - gridLayout.offsetY + 2,
-                  width,
-                  height,
-                }}
-                onClick={() => handleTableClick(table.tableId, table.status as TableStatus, table.reservation?.id)}
+          {/* Grid pattern */}
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            width={gridLayout.width}
+            height={gridLayout.height}
+          >
+            <defs>
+              <pattern
+                id="service-grid"
+                width={GRID_CELL_SIZE}
+                height={GRID_CELL_SIZE}
+                patternUnits="userSpaceOnUse"
               >
-                {/* Table name */}
-                <span className={cn("text-xs font-semibold", statusColors.text)}>
-                  {table.name}
-                </span>
+                <path
+                  d={`M ${GRID_CELL_SIZE} 0 L 0 0 0 ${GRID_CELL_SIZE}`}
+                  fill="none"
+                  stroke="#e5e7eb"
+                  strokeWidth="0.5"
+                />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#service-grid)" />
+          </svg>
 
-                {/* Capacity */}
-                <span className={cn("text-[10px] flex items-center gap-0.5", statusColors.text, "opacity-75")}>
-                  {table.capacity} <Users className="w-2.5 h-2.5" />
-                </span>
-
-                {/* Reservation info if assigned */}
-                {table.reservation && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white px-1 rounded text-[8px] font-medium shadow truncate max-w-full">
-                    {table.reservation.lastName}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+          {renderTables()}
         </div>
       </div>
     </div>
