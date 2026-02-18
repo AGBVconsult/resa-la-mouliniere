@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -50,28 +50,9 @@ export function ServiceFloorPlan({
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  // Measure wrapper size for dynamic scaling (wrapper has fixed dimensions from parent)
-  useEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper || !hideHeader) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerSize({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
-        });
-      }
-    });
-
-    resizeObserver.observe(wrapper);
-    return () => resizeObserver.disconnect();
-  }, [hideHeader]);
 
   // Query table states for this service
   const tableStates = useQuery(api.floorplan.getTableStates, { dateKey, service });
@@ -134,26 +115,6 @@ export function ServiceFloorPlan({
     };
   }, [filteredTables]);
 
-  // Calculate dynamic scale to fit container
-  const dynamicScale = useMemo(() => {
-    if (!hideHeader) return 1;
-
-    // containerSize is measured by ResizeObserver on the wrapper
-    if (containerSize.width === 0 || containerSize.height === 0) return 0.78; // fallback initial
-
-    // Account for border/padding of the grid container
-    const availableWidth = containerSize.width - 8;
-    const availableHeight = containerSize.height - 8;
-
-    const scaleX = availableWidth / gridLayout.width;
-    const scaleY = availableHeight / gridLayout.height;
-
-    // Use the minimum to ensure the plan fits entirely (contain strategy)
-    const scale = Math.min(scaleX, scaleY);
-
-    // Clamp between a min/max to avoid extremes
-    return Math.min(Math.max(scale, 0.4), 1.2);
-  }, [hideHeader, containerSize, gridLayout]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
   // The clicked table is always included, then we find the best combination (forward or backward)
@@ -352,23 +313,15 @@ export function ServiceFloorPlan({
         )}
         style={hideHeader ? undefined : { maxHeight: gridLayout.height + 4 }}
       >
-        {/* Wrapper to contain the scaled content - centered */}
+        {/* Floor plan content */}
         <div
-          className={hideHeader ? "flex-shrink-0" : undefined}
-          style={hideHeader ? {
-            width: gridLayout.width * dynamicScale,
-            height: gridLayout.height * dynamicScale,
-          } : undefined}
+          className="relative"
+          style={{
+            width: gridLayout.width,
+            height: gridLayout.height,
+            minWidth: gridLayout.width,
+          }}
         >
-          <div
-            className="relative origin-top-left"
-            style={{
-              width: gridLayout.width,
-              height: gridLayout.height,
-              minWidth: hideHeader ? undefined : gridLayout.width,
-              transform: hideHeader ? `scale(${dynamicScale})` : undefined,
-            }}
-          >
           {/* Grid pattern */}
           <svg
             className="absolute inset-0 pointer-events-none"
@@ -440,10 +393,8 @@ export function ServiceFloorPlan({
               </div>
             );
           })}
-          </div>
         </div>
       </div>
-
     </div>
   );
 }
