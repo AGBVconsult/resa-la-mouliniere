@@ -55,9 +55,9 @@ export function ServiceFloorPlan({
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Observe container size for dynamic scaling in tablet mode
+  // Observe the actual grid container size for dynamic scaling in tablet mode
   useEffect(() => {
-    if (!hideHeader || !wrapperRef.current) return;
+    if (!hideHeader || !containerRef.current) return;
     
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -68,7 +68,7 @@ export function ServiceFloorPlan({
       }
     });
     
-    observer.observe(wrapperRef.current);
+    observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, [hideHeader]);
 
@@ -337,18 +337,22 @@ export function ServiceFloorPlan({
         ref={containerRef}
         className={cn(
           "flex-1 relative rounded-lg transition-all duration-300",
-          hideHeader ? "overflow-hidden flex items-center justify-center bg-transparent" : "overflow-auto mt-4 bg-gray-50 border-2 border-gray-200"
+          hideHeader ? "overflow-hidden bg-transparent" : "overflow-auto mt-4 bg-gray-50 border-2 border-gray-200"
         )}
         style={hideHeader ? undefined : { maxHeight: gridLayout.height + 4 }}
       >
         {/* Floor plan content with dynamic scaling for tablet mode */}
         <div
-          className="relative origin-center"
-          style={{
+          className="relative"
+          style={hideHeader ? {
+            width: gridLayout.width,
+            height: gridLayout.height,
+            transform: `scale(${dynamicScale})`,
+            transformOrigin: '0 0',
+          } : {
             width: gridLayout.width,
             height: gridLayout.height,
             minWidth: gridLayout.width,
-            transform: hideHeader ? `scale(${dynamicScale})` : undefined,
           }}
         >
           {/* Grid pattern - only show in admin mode (not tablet) */}
