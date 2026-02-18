@@ -704,7 +704,7 @@ export default function TabletReservationsPage() {
         {/* Reservations list with header */}
         <div className={cn(
           "flex flex-col transition-all duration-300",
-          showFloorPlan ? "w-[55%]" : "w-full"
+          showFloorPlan ? "w-[50%]" : "w-full"
         )}>
           {/* Reservations list grouped by time */}
           <div className="flex-1 flex flex-col bg-white overflow-hidden">
@@ -803,7 +803,7 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="w-[45%] shrink-0 h-full bg-[#F2F2F7] border-l border-slate-200 overflow-hidden relative">
+          <div className="w-[50%] shrink-0 h-full bg-[#F2F2F7] border-l border-slate-200 overflow-hidden relative">
               <ServiceFloorPlan
               dateKey={dateKey}
               service={selectedService}
