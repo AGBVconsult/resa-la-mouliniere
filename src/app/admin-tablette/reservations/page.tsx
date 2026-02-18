@@ -27,6 +27,17 @@ import {
   Clock,
   Sun,
   Moon,
+  CheckCircle,
+  XCircle,
+  Armchair,
+  Flag,
+  Ghost,
+  Trash2,
+  AlertTriangle,
+  RotateCcw,
+  Pencil,
+  Phone,
+  Mail,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -103,7 +114,7 @@ export default function TabletReservationsPage() {
     const hour = brusselsTime.getHours();
     return hour >= 16 ? "dinner" : "lunch";
   });
-  const [showFloorPlan, setShowFloorPlan] = useState(false);
+  const [showFloorPlan, setShowFloorPlan] = useState(true);
   const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
   const [highlightedReservationId, setHighlightedReservationId] = useState<Id<"reservations"> | null>(null);
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
@@ -303,6 +314,22 @@ export default function TabletReservationsPage() {
     return actions;
   };
 
+  // Get all available actions for iOS-style popup menu
+  const getAllActions = (status: string): Array<{ label: string; icon: React.ReactNode; action: string; available: boolean }> => {
+    const actions = [
+      { label: "confirmer", icon: <CheckCircle size={28} strokeWidth={1.5} />, action: "confirmed", available: status === "pending" },
+      { label: "refuser", icon: <XCircle size={28} strokeWidth={1.5} />, action: "refused", available: status === "pending" },
+      { label: "installer", icon: <Armchair size={28} strokeWidth={1.5} />, action: "seated", available: status === "confirmed" || status === "noshow" || status === "cancelled" },
+      { label: "terminer", icon: <Flag size={28} strokeWidth={1.5} />, action: "completed", available: status === "seated" || status === "incident" },
+      { label: "no-show", icon: <Ghost size={28} strokeWidth={1.5} />, action: "noshow", available: status !== "noshow" && status !== "completed" && status !== "incident" },
+      { label: "annuler", icon: <Trash2 size={28} strokeWidth={1.5} />, action: "cancelled", available: status === "pending" || status === "confirmed" },
+      { label: "annuler client", icon: <UserX size={28} strokeWidth={1.5} />, action: "cancelled_by_client", available: status === "pending" || status === "confirmed" },
+      { label: "signaler incident", icon: <AlertTriangle size={28} strokeWidth={1.5} />, action: "incident", available: status === "seated" },
+      { label: "rouvrir", icon: <RotateCcw size={28} strokeWidth={1.5} />, action: "reopen", available: status === "completed" || status === "incident" || status === "noshow" || status === "cancelled" },
+    ];
+    return actions.filter(a => a.available);
+  };
+
   const isLoading = lunchStatus === "LoadingFirstPage" || dinnerStatus === "LoadingFirstPage";
 
   const currentReservations = selectedService === "lunch" ? lunchReservations : dinnerReservations;
@@ -409,84 +436,79 @@ export default function TabletReservationsPage() {
             )}>{getTableName(res)}</span>
           </div>
 
-          {/* Actions - largeur fixe, hidden in compact mode */}
-          {!isCompact && (
-            <div className="flex items-center gap-2 w-[180px] shrink-0" onClick={(e) => e.stopPropagation()}>
-              {primaryAction ? (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className={cn("w-28 h-11 min-h-[44px] rounded-full text-[11px] font-medium uppercase tracking-wide", primaryAction.color)}
-                  onClick={() => handleStatusChange(res._id, primaryAction.nextStatus, res.version)}
-                >
-                  {primaryAction.label}
-                </Button>
-              ) : (
-                <div className="w-28 h-11" />
-              )}
-              {secondaryAction ? (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className={cn("w-11 min-w-[44px] h-11 min-h-[44px] rounded-full", secondaryAction.color)}
-                  onClick={() => handleStatusChange(res._id, secondaryAction.nextStatus, res.version)}
-                  title={secondaryAction.tooltip}
-                >
-                  {secondaryAction.icon}
-                </Button>
-              ) : (
-                <div className="w-11 h-11" />
-              )}
-            </div>
-          )}
-
-          {/* Menu */}
-          <div className={cn("flex items-center justify-end", isCompact ? "w-6" : "w-10")} onClick={(e) => e.stopPropagation()}>
+          {/* Menu - bouton unique pour ouvrir le popup iOS */}
+          <div className="flex items-center justify-end w-10" onClick={(e) => e.stopPropagation()}>
             <div className="relative">
               <Button
                 size="icon"
                 variant="ghost"
-                className={cn("rounded-full text-gray-400 hover:text-black hover:bg-gray-100", isCompact ? "w-6 h-6" : "w-10 h-10")}
+                className="rounded-full text-gray-400 hover:text-black hover:bg-gray-100 w-10 h-10"
                 onClick={(e) => togglePopup(e, res._id)}
               >
-                <MoreHorizontal className={isCompact ? "h-4 w-4" : "h-5 w-5"} />
+                <MoreHorizontal className="h-5 w-5" />
               </Button>
               {openPopupId === res._id && (
                 <>
-                  <div className="fixed inset-0 z-[99]" onClick={() => setOpenPopupId(null)} />
-                  <div className="absolute right-0 top-full mt-2 bg-white rounded-3xl shadow-2xl border border-slate-100 py-4 z-[100] min-w-[200px] animate-in fade-in slide-in-from-top-2 duration-200">
-                    {/* Option Modifier */}
-                    <button
-                      className="w-full px-5 py-3 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                      onClick={() => {
-                        setOpenPopupId(null);
-                        setEditingReservation(res);
-                      }}
-                    >
-                      Modifier
-                    </button>
-                    {menuActions.length > 0 && <div className="border-t border-slate-100 my-2 mx-3" />}
-                    {menuActions.map((action) => (
+                  <div className="fixed inset-0 z-[99] bg-black/20" onClick={() => setOpenPopupId(null)} />
+                  <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#E8E8ED] rounded-3xl shadow-2xl p-4 z-[100] w-[340px] animate-in fade-in zoom-in-95 duration-200">
+                    {/* Header avec actions rapides */}
+                    <div className="flex justify-center gap-6 pb-4 border-b border-gray-300/50">
                       <button
-                        key={action.nextStatus}
-                        className={cn("w-full px-5 py-3 text-left text-sm transition-colors", action.textColor, action.hoverBg)}
-                        onClick={async () => {
+                        className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
+                        onClick={() => {
                           setOpenPopupId(null);
-                          if ((action.nextStatus as string) === "cancelled_by_client") {
-                            try {
-                              await cancelByClient({ reservationId: res._id, expectedVersion: res.version });
-                              toast.success("Annulation client enregistrée");
-                            } catch (error) {
-                              toast.error(formatConvexError(error));
-                            }
-                          } else {
-                            handleStatusChange(res._id, action.nextStatus, res.version);
-                          }
+                          setEditingReservation(res);
                         }}
                       >
-                        {action.label}
+                        <Pencil size={24} strokeWidth={1.5} />
                       </button>
-                    ))}
+                      {res.phone && (
+                        <a
+                          href={`tel:${res.phone}`}
+                          className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
+                          onClick={() => setOpenPopupId(null)}
+                        >
+                          <Phone size={24} strokeWidth={1.5} />
+                        </a>
+                      )}
+                      {res.email && (
+                        <a
+                          href={`mailto:${res.email}`}
+                          className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
+                          onClick={() => setOpenPopupId(null)}
+                        >
+                          <Mail size={24} strokeWidth={1.5} />
+                        </a>
+                      )}
+                    </div>
+                    
+                    {/* Grille d'actions */}
+                    <div className="grid grid-cols-3 gap-2 pt-4">
+                      {getAllActions(res.status).map((action) => (
+                        <button
+                          key={action.action}
+                          className="flex flex-col items-center justify-center gap-2 p-4 bg-[#D4D4D9] hover:bg-[#C8C8CD] rounded-2xl transition-colors aspect-square"
+                          onClick={async () => {
+                            setOpenPopupId(null);
+                            if (action.action === "cancelled_by_client") {
+                              try {
+                                await cancelByClient({ reservationId: res._id, expectedVersion: res.version });
+                                toast.success("Annulation client enregistrée");
+                              } catch (error) {
+                                toast.error(formatConvexError(error));
+                              }
+                            } else if (action.action === "reopen") {
+                              handleStatusChange(res._id, "confirmed" as ReservationStatus, res.version);
+                            } else {
+                              handleStatusChange(res._id, action.action as ReservationStatus, res.version);
+                            }
+                          }}
+                        >
+                          <span className="text-gray-600">{action.icon}</span>
+                          <span className="text-[11px] font-medium text-gray-600 text-center leading-tight">{action.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </>
               )}
@@ -517,7 +539,8 @@ export default function TabletReservationsPage() {
   return (
     <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F2F2F2]">
       {/* Header */}
-      <header className="flex justify-between items-center py-12 px-4 border-b border-slate-200">
+      <header className="relative flex items-center py-12 px-4 border-b border-slate-200 bg-[#E4E4E4]">
+        {/* Left: Date navigation */}
         <div className="flex items-center h-[52px] bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
           <button
             onClick={() => setShowCalendarPopup(true)}
@@ -549,8 +572,8 @@ export default function TabletReservationsPage() {
           </button>
         </div>
 
-        {/* Stats badge avec switch intégré */}
-        <div className="flex items-center gap-2 h-[52px] bg-white/80 backdrop-blur-xl rounded-full pl-5 pr-1 border border-slate-200/60 shadow-sm">
+        {/* Stats badge avec switch intégré - centré */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 h-[52px] bg-white/80 backdrop-blur-xl rounded-full pl-5 pr-1 border border-slate-200/60 shadow-sm">
           {/* Total */}
           <div className="flex items-center gap-2 mr-1">
             <UsersRound size={16} strokeWidth={1.5} className="text-slate-400" />
@@ -601,8 +624,8 @@ export default function TabletReservationsPage() {
           </div>
         </div>
 
-        {/* Settings + Map */}
-        <div className="flex items-center gap-2">
+        {/* Settings + Map - aligné à droite */}
+        <div className="flex items-center gap-2 ml-auto">
           <button
             onClick={() => setShowSettings(true)}
             className="w-[52px] h-[52px] bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
@@ -628,7 +651,7 @@ export default function TabletReservationsPage() {
         {/* Reservations list with header */}
         <div className={cn(
           "flex flex-col transition-all duration-300",
-          showFloorPlan ? "w-[66%]" : "w-full"
+          showFloorPlan ? "w-[55%]" : "w-full"
         )}>
           {/* Reservations list grouped by time */}
           <div className="flex-1 flex flex-col bg-white overflow-hidden">
@@ -727,7 +750,7 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="w-[34%] shrink-0 bg-[#F2F2F7] border-l border-slate-200 overflow-hidden relative h-full">
+          <div className="w-[45%] shrink-0 bg-[#F2F2F7] border-l border-slate-200 overflow-hidden relative h-full">
             <div className="absolute inset-2">
               <ServiceFloorPlan
               dateKey={dateKey}
