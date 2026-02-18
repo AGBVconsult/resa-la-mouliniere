@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -302,15 +302,28 @@ export function ServiceFloorPlan({
     );
   }
 
-  // Tablet mode: simple overflow auto, no complex scaling
+  // Tablet mode: scale to fit container using callback ref
+  const [tabletScale, setTabletScale] = useState(1);
+  const tabletRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      const scaleX = rect.width / gridLayout.width;
+      const scaleY = rect.height / gridLayout.height;
+      setTabletScale(Math.min(scaleX, scaleY));
+    }
+  }, [gridLayout.width, gridLayout.height]);
+
   if (hideHeader) {
     return (
-      <div className="w-full h-full overflow-auto">
+      <div ref={tabletRef} className="w-full h-full overflow-hidden flex items-center justify-center">
         <div
-          className="relative"
+          className="relative shrink-0"
           style={{
             width: gridLayout.width,
             height: gridLayout.height,
+            transform: `scale(${tabletScale})`,
+            transformOrigin: 'center center',
           }}
         >
           {renderTables()}
