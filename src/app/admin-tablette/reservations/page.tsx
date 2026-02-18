@@ -38,6 +38,7 @@ import {
   Pencil,
   Phone,
   Mail,
+  Hourglass,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -452,25 +453,48 @@ export default function TabletReservationsPage() {
           {/* Note preview - 2 lignes max */}
           <span className={cn("flex-1 text-gray-500 line-clamp-2", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
 
-          {/* Table - largeur fixe */}
-          <div className={cn("shrink-0", isCompact ? "w-12" : "w-16")}>
+          {/* Table - largeur fixe - clic active l'assignation */}
+          <div 
+            className={cn("shrink-0 cursor-pointer", isCompact ? "w-12" : "w-16")}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isSelectedForAssignment) {
+                setSelectedForAssignment(null);
+              } else {
+                setSelectedForAssignment(res);
+              }
+            }}
+          >
             <span className={cn(
-              "block rounded text-center",
+              "block rounded text-center transition-colors",
               isCompact ? "text-xs px-1.5 py-3" : "text-sm px-2.5 py-3",
-              isUnassigned ? "bg-amber-100 text-amber-700" : "bg-gray-100"
+              isSelectedForAssignment 
+                ? "bg-blue-500 text-white" 
+                : isUnassigned 
+                  ? "bg-amber-100 text-amber-700 hover:bg-amber-200" 
+                  : "bg-gray-100 hover:bg-gray-200"
             )}>{getTableName(res)}</span>
           </div>
 
           {/* Menu - bouton unique pour ouvrir le popup iOS */}
-          <div className="flex items-center justify-end w-10" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-end w-12" onClick={(e) => e.stopPropagation()}>
             <div className="relative">
               <Button
                 size="icon"
                 variant="ghost"
-                className="rounded-full text-gray-400 hover:text-black hover:bg-gray-100 w-10 h-10"
+                className={cn(
+                  "rounded-full w-10 h-10 transition-colors",
+                  res.status === "pending"
+                    ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                )}
                 onClick={(e) => togglePopup(e, res._id)}
               >
-                <MoreHorizontal className="h-5 w-5" />
+                {res.status === "pending" ? (
+                  <Hourglass className="h-5 w-5" />
+                ) : (
+                  <MoreHorizontal className="h-5 w-5" />
+                )}
               </Button>
               {openPopupId === res._id && (
                 <>
