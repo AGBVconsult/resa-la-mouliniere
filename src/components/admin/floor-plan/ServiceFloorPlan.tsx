@@ -31,10 +31,10 @@ interface ServiceFloorPlanProps {
 type TableStatus = "seated" | "reserved" | "free" | "blocked";
 
 const STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: string }> = {
-  free: { bg: "bg-emerald-100", border: "border-emerald-400", text: "text-emerald-800" },
-  reserved: { bg: "bg-orange-100", border: "border-orange-400", text: "text-orange-800" },
-  seated: { bg: "bg-red-100", border: "border-red-400", text: "text-red-800" },
-  blocked: { bg: "bg-gray-200", border: "border-gray-400", text: "text-gray-500" },
+  free: { bg: "bg-white", border: "border-transparent", text: "text-black" },
+  reserved: { bg: "bg-[#FFF7BC]", border: "border-transparent", text: "text-black" },
+  seated: { bg: "bg-[#91BDA0]", border: "border-transparent", text: "text-black" },
+  blocked: { bg: "bg-gray-400", border: "border-transparent", text: "text-gray-700" },
 };
 
 export function ServiceFloorPlan({
@@ -281,7 +281,7 @@ export function ServiceFloorPlan({
           <div
             key={table.tableId}
             className={cn(
-              "absolute flex flex-col items-center justify-center rounded-lg border-2 transition-all duration-150",
+              "absolute flex flex-col items-center justify-center rounded-lg transition-all duration-150",
               statusColors.bg,
               statusColors.border,
               table.status === "blocked" && "opacity-50",

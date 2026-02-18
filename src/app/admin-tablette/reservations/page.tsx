@@ -803,7 +803,7 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="w-[50%] shrink-0 h-full bg-[#334156] border-l-2 border-white overflow-hidden relative">
+          <div className="w-[50%] shrink-0 h-full bg-[#4F4F50] border-l-2 border-white overflow-hidden relative">
               <ServiceFloorPlan
               dateKey={dateKey}
               service={selectedService}
