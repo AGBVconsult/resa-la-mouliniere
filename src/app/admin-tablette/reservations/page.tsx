@@ -476,49 +476,49 @@ export default function TabletReservationsPage() {
                 <>
                   <div className="fixed inset-0 z-[99] bg-black/20" onClick={() => setOpenPopupId(null)} />
                   <div 
-                    className="fixed bg-[#E8E8ED] rounded-2xl shadow-2xl p-3 z-[100] animate-in fade-in zoom-in-95 duration-200"
+                    className="fixed bg-[#E8E8ED] rounded-[2rem] shadow-2xl p-4 z-[100] animate-in fade-in zoom-in-95 duration-200"
                     style={{
                       left: Math.min(popupPosition.x, window.innerWidth - 280),
                       top: Math.min(popupPosition.y, window.innerHeight - 300),
                     }}
                   >
                     {/* Header avec actions rapides */}
-                    <div className="flex justify-center gap-6 pb-3 border-b border-gray-300/50">
+                    <div className="flex justify-center pb-4 border-b border-gray-300/50">
                       <button
-                        className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
+                        className="px-6 text-gray-500 hover:text-gray-700 transition-colors"
                         onClick={() => {
                           setOpenPopupId(null);
                           setEditingReservation(res);
                         }}
                       >
-                        <Pencil size={22} strokeWidth={1.5} />
+                        <Pencil size={28} strokeWidth={1.5} />
                       </button>
                       {res.phone && (
                         <a
                           href={`tel:${res.phone}`}
-                          className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
+                          className="px-6 text-gray-500 hover:text-gray-700 transition-colors"
                           onClick={() => setOpenPopupId(null)}
                         >
-                          <Phone size={22} strokeWidth={1.5} />
+                          <Phone size={28} strokeWidth={1.5} />
                         </a>
                       )}
                       {res.email && (
                         <a
                           href={`mailto:${res.email}`}
-                          className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
+                          className="px-6 text-gray-500 hover:text-gray-700 transition-colors"
                           onClick={() => setOpenPopupId(null)}
                         >
-                          <Mail size={22} strokeWidth={1.5} />
+                          <Mail size={28} strokeWidth={1.5} />
                         </a>
                       )}
                     </div>
                     
                     {/* Grille d'actions 2 colonnes rectangulaire */}
-                    <div className="grid grid-cols-2 gap-2 pt-3">
+                    <div className="grid grid-cols-2 gap-3 pt-4">
                       {getAllActions(res.status).map((action) => (
                         <button
                           key={action.action}
-                          className="flex flex-col items-center justify-center gap-2 px-6 py-4 bg-[#D4D4D9] hover:bg-[#C8C8CD] rounded-xl transition-colors"
+                          className="flex items-center gap-3 px-5 py-4 bg-[#D4D4D9] hover:bg-[#C8C8CD] rounded-2xl transition-colors"
                           onClick={async () => {
                             setOpenPopupId(null);
                             if (action.action === "cancelled_by_client") {
@@ -534,7 +534,7 @@ export default function TabletReservationsPage() {
                           }}
                         >
                           <span className={action.iconColor}>{action.icon}</span>
-                          <span className="text-[11px] font-medium text-gray-600 text-center leading-tight">{action.label}</span>
+                          <span className="text-sm font-semibold text-gray-700">{action.label}</span>
                         </button>
                       ))}
                     </div>
