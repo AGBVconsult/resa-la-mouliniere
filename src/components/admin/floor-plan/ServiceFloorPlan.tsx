@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -50,31 +50,9 @@ export function ServiceFloorPlan({
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  // Observe parent size for dynamic scaling in tablet mode
-  useEffect(() => {
-    if (!hideHeader || !wrapperRef.current) return;
-    
-    // Observe the parent element since wrapperRef is absolute positioned
-    const parent = wrapperRef.current.parentElement;
-    if (!parent) return;
-    
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerSize({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
-        });
-      }
-    });
-    
-    observer.observe(parent);
-    return () => observer.disconnect();
-  }, [hideHeader]);
 
   // Query table states for this service
   const tableStates = useQuery(api.floorplan.getTableStates, { dateKey, service });
@@ -137,16 +115,6 @@ export function ServiceFloorPlan({
     };
   }, [filteredTables]);
 
-  // Calculate dynamic scale for tablet mode to fill the container
-  const dynamicScale = useMemo(() => {
-    if (!hideHeader || containerSize.width === 0 || containerSize.height === 0) {
-      return 1;
-    }
-    const scaleX = containerSize.width / gridLayout.width;
-    const scaleY = containerSize.height / gridLayout.height;
-    // Use the smaller scale to fit while maintaining aspect ratio, allow scaling up
-    return Math.min(scaleX, scaleY);
-  }, [hideHeader, containerSize, gridLayout]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
   // The clicked table is always included, then we find the best combination (forward or backward)
@@ -334,36 +302,19 @@ export function ServiceFloorPlan({
     );
   }
 
-  // Tablet mode: simplified rendering with auto-scaling
+  // Tablet mode: simple overflow auto, no complex scaling
   if (hideHeader) {
-    const hasSize = containerSize.width > 0 && containerSize.height > 0;
-    const scaledW = gridLayout.width * dynamicScale;
-    const scaledH = gridLayout.height * dynamicScale;
-    const offsetX = hasSize ? Math.max(0, (containerSize.width - scaledW) / 2) : 0;
-    const offsetY = hasSize ? Math.max(0, (containerSize.height - scaledH) / 2) : 0;
-
     return (
-      <div ref={wrapperRef} className="absolute inset-0 overflow-hidden">
-        {hasSize ? (
-          <div
-            className="relative"
-            style={{
-              width: gridLayout.width,
-              height: gridLayout.height,
-              transform: `scale(${dynamicScale})`,
-              transformOrigin: '0 0',
-              position: 'absolute',
-              left: offsetX,
-              top: offsetY,
-            }}
-          >
-            {renderTables()}
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-400">
-            Chargement...
-          </div>
-        )}
+      <div className="w-full h-full overflow-auto">
+        <div
+          className="relative"
+          style={{
+            width: gridLayout.width,
+            height: gridLayout.height,
+          }}
+        >
+          {renderTables()}
+        </div>
       </div>
     );
   }
