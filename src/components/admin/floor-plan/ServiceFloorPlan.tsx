@@ -55,9 +55,13 @@ export function ServiceFloorPlan({
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Observe wrapper size for dynamic scaling in tablet mode
+  // Observe parent size for dynamic scaling in tablet mode
   useEffect(() => {
     if (!hideHeader || !wrapperRef.current) return;
+    
+    // Observe the parent element since wrapperRef is absolute positioned
+    const parent = wrapperRef.current.parentElement;
+    if (!parent) return;
     
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -68,7 +72,7 @@ export function ServiceFloorPlan({
       }
     });
     
-    observer.observe(wrapperRef.current);
+    observer.observe(parent);
     return () => observer.disconnect();
   }, [hideHeader]);
 
