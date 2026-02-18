@@ -518,7 +518,7 @@ export default function TabletReservationsPage() {
                       {getAllActions(res.status).map((action) => (
                         <button
                           key={action.action}
-                          className="flex items-center gap-3 px-5 py-4 bg-[#D4D4D9] hover:bg-[#C8C8CD] rounded-2xl transition-colors"
+                          className="flex flex-col items-center justify-center gap-2 px-4 py-5 bg-[#D4D4D9] hover:bg-[#C8C8CD] rounded-2xl transition-colors"
                           onClick={async () => {
                             setOpenPopupId(null);
                             if (action.action === "cancelled_by_client") {
