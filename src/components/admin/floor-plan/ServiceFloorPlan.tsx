@@ -133,14 +133,15 @@ export function ServiceFloorPlan({
     };
   }, [filteredTables]);
 
-  // Calculate dynamic scale for tablet mode to fit the container
+  // Calculate dynamic scale for tablet mode to fill the container
   const dynamicScale = useMemo(() => {
     if (!hideHeader || containerSize.width === 0 || containerSize.height === 0) {
       return 1;
     }
     const scaleX = containerSize.width / gridLayout.width;
     const scaleY = containerSize.height / gridLayout.height;
-    return Math.min(scaleX, scaleY, 1); // Never scale up, only down
+    // Use the smaller scale to fit while maintaining aspect ratio, allow scaling up
+    return Math.min(scaleX, scaleY);
   }, [hideHeader, containerSize, gridLayout]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
