@@ -517,7 +517,7 @@ export default function TabletReservationsPage() {
   return (
     <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F2F2F2]">
       {/* Header */}
-      <header className="flex justify-between items-center py-6 px-4">
+      <header className="flex justify-between items-center py-12 px-4 border-b border-slate-200">
         <div className="flex items-center h-[52px] bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
           <button
             onClick={() => setShowCalendarPopup(true)}
@@ -624,14 +624,14 @@ export default function TabletReservationsPage() {
       </header>
 
       {/* Main content with floor plan */}
-      <div className="flex-1 flex gap-4 min-h-0">
+      <div className="flex-1 flex gap-0 min-h-0">
         {/* Reservations list with header */}
         <div className={cn(
           "flex flex-col transition-all duration-300",
           showFloorPlan ? "w-[66%]" : "w-full"
         )}>
           {/* Reservations list grouped by time */}
-          <div className="flex-1 flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden">
+          <div className="flex-1 flex flex-col bg-white overflow-hidden">
             {isLoading ? (
               <div className="flex-1 flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -674,18 +674,18 @@ export default function TabletReservationsPage() {
                           <div key={time}>
                             {/* Time section header */}
                             <div className={cn(
-                              "flex items-center gap-4 bg-slate-50/80 border-b border-slate-100",
+                              "flex items-center gap-4 bg-[#334156] text-white border-b border-slate-600",
                               showFloorPlan ? "px-3 py-1.5" : "px-4 py-2"
                             )}>
-                              <div className="flex items-center gap-1.5 text-slate-600">
+                              <div className="flex items-center gap-1.5 text-white">
                                 <Clock size={showFloorPlan ? 12 : 14} strokeWidth={2} />
                                 <span className={cn("font-bold", showFloorPlan ? "text-xs" : "text-sm")}>{time}</span>
                               </div>
-                              <div className="flex items-center gap-1.5 text-slate-500">
+                              <div className="flex items-center gap-1.5 text-white/80">
                                 <UsersRound size={showFloorPlan ? 12 : 14} strokeWidth={2} />
                                 <span className={cn(showFloorPlan ? "text-[10px]" : "text-xs")}>{groupCovers} / {groupCapacity}</span>
                               </div>
-                              <span className={cn("text-slate-400", showFloorPlan ? "text-[10px]" : "text-xs")}>• {resaCount} résa{resaCount > 1 ? "s" : ""}</span>
+                              <span className={cn("text-white/60", showFloorPlan ? "text-[10px]" : "text-xs")}>• {resaCount} résa{resaCount > 1 ? "s" : ""}</span>
                             </div>
                             {/* Reservations in this time slot */}
                             <div className="divide-y divide-slate-50">
@@ -727,7 +727,7 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="w-[34%] shrink-0 bg-[#F2F2F7] border border-slate-100 rounded-2xl overflow-hidden relative h-full">
+          <div className="w-[34%] shrink-0 bg-[#F2F2F7] border-l border-slate-200 overflow-hidden relative h-full">
             <div className="absolute inset-2">
               <ServiceFloorPlan
               dateKey={dateKey}
