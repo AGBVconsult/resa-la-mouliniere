@@ -50,6 +50,7 @@ export function ServiceFloorPlan({
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
+  const [tabletScale, setTabletScale] = useState(1);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -294,16 +295,7 @@ export function ServiceFloorPlan({
     </>
   );
 
-  if (!tableStates) {
-    return (
-      <div className="flex items-center justify-center h-64 text-gray-500">
-        Chargement du plan...
-      </div>
-    );
-  }
-
   // Tablet mode: scale to fit container using callback ref
-  const [tabletScale, setTabletScale] = useState(1);
   const tabletRef = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
     const rect = node.getBoundingClientRect();
@@ -313,6 +305,14 @@ export function ServiceFloorPlan({
       setTabletScale(Math.min(scaleX, scaleY));
     }
   }, [gridLayout.width, gridLayout.height]);
+
+  if (!tableStates) {
+    return (
+      <div className="flex items-center justify-center h-64 text-gray-500">
+        Chargement du plan...
+      </div>
+    );
+  }
 
   if (hideHeader) {
     return (
