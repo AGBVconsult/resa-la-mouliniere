@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -50,9 +50,27 @@ export function ServiceFloorPlan({
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Observe container size for dynamic scaling in tablet mode
+  useEffect(() => {
+    if (!hideHeader || !wrapperRef.current) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        });
+      }
+    });
+    
+    observer.observe(wrapperRef.current);
+    return () => observer.disconnect();
+  }, [hideHeader]);
 
   // Query table states for this service
   const tableStates = useQuery(api.floorplan.getTableStates, { dateKey, service });
@@ -115,6 +133,15 @@ export function ServiceFloorPlan({
     };
   }, [filteredTables]);
 
+  // Calculate dynamic scale for tablet mode to fit the container
+  const dynamicScale = useMemo(() => {
+    if (!hideHeader || containerSize.width === 0 || containerSize.height === 0) {
+      return 1;
+    }
+    const scaleX = containerSize.width / gridLayout.width;
+    const scaleY = containerSize.height / gridLayout.height;
+    return Math.min(scaleX, scaleY, 1); // Never scale up, only down
+  }, [hideHeader, containerSize, gridLayout]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
   // The clicked table is always included, then we find the best combination (forward or backward)
@@ -313,13 +340,14 @@ export function ServiceFloorPlan({
         )}
         style={hideHeader ? undefined : { maxHeight: gridLayout.height + 4 }}
       >
-        {/* Floor plan content */}
+        {/* Floor plan content with dynamic scaling for tablet mode */}
         <div
-          className="relative"
+          className="relative origin-center"
           style={{
             width: gridLayout.width,
             height: gridLayout.height,
             minWidth: gridLayout.width,
+            transform: hideHeader ? `scale(${dynamicScale})` : undefined,
           }}
         >
           {/* Grid pattern - only show in admin mode (not tablet) */}

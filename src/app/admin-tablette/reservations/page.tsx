@@ -498,9 +498,9 @@ export default function TabletReservationsPage() {
               </Button>
               {openPopupId === res._id && (
                 <>
-                  <div className="fixed inset-0 z-[99] bg-black/20" onClick={() => setOpenPopupId(null)} />
+                  <div className="fixed inset-0 z-[9999] bg-black/20" onClick={() => setOpenPopupId(null)} />
                   <div 
-                    className="fixed bg-[#E8E8ED] rounded-[2rem] shadow-2xl p-4 z-[100] animate-in fade-in zoom-in-95 duration-200"
+                    className="fixed bg-[#E8E8ED] rounded-[2rem] shadow-2xl p-4 z-[10000] animate-in fade-in zoom-in-95 duration-200"
                     style={{
                       left: Math.min(popupPosition.x, window.innerWidth - 280),
                       top: Math.min(popupPosition.y, window.innerHeight - 300),
@@ -803,8 +803,8 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="w-[45%] shrink-0 bg-[#F2F2F7] border-l border-slate-200 overflow-hidden relative h-full">
-            <div className="absolute inset-2">
+          <div className="w-[45%] shrink-0 bg-[#F2F2F7] border-l border-slate-200 overflow-hidden flex flex-col h-full p-2">
+            <div className="flex-1 min-h-0">
               <ServiceFloorPlan
               dateKey={dateKey}
               service={selectedService}
