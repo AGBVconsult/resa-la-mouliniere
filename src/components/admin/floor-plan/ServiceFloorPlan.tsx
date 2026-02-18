@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useCallback } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -53,6 +53,7 @@ export function ServiceFloorPlan({
   const [tabletScale, setTabletScale] = useState(1);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const tabletContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Query table states for this service
@@ -116,16 +117,26 @@ export function ServiceFloorPlan({
     };
   }, [filteredTables]);
 
-  // Tablet mode: scale to fit container using callback ref
-  const tabletRef = useCallback((node: HTMLDivElement | null) => {
-    if (!node) return;
-    const rect = node.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      const scaleX = rect.width / gridLayout.width;
-      const scaleY = rect.height / gridLayout.height;
-      setTabletScale(Math.min(scaleX, scaleY));
-    }
-  }, [gridLayout.width, gridLayout.height]);
+  // Tablet mode: observe container and compute scale to fill available space
+  useEffect(() => {
+    if (!hideHeader) return;
+    const el = tabletContainerRef.current;
+    if (!el) return;
+
+    const compute = () => {
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0 && gridLayout.width > 0 && gridLayout.height > 0) {
+        const scaleX = rect.width / gridLayout.width;
+        const scaleY = rect.height / gridLayout.height;
+        setTabletScale(Math.min(scaleX, scaleY));
+      }
+    };
+
+    const observer = new ResizeObserver(compute);
+    observer.observe(el);
+    compute(); // immediate first calculation
+    return () => observer.disconnect();
+  }, [hideHeader, gridLayout.width, gridLayout.height]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
   // The clicked table is always included, then we find the best combination (forward or backward)
@@ -315,7 +326,7 @@ export function ServiceFloorPlan({
 
   if (hideHeader) {
     return (
-      <div ref={tabletRef} className="w-full h-full overflow-hidden flex items-center justify-center">
+      <div ref={tabletContainerRef} className="w-full h-full overflow-hidden flex items-center justify-center">
         <div
           className="relative shrink-0"
           style={{
