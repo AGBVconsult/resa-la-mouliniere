@@ -317,7 +317,7 @@ export default function TabletReservationsPage() {
     const secondaryAction = getSecondaryAction(res.status);
     const menuActions = getMenuActions(res.status);
     const hasOption = (opt: string) => res.options?.includes(opt);
-    const isCompact = showFloorPlan;
+    const isCompact = false; // Always show full info
     const isSelectedForAssignment = selectedForAssignment?._id === res._id;
     const isUnassigned = !res.primaryTableId && res.tableIds.length === 0;
     const isHighlighted = highlightedReservationId === res._id;
@@ -517,7 +517,7 @@ export default function TabletReservationsPage() {
   return (
     <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F2F2F2]">
       {/* Header */}
-      <header className="flex justify-between items-center pt-6 pb-8 px-4">
+      <header className="flex justify-between items-center py-6 px-4">
         <div className="flex items-center h-[52px] bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
           <button
             onClick={() => setShowCalendarPopup(true)}
@@ -727,7 +727,7 @@ export default function TabletReservationsPage() {
 
         {/* Floor Plan */}
         {showFloorPlan && (
-          <div className="w-[34%] shrink-0 bg-white border border-slate-100 rounded-2xl overflow-hidden relative h-full">
+          <div className="w-[34%] shrink-0 bg-[#F2F2F7] border border-slate-100 rounded-2xl overflow-hidden relative h-full">
             <div className="absolute inset-2">
               <ServiceFloorPlan
               dateKey={dateKey}

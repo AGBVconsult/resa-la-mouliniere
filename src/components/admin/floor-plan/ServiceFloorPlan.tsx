@@ -308,8 +308,8 @@ export function ServiceFloorPlan({
       <div
         ref={containerRef}
         className={cn(
-          "flex-1 relative bg-gray-50 border-2 border-gray-200 rounded-lg transition-all duration-300",
-          hideHeader ? "overflow-hidden flex items-center justify-center" : "overflow-auto mt-4"
+          "flex-1 relative rounded-lg transition-all duration-300",
+          hideHeader ? "overflow-hidden flex items-center justify-center bg-transparent" : "overflow-auto mt-4 bg-gray-50 border-2 border-gray-200"
         )}
         style={hideHeader ? undefined : { maxHeight: gridLayout.height + 4 }}
       >
@@ -322,29 +322,31 @@ export function ServiceFloorPlan({
             minWidth: gridLayout.width,
           }}
         >
-          {/* Grid pattern */}
-          <svg
-            className="absolute inset-0 pointer-events-none"
-            width={gridLayout.width}
-            height={gridLayout.height}
-          >
-            <defs>
-              <pattern
-                id="service-grid"
-                width={GRID_CELL_SIZE}
-                height={GRID_CELL_SIZE}
-                patternUnits="userSpaceOnUse"
-              >
-                <path
-                  d={`M ${GRID_CELL_SIZE} 0 L 0 0 0 ${GRID_CELL_SIZE}`}
-                  fill="none"
-                  stroke="#e5e7eb"
-                  strokeWidth="0.5"
-                />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#service-grid)" />
-          </svg>
+          {/* Grid pattern - only show in admin mode (not tablet) */}
+          {!hideHeader && (
+            <svg
+              className="absolute inset-0 pointer-events-none"
+              width={gridLayout.width}
+              height={gridLayout.height}
+            >
+              <defs>
+                <pattern
+                  id="service-grid"
+                  width={GRID_CELL_SIZE}
+                  height={GRID_CELL_SIZE}
+                  patternUnits="userSpaceOnUse"
+                >
+                  <path
+                    d={`M ${GRID_CELL_SIZE} 0 L 0 0 0 ${GRID_CELL_SIZE}`}
+                    fill="none"
+                    stroke="#e5e7eb"
+                    strokeWidth="0.5"
+                  />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#service-grid)" />
+            </svg>
+          )}
 
           {/* Tables */}
           {filteredTables.map((table) => {
