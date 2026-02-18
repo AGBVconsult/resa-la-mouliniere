@@ -116,6 +116,16 @@ export function ServiceFloorPlan({
     };
   }, [filteredTables]);
 
+  // Tablet mode: scale to fit container using callback ref
+  const tabletRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      const scaleX = rect.width / gridLayout.width;
+      const scaleY = rect.height / gridLayout.height;
+      setTabletScale(Math.min(scaleX, scaleY));
+    }
+  }, [gridLayout.width, gridLayout.height]);
 
   // Find adjacent combinable tables - analyzes both directions and picks the best option
   // The clicked table is always included, then we find the best combination (forward or backward)
@@ -294,17 +304,6 @@ export function ServiceFloorPlan({
       })}
     </>
   );
-
-  // Tablet mode: scale to fit container using callback ref
-  const tabletRef = useCallback((node: HTMLDivElement | null) => {
-    if (!node) return;
-    const rect = node.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      const scaleX = rect.width / gridLayout.width;
-      const scaleY = rect.height / gridLayout.height;
-      setTabletScale(Math.min(scaleX, scaleY));
-    }
-  }, [gridLayout.width, gridLayout.height]);
 
   if (!tableStates) {
     return (
