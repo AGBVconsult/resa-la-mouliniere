@@ -107,6 +107,7 @@ export default function TabletReservationsPage() {
 
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [openPopupId, setOpenPopupId] = useState<Id<"reservations"> | null>(null);
+  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [selectedService, setSelectedService] = useState<"lunch" | "dinner">(() => {
     // Sélectionner automatiquement le service selon l'heure au chargement
     const now = new Date();
@@ -166,6 +167,7 @@ export default function TabletReservationsPage() {
 
   const togglePopup = (e: React.MouseEvent, id: Id<"reservations">) => {
     e.stopPropagation();
+    setPopupPosition({ x: e.clientX, y: e.clientY });
     setOpenPopupId((prev) => (prev === id ? null : id));
   };
 
@@ -314,20 +316,43 @@ export default function TabletReservationsPage() {
     return actions;
   };
 
-  // Get all available actions for iOS-style popup menu
-  const getAllActions = (status: string): Array<{ label: string; icon: React.ReactNode; action: string; available: boolean }> => {
-    const actions = [
-      { label: "confirmer", icon: <CheckCircle size={28} strokeWidth={1.5} />, action: "confirmed", available: status === "pending" },
-      { label: "refuser", icon: <XCircle size={28} strokeWidth={1.5} />, action: "refused", available: status === "pending" },
-      { label: "installer", icon: <Armchair size={28} strokeWidth={1.5} />, action: "seated", available: status === "confirmed" || status === "noshow" || status === "cancelled" },
-      { label: "terminer", icon: <Flag size={28} strokeWidth={1.5} />, action: "completed", available: status === "seated" || status === "incident" },
-      { label: "no-show", icon: <Ghost size={28} strokeWidth={1.5} />, action: "noshow", available: status !== "noshow" && status !== "completed" && status !== "incident" },
-      { label: "annuler", icon: <Trash2 size={28} strokeWidth={1.5} />, action: "cancelled", available: status === "pending" || status === "confirmed" },
-      { label: "annuler client", icon: <UserX size={28} strokeWidth={1.5} />, action: "cancelled_by_client", available: status === "pending" || status === "confirmed" },
-      { label: "signaler incident", icon: <AlertTriangle size={28} strokeWidth={1.5} />, action: "incident", available: status === "seated" },
-      { label: "rouvrir", icon: <RotateCcw size={28} strokeWidth={1.5} />, action: "reopen", available: status === "completed" || status === "incident" || status === "noshow" || status === "cancelled" },
-    ];
-    return actions.filter(a => a.available);
+  // Get all available actions for iOS-style popup menu with colors
+  const getAllActions = (status: string): Array<{ label: string; icon: React.ReactNode; action: string; iconColor: string }> => {
+    switch (status) {
+      case "pending":
+        return [
+          { label: "confirmer", icon: <CheckCircle size={28} strokeWidth={1.5} />, action: "confirmed", iconColor: "text-emerald-500" },
+          { label: "refuser", icon: <XCircle size={28} strokeWidth={1.5} />, action: "refused", iconColor: "text-red-500" },
+          { label: "annuler client", icon: <UserX size={28} strokeWidth={1.5} />, action: "cancelled_by_client", iconColor: "text-orange-500" },
+        ];
+      case "confirmed":
+        return [
+          { label: "installer", icon: <Armchair size={28} strokeWidth={1.5} />, action: "seated", iconColor: "text-blue-500" },
+          { label: "no-show", icon: <Ghost size={28} strokeWidth={1.5} />, action: "noshow", iconColor: "text-amber-500" },
+          { label: "annuler", icon: <Trash2 size={28} strokeWidth={1.5} />, action: "cancelled", iconColor: "text-red-500" },
+          { label: "annuler client", icon: <UserX size={28} strokeWidth={1.5} />, action: "cancelled_by_client", iconColor: "text-orange-500" },
+        ];
+      case "seated":
+        return [
+          { label: "terminer", icon: <Flag size={28} strokeWidth={1.5} />, action: "completed", iconColor: "text-emerald-500" },
+          { label: "no-show", icon: <Ghost size={28} strokeWidth={1.5} />, action: "noshow", iconColor: "text-amber-500" },
+          { label: "incident", icon: <AlertTriangle size={28} strokeWidth={1.5} />, action: "incident", iconColor: "text-orange-500" },
+        ];
+      case "noshow":
+      case "cancelled":
+        return [
+          { label: "installer", icon: <Armchair size={28} strokeWidth={1.5} />, action: "seated", iconColor: "text-blue-500" },
+          { label: "rouvrir", icon: <RotateCcw size={28} strokeWidth={1.5} />, action: "confirmed", iconColor: "text-slate-500" },
+        ];
+      case "completed":
+      case "incident":
+        return [
+          { label: "rouvrir", icon: <RotateCcw size={28} strokeWidth={1.5} />, action: "seated", iconColor: "text-slate-500" },
+          { label: "terminer", icon: <Flag size={28} strokeWidth={1.5} />, action: "completed", iconColor: "text-emerald-500" },
+        ];
+      default:
+        return [];
+    }
   };
 
   const isLoading = lunchStatus === "LoadingFirstPage" || dinnerStatus === "LoadingFirstPage";
@@ -450,9 +475,15 @@ export default function TabletReservationsPage() {
               {openPopupId === res._id && (
                 <>
                   <div className="fixed inset-0 z-[99] bg-black/20" onClick={() => setOpenPopupId(null)} />
-                  <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#E8E8ED] rounded-3xl shadow-2xl p-4 z-[100] w-[340px] animate-in fade-in zoom-in-95 duration-200">
+                  <div 
+                    className="fixed bg-[#E8E8ED] rounded-2xl shadow-2xl p-3 z-[100] animate-in fade-in zoom-in-95 duration-200"
+                    style={{
+                      left: Math.min(popupPosition.x, window.innerWidth - 280),
+                      top: Math.min(popupPosition.y, window.innerHeight - 300),
+                    }}
+                  >
                     {/* Header avec actions rapides */}
-                    <div className="flex justify-center gap-6 pb-4 border-b border-gray-300/50">
+                    <div className="flex justify-center gap-6 pb-3 border-b border-gray-300/50">
                       <button
                         className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
                         onClick={() => {
@@ -460,7 +491,7 @@ export default function TabletReservationsPage() {
                           setEditingReservation(res);
                         }}
                       >
-                        <Pencil size={24} strokeWidth={1.5} />
+                        <Pencil size={22} strokeWidth={1.5} />
                       </button>
                       {res.phone && (
                         <a
@@ -468,7 +499,7 @@ export default function TabletReservationsPage() {
                           className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
                           onClick={() => setOpenPopupId(null)}
                         >
-                          <Phone size={24} strokeWidth={1.5} />
+                          <Phone size={22} strokeWidth={1.5} />
                         </a>
                       )}
                       {res.email && (
@@ -477,17 +508,17 @@ export default function TabletReservationsPage() {
                           className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
                           onClick={() => setOpenPopupId(null)}
                         >
-                          <Mail size={24} strokeWidth={1.5} />
+                          <Mail size={22} strokeWidth={1.5} />
                         </a>
                       )}
                     </div>
                     
-                    {/* Grille d'actions */}
-                    <div className="grid grid-cols-3 gap-2 pt-4">
+                    {/* Grille d'actions 2 colonnes rectangulaire */}
+                    <div className="grid grid-cols-2 gap-2 pt-3">
                       {getAllActions(res.status).map((action) => (
                         <button
                           key={action.action}
-                          className="flex flex-col items-center justify-center gap-2 p-4 bg-[#D4D4D9] hover:bg-[#C8C8CD] rounded-2xl transition-colors aspect-square"
+                          className="flex flex-col items-center justify-center gap-2 px-6 py-4 bg-[#D4D4D9] hover:bg-[#C8C8CD] rounded-xl transition-colors"
                           onClick={async () => {
                             setOpenPopupId(null);
                             if (action.action === "cancelled_by_client") {
@@ -497,14 +528,12 @@ export default function TabletReservationsPage() {
                               } catch (error) {
                                 toast.error(formatConvexError(error));
                               }
-                            } else if (action.action === "reopen") {
-                              handleStatusChange(res._id, "confirmed" as ReservationStatus, res.version);
                             } else {
                               handleStatusChange(res._id, action.action as ReservationStatus, res.version);
                             }
                           }}
                         >
-                          <span className="text-gray-600">{action.icon}</span>
+                          <span className={action.iconColor}>{action.icon}</span>
                           <span className="text-[11px] font-medium text-gray-600 text-center leading-tight">{action.label}</span>
                         </button>
                       ))}
