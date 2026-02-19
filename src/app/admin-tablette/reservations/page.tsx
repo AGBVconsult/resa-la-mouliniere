@@ -27,6 +27,7 @@ import {
   Clock,
   Sun,
   Moon,
+  Check,
   CheckCircle,
   XCircle,
   Armchair,
@@ -475,6 +476,26 @@ export default function TabletReservationsPage() {
                   : "bg-gray-100 hover:bg-gray-200"
             )}>{getTableName(res)}</span>
           </div>
+
+          {/* Bouton Tick - arrivée client */}
+          {(res.status === "confirmed" || res.status === "seated") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (res.status === "confirmed") {
+                  updateReservation({ reservationId: res._id, status: "seated", expectedVersion: res.version });
+                }
+              }}
+              className={cn(
+                "self-stretch flex items-center justify-center w-12 -my-3 shrink-0 transition-colors",
+                res.status === "seated"
+                  ? "bg-[#91BDA0] cursor-default"
+                  : "bg-[#FFF7BC] hover:bg-[#f5e87a] cursor-pointer"
+              )}
+            >
+              <Check size={20} strokeWidth={2.5} className="text-black" />
+            </button>
+          )}
 
           {/* Menu - bouton unique pour ouvrir le popup iOS */}
           <div className="flex items-center justify-end w-12" onClick={(e) => e.stopPropagation()}>
