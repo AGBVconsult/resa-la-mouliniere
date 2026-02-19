@@ -734,10 +734,12 @@ export default function TabletReservationsPage() {
                     
                     const hiddenStatuses = getHiddenStatuses(currentStatus, hasTable);
                     
+                    // Pour "assigned" (confirmed + table), on considère que c'est le statut actuel
+                    const effectiveStatus = (currentStatus === "confirmed" && hasTable) ? "assigned" : currentStatus;
+                    
                     return allStatuses.filter((item) => {
-                      // Toujours afficher le statut actuel
-                      if (item.status === currentStatus) return true;
-                      if (item.status === "assigned" && currentStatus === "confirmed" && hasTable) return true;
+                      // Toujours afficher le statut actuel effectif
+                      if (item.status === effectiveStatus) return true;
                       
                       // Masquer les statuts selon les règles
                       if (hiddenStatuses.includes(item.status)) return false;
@@ -745,16 +747,17 @@ export default function TabletReservationsPage() {
                       return true;
                     }).map((item) => {
                       const IconComponent = item.icon;
-                      const isCurrentStatus = res.status === item.status || 
-                        (item.status === "assigned" && res.status === "confirmed" && hasTable);
+                      const isCurrentStatus = item.status === effectiveStatus;
                       
                       return (
                         <button
                           key={item.status}
                           onClick={async () => {
                             setOpenPopupId(null);
-                            if (item.status !== res.status && item.status !== "assigned") {
-                              handleStatusChange(res._id, item.status as ReservationStatus, res.version);
+                            // Pour "assigned", on passe à "confirmed" (le statut réel)
+                            const targetStatus = item.status === "assigned" ? "confirmed" : item.status;
+                            if (targetStatus !== res.status) {
+                              handleStatusChange(res._id, targetStatus as ReservationStatus, res.version);
                             }
                           }}
                           className={cn(
