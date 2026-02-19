@@ -547,7 +547,7 @@ export default function TabletReservationsPage() {
         <div
           onClick={handleRowClick}
           className={cn(
-            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 px-4 py-3 gap-4",
+            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-3 gap-4",
             isExpanded && "bg-gray-50",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
             isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
@@ -666,19 +666,19 @@ export default function TabletReservationsPage() {
                   }}
                   disabled={!hasNextStatus}
                   className={cn(
-                    "flex items-center justify-center w-24 h-full transition-all active:scale-95",
+                    "flex items-center justify-center w-16 h-full transition-all active:scale-95",
                     hasNextStatus ? "cursor-pointer hover:brightness-95" : "cursor-default"
                   )}
                 >
-                  <StatusIcon size={28} strokeWidth={2} className={statusConfig.iconColor} />
+                  <StatusIcon size={24} strokeWidth={2} className={statusConfig.iconColor} />
                 </button>
                 
                 {/* Action secondaire - Chevron menu */}
                 <button
                   onClick={(e) => togglePopup(e, res._id)}
-                  className="flex items-center justify-center w-12 h-full border-l border-black/10 hover:bg-black/5 transition-colors"
+                  className="flex items-center justify-center w-8 h-full border-l border-black/10 hover:bg-black/5 transition-colors"
                 >
-                  <ChevronDown size={18} strokeWidth={2} className={statusConfig.iconColor} />
+                  <ChevronDown size={16} strokeWidth={2} className={statusConfig.iconColor} />
                 </button>
               </div>
             );
