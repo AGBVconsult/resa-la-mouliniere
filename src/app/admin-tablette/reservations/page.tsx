@@ -684,10 +684,10 @@ export default function TabletReservationsPage() {
             <>
               <div className="fixed inset-0 z-[9999] bg-black/10" onClick={(e) => { e.stopPropagation(); setOpenPopupId(null); }} />
               <div 
-                className="fixed bg-white rounded-3xl shadow-2xl p-5 z-[10000] animate-in fade-in zoom-in-95 duration-200 w-[280px]"
+                className="fixed bg-white rounded-3xl shadow-2xl p-5 z-[10000] animate-in fade-in zoom-in-95 duration-200 w-[280px] max-h-[80vh] overflow-y-auto"
                 style={{
-                  left: Math.min(popupPosition.x - 140, window.innerWidth - 300),
-                  top: Math.min(popupPosition.y, window.innerHeight - 500),
+                  left: Math.min(Math.max(popupPosition.x - 140, 10), window.innerWidth - 300),
+                  top: Math.min(Math.max(popupPosition.y - 200, 60), window.innerHeight - 450),
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
