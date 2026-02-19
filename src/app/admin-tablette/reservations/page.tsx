@@ -41,6 +41,10 @@ import {
   Phone,
   Mail,
   Hourglass,
+  ShieldQuestion,
+  CheckCheck,
+  Ban,
+  ChevronDown,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -94,6 +98,72 @@ const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
   refused: { bg: "bg-red-500" },
   completed: { bg: "bg-gray-300" },
   finished: { bg: "bg-gray-300" },
+};
+
+// Smart Status Button - Charte graphique pastel
+const SMART_STATUS_CONFIG: Record<string, {
+  bg: string;
+  iconColor: string;
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  nextStatus: string | null;
+  label: string;
+}> = {
+  pending: {
+    bg: "bg-[#FFEDD5]", // Pêche
+    iconColor: "text-orange-700",
+    icon: Clock,
+    nextStatus: "confirmed",
+    label: "En attente",
+  },
+  confirmed: {
+    bg: "bg-[#FEF3C7]", // Jaune crème
+    iconColor: "text-amber-700",
+    icon: ShieldQuestion,
+    nextStatus: "seated",
+    label: "Confirmé",
+  },
+  seated: {
+    bg: "bg-[#D0E1F9]", // Bleu glacier
+    iconColor: "text-blue-700",
+    icon: UserRoundCheck,
+    nextStatus: "completed",
+    label: "Installé",
+  },
+  completed: {
+    bg: "bg-[#F1F5F9]", // Gris nuage
+    iconColor: "text-slate-600",
+    icon: CheckCheck,
+    nextStatus: null,
+    label: "Terminé",
+  },
+  noshow: {
+    bg: "bg-[#FCE7F3]", // Rose poudré
+    iconColor: "text-pink-700",
+    icon: Ghost,
+    nextStatus: null,
+    label: "No-show",
+  },
+  cancelled: {
+    bg: "bg-[#FEE2E2]", // Rouge pastel
+    iconColor: "text-red-700",
+    icon: XCircle,
+    nextStatus: null,
+    label: "Annulé",
+  },
+  refused: {
+    bg: "bg-[#E7E5E4]", // Pierre
+    iconColor: "text-stone-700",
+    icon: Ban,
+    nextStatus: null,
+    label: "Refusé",
+  },
+  incident: {
+    bg: "bg-[#E2E8F0]", // Ardoise claire
+    iconColor: "text-slate-700",
+    icon: AlertTriangle,
+    nextStatus: null,
+    label: "Incident",
+  },
 };
 
 export default function TabletReservationsPage() {
@@ -559,53 +629,64 @@ export default function TabletReservationsPage() {
             )}>{getTableName(res)}</span>
           </div>
 
-          {/* Bouton Tick - arrivée client */}
-          {(res.status === "confirmed" || res.status === "seated") && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (res.status === "confirmed") {
-                  updateReservation({ reservationId: res._id, status: "seated", expectedVersion: res.version });
-                }
-              }}
-              className={cn(
-                "self-stretch flex items-center justify-center w-12 -my-3 shrink-0 transition-colors",
-                res.status === "seated"
-                  ? "bg-[#91BDA0] cursor-default"
-                  : isUnassigned
-                    ? "bg-gray-200 hover:bg-gray-300 cursor-pointer"
-                    : "bg-[#FFF7BC] hover:bg-[#f5e87a] cursor-pointer"
-              )}
-            >
-              {res.status === "seated" ? (
-                <UserRoundCheck size={20} strokeWidth={2} className="text-white" />
-              ) : (
-                <Check size={20} strokeWidth={2.5} className="text-black" />
-              )}
-            </button>
-          )}
-
-          {/* Menu - bouton unique pour ouvrir le popup iOS */}
-          <div className="flex items-center justify-end w-12" onClick={(e) => e.stopPropagation()}>
-            <div className="relative">
-              <Button
-                size="icon"
-                variant="ghost"
+          {/* Smart Status Button - Full Height */}
+          {(() => {
+            const baseConfig = SMART_STATUS_CONFIG[res.status];
+            if (!baseConfig) return null;
+            
+            // Cas spécial: confirmed + table assignée = Vert sauge avec Check
+            const hasTable = !isUnassigned;
+            const isConfirmedWithTable = res.status === "confirmed" && hasTable;
+            
+            const statusConfig = isConfirmedWithTable 
+              ? { bg: "bg-[#91BDA0]", iconColor: "text-white", icon: Check, nextStatus: "seated", label: "Table assignée" }
+              : baseConfig;
+            
+            const StatusIcon = statusConfig.icon;
+            const hasNextStatus = statusConfig.nextStatus !== null;
+            
+            return (
+              <div 
                 className={cn(
-                  "rounded-full w-10 h-10 transition-colors",
-                  res.status === "pending"
-                    ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
-                    : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                  "self-stretch flex shrink-0 -my-3 transition-all duration-300",
+                  statusConfig.bg
                 )}
-                onClick={(e) => togglePopup(e, res._id)}
+                onClick={(e) => e.stopPropagation()}
               >
-                {res.status === "pending" ? (
-                  <Hourglass className="h-5 w-5" />
-                ) : (
-                  <MoreHorizontal className="h-5 w-5" />
-                )}
-              </Button>
-              {openPopupId === res._id && (
+                {/* Action principale - Icône */}
+                <button
+                  onClick={() => {
+                    if (hasNextStatus) {
+                      updateReservation({ 
+                        reservationId: res._id, 
+                        status: statusConfig.nextStatus as ReservationStatus, 
+                        expectedVersion: res.version 
+                      });
+                    }
+                  }}
+                  disabled={!hasNextStatus}
+                  className={cn(
+                    "flex items-center justify-center w-12 h-full transition-all active:scale-95",
+                    hasNextStatus ? "cursor-pointer hover:brightness-95" : "cursor-default"
+                  )}
+                >
+                  <StatusIcon size={22} strokeWidth={2} className={statusConfig.iconColor} />
+                </button>
+                
+                {/* Action secondaire - Chevron menu */}
+                <button
+                  onClick={(e) => togglePopup(e, res._id)}
+                  className="flex items-center justify-center w-6 h-full border-l border-black/10 hover:bg-black/5 transition-colors"
+                >
+                  <ChevronDown size={14} strokeWidth={2} className={statusConfig.iconColor} />
+                </button>
+              </div>
+            );
+          })()}
+
+          {/* Popup menu contextuel */}
+          {openPopupId === res._id && (
+            <div onClick={(e) => e.stopPropagation()}>
                 <>
                   <div className="fixed inset-0 z-[9999] bg-black/20" onClick={() => setOpenPopupId(null)} />
                   <div 
@@ -673,9 +754,8 @@ export default function TabletReservationsPage() {
                     </div>
                   </div>
                 </>
-              )}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Expanded details */}
