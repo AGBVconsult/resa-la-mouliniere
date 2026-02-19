@@ -123,8 +123,8 @@ const SMART_STATUS_CONFIG: Record<string, {
     label: "Confirmé",
   },
   seated: {
-    bg: "bg-[#D0E1F9]", // Bleu glacier
-    iconColor: "text-blue-700",
+    bg: "bg-[#91BDA0]", // Vert sauge
+    iconColor: "text-green-900",
     icon: UserRoundCheck,
     nextStatus: "completed",
     label: "Installé",
@@ -629,12 +629,12 @@ export default function TabletReservationsPage() {
             const baseConfig = SMART_STATUS_CONFIG[res.status];
             if (!baseConfig) return null;
             
-            // Cas spécial: confirmed + table assignée = Vert sauge avec Check
+            // Cas spécial: confirmed + table assignée = Bleu glacier avec Check
             const hasTable = !isUnassigned;
             const isConfirmedWithTable = res.status === "confirmed" && hasTable;
             
             const statusConfig = isConfirmedWithTable 
-              ? { bg: "bg-[#91BDA0]", iconColor: "text-white", icon: Check, nextStatus: "seated", label: "Table assignée" }
+              ? { bg: "bg-[#D0E1F9]", iconColor: "text-blue-700", icon: Check, nextStatus: "seated", label: "Table assignée" }
               : baseConfig;
             
             const StatusIcon = statusConfig.icon;
@@ -702,8 +702,8 @@ export default function TabletReservationsPage() {
                     const allStatuses = [
                       { status: "pending", label: "En attente", desc: "Nécessite une validation", bg: "bg-[#FFEDD5]", iconColor: "text-orange-600", icon: Clock },
                       { status: "confirmed", label: "Confirmé", desc: "À assigner", bg: "bg-[#FEF3C7]", iconColor: "text-amber-600", icon: ShieldQuestion },
-                      { status: "assigned", label: "Table assignée", desc: "Prêt pour accueil", bg: "bg-[#91BDA0]", iconColor: "text-white", icon: Check },
-                      { status: "seated", label: "Installé", desc: "Client à table", bg: "bg-[#D0E1F9]", iconColor: "text-blue-600", icon: UserRoundCheck },
+                      { status: "assigned", label: "Table assignée", desc: "Prêt pour accueil", bg: "bg-[#D0E1F9]", iconColor: "text-blue-600", icon: Check },
+                      { status: "seated", label: "Installé", desc: "Client à table", bg: "bg-[#91BDA0]", iconColor: "text-green-900", icon: UserRoundCheck },
                       { status: "completed", label: "Terminé", desc: "Table libérée", bg: "bg-[#F1F5F9]", iconColor: "text-slate-600", icon: CheckCheck },
                       { status: "noshow", label: "No-show", desc: "Absent", bg: "bg-[#FCE7F3]", iconColor: "text-pink-600", icon: Ghost },
                       { status: "cancelled", label: "Annulé", desc: "Annulation client", bg: "bg-[#FEE2E2]", iconColor: "text-red-600", icon: XCircle },
