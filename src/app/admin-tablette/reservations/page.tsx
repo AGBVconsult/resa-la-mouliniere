@@ -194,6 +194,7 @@ export default function TabletReservationsPage() {
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ReservationStatus>>({});
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -249,10 +250,25 @@ export default function TabletReservationsPage() {
     newStatus: ReservationStatus,
     version: number
   ) => {
+    // Optimistic update - affichage immédiat
+    setOptimisticStatuses((prev) => ({ ...prev, [id]: newStatus }));
+    
     try {
       await updateReservation({ reservationId: id, status: newStatus, expectedVersion: version });
+      // Supprimer l'état optimiste une fois la mutation réussie
+      setOptimisticStatuses((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
       toast.success(`Statut mis à jour: ${newStatus}`);
     } catch (error) {
+      // Rollback en cas d'erreur
+      setOptimisticStatuses((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
       toast.error(formatConvexError(error));
     }
   };
@@ -518,10 +534,12 @@ export default function TabletReservationsPage() {
 
   const renderReservationRow = (res: Reservation) => {
     const isExpanded = expandedId === res._id;
-    const statusStyle = STATUS_COLORS[res.status] || { bg: "bg-gray-400" };
-    const primaryAction = getPrimaryAction(res.status);
-    const secondaryAction = getSecondaryAction(res.status);
-    const menuActions = getMenuActions(res.status);
+    // Utiliser le statut optimiste s'il existe, sinon le statut réel
+    const displayStatus = optimisticStatuses[res._id] || res.status;
+    const statusStyle = STATUS_COLORS[displayStatus] || { bg: "bg-gray-400" };
+    const primaryAction = getPrimaryAction(displayStatus);
+    const secondaryAction = getSecondaryAction(displayStatus);
+    const menuActions = getMenuActions(displayStatus);
     const hasOption = (opt: string) => res.options?.includes(opt);
     const isCompact = false; // Always show full info
     const isSelectedForAssignment = selectedForAssignment?._id === res._id;
@@ -626,12 +644,12 @@ export default function TabletReservationsPage() {
 
           {/* Smart Status Button - Full Height */}
           {(() => {
-            const baseConfig = SMART_STATUS_CONFIG[res.status];
+            const baseConfig = SMART_STATUS_CONFIG[displayStatus];
             if (!baseConfig) return null;
             
             // Cas spécial: confirmed + table assignée = Bleu glacier avec Check
             const hasTable = !isUnassigned;
-            const isConfirmedWithTable = res.status === "confirmed" && hasTable;
+            const isConfirmedWithTable = displayStatus === "confirmed" && hasTable;
             
             const statusConfig = isConfirmedWithTable 
               ? { bg: "bg-[#D0E1F9]", iconColor: "text-blue-700", icon: Check, nextStatus: "seated", label: "Table assignée" }
@@ -711,8 +729,8 @@ export default function TabletReservationsPage() {
                       { status: "incident", label: "Incident", desc: "Problème majeur", bg: "bg-[#E2E8F0]", iconColor: "text-slate-600", icon: AlertTriangle },
                     ];
                     
-                    // Filtrer selon le statut actuel
-                    const currentStatus = res.status;
+                    // Filtrer selon le statut actuel (utiliser le statut optimiste)
+                    const currentStatus = displayStatus;
                     const hasTable = !isUnassigned;
                     
                     // Statuts à masquer selon le statut actuel
