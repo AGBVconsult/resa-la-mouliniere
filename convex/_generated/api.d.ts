@@ -28,6 +28,7 @@ import type * as lib_email_resend from "../lib/email/resend.js";
 import type * as lib_email_retry from "../lib/email/retry.js";
 import type * as lib_email_templates from "../lib/email/templates.js";
 import type * as lib_errors from "../lib/errors.js";
+import type * as lib_formatters from "../lib/formatters.js";
 import type * as lib_idempotency from "../lib/idempotency.js";
 import type * as lib_pushover from "../lib/pushover.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
@@ -77,6 +78,7 @@ declare const fullApi: ApiFromModules<{
   "lib/email/retry": typeof lib_email_retry;
   "lib/email/templates": typeof lib_email_templates;
   "lib/errors": typeof lib_errors;
+  "lib/formatters": typeof lib_formatters;
   "lib/idempotency": typeof lib_idempotency;
   "lib/pushover": typeof lib_pushover;
   "lib/rateLimit": typeof lib_rateLimit;

@@ -23,7 +23,7 @@ const VALID_TRANSITIONS: Record<ReservationStatus, ReservationStatus[]> = {
   pending: ["confirmed", "refused", "cancelled"],
   confirmed: ["seated", "cancelled", "noshow", "completed"],
   seated: ["completed", "incident", "noshow", "confirmed"], // Can complete, report incident, mark as noshow, or revert to confirmed
-  completed: ["seated"], // Allow reopening
+  completed: ["seated", "confirmed"], // Allow reopening or reverting to confirmed
   noshow: ["seated", "confirmed"], // Allow marking as arrived or restoring
   cancelled: ["confirmed"], // Allow restoring
   refused: ["confirmed"], // Allow restoring

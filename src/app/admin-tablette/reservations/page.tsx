@@ -554,11 +554,6 @@ export default function TabletReservationsPage() {
             isUnassigned && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
           )}
         >
-          {/* Status pill */}
-          <div className="w-4 flex justify-center shrink-0 self-stretch">
-            <div className={cn("w-1 rounded-full h-full", statusStyle.bg, statusStyle.animate && "animate-pulse")} />
-          </div>
-
           {/* Column: 2 lignes */}
           <div className="flex flex-col gap-1 shrink-0" style={{ width: isCompact ? "150px" : "240px" }}>
             {/* Ligne 1: Prénom + Nom + Badge */}
