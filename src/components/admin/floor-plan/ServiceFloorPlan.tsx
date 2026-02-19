@@ -334,7 +334,7 @@ export function ServiceFloorPlan({
 
   if (hideHeader) {
     return (
-      <div ref={tabletContainerRef} className="w-full h-full overflow-hidden flex items-center justify-center">
+      <div ref={tabletContainerRef} className="w-full h-full overflow-hidden flex items-center justify-center p-4">
         <div
           className="relative shrink-0"
           style={{
