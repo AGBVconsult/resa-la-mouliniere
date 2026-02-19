@@ -847,12 +847,12 @@ export default function TabletReservationsPage() {
         </div>
 
         {/* Switch Total/Midi/Soir - centré */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-[52px] bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-[52px] bg-white/80 backdrop-blur-xl rounded-full px-1 border border-slate-200/60 shadow-sm">
           {/* Fond animé */}
           <div 
-            className="absolute top-1 h-[44px] bg-slate-700 rounded-full transition-transform duration-300 ease-out shadow-md"
+            className="absolute top-1 bottom-1 bg-slate-700 rounded-full transition-transform duration-300 ease-out shadow-md"
             style={{
-              width: 'calc(33.33% - 4px)',
+              width: 'calc(33.33% - 2px)',
               left: '4px',
               transform: selectedService === "lunch" ? 'translateX(100%)' : selectedService === "dinner" ? 'translateX(200%)' : 'translateX(0)'
             }}
