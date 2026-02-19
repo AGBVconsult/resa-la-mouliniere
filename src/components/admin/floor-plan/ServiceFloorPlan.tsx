@@ -299,16 +299,24 @@ export function ServiceFloorPlan({
             }}
             onClick={() => handleTableClick(table.tableId, table.status as TableStatus, table.reservation?.id)}
           >
-            <span className={cn("text-xs font-semibold", statusColors.text)}>
-              {table.name}
-            </span>
-            <span className={cn("text-[10px] flex items-center gap-0.5", statusColors.text, "opacity-75")}>
-              {table.capacity} <Users className="w-2.5 h-2.5" />
-            </span>
-            {table.reservation && (
-              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white px-1 rounded text-[8px] font-medium shadow truncate max-w-full">
-                {table.reservation.lastName}
-              </span>
+            {table.reservation ? (
+              <>
+                <span className={cn("text-[10px] font-bold leading-tight", statusColors.text)}>
+                  {table.reservation.timeKey}
+                </span>
+                <span className={cn("text-[9px] leading-tight truncate max-w-full px-0.5", statusColors.text)}>
+                  {table.reservation.lastName}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className={cn("text-xs font-semibold", statusColors.text)}>
+                  {table.name}
+                </span>
+                <span className={cn("text-[10px] flex items-center gap-0.5", statusColors.text, "opacity-75")}>
+                  {table.capacity} <Users className="w-2.5 h-2.5" />
+                </span>
+              </>
             )}
           </div>
         );
