@@ -67,6 +67,24 @@ crons.cron(
   {}
 );
 
+// Send noshow emails at 16h (15h UTC in winter, 14h UTC in summer)
+// Delayed sending to allow error correction
+crons.cron(
+  "send-noshow-emails-afternoon",
+  "0 15 * * *",
+  internal.emails.sendNoshowEmails,
+  {}
+);
+
+// Send noshow emails at 22h (21h UTC in winter, 20h UTC in summer)
+// Delayed sending to allow error correction
+crons.cron(
+  "send-noshow-emails-evening",
+  "0 21 * * *",
+  internal.emails.sendNoshowEmails,
+  {}
+);
+
 // Daily cleanup at 04:00 - delete expired tokens and idempotency keys
 crons.cron(
   "daily-cleanup",

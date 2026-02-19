@@ -788,6 +788,131 @@ export const reaper = internalMutation({
 });
 
 /**
+ * Send noshow emails in batch.
+ * Called by cron at 16h and 22h to allow error correction before sending.
+ * 
+ * Finds all reservations with status "noshow" for today that haven't received
+ * a noshow email yet, and enqueues the emails.
+ */
+export const sendNoshowEmails = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+
+    // Get active restaurant
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .collect();
+
+    if (activeRestaurants.length === 0) {
+      console.log("sendNoshowEmails: no active restaurant");
+      return { scanned: 0, enqueued: 0, alreadyExists: 0 };
+    }
+    if (activeRestaurants.length > 1) {
+      console.log("sendNoshowEmails: multiple active restaurants, skipping");
+      return { scanned: 0, enqueued: 0, alreadyExists: 0 };
+    }
+
+    const restaurant = activeRestaurants[0];
+    const timezone = restaurant.timezone;
+    const todayDateKey = computeTodayDateKey(timezone, now);
+
+    // Get settings for appUrl
+    const settings = await ctx.db
+      .query("settings")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", restaurant._id))
+      .unique();
+
+    const appUrl = settings?.appUrl ?? "";
+
+    // Find all noshow reservations for today
+    const noshowReservationsLunch = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("dateKey", todayDateKey).eq("service", "lunch")
+      )
+      .filter((q) => q.eq(q.field("status"), "noshow"))
+      .collect();
+
+    const noshowReservationsDinner = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("dateKey", todayDateKey).eq("service", "dinner")
+      )
+      .filter((q) => q.eq(q.field("status"), "noshow"))
+      .collect();
+
+    const noshowReservations = [...noshowReservationsLunch, ...noshowReservationsDinner];
+
+    let enqueued = 0;
+    let alreadyExists = 0;
+
+    for (const reservation of noshowReservations) {
+      // Build dedupe key for noshow email
+      const dedupeKey = `email:reservation.noshow:${reservation._id}:${reservation.version}`;
+
+      // Check if already exists
+      const existing = await ctx.db
+        .query("emailJobs")
+        .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
+        .unique();
+
+      if (existing) {
+        alreadyExists++;
+        continue;
+      }
+
+      // Enqueue noshow email (no manage URLs needed for noshow)
+      await ctx.db.insert("emailJobs", {
+        restaurantId: restaurant._id,
+        type: "reservation.noshow",
+        to: reservation.email,
+        subjectKey: "email.reservation.noshow.subject",
+        templateKey: "reservation.noshow",
+        templateData: {
+          firstName: reservation.firstName,
+          lastName: reservation.lastName,
+          dateKey: reservation.dateKey,
+          timeKey: reservation.timeKey,
+          service: reservation.service,
+          partySize: reservation.partySize,
+          adults: reservation.adults,
+          childrenCount: reservation.childrenCount,
+          babyCount: reservation.babyCount,
+          language: reservation.language,
+          manageUrl: "",
+          editUrl: "",
+          cancelUrl: "",
+          note: reservation.note ?? "",
+          options: reservation.options ?? [],
+        },
+        icsBase64: null,
+        status: "queued",
+        attemptCount: 0,
+        nextRetryAt: null,
+        lastAttemptAt: null,
+        lastErrorCode: null,
+        dedupeKey,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      enqueued++;
+    }
+
+    console.log("sendNoshowEmails completed", {
+      todayDateKey,
+      scanned: noshowReservations.length,
+      enqueued,
+      alreadyExists,
+    });
+
+    return { scanned: noshowReservations.length, enqueued, alreadyExists };
+  },
+});
+
+/**
  * Get operational stats for admin dashboard.
  * 
  * Autorisation: internal only (called by admin endpoints if needed).

@@ -32,7 +32,7 @@ type TableStatus = "seated" | "reserved" | "free" | "blocked";
 
 const STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: string }> = {
   free: { bg: "bg-white", border: "border-transparent", text: "text-black" },
-  reserved: { bg: "bg-[#91BDA0]", border: "border-transparent", text: "text-white" }, // Vert sauge pour assigned/confirmed
+  reserved: { bg: "bg-[#91BDA0]", border: "border-transparent", text: "text-black" }, // Vert sauge pour assigned/confirmed
   seated: { bg: "bg-[#D0E1F9]", border: "border-transparent", text: "text-blue-900" }, // Bleu glacier pour seated
   blocked: { bg: "bg-gray-400", border: "border-transparent", text: "text-gray-700" },
 };

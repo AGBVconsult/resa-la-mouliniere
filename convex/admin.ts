@@ -810,9 +810,9 @@ export const updateReservation = mutation({
         emailType = "reservation.cancelled_by_restaurant";
       } else if (status === "refused") {
         emailType = "reservation.refused";
-      } else if (status === "noshow") {
-        emailType = "reservation.noshow";
       }
+      // Note: noshow emails are NOT sent immediately to allow for error correction
+      // They are sent in batch at 16h and 22h via the sendNoshowEmails cron job
 
       if (emailType && settings) {
         await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
