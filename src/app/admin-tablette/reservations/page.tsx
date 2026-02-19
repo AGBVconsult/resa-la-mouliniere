@@ -367,6 +367,85 @@ export default function TabletReservationsPage() {
   const currentCapacity = selectedService === "total" ? (lunchCapacity + dinnerCapacity) : selectedService === "lunch" ? lunchCapacity : dinnerCapacity;
   const currentReservationsCount = selectedService === "total" ? (lunchReservationsCount + dinnerReservationsCount) : selectedService === "lunch" ? lunchReservationsCount : dinnerReservationsCount;
 
+  const renderReservationsList = (reservations: Reservation[], service: "lunch" | "dinner") => {
+    const allReservations = reservations?.slice().sort((a, b) => a.timeKey.localeCompare(b.timeKey)) || [];
+    
+    const activeReservations = allReservations.filter(r => !["cancelled", "noshow"].includes(r.status));
+    const cancelledReservations = allReservations.filter(r => ["cancelled", "noshow"].includes(r.status));
+    
+    const timeGroups = activeReservations.reduce((groups, res) => {
+      const time = res.timeKey;
+      if (!groups[time]) groups[time] = [];
+      groups[time].push(res);
+      return groups;
+    }, {} as Record<string, Reservation[]>);
+    
+    const sortedTimes = Object.keys(timeGroups).sort();
+    
+    if (sortedTimes.length === 0 && cancelledReservations.length === 0) {
+      return (
+        <div className="px-5 py-12 text-center text-base text-slate-400">
+          Aucune réservation
+        </div>
+      );
+    }
+    
+    return (
+      <>
+        {sortedTimes.map((time) => {
+          const groupReservations = timeGroups[time];
+          const groupCovers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
+          const groupCapacity = slotsData?.[service]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
+          const resaCount = groupReservations.length;
+          
+          return (
+            <div key={time}>
+              <div className={cn(
+                "flex items-center gap-4 bg-[#334156] text-white border-b border-slate-600",
+                showFloorPlan || selectedService === "total" ? "px-3 py-1.5" : "px-4 py-2"
+              )}>
+                <div className="flex items-center gap-1.5 text-white">
+                  <Clock size={12} strokeWidth={2} />
+                  <span className="font-bold text-xs">{time}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-white/80">
+                  <UsersRound size={12} strokeWidth={2} />
+                  <span className="text-[10px]">{groupCovers} / {groupCapacity}</span>
+                </div>
+                <span className="text-white/60 text-[10px]">• {resaCount} résa{resaCount > 1 ? "s" : ""}</span>
+              </div>
+              <div className="divide-y divide-slate-50">
+                {groupReservations.map(renderReservationRow)}
+              </div>
+            </div>
+          );
+        })}
+        
+        {cancelledReservations.length > 0 && (
+          <div className="mt-4 border-t-2 border-slate-200">
+            <div className={cn(
+              "flex items-center gap-4 bg-slate-100 border-b border-slate-200",
+              showFloorPlan || selectedService === "total" ? "px-3 py-1.5" : "px-4 py-2"
+            )}>
+              <div className="flex items-center gap-1.5 text-slate-500">
+                <X size={12} strokeWidth={2} />
+                <span className="font-semibold uppercase tracking-wide text-[10px]">
+                  Annulations / No-show
+                </span>
+              </div>
+              <span className="text-slate-400 text-[10px]">
+                • {cancelledReservations.length} résa{cancelledReservations.length > 1 ? "s" : ""}
+              </span>
+            </div>
+            <div className="divide-y divide-slate-50 opacity-60">
+              {cancelledReservations.map(renderReservationRow)}
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
+
   const renderReservationRow = (res: Reservation) => {
     const isExpanded = expandedId === res._id;
     const statusStyle = STATUS_COLORS[res.status] || { bg: "bg-gray-400" };
@@ -655,59 +734,56 @@ export default function TabletReservationsPage() {
           </button>
         </div>
 
-        {/* Stats badge avec switch intégré - centré */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 h-[52px] bg-white/80 backdrop-blur-xl rounded-full pl-5 pr-1 border border-slate-200/60 shadow-sm">
-          {/* Switch Total/Midi/Soir */}
-          <div className="relative bg-slate-100/80 rounded-full p-1 h-[44px] flex items-center">
-            {/* Fond animé */}
-            <div 
-              className="absolute top-1 h-[36px] bg-slate-700 rounded-full transition-transform duration-300 ease-out shadow-md"
-              style={{
-                width: 'calc(33.33% - 4px)',
-                left: '4px',
-                transform: selectedService === "lunch" ? 'translateX(100%)' : selectedService === "dinner" ? 'translateX(200%)' : 'translateX(0)'
-              }}
-            />
-            
-            {/* Bouton Total */}
-            <button
-              onClick={() => setSelectedService("total")}
-              className={cn(
-                "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
-                selectedService === "total" ? "text-white" : "text-slate-500"
-              )}
-            >
-              <UsersRound size={14} strokeWidth={1.5} />
-              <span className="font-bold text-base">{totalCovers}</span>
-              <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "total" ? "opacity-100" : "opacity-60")}>Total</span>
-            </button>
-            
-            {/* Bouton Midi */}
-            <button
-              onClick={() => setSelectedService("lunch")}
-              className={cn(
-                "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
-                selectedService === "lunch" ? "text-white" : "text-slate-500"
-              )}
-            >
-              <Sun size={14} strokeWidth={1.5} className="text-amber-400" />
-              <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "lunch" ? "opacity-100" : "opacity-60")}>Midi</span>
-              <span className="font-bold text-base">{lunchCovers}</span>
-            </button>
-            
-            {/* Bouton Soir */}
-            <button
-              onClick={() => setSelectedService("dinner")}
-              className={cn(
-                "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
-                selectedService === "dinner" ? "text-white" : "text-slate-500"
-              )}
-            >
-              <Moon size={14} strokeWidth={1.5} className="text-indigo-400" />
-              <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "dinner" ? "opacity-100" : "opacity-60")}>Soir</span>
-              <span className="font-bold text-base">{dinnerCovers}</span>
-            </button>
-          </div>
+        {/* Switch Total/Midi/Soir - centré */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-[52px] bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
+          {/* Fond animé */}
+          <div 
+            className="absolute top-1 h-[44px] bg-slate-700 rounded-full transition-transform duration-300 ease-out shadow-md"
+            style={{
+              width: 'calc(33.33% - 4px)',
+              left: '4px',
+              transform: selectedService === "lunch" ? 'translateX(100%)' : selectedService === "dinner" ? 'translateX(200%)' : 'translateX(0)'
+            }}
+          />
+          
+          {/* Bouton Total */}
+          <button
+            onClick={() => setSelectedService("total")}
+            className={cn(
+              "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
+              selectedService === "total" ? "text-white" : "text-slate-500"
+            )}
+          >
+            <UsersRound size={14} strokeWidth={1.5} />
+            <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "total" ? "opacity-100" : "opacity-60")}>Total</span>
+            <span className="font-bold text-base">{totalCovers}</span>
+          </button>
+          
+          {/* Bouton Midi */}
+          <button
+            onClick={() => setSelectedService("lunch")}
+            className={cn(
+              "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
+              selectedService === "lunch" ? "text-white" : "text-slate-500"
+            )}
+          >
+            <Sun size={14} strokeWidth={1.5} className="text-amber-400" />
+            <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "lunch" ? "opacity-100" : "opacity-60")}>Midi</span>
+            <span className="font-bold text-base">{lunchCovers}</span>
+          </button>
+          
+          {/* Bouton Soir */}
+          <button
+            onClick={() => setSelectedService("dinner")}
+            className={cn(
+              "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
+              selectedService === "dinner" ? "text-white" : "text-slate-500"
+            )}
+          >
+            <Moon size={14} strokeWidth={1.5} className="text-indigo-400" />
+            <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "dinner" ? "opacity-100" : "opacity-60")}>Soir</span>
+            <span className="font-bold text-base">{dinnerCovers}</span>
+          </button>
         </div>
 
         {/* Settings + Map - aligné à droite */}
@@ -734,110 +810,55 @@ export default function TabletReservationsPage() {
 
       {/* Main content with floor plan */}
       <div className="flex-1 flex gap-0 min-h-0">
-        {/* Reservations list with header */}
-        <div className={cn(
-          "flex flex-col transition-all duration-300",
-          showFloorPlan ? "w-[50%]" : "w-full"
-        )}>
-          {/* Reservations list grouped by time */}
-          <div className="flex-1 flex flex-col bg-white overflow-hidden">
-            {isLoading ? (
-              <div className="flex-1 flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        {/* Vue Total: deux colonnes Midi | Soir */}
+        {selectedService === "total" ? (
+          <>
+            {/* Colonne Midi */}
+            <div className="w-[50%] flex flex-col border-r border-slate-200">
+              <div className="bg-amber-50 px-4 py-2 border-b border-amber-200 flex items-center gap-2">
+                <Sun size={16} strokeWidth={1.5} className="text-amber-500" />
+                <span className="font-bold text-amber-700">MIDI</span>
+                <span className="text-amber-600 text-sm">{lunchCovers} couverts</span>
               </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto">
-                {(() => {
-                  const allReservations = (currentReservations as Reservation[])?.slice().sort((a, b) => a.timeKey.localeCompare(b.timeKey)) || [];
-                  
-                  // Séparer les réservations actives et annulées/noshow
-                  const activeReservations = allReservations.filter(r => !["cancelled", "noshow"].includes(r.status));
-                  const cancelledReservations = allReservations.filter(r => ["cancelled", "noshow"].includes(r.status));
-                  
-                  const timeGroups = activeReservations.reduce((groups, res) => {
-                    const time = res.timeKey;
-                    if (!groups[time]) groups[time] = [];
-                    groups[time].push(res);
-                    return groups;
-                  }, {} as Record<string, Reservation[]>);
-                  
-                  const sortedTimes = Object.keys(timeGroups).sort();
-                  
-                  if (sortedTimes.length === 0 && cancelledReservations.length === 0) {
-                    return (
-                      <div className="px-5 py-12 text-center text-base text-slate-400">
-                        Aucune réservation
-                      </div>
-                    );
-                  }
-                  
-                  return (
-                    <>
-                      {sortedTimes.map((time) => {
-                        const groupReservations = timeGroups[time];
-                        const groupCovers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
-                        const groupCapacity = selectedService === "total" 
-                          ? 0 
-                          : slotsData?.[selectedService]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
-                        const resaCount = groupReservations.length;
-                        
-                        return (
-                          <div key={time}>
-                            {/* Time section header */}
-                            <div className={cn(
-                              "flex items-center gap-4 bg-[#334156] text-white border-b border-slate-600",
-                              showFloorPlan ? "px-3 py-1.5" : "px-4 py-2"
-                            )}>
-                              <div className="flex items-center gap-1.5 text-white">
-                                <Clock size={showFloorPlan ? 12 : 14} strokeWidth={2} />
-                                <span className={cn("font-bold", showFloorPlan ? "text-xs" : "text-sm")}>{time}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5 text-white/80">
-                                <UsersRound size={showFloorPlan ? 12 : 14} strokeWidth={2} />
-                                <span className={cn(showFloorPlan ? "text-[10px]" : "text-xs")}>{groupCovers} / {groupCapacity}</span>
-                              </div>
-                              <span className={cn("text-white/60", showFloorPlan ? "text-[10px]" : "text-xs")}>• {resaCount} résa{resaCount > 1 ? "s" : ""}</span>
-                            </div>
-                            {/* Reservations in this time slot */}
-                            <div className="divide-y divide-slate-50">
-                              {groupReservations.map(renderReservationRow)}
-                            </div>
-                          </div>
-                        );
-                      })}
-                      
-                      {/* Section Annulations / No-show */}
-                      {cancelledReservations.length > 0 && (
-                        <div className="mt-4 border-t-2 border-slate-200">
-                          <div className={cn(
-                            "flex items-center gap-4 bg-slate-100 border-b border-slate-200",
-                            showFloorPlan ? "px-3 py-1.5" : "px-4 py-2"
-                          )}>
-                            <div className="flex items-center gap-1.5 text-slate-500">
-                              <X size={showFloorPlan ? 12 : 14} strokeWidth={2} />
-                              <span className={cn("font-semibold uppercase tracking-wide", showFloorPlan ? "text-[10px]" : "text-xs")}>
-                                Annulations / No-show
-                              </span>
-                            </div>
-                            <span className={cn("text-slate-400", showFloorPlan ? "text-[10px]" : "text-xs")}>
-                              • {cancelledReservations.length} résa{cancelledReservations.length > 1 ? "s" : ""}
-                            </span>
-                          </div>
-                          <div className="divide-y divide-slate-50 opacity-60">
-                            {cancelledReservations.map(renderReservationRow)}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
+              <div className="flex-1 overflow-y-auto bg-white">
+                {renderReservationsList(lunchReservations as Reservation[], "lunch")}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+            {/* Colonne Soir */}
+            <div className="w-[50%] flex flex-col">
+              <div className="bg-indigo-50 px-4 py-2 border-b border-indigo-200 flex items-center gap-2">
+                <Moon size={16} strokeWidth={1.5} className="text-indigo-500" />
+                <span className="font-bold text-indigo-700">SOIR</span>
+                <span className="text-indigo-600 text-sm">{dinnerCovers} couverts</span>
+              </div>
+              <div className="flex-1 overflow-y-auto bg-white">
+                {renderReservationsList(dinnerReservations as Reservation[], "dinner")}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Reservations list with header */}
+            <div className={cn(
+              "flex flex-col transition-all duration-300",
+              showFloorPlan ? "w-[50%]" : "w-full"
+            )}>
+              {/* Reservations list grouped by time */}
+              <div className="flex-1 flex flex-col bg-white overflow-hidden">
+                {isLoading ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-y-auto">
+                    {renderReservationsList(currentReservations as Reservation[], selectedService as "lunch" | "dinner")}
+                  </div>
+                )}
+              </div>
+            </div>
 
-        {/* Floor Plan */}
-        {showFloorPlan && selectedService !== "total" && (
+            {/* Floor Plan */}
+            {showFloorPlan && (
           <div className="w-[50%] shrink-0 h-full bg-[#4F4F50] border-l-2 border-white overflow-hidden relative">
               <ServiceFloorPlan
               dateKey={dateKey}
@@ -851,6 +872,8 @@ export default function TabletReservationsPage() {
               hideHeader
             />
           </div>
+        )}
+          </>
         )}
       </div>
 
