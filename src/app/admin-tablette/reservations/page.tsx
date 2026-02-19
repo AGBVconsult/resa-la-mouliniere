@@ -482,7 +482,7 @@ export default function TabletReservationsPage() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (res.status === "confirmed" && !isUnassigned) {
+                if (res.status === "confirmed") {
                   updateReservation({ reservationId: res._id, status: "seated", expectedVersion: res.version });
                 }
               }}
@@ -491,7 +491,7 @@ export default function TabletReservationsPage() {
                 res.status === "seated"
                   ? "bg-[#91BDA0] cursor-default"
                   : isUnassigned
-                    ? "bg-gray-200 cursor-default"
+                    ? "bg-gray-200 hover:bg-gray-300 cursor-pointer"
                     : "bg-[#FFF7BC] hover:bg-[#f5e87a] cursor-pointer"
               )}
             >
