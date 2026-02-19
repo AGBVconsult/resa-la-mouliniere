@@ -111,7 +111,7 @@ export default function TabletReservationsPage() {
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [openPopupId, setOpenPopupId] = useState<Id<"reservations"> | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [selectedService, setSelectedService] = useState<"lunch" | "dinner">(() => {
+  const [selectedService, setSelectedService] = useState<"total" | "lunch" | "dinner">(() => {
     // Sélectionner automatiquement le service selon l'heure au chargement
     const now = new Date();
     const brusselsTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Brussels" }));
@@ -360,10 +360,12 @@ export default function TabletReservationsPage() {
 
   const isLoading = lunchStatus === "LoadingFirstPage" || dinnerStatus === "LoadingFirstPage";
 
-  const currentReservations = selectedService === "lunch" ? lunchReservations : dinnerReservations;
-  const currentCovers = selectedService === "lunch" ? lunchCovers : dinnerCovers;
-  const currentCapacity = selectedService === "lunch" ? lunchCapacity : dinnerCapacity;
-  const currentReservationsCount = selectedService === "lunch" ? lunchReservationsCount : dinnerReservationsCount;
+  const currentReservations = selectedService === "total" 
+    ? [...(lunchReservations || []), ...(dinnerReservations || [])]
+    : selectedService === "lunch" ? lunchReservations : dinnerReservations;
+  const currentCovers = selectedService === "total" ? totalCovers : selectedService === "lunch" ? lunchCovers : dinnerCovers;
+  const currentCapacity = selectedService === "total" ? (lunchCapacity + dinnerCapacity) : selectedService === "lunch" ? lunchCapacity : dinnerCapacity;
+  const currentReservationsCount = selectedService === "total" ? (lunchReservationsCount + dinnerReservationsCount) : selectedService === "lunch" ? lunchReservationsCount : dinnerReservationsCount;
 
   const renderReservationRow = (res: Reservation) => {
     const isExpanded = expandedId === res._id;
@@ -655,33 +657,36 @@ export default function TabletReservationsPage() {
 
         {/* Stats badge avec switch intégré - centré */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 h-[52px] bg-white/80 backdrop-blur-xl rounded-full pl-5 pr-1 border border-slate-200/60 shadow-sm">
-          {/* Total */}
-          <div className="flex items-center gap-2 mr-1">
-            <UsersRound size={16} strokeWidth={1.5} className="text-slate-400" />
-            <span className="font-bold text-lg text-slate-700">{totalCovers}</span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</span>
-          </div>
-          
-          {/* Diviseur */}
-          <div className="w-px h-6 bg-slate-200/80 mr-1" />
-          
-          {/* Switch Midi/Soir */}
+          {/* Switch Total/Midi/Soir */}
           <div className="relative bg-slate-100/80 rounded-full p-1 h-[44px] flex items-center">
             {/* Fond animé */}
             <div 
               className="absolute top-1 h-[36px] bg-slate-700 rounded-full transition-transform duration-300 ease-out shadow-md"
               style={{
-                width: 'calc(50% - 4px)',
+                width: 'calc(33.33% - 4px)',
                 left: '4px',
-                transform: selectedService === "dinner" ? 'translateX(100%)' : 'translateX(0)'
+                transform: selectedService === "lunch" ? 'translateX(100%)' : selectedService === "dinner" ? 'translateX(200%)' : 'translateX(0)'
               }}
             />
+            
+            {/* Bouton Total */}
+            <button
+              onClick={() => setSelectedService("total")}
+              className={cn(
+                "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
+                selectedService === "total" ? "text-white" : "text-slate-500"
+              )}
+            >
+              <UsersRound size={14} strokeWidth={1.5} />
+              <span className="font-bold text-base">{totalCovers}</span>
+              <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "total" ? "opacity-100" : "opacity-60")}>Total</span>
+            </button>
             
             {/* Bouton Midi */}
             <button
               onClick={() => setSelectedService("lunch")}
               className={cn(
-                "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-28 gap-1.5",
+                "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
                 selectedService === "lunch" ? "text-white" : "text-slate-500"
               )}
             >
@@ -694,7 +699,7 @@ export default function TabletReservationsPage() {
             <button
               onClick={() => setSelectedService("dinner")}
               className={cn(
-                "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-28 gap-1.5",
+                "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
                 selectedService === "dinner" ? "text-white" : "text-slate-500"
               )}
             >
@@ -771,7 +776,9 @@ export default function TabletReservationsPage() {
                       {sortedTimes.map((time) => {
                         const groupReservations = timeGroups[time];
                         const groupCovers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
-                        const groupCapacity = slotsData?.[selectedService]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
+                        const groupCapacity = selectedService === "total" 
+                          ? 0 
+                          : slotsData?.[selectedService]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
                         const resaCount = groupReservations.length;
                         
                         return (
@@ -830,11 +837,11 @@ export default function TabletReservationsPage() {
         </div>
 
         {/* Floor Plan */}
-        {showFloorPlan && (
+        {showFloorPlan && selectedService !== "total" && (
           <div className="w-[50%] shrink-0 h-full bg-[#4F4F50] border-l-2 border-white overflow-hidden relative">
               <ServiceFloorPlan
               dateKey={dateKey}
-              service={selectedService}
+              service={selectedService as "lunch" | "dinner"}
               selectedReservationId={selectedForAssignment?._id}
               selectedReservationVersion={selectedForAssignment?.version}
               selectedPartySize={selectedForAssignment?.partySize}
