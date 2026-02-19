@@ -686,7 +686,7 @@ export default function TabletReservationsPage() {
 
           {/* Popup menu contextuel - Changer le statut */}
           {openPopupId === res._id && (
-            <div onClick={(e) => e.stopPropagation()}>
+            <>
               <div className="fixed inset-0 z-[9999] bg-black/10" onClick={() => setOpenPopupId(null)} />
               <div 
                 className="fixed bg-white rounded-3xl shadow-2xl p-5 z-[10000] animate-in fade-in zoom-in-95 duration-200 w-[280px]"
@@ -694,61 +694,99 @@ export default function TabletReservationsPage() {
                   left: Math.min(popupPosition.x - 140, window.innerWidth - 300),
                   top: Math.min(popupPosition.y, window.innerHeight - 500),
                 }}
+                onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center mb-4">
                   Changer le statut
                 </p>
                 
-                {/* Liste des statuts */}
+                {/* Liste des statuts filtrée selon le statut actuel */}
                 <div className="flex flex-col gap-1">
-                  {[
-                    { status: "pending", label: "En attente", desc: "Nécessite une validation", bg: "bg-[#FFEDD5]", iconColor: "text-orange-600", icon: Clock },
-                    { status: "confirmed", label: "Confirmé", desc: "À assigner", bg: "bg-[#FEF3C7]", iconColor: "text-amber-600", icon: ShieldQuestion },
-                    { status: "assigned", label: "Table assignée", desc: "Prêt pour accueil", bg: "bg-[#91BDA0]", iconColor: "text-white", icon: Check },
-                    { status: "seated", label: "Installé", desc: "Client à table", bg: "bg-[#D0E1F9]", iconColor: "text-blue-600", icon: UserRoundCheck },
-                    { status: "completed", label: "Terminé", desc: "Table libérée", bg: "bg-[#F1F5F9]", iconColor: "text-slate-600", icon: CheckCheck },
-                    { status: "noshow", label: "No-show", desc: "Absent", bg: "bg-[#FCE7F3]", iconColor: "text-pink-600", icon: Ghost },
-                    { status: "cancelled", label: "Annulé", desc: "Annulation client", bg: "bg-[#FEE2E2]", iconColor: "text-red-600", icon: XCircle },
-                    { status: "refused", label: "Refusé", desc: "Refus établissement", bg: "bg-[#E7E5E4]", iconColor: "text-stone-600", icon: Ban },
-                    { status: "incident", label: "Incident", desc: "Problème majeur", bg: "bg-[#E2E8F0]", iconColor: "text-slate-600", icon: AlertTriangle },
-                  ].map((item) => {
-                    const IconComponent = item.icon;
-                    const isCurrentStatus = res.status === item.status || 
-                      (item.status === "assigned" && res.status === "confirmed" && !isUnassigned);
+                  {(() => {
+                    const allStatuses = [
+                      { status: "pending", label: "En attente", desc: "Nécessite une validation", bg: "bg-[#FFEDD5]", iconColor: "text-orange-600", icon: Clock },
+                      { status: "confirmed", label: "Confirmé", desc: "À assigner", bg: "bg-[#FEF3C7]", iconColor: "text-amber-600", icon: ShieldQuestion },
+                      { status: "assigned", label: "Table assignée", desc: "Prêt pour accueil", bg: "bg-[#91BDA0]", iconColor: "text-white", icon: Check },
+                      { status: "seated", label: "Installé", desc: "Client à table", bg: "bg-[#D0E1F9]", iconColor: "text-blue-600", icon: UserRoundCheck },
+                      { status: "completed", label: "Terminé", desc: "Table libérée", bg: "bg-[#F1F5F9]", iconColor: "text-slate-600", icon: CheckCheck },
+                      { status: "noshow", label: "No-show", desc: "Absent", bg: "bg-[#FCE7F3]", iconColor: "text-pink-600", icon: Ghost },
+                      { status: "cancelled", label: "Annulé", desc: "Annulation client", bg: "bg-[#FEE2E2]", iconColor: "text-red-600", icon: XCircle },
+                      { status: "refused", label: "Refusé", desc: "Refus établissement", bg: "bg-[#E7E5E4]", iconColor: "text-stone-600", icon: Ban },
+                      { status: "incident", label: "Incident", desc: "Problème majeur", bg: "bg-[#E2E8F0]", iconColor: "text-slate-600", icon: AlertTriangle },
+                    ];
                     
-                    return (
-                      <button
-                        key={item.status}
-                        onClick={async () => {
-                          setOpenPopupId(null);
-                          if (item.status !== res.status && item.status !== "assigned") {
-                            handleStatusChange(res._id, item.status as ReservationStatus, res.version);
-                          }
-                        }}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all",
-                          isCurrentStatus 
-                            ? "bg-orange-50 border border-orange-200" 
-                            : "hover:bg-slate-50"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                          item.bg
-                        )}>
-                          <IconComponent size={20} strokeWidth={2} className={item.iconColor} />
-                        </div>
-                        <div className="flex flex-col items-start">
-                          <span className="text-sm font-semibold text-slate-800">{item.label}</span>
-                          <span className="text-xs text-slate-400">{item.desc}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
+                    // Filtrer selon le statut actuel
+                    const currentStatus = res.status;
+                    const hasTable = !isUnassigned;
+                    
+                    // Ordre du flux: pending → confirmed → assigned → seated → completed
+                    const flowOrder = ["pending", "confirmed", "assigned", "seated", "completed"];
+                    const currentFlowIndex = flowOrder.indexOf(currentStatus);
+                    const isInFlow = currentFlowIndex !== -1;
+                    
+                    // Statuts d'exception qui permettent un retour
+                    const exceptionStatuses = ["seated", "completed", "noshow", "cancelled", "refused", "incident"];
+                    const isException = exceptionStatuses.includes(currentStatus);
+                    
+                    return allStatuses.filter((item) => {
+                      // Toujours afficher le statut actuel
+                      if (item.status === currentStatus) return true;
+                      if (item.status === "assigned" && currentStatus === "confirmed" && hasTable) return true;
+                      
+                      // Pour les statuts dans le flux (pending, confirmed, assigned)
+                      if (isInFlow && !isException) {
+                        const itemFlowIndex = flowOrder.indexOf(item.status);
+                        // Ne pas afficher les statuts précédents dans le flux
+                        if (itemFlowIndex !== -1 && itemFlowIndex < currentFlowIndex) return false;
+                        // Afficher les statuts suivants et les exceptions
+                        return true;
+                      }
+                      
+                      // Pour les statuts d'exception, permettre le retour
+                      if (isException) {
+                        return true;
+                      }
+                      
+                      return true;
+                    }).map((item) => {
+                      const IconComponent = item.icon;
+                      const isCurrentStatus = res.status === item.status || 
+                        (item.status === "assigned" && res.status === "confirmed" && hasTable);
+                      
+                      return (
+                        <button
+                          key={item.status}
+                          onClick={async () => {
+                            setOpenPopupId(null);
+                            if (item.status !== res.status && item.status !== "assigned") {
+                              handleStatusChange(res._id, item.status as ReservationStatus, res.version);
+                            }
+                          }}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all",
+                            isCurrentStatus 
+                              ? "bg-orange-50 border border-orange-200" 
+                              : "hover:bg-slate-50"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                            item.bg
+                          )}>
+                            <IconComponent size={20} strokeWidth={2} className={item.iconColor} />
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="text-sm font-semibold text-slate-800">{item.label}</span>
+                            <span className="text-xs text-slate-400">{item.desc}</span>
+                          </div>
+                        </button>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
-            </div>
+            </>
           )}
         </div>
 
