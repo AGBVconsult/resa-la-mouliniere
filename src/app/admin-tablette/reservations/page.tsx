@@ -666,19 +666,19 @@ export default function TabletReservationsPage() {
                   }}
                   disabled={!hasNextStatus}
                   className={cn(
-                    "flex items-center justify-center w-12 h-full transition-all active:scale-95",
+                    "flex items-center justify-center w-24 h-full transition-all active:scale-95",
                     hasNextStatus ? "cursor-pointer hover:brightness-95" : "cursor-default"
                   )}
                 >
-                  <StatusIcon size={22} strokeWidth={2} className={statusConfig.iconColor} />
+                  <StatusIcon size={28} strokeWidth={2} className={statusConfig.iconColor} />
                 </button>
                 
                 {/* Action secondaire - Chevron menu */}
                 <button
                   onClick={(e) => togglePopup(e, res._id)}
-                  className="flex items-center justify-center w-6 h-full border-l border-black/10 hover:bg-black/5 transition-colors"
+                  className="flex items-center justify-center w-12 h-full border-l border-black/10 hover:bg-black/5 transition-colors"
                 >
-                  <ChevronDown size={14} strokeWidth={2} className={statusConfig.iconColor} />
+                  <ChevronDown size={18} strokeWidth={2} className={statusConfig.iconColor} />
                 </button>
               </div>
             );
