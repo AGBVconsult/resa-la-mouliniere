@@ -123,11 +123,14 @@ export function ServiceFloorPlan({
     const el = tabletContainerRef.current;
     if (!el) return;
 
+    const PADDING = 32; // 16px * 2 (p-4)
     const compute = () => {
       const rect = el.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0 && gridLayout.width > 0 && gridLayout.height > 0) {
-        const scaleX = rect.width / gridLayout.width;
-        const scaleY = rect.height / gridLayout.height;
+      const availableW = rect.width - PADDING;
+      const availableH = rect.height - PADDING;
+      if (availableW > 0 && availableH > 0 && gridLayout.width > 0 && gridLayout.height > 0) {
+        const scaleX = availableW / gridLayout.width;
+        const scaleY = availableH / gridLayout.height;
         setTabletScale(Math.min(scaleX, scaleY));
       }
     };

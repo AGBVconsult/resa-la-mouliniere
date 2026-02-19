@@ -28,6 +28,7 @@ import {
   Sun,
   Moon,
   Check,
+  UserRoundCheck,
   CheckCircle,
   XCircle,
   Armchair,
@@ -408,7 +409,7 @@ export default function TabletReservationsPage() {
           </div>
 
           {/* Column: 2 lignes */}
-          <div className="flex flex-col gap-1 shrink-0" style={{ width: isCompact ? "200px" : "320px" }}>
+          <div className="flex flex-col gap-1 shrink-0" style={{ width: isCompact ? "150px" : "240px" }}>
             {/* Ligne 1: Prénom + Nom + Badge */}
             {(() => {
               const visits = res.totalVisits ?? 0;
@@ -495,7 +496,11 @@ export default function TabletReservationsPage() {
                     : "bg-[#FFF7BC] hover:bg-[#f5e87a] cursor-pointer"
               )}
             >
-              <Check size={20} strokeWidth={2.5} className="text-black" />
+              {res.status === "seated" ? (
+                <UserRoundCheck size={20} strokeWidth={2} className="text-white" />
+              ) : (
+                <Check size={20} strokeWidth={2.5} className="text-black" />
+              )}
             </button>
           )}
 
