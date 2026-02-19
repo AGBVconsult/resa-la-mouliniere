@@ -687,7 +687,7 @@ export default function TabletReservationsPage() {
           {/* Popup menu contextuel - Changer le statut */}
           {openPopupId === res._id && (
             <>
-              <div className="fixed inset-0 z-[9999] bg-black/10" onClick={() => setOpenPopupId(null)} />
+              <div className="fixed inset-0 z-[9999] bg-black/10" onClick={(e) => { e.stopPropagation(); setOpenPopupId(null); }} />
               <div 
                 className="fixed bg-white rounded-3xl shadow-2xl p-5 z-[10000] animate-in fade-in zoom-in-95 duration-200 w-[280px]"
                 style={{
@@ -720,33 +720,27 @@ export default function TabletReservationsPage() {
                     const currentStatus = res.status;
                     const hasTable = !isUnassigned;
                     
-                    // Ordre du flux: pending → confirmed → assigned → seated → completed
-                    const flowOrder = ["pending", "confirmed", "assigned", "seated", "completed"];
-                    const currentFlowIndex = flowOrder.indexOf(currentStatus);
-                    const isInFlow = currentFlowIndex !== -1;
+                    // Statuts à masquer selon le statut actuel
+                    // Confirmed -> masque Pending
+                    // Assigned/Seated -> masque Pending, Confirmed
+                    // Completed/Noshow/Cancelled/Refused/Incident -> masque Pending, Confirmed
+                    const getHiddenStatuses = (status: string, hasTableAssigned: boolean): string[] => {
+                      if (status === "pending") return [];
+                      if (status === "confirmed" && !hasTableAssigned) return ["pending"];
+                      if (status === "confirmed" && hasTableAssigned) return ["pending", "confirmed"];
+                      // Tous les autres statuts masquent pending et confirmed
+                      return ["pending", "confirmed"];
+                    };
                     
-                    // Statuts d'exception qui permettent un retour
-                    const exceptionStatuses = ["seated", "completed", "noshow", "cancelled", "refused", "incident"];
-                    const isException = exceptionStatuses.includes(currentStatus);
+                    const hiddenStatuses = getHiddenStatuses(currentStatus, hasTable);
                     
                     return allStatuses.filter((item) => {
                       // Toujours afficher le statut actuel
                       if (item.status === currentStatus) return true;
                       if (item.status === "assigned" && currentStatus === "confirmed" && hasTable) return true;
                       
-                      // Pour les statuts dans le flux (pending, confirmed, assigned)
-                      if (isInFlow && !isException) {
-                        const itemFlowIndex = flowOrder.indexOf(item.status);
-                        // Ne pas afficher les statuts précédents dans le flux
-                        if (itemFlowIndex !== -1 && itemFlowIndex < currentFlowIndex) return false;
-                        // Afficher les statuts suivants et les exceptions
-                        return true;
-                      }
-                      
-                      // Pour les statuts d'exception, permettre le retour
-                      if (isException) {
-                        return true;
-                      }
+                      // Masquer les statuts selon les règles
+                      if (hiddenStatuses.includes(item.status)) return false;
                       
                       return true;
                     }).map((item) => {
