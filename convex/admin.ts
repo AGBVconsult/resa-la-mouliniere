@@ -9,6 +9,7 @@ import { isValidStatusTransition } from "./lib/stateMachine";
 import type { ReservationStatus, Language } from "../spec/contracts.generated";
 import { makeSlotKey, computePartySize, computeEffectiveOpen } from "../spec/contracts.generated";
 import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./lib/tokens";
+import { capitalizeName, formatPhoneNumber } from "./lib/formatters";
 
 const CRM_SCORE_VERSION = "v1";
 
@@ -1204,11 +1205,16 @@ export const createReservation = mutation({
 
     const now = Date.now();
 
+    // Format names and phone
+    const formattedFirstName = capitalizeName(args.firstName);
+    const formattedLastName = capitalizeName(args.lastName);
+    const formattedPhone = formatPhoneNumber(args.phone);
+
     const clientId = await getOrCreateClientIdFromReservation(ctx, {
-      firstName: args.firstName,
-      lastName: args.lastName,
+      firstName: formattedFirstName,
+      lastName: formattedLastName,
       email: args.email,
-      phone: args.phone,
+      phone: formattedPhone,
       language: args.language as Language,
       source: args.source,
     });
@@ -1228,10 +1234,10 @@ export const createReservation = mutation({
       childrenCount: args.childrenCount,
       babyCount: args.babyCount,
       partySize,
-      firstName: args.firstName,
-      lastName: args.lastName,
+      firstName: formattedFirstName,
+      lastName: formattedLastName,
       email: args.email,
-      phone: args.phone,
+      phone: formattedPhone,
       language: args.language,
       note: args.note,
       options: args.options,
@@ -1396,11 +1402,16 @@ export const importReservation = mutation({
     const email = args.email?.trim() || "import@placeholder.local";
     const phone = args.phone?.trim() || "+32000000000";
 
+    // Format names and phone
+    const formattedFirstName = capitalizeName(args.firstName);
+    const formattedLastName = capitalizeName(args.lastName);
+    const formattedPhone = formatPhoneNumber(phone);
+
     const clientId = await getOrCreateClientIdFromReservation(ctx, {
-      firstName: args.firstName,
-      lastName: args.lastName,
+      firstName: formattedFirstName,
+      lastName: formattedLastName,
       email,
-      phone,
+      phone: formattedPhone,
       language: args.language as Language,
       source: "admin",
     });
@@ -1420,10 +1431,10 @@ export const importReservation = mutation({
       childrenCount: args.childrenCount,
       babyCount: args.babyCount,
       partySize,
-      firstName: args.firstName,
-      lastName: args.lastName,
+      firstName: formattedFirstName,
+      lastName: formattedLastName,
       email,
-      phone,
+      phone: formattedPhone,
       language: args.language,
       note: args.note ? `[IMPORT] ${args.note}` : "[IMPORT]",
       options: [],

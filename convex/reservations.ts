@@ -14,6 +14,7 @@ import {
 import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./lib/tokens";
 import { verifyTurnstile } from "./lib/turnstile";
 import { computeRequestHash } from "./lib/idempotency";
+import { capitalizeName, formatPhoneNumber } from "./lib/formatters";
 
 const CRM_SCORE_VERSION = "v1";
 
@@ -380,11 +381,16 @@ export const _create = internalMutation({
 
     const now = Date.now();
 
+    // Format names and phone
+    const formattedFirstName = capitalizeName(args.firstName);
+    const formattedLastName = capitalizeName(args.lastName);
+    const formattedPhone = formatPhoneNumber(args.phone);
+
     const clientId = await getOrCreateClientIdFromReservation(ctx, {
-      firstName: args.firstName,
-      lastName: args.lastName,
+      firstName: formattedFirstName,
+      lastName: formattedLastName,
       email: args.email,
-      phone: args.phone,
+      phone: formattedPhone,
       language: args.language as Language,
       source: args.source,
     });
@@ -401,10 +407,10 @@ export const _create = internalMutation({
       childrenCount: args.childrenCount,
       babyCount: args.babyCount,
       partySize,
-      firstName: args.firstName,
-      lastName: args.lastName,
+      firstName: formattedFirstName,
+      lastName: formattedLastName,
       email: args.email,
-      phone: args.phone,
+      phone: formattedPhone,
       language: args.language,
       note: args.note,
       options: args.options,
