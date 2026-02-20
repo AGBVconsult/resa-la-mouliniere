@@ -109,188 +109,157 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
         className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Sidebar gauche */}
-        <div className="w-80 bg-slate-50 p-6 flex flex-col gap-6 border-r border-slate-200 overflow-y-auto">
+        {/* Sidebar gauche - Design épuré */}
+        <div className="w-96 bg-white p-8 flex flex-col gap-8 border-r border-slate-100 overflow-y-auto">
           {/* Header client */}
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-12 h-12 rounded-full flex items-center justify-center",
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">
+              {client.firstName} {client.lastName}
+            </h2>
+            <span className={cn(
+              "inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide",
               clientStatusConfig.color
             )}>
-              <ClientStatusIcon size={24} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="font-bold text-lg text-slate-900 truncate">
-                {client.firstName} {client.lastName}
-              </h2>
-              <span className={cn(
-                "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-                clientStatusConfig.color
-              )}>
-                {clientStatusConfig.label}
-              </span>
-            </div>
+              {clientStatusConfig.label}
+            </span>
           </div>
 
-          {/* Détails contact */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Contact</h3>
+          {/* Détails client */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between py-3 border-b border-slate-100">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Détails client</h3>
+              <Plus size={16} className="text-slate-300" />
+            </div>
             
-            {client.phone && (
-              <div className="flex items-center gap-3 text-sm">
-                <Phone size={16} className="text-slate-400" />
-                <span className="text-slate-700">{client.phone}</span>
-              </div>
-            )}
-            
-            {"email" in client && client.email && (
-              <div className="flex items-center gap-3 text-sm">
-                <Mail size={16} className="text-slate-400" />
-                <span className="text-slate-700 truncate">{String(client.email)}</span>
-              </div>
-            )}
-          </div>
+            <div className="space-y-4 pt-3">
+              {"email" in client && client.email && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-400">Email</span>
+                  <span className="text-sm font-medium text-slate-900">{String(client.email)}</span>
+                </div>
+              )}
+              
+              {client.phone && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-400">Téléphone</span>
+                  <span className="text-sm font-medium text-slate-900">{client.phone}</span>
+                </div>
+              )}
 
-          {/* Stats */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Statistiques</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-slate-900">{client.totalVisits}</div>
-                <div className="text-xs text-slate-500">Visites</div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-400">Visites</span>
+                <span className="text-sm font-medium text-slate-900">{client.totalVisits}</span>
               </div>
-              <div className="bg-white rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-slate-900">{client.score}</div>
-                <div className="text-xs text-slate-500">Score</div>
-              </div>
+
               {client.totalNoShows > 0 && (
-                <div className="bg-red-50 rounded-xl p-3 text-center col-span-2">
-                  <div className="text-xl font-bold text-red-600">{client.totalNoShows}</div>
-                  <div className="text-xs text-red-500">No-shows</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-400">No-shows</span>
+                  <span className="text-sm font-medium text-red-600">{client.totalNoShows}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Tags profil */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <Tag size={12} />
-              Tags profil
-            </h3>
-            <div className="flex flex-wrap gap-2">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between py-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Tag size={14} className="text-slate-400" />
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tags profil</h3>
+              </div>
+              <Plus size={16} className="text-slate-300" />
+            </div>
+            
+            <div className="flex flex-wrap gap-2 pt-3">
               {client.tags && client.tags.length > 0 ? (
                 client.tags.map((tag, i) => (
-                  <span key={i} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                  <span key={i} className="px-3 py-1.5 border border-slate-200 text-slate-700 rounded-full text-xs font-medium uppercase">
                     {tag}
                   </span>
                 ))
               ) : (
-                <span className="text-xs text-slate-400 italic">Aucun tag</span>
+                <span className="text-sm text-slate-400 italic">Aucun tag</span>
+              )}
+              {client.preferredZone && (
+                <span className="px-3 py-1.5 border border-slate-200 text-slate-700 rounded-full text-xs font-medium uppercase">
+                  {client.preferredZone}
+                </span>
+              )}
+              {client.preferredTable && (
+                <span className="px-3 py-1.5 border border-slate-200 text-slate-700 rounded-full text-xs font-medium uppercase">
+                  Table {client.preferredTable}
+                </span>
               )}
             </div>
           </div>
 
-          {/* Préférences */}
-          {(client.dietaryRestrictions?.length || client.preferredZone || client.preferredTable) && (
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Préférences</h3>
-              {client.dietaryRestrictions && client.dietaryRestrictions.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {client.dietaryRestrictions.map((r, i) => (
-                    <span key={i} className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs">
-                      {r}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {client.preferredZone && (
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <MapPin size={14} />
-                  Zone: {client.preferredZone}
-                </div>
-              )}
-              {client.preferredTable && (
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <MapPin size={14} />
-                  Table: {client.preferredTable}
-                </div>
+          {/* Comportement */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between py-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Clock size={14} className="text-slate-400" />
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Comportement</h3>
+              </div>
+              <Plus size={16} className="text-slate-300" />
+            </div>
+            
+            <div className="flex flex-wrap gap-2 pt-3">
+              {client.dietaryRestrictions && client.dietaryRestrictions.length > 0 ? (
+                client.dietaryRestrictions.map((r, i) => (
+                  <span key={i} className="px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-medium flex items-center gap-1">
+                    {r}
+                    <X size={12} className="cursor-pointer hover:text-amber-900" />
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm text-slate-400 italic">Aucune observation</span>
               )}
             </div>
-          )}
+          </div>
 
           {/* Notes internes */}
-          <div className="space-y-3 flex-1">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <MessageSquare size={12} />
-              Notes internes
-            </h3>
+          <div className="space-y-1 flex-1">
+            <div className="flex items-center justify-between py-3 border-b border-slate-100">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Notes internes</h3>
+              <Plus size={16} className="text-slate-300 cursor-pointer hover:text-slate-500" />
+            </div>
             
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            {/* Notes existantes */}
+            <div className="space-y-2 pt-3 max-h-32 overflow-y-auto">
               {client.notes && client.notes.length > 0 ? (
                 client.notes.map((note) => (
                   <div 
                     key={note.id} 
                     className={cn(
-                      "p-2 rounded-lg text-xs relative group",
+                      "p-3 rounded-xl text-sm relative group",
                       note.type === "alert" && "bg-red-50 text-red-700",
                       note.type === "incident" && "bg-orange-50 text-orange-700",
                       note.type === "preference" && "bg-blue-50 text-blue-700",
-                      note.type === "info" && "bg-slate-100 text-slate-700"
+                      note.type === "info" && "bg-slate-50 text-slate-700"
                     )}
                   >
                     <p>{note.content}</p>
                     <button
                       onClick={() => handleDeleteNote(note.id)}
-                      className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 hover:bg-white/50 rounded"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 hover:bg-white/50 rounded transition-opacity"
                     >
-                      <Trash2 size={12} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 ))
-              ) : (
-                <span className="text-xs text-slate-400 italic">Aucune note</span>
-              )}
+              ) : null}
             </div>
 
-            {/* Ajouter une note */}
-            <div className="space-y-2">
-              <div className="flex gap-1">
-                {(["info", "preference", "incident", "alert"] as const).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setNoteType(type)}
-                    className={cn(
-                      "px-2 py-1 rounded text-[10px] font-medium transition-all",
-                      noteType === type
-                        ? type === "alert" ? "bg-red-500 text-white"
-                        : type === "incident" ? "bg-orange-500 text-white"
-                        : type === "preference" ? "bg-blue-500 text-white"
-                        : "bg-slate-500 text-white"
-                        : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                    )}
-                  >
-                    {type === "info" ? "Info" : type === "preference" ? "Préf." : type === "incident" ? "Incident" : "Alerte"}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  placeholder="Ajouter une note..."
-                  className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  onKeyDown={(e) => e.key === "Enter" && handleAddNote()}
-                />
-                <button
-                  onClick={handleAddNote}
-                  disabled={!newNote.trim()}
-                  className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
+            {/* Input note */}
+            <div className="pt-2">
+              <input
+                type="text"
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder="Ajouter une note persistante..."
+                className="w-full px-4 py-3 text-sm bg-amber-50/50 border border-amber-100 rounded-2xl text-amber-700 placeholder:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                onKeyDown={(e) => e.key === "Enter" && handleAddNote()}
+              />
             </div>
           </div>
         </div>
