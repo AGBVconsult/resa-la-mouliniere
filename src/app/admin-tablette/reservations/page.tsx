@@ -619,11 +619,11 @@ export default function TabletReservationsPage() {
           {/* Table - Full Height - clic active l'assignation */}
           <div 
             className={cn(
-              "self-stretch flex shrink-0 -my-3 cursor-pointer transition-all duration-300",
+              "self-stretch flex shrink-0 -my-3 cursor-pointer transition-all duration-300 border-l border-r border-black/10",
               isCompact ? "w-16" : "w-20",
               isSelectedForAssignment 
                 ? "bg-blue-500" 
-                : "bg-slate-50 hover:bg-slate-100 border-l border-slate-200"
+                : "bg-slate-50 hover:bg-slate-100"
             )}
             onClick={(e) => {
               e.stopPropagation();
