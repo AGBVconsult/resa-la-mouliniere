@@ -56,6 +56,7 @@ import { ServiceFloorPlan } from "@/components/admin/floor-plan/ServiceFloorPlan
 import { CalendarPopup } from "../components/CalendarPopup";
 import { EditReservationPopup } from "../components/EditReservationPopup";
 import { DaySettingsPopup } from "../components/DaySettingsPopup";
+import { ClientModal } from "@/components/admin/ClientModal";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -79,6 +80,7 @@ interface Reservation {
   source: string;
   version: number;
   totalVisits?: number;
+  clientId?: Id<"clients">;
 }
 
 // Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
@@ -195,6 +197,7 @@ export default function TabletReservationsPage() {
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ReservationStatus>>({});
+  const [selectedClientModal, setSelectedClientModal] = useState<{ clientId: Id<"clients">; reservationId: Id<"reservations"> } | null>(null);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -547,16 +550,9 @@ export default function TabletReservationsPage() {
     const isHighlighted = highlightedReservationId === res._id;
 
     const handleRowClick = () => {
-      if (isCompact) {
-        // En mode compact (plan de salle visible), clic = sélection pour assignation
-        if (isSelectedForAssignment) {
-          setSelectedForAssignment(null);
-        } else {
-          setSelectedForAssignment(res);
-        }
-      } else {
-        // En mode normal, clic = expand
-        toggleExpand(res._id);
+      // Ouvrir le ClientModal au clic sur une réservation
+      if (res.clientId) {
+        setSelectedClientModal({ clientId: res.clientId, reservationId: res._id });
       }
     };
 
@@ -1024,6 +1020,15 @@ export default function TabletReservationsPage() {
         <DaySettingsPopup
           dateKey={dateKey}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Client Modal */}
+      {selectedClientModal && (
+        <ClientModal
+          clientId={selectedClientModal.clientId}
+          currentReservationId={selectedClientModal.reservationId}
+          onClose={() => setSelectedClientModal(null)}
         />
       )}
     </div>

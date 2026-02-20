@@ -155,6 +155,25 @@ export const get = query({
     const client = await ctx.db.get(args.clientId);
     if (!client) throw Errors.NOT_FOUND("clients", args.clientId);
 
+    // Get reservations for this client
+    const reservations = await ctx.db
+      .query("reservations")
+      .filter((q) => q.eq(q.field("clientId"), args.clientId))
+      .order("desc")
+      .take(50);
+
+    const reservationsWithTables = await Promise.all(
+      reservations.map(async (r) => {
+        const tables = await Promise.all(
+          r.tableIds.map((tid) => ctx.db.get(tid))
+        );
+        return {
+          ...r,
+          tableNames: tables.filter(Boolean).map((t) => t!.name),
+        };
+      })
+    );
+
     if (role === "staff") {
       return {
         _id: client._id,
@@ -181,10 +200,11 @@ export const get = query({
         preferredTable: client.preferredTable,
         firstSeenAt: client.firstSeenAt,
         isBlacklisted: client.isBlacklisted,
+        reservations: reservationsWithTables,
       };
     }
 
-    return client;
+    return { ...client, reservations: reservationsWithTables };
   },
 });
 
