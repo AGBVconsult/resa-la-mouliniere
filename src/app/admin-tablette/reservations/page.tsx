@@ -562,7 +562,7 @@ export default function TabletReservationsPage() {
         <div
           onClick={handleRowClick}
           className={cn(
-            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-3 gap-4",
+            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-3",
             isExpanded && "bg-gray-50",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
             isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
@@ -570,7 +570,7 @@ export default function TabletReservationsPage() {
           )}
         >
           {/* Column: 2 lignes */}
-          <div className="flex flex-col gap-1 shrink-0" style={{ width: isCompact ? "150px" : "240px" }}>
+          <div className="flex flex-col gap-1 shrink-0 mr-4" style={{ width: isCompact ? "150px" : "240px" }}>
             {/* Ligne 1: Prénom + Nom + Badge */}
             {(() => {
               const visits = res.totalVisits ?? 0;
@@ -614,7 +614,7 @@ export default function TabletReservationsPage() {
           </div>
 
           {/* Note preview - 2 lignes max */}
-          <span className={cn("flex-1 text-gray-500 line-clamp-2", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
+          <span className={cn("flex-1 text-gray-500 line-clamp-2 mr-4", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
 
           {/* Table - Full Height - clic active l'assignation */}
           <div 
