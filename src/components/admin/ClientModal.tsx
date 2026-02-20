@@ -703,48 +703,6 @@ function ReservationEditForm({
             ))}
           </select>
         </div>
-
-        {/* Service */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Service</label>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => updateField("service", "lunch")}
-              className={cn(
-                "flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                formData.service === "lunch"
-                  ? "bg-blue-500 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              )}
-            >
-              Midi
-            </button>
-            <button
-              type="button"
-              onClick={() => updateField("service", "dinner")}
-              className={cn(
-                "flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                formData.service === "dinner"
-                  ? "bg-blue-500 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              )}
-            >
-              Soir
-            </button>
-          </div>
-        </div>
-
-        {/* Tables assignées (lecture seule) */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Table(s)</label>
-          <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
-            {reservation.tableNames && reservation.tableNames.length > 0 
-              ? reservation.tableNames.join(", ")
-              : <span className="text-amber-600 italic">Non assignée</span>
-            }
-          </div>
-        </div>
       </div>
 
       {/* Nombre de personnes */}
@@ -825,46 +783,6 @@ function ReservationEditForm({
         </div>
         <div className="text-sm text-slate-500">
           Total: {formData.adults + formData.childrenCount} couverts
-        </div>
-      </div>
-
-      {/* Coordonnées */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Prénom</label>
-          <input
-            type="text"
-            value={formData.firstName}
-            onChange={(e) => updateField("firstName", e.target.value)}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Nom</label>
-          <input
-            type="text"
-            value={formData.lastName}
-            onChange={(e) => updateField("lastName", e.target.value)}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Téléphone</label>
-          <input
-            type="tel"
-            value={formData.phone}
-            onChange={(e) => updateField("phone", e.target.value)}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Email</label>
-          <input
-            type="email"
-            value={formData.email}
-            onChange={(e) => updateField("email", e.target.value)}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
         </div>
       </div>
 
