@@ -67,7 +67,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ["var(--font-lato)", "system-ui", "sans-serif"],
-        heading: ["var(--font-montserrat)", "system-ui", "sans-serif"],
+        heading: ["'Transat Text W01 Black'", "system-ui", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

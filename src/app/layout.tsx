@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Lato, Montserrat } from "next/font/google";
+import { Lato } from "next/font/google";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { ConvexClientProvider } from "@/components/providers/ConvexClientProvider";
 import "./globals.css";
@@ -8,12 +8,6 @@ const lato = Lato({
   variable: "--font-lato",
   subsets: ["latin"],
   weight: ["300", "400", "700", "900"],
-});
-
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -28,8 +22,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
+      <head>
+        <link 
+          href="https://db.onlinewebfonts.com/c/838d13bb3d3a5bc89e0b045845b2e282?family=Transat+Text+W01+Black" 
+          rel="stylesheet" 
+          type="text/css"
+        />
+      </head>
       <body
-        className={`${lato.variable} ${montserrat.variable} antialiased font-sans`}
+        className={`${lato.variable} antialiased font-sans`}
         suppressHydrationWarning
       >
         <SessionProvider>
