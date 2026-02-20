@@ -617,10 +617,10 @@ const TIME_SLOTS = [
 ];
 
 const AVAILABLE_OPTIONS = [
-  "PMR",
-  "Poussette",
-  "Chaise haute",
-  "Chien",
+  { key: "wheelchair", label: "PMR" },
+  { key: "stroller", label: "Poussette" },
+  { key: "highChair", label: "Chaise haute" },
+  { key: "dogAccess", label: "Chien" },
 ];
 
 function ReservationEditForm({ 
@@ -772,17 +772,17 @@ function ReservationEditForm({
         <div className="flex flex-wrap gap-2">
           {AVAILABLE_OPTIONS.map((option) => (
             <button
-              key={option}
+              key={option.key}
               type="button"
-              onClick={() => toggleOption(option)}
+              onClick={() => toggleOption(option.key)}
               className={cn(
                 "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-                formData.options.includes(option)
+                formData.options.includes(option.key)
                   ? "bg-purple-500 text-white"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               )}
             >
-              {option}
+              {option.label}
             </button>
           ))}
         </div>
