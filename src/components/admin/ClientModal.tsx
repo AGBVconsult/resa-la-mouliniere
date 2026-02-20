@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
+import { formatConvexError } from "@/lib/formatError";
 import {
   X,
-  Mail,
-  Phone,
   Star,
   Crown,
   AlertTriangle,
@@ -18,7 +18,6 @@ import {
   Users,
   Calendar,
   MapPin,
-  MessageSquare,
   Tag,
   History,
   CheckCircle,
@@ -26,6 +25,10 @@ import {
   Ghost,
   Plus,
   Trash2,
+  Save,
+  Baby,
+  User,
+  Utensils,
 } from "lucide-react";
 
 interface ClientModalProps {
@@ -53,13 +56,54 @@ const CLIENT_STATUS_CONFIG: Record<string, { label: string; icon: typeof Star; c
 };
 
 export function ClientModal({ clientId, currentReservationId, onClose }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState<"current" | "history">("current");
+  const [activeTab, setActiveTab] = useState<"reservation" | "history">("reservation");
   const [newNote, setNewNote] = useState("");
   const [noteType, setNoteType] = useState<"info" | "preference" | "incident" | "alert">("info");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Form state for reservation editing
+  const [formData, setFormData] = useState({
+    dateKey: "",
+    timeKey: "",
+    service: "lunch" as "lunch" | "dinner",
+    adults: 2,
+    childrenCount: 0,
+    babyCount: 0,
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+    note: "",
+    options: [] as string[],
+  });
 
   const client = useQuery(api.clients.get, { clientId });
   const addNote = useMutation(api.clients.addNote);
   const deleteNote = useMutation(api.clients.deleteNote);
+  const updateReservation = useMutation(api.admin.updateReservationFull);
+
+  // Find the current reservation
+  const currentReservation = client?.reservations?.find((r) => r._id === currentReservationId);
+
+  // Initialize form data when reservation loads
+  useEffect(() => {
+    if (currentReservation) {
+      setFormData({
+        dateKey: currentReservation.dateKey,
+        timeKey: currentReservation.timeKey,
+        service: currentReservation.service as "lunch" | "dinner",
+        adults: currentReservation.adults ?? 2,
+        childrenCount: currentReservation.childrenCount ?? 0,
+        babyCount: currentReservation.babyCount ?? 0,
+        firstName: currentReservation.firstName ?? "",
+        lastName: currentReservation.lastName ?? "",
+        phone: currentReservation.phone ?? "",
+        email: currentReservation.email ?? "",
+        note: currentReservation.note ?? "",
+        options: currentReservation.options ?? [],
+      });
+    }
+  }, [currentReservation]);
 
   if (!client) {
     return (
@@ -90,6 +134,37 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
 
   const handleDeleteNote = async (noteId: string) => {
     await deleteNote({ clientId, noteId });
+  };
+
+  const { toast } = useToast();
+
+  const handleSaveReservation = async () => {
+    if (!currentReservation || !currentReservationId) return;
+    
+    setIsSaving(true);
+    try {
+      await updateReservation({
+        reservationId: currentReservationId,
+        expectedVersion: currentReservation.version,
+        dateKey: formData.dateKey,
+        service: formData.service,
+        timeKey: formData.timeKey,
+        adults: formData.adults,
+        childrenCount: formData.childrenCount,
+        babyCount: formData.babyCount,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        email: formData.email,
+        note: formData.note,
+        options: formData.options,
+      });
+      toast.success("Réservation mise à jour");
+    } catch (error) {
+      toast.error(formatConvexError(error));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formatDate = (dateKey: string) => {
@@ -272,21 +347,16 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
             <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
               <button
-                onClick={() => setActiveTab("current")}
+                onClick={() => setActiveTab("reservation")}
                 className={cn(
                   "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                  activeTab === "current"
+                  activeTab === "reservation"
                     ? "bg-white text-slate-900 shadow-sm"
                     : "text-slate-500 hover:text-slate-700"
                 )}
               >
                 <Calendar size={14} className="inline mr-2" />
-                Réservations en cours
-                {currentReservations.length > 0 && (
-                  <span className="ml-2 px-1.5 py-0.5 bg-blue-500 text-white text-xs rounded-full">
-                    {currentReservations.length}
-                  </span>
-                )}
+                Réservation
               </button>
               <button
                 onClick={() => setActiveTab("history")}
@@ -312,24 +382,15 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
 
           {/* Contenu des onglets */}
           <div className="flex-1 overflow-y-auto p-6">
-            {activeTab === "current" ? (
-              <div className="space-y-3">
-                {currentReservations.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400">
-                    <Calendar size={48} className="mx-auto mb-4 opacity-50" />
-                    <p>Aucune réservation en cours</p>
-                  </div>
-                ) : (
-                  currentReservations.map((res) => (
-                    <ReservationCard 
-                      key={res._id} 
-                      reservation={res} 
-                      isHighlighted={res._id === currentReservationId}
-                      formatDate={formatDate}
-                    />
-                  ))
-                )}
-              </div>
+            {activeTab === "reservation" ? (
+              <ReservationEditForm
+                reservation={currentReservation}
+                formData={formData}
+                setFormData={setFormData}
+                isSaving={isSaving}
+                onSave={handleSaveReservation}
+                formatDate={formatDate}
+              />
             ) : (
               <div className="space-y-3">
                 {pastReservations.length === 0 ? (
@@ -490,6 +551,373 @@ function ReservationCard({ reservation, isHighlighted, formatDate }: Reservation
           <p className="text-sm text-slate-600 italic">"{reservation.note}"</p>
         </div>
       )}
+    </div>
+  );
+}
+
+// Formulaire d'édition de réservation
+interface ReservationEditFormProps {
+  reservation?: {
+    _id: Id<"reservations">;
+    dateKey: string;
+    timeKey: string;
+    service: string;
+    partySize: number;
+    adults?: number;
+    childrenCount?: number;
+    babyCount?: number;
+    status: string;
+    tableNames?: string[];
+    note?: string | null;
+    options?: string[];
+    source?: string;
+    language?: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    email?: string;
+    version: number;
+  };
+  formData: {
+    dateKey: string;
+    timeKey: string;
+    service: "lunch" | "dinner";
+    adults: number;
+    childrenCount: number;
+    babyCount: number;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    note: string;
+    options: string[];
+  };
+  setFormData: React.Dispatch<React.SetStateAction<{
+    dateKey: string;
+    timeKey: string;
+    service: "lunch" | "dinner";
+    adults: number;
+    childrenCount: number;
+    babyCount: number;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    note: string;
+    options: string[];
+  }>>;
+  isSaving: boolean;
+  onSave: () => void;
+  formatDate: (dateKey: string) => string;
+}
+
+const TIME_SLOTS = [
+  "11:30", "11:45", "12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30",
+  "18:30", "18:45", "19:00", "19:15", "19:30", "19:45", "20:00", "20:15", "20:30", "20:45", "21:00"
+];
+
+const AVAILABLE_OPTIONS = [
+  "Anniversaire",
+  "Chaise haute",
+  "Allergies",
+  "Végétarien",
+  "Terrasse",
+  "Calme",
+];
+
+function ReservationEditForm({ 
+  reservation, 
+  formData, 
+  setFormData, 
+  isSaving, 
+  onSave,
+  formatDate 
+}: ReservationEditFormProps) {
+  if (!reservation) {
+    return (
+      <div className="text-center py-12 text-slate-400">
+        <Calendar size={48} className="mx-auto mb-4 opacity-50" />
+        <p>Aucune réservation sélectionnée</p>
+      </div>
+    );
+  }
+
+  const statusConfig = STATUS_LABELS[reservation.status] || { label: reservation.status, color: "bg-slate-100 text-slate-600" };
+
+  const updateField = <K extends keyof typeof formData>(field: K, value: typeof formData[K]) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleOption = (option: string) => {
+    setFormData(prev => ({
+      ...prev,
+      options: prev.options.includes(option)
+        ? prev.options.filter(o => o !== option)
+        : [...prev.options, option]
+    }));
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header avec statut */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900">
+            {formatDate(reservation.dateKey)} - {reservation.timeKey}
+          </h3>
+          <p className="text-sm text-slate-500">
+            {reservation.service === "lunch" ? "Service du midi" : "Service du soir"}
+          </p>
+        </div>
+        <div className={cn(
+          "px-3 py-1.5 rounded-full text-sm font-medium",
+          statusConfig.color
+        )}>
+          {statusConfig.label}
+        </div>
+      </div>
+
+      {/* Formulaire */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Date */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Date</label>
+          <input
+            type="date"
+            value={formData.dateKey}
+            onChange={(e) => updateField("dateKey", e.target.value)}
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Heure */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Heure</label>
+          <select
+            value={formData.timeKey}
+            onChange={(e) => updateField("timeKey", e.target.value)}
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {TIME_SLOTS.map((time) => (
+              <option key={time} value={time}>{time}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Service */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Service</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => updateField("service", "lunch")}
+              className={cn(
+                "flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                formData.service === "lunch"
+                  ? "bg-blue-500 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              )}
+            >
+              Midi
+            </button>
+            <button
+              type="button"
+              onClick={() => updateField("service", "dinner")}
+              className={cn(
+                "flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                formData.service === "dinner"
+                  ? "bg-blue-500 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              )}
+            >
+              Soir
+            </button>
+          </div>
+        </div>
+
+        {/* Tables assignées (lecture seule) */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Table(s)</label>
+          <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
+            {reservation.tableNames && reservation.tableNames.length > 0 
+              ? reservation.tableNames.join(", ")
+              : <span className="text-amber-600 italic">Non assignée</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      {/* Nombre de personnes */}
+      <div className="space-y-3">
+        <label className="text-sm font-medium text-slate-700">Nombre de personnes</label>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <User size={14} />
+              Adultes
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => updateField("adults", Math.max(1, formData.adults - 1))}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+              >
+                -
+              </button>
+              <span className="w-8 text-center font-medium">{formData.adults}</span>
+              <button
+                type="button"
+                onClick={() => updateField("adults", formData.adults + 1)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Users size={14} />
+              Enfants
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => updateField("childrenCount", Math.max(0, formData.childrenCount - 1))}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+              >
+                -
+              </button>
+              <span className="w-8 text-center font-medium">{formData.childrenCount}</span>
+              <button
+                type="button"
+                onClick={() => updateField("childrenCount", formData.childrenCount + 1)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Baby size={14} />
+              Bébés
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => updateField("babyCount", Math.max(0, formData.babyCount - 1))}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+              >
+                -
+              </button>
+              <span className="w-8 text-center font-medium">{formData.babyCount}</span>
+              <button
+                type="button"
+                onClick={() => updateField("babyCount", formData.babyCount + 1)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="text-sm text-slate-500">
+          Total: {formData.adults + formData.childrenCount} couverts
+        </div>
+      </div>
+
+      {/* Coordonnées */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Prénom</label>
+          <input
+            type="text"
+            value={formData.firstName}
+            onChange={(e) => updateField("firstName", e.target.value)}
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Nom</label>
+          <input
+            type="text"
+            value={formData.lastName}
+            onChange={(e) => updateField("lastName", e.target.value)}
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Téléphone</label>
+          <input
+            type="tel"
+            value={formData.phone}
+            onChange={(e) => updateField("phone", e.target.value)}
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Email</label>
+          <input
+            type="email"
+            value={formData.email}
+            onChange={(e) => updateField("email", e.target.value)}
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      {/* Options */}
+      <div className="space-y-3">
+        <label className="text-sm font-medium text-slate-700">Options</label>
+        <div className="flex flex-wrap gap-2">
+          {AVAILABLE_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => toggleOption(option)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                formData.options.includes(option)
+                  ? "bg-purple-500 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              )}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Note */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700">Note</label>
+        <textarea
+          value={formData.note}
+          onChange={(e) => updateField("note", e.target.value)}
+          rows={3}
+          placeholder="Ajouter une note pour cette réservation..."
+          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+        />
+      </div>
+
+      {/* Bouton sauvegarder */}
+      <div className="flex justify-end pt-4 border-t border-slate-100">
+        <button
+          onClick={onSave}
+          disabled={isSaving}
+          className={cn(
+            "flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium transition-all",
+            isSaving
+              ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+              : "bg-blue-500 text-white hover:bg-blue-600"
+          )}
+        >
+          <Save size={18} />
+          {isSaving ? "Enregistrement..." : "Enregistrer les modifications"}
+        </button>
+      </div>
     </div>
   );
 }
