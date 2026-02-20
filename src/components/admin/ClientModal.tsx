@@ -617,12 +617,10 @@ const TIME_SLOTS = [
 ];
 
 const AVAILABLE_OPTIONS = [
-  "Anniversaire",
+  "PMR",
+  "Poussette",
   "Chaise haute",
-  "Allergies",
-  "Végétarien",
-  "Terrasse",
-  "Calme",
+  "Chien",
 ];
 
 function ReservationEditForm({ 
@@ -659,24 +657,6 @@ function ReservationEditForm({
 
   return (
     <div className="space-y-6">
-      {/* Header avec statut */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900">
-            {formatDate(reservation.dateKey)} - {reservation.timeKey}
-          </h3>
-          <p className="text-sm text-slate-500">
-            {reservation.service === "lunch" ? "Service du midi" : "Service du soir"}
-          </p>
-        </div>
-        <div className={cn(
-          "px-3 py-1.5 rounded-full text-sm font-medium",
-          statusConfig.color
-        )}>
-          {statusConfig.label}
-        </div>
-      </div>
-
       {/* Formulaire */}
       <div className="grid grid-cols-2 gap-6">
         {/* Date */}
