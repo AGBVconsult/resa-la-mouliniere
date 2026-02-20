@@ -62,6 +62,12 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   const [newNote, setNewNote] = useState("");
   const [noteType, setNoteType] = useState<"info" | "preference" | "incident" | "alert">("info");
   const [isSaving, setIsSaving] = useState(false);
+  
+  // État pour l'édition des détails client
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [editPhone, setEditPhone] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [isSavingDetails, setIsSavingDetails] = useState(false);
 
   // Form state for reservation editing
   const [formData, setFormData] = useState({
@@ -83,6 +89,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   const addNote = useMutation(api.clients.addNote);
   const deleteNote = useMutation(api.clients.deleteNote);
   const updateReservation = useMutation(api.admin.updateReservationFull);
+  const updateClient = useMutation(api.clients.update);
 
   // Find the current reservation
   const currentReservation = client?.reservations?.find((r) => r._id === currentReservationId);
@@ -139,6 +146,40 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   };
 
   const { toast } = useToast();
+
+  // Fonction pour démarrer l'édition des détails client
+  const handleStartEditDetails = () => {
+    const phone = client?.phone || ("primaryPhone" in client! ? String(client!.primaryPhone) : "");
+    const email = ("email" in client! && client!.email) ? String(client!.email) : ("primaryEmail" in client! ? String(client!.primaryEmail) : "");
+    setEditPhone(phone);
+    setEditEmail(email);
+    setIsEditingDetails(true);
+  };
+
+  // Fonction pour sauvegarder les détails client
+  const handleSaveDetails = async () => {
+    setIsSavingDetails(true);
+    try {
+      await updateClient({
+        clientId,
+        patch: {
+          primaryPhone: editPhone,
+          email: editEmail,
+        },
+      });
+      toast.success("Détails client mis à jour");
+      setIsEditingDetails(false);
+    } catch (error) {
+      toast.error(formatConvexError(error));
+    } finally {
+      setIsSavingDetails(false);
+    }
+  };
+
+  // Fonction pour annuler l'édition
+  const handleCancelEditDetails = () => {
+    setIsEditingDetails(false);
+  };
 
   const handleSaveReservation = async () => {
     if (!currentReservation || !currentReservationId) return;
@@ -216,30 +257,79 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
           <div className="space-y-1">
             <div className="flex items-center justify-between py-3 border-b border-slate-100">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Détails client</h3>
-              <button className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors">
-                <Pencil size={12} />
-                <span>Modifier</span>
-              </button>
+              {isEditingDetails ? (
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={handleCancelEditDetails}
+                    className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    onClick={handleSaveDetails}
+                    disabled={isSavingDetails}
+                    className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors disabled:opacity-50"
+                  >
+                    <Save size={12} />
+                    <span>{isSavingDetails ? "..." : "Enregistrer"}</span>
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={handleStartEditDetails}
+                  className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors"
+                >
+                  <Pencil size={12} />
+                  <span>Modifier</span>
+                </button>
+              )}
             </div>
             
             <div className="space-y-4 pt-3">
-              {(client.phone || ("primaryPhone" in client && client.primaryPhone)) && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Téléphone</span>
-                  <span className="text-sm font-medium text-slate-900">
-                    {client.phone || ("primaryPhone" in client ? String(client.primaryPhone) : "")}
-                  </span>
-                </div>
-              )}
+              {isEditingDetails ? (
+                <>
+                  <div className="space-y-1">
+                    <label className="text-sm text-slate-400">Téléphone</label>
+                    <input
+                      type="tel"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="+32..."
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm text-slate-400">Email</label>
+                    <input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="email@exemple.com"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {(client.phone || ("primaryPhone" in client && client.primaryPhone)) && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-400">Téléphone</span>
+                      <span className="text-sm font-medium text-slate-900">
+                        {client.phone || ("primaryPhone" in client ? String(client.primaryPhone) : "")}
+                      </span>
+                    </div>
+                  )}
 
-              {("email" in client && client.email) || ("primaryEmail" in client && client.primaryEmail) ? (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Email</span>
-                  <span className="text-sm font-medium text-slate-900">
-                    {"email" in client ? String(client.email) : "primaryEmail" in client ? String(client.primaryEmail) : ""}
-                  </span>
-                </div>
-              ) : null}
+                  {("email" in client && client.email) || ("primaryEmail" in client && client.primaryEmail) ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-400">Email</span>
+                      <span className="text-sm font-medium text-slate-900">
+                        {"email" in client ? String(client.email) : "primaryEmail" in client ? String(client.primaryEmail) : ""}
+                      </span>
+                    </div>
+                  ) : null}
+                </>
+              )}
             </div>
           </div>
 
