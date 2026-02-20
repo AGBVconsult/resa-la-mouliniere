@@ -116,12 +116,22 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
             <h2 className="text-2xl font-bold text-slate-900">
               {client.firstName} {client.lastName}
             </h2>
-            <span className={cn(
-              "inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide",
-              clientStatusConfig.color
-            )}>
-              {clientStatusConfig.label}
-            </span>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={cn(
+                "px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide",
+                clientStatusConfig.color
+              )}>
+                {clientStatusConfig.label}
+              </span>
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                {client.totalVisits} visite{client.totalVisits > 1 ? "s" : ""}
+              </span>
+              {client.totalNoShows > 0 && (
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600">
+                  {client.totalNoShows} no-show{client.totalNoShows > 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Détails client */}
@@ -132,13 +142,6 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
             </div>
             
             <div className="space-y-4 pt-3">
-              {"email" in client && client.email && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Email</span>
-                  <span className="text-sm font-medium text-slate-900">{String(client.email)}</span>
-                </div>
-              )}
-              
               {client.phone && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-400">Téléphone</span>
@@ -146,15 +149,10 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-400">Visites</span>
-                <span className="text-sm font-medium text-slate-900">{client.totalVisits}</span>
-              </div>
-
-              {client.totalNoShows > 0 && (
+              {"email" in client && client.email && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">No-shows</span>
-                  <span className="text-sm font-medium text-red-600">{client.totalNoShows}</span>
+                  <span className="text-sm text-slate-400">Email</span>
+                  <span className="text-sm font-medium text-slate-900">{String(client.email)}</span>
                 </div>
               )}
             </div>
