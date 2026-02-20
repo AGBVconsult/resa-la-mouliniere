@@ -45,6 +45,7 @@ import {
   CheckCheck,
   Ban,
   ChevronDown,
+  LayoutGrid,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -615,9 +616,15 @@ export default function TabletReservationsPage() {
           {/* Note preview - 2 lignes max */}
           <span className={cn("flex-1 text-gray-500 line-clamp-2", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
 
-          {/* Table - largeur fixe - clic active l'assignation */}
+          {/* Table - Full Height - clic active l'assignation */}
           <div 
-            className={cn("shrink-0 cursor-pointer", isCompact ? "w-12" : "w-16")}
+            className={cn(
+              "self-stretch flex shrink-0 -my-3 cursor-pointer transition-all duration-300",
+              isCompact ? "w-16" : "w-20",
+              isSelectedForAssignment 
+                ? "bg-blue-500" 
+                : "bg-slate-50 hover:bg-slate-100 border-l border-slate-200"
+            )}
             onClick={(e) => {
               e.stopPropagation();
               if (isSelectedForAssignment) {
@@ -627,15 +634,30 @@ export default function TabletReservationsPage() {
               }
             }}
           >
-            <span className={cn(
-              "block rounded text-center transition-colors",
-              isCompact ? "text-xs px-1.5 py-3" : "text-sm px-2.5 py-3",
-              isSelectedForAssignment 
-                ? "bg-blue-500 text-white" 
-                : isUnassigned 
-                  ? "bg-amber-100 text-amber-700 hover:bg-amber-200" 
-                  : "bg-gray-100 hover:bg-gray-200"
-            )}>{getTableName(res)}</span>
+            <div className="flex flex-col items-center justify-center w-full py-2">
+              {isUnassigned ? (
+                <>
+                  <LayoutGrid size={24} className={cn(
+                    isSelectedForAssignment ? "text-white" : "text-slate-400"
+                  )} />
+                  <span className={cn(
+                    "text-[10px] font-medium mt-1 tracking-wide",
+                    isSelectedForAssignment ? "text-white" : "text-slate-400"
+                  )}>ASSIG.</span>
+                </>
+              ) : (
+                <>
+                  <span className={cn(
+                    "text-[10px] font-medium tracking-wide",
+                    isSelectedForAssignment ? "text-white" : "text-slate-400"
+                  )}>TABLE</span>
+                  <span className={cn(
+                    "text-2xl font-bold leading-none",
+                    isSelectedForAssignment ? "text-white" : "text-slate-700"
+                  )}>{getTableName(res)}</span>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Smart Status Button - Full Height */}
