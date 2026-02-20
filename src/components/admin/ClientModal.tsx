@@ -29,7 +29,9 @@ import {
   Baby,
   User,
   Utensils,
+  Pencil,
 } from "lucide-react";
+import { getFlag } from "@/lib/getFlag";
 
 interface ClientModalProps {
   clientId: Id<"clients">;
@@ -192,6 +194,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
               {client.firstName} {client.lastName}
             </h2>
             <div className="flex items-center gap-2 mt-2">
+              <span className="text-lg">{getFlag(client.phone || ("primaryPhone" in client ? String(client.primaryPhone) : ""), currentReservation?.language || "fr")}</span>
               <span className={cn(
                 "px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide",
                 clientStatusConfig.color
@@ -213,7 +216,10 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
           <div className="space-y-1">
             <div className="flex items-center justify-between py-3 border-b border-slate-100">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Détails client</h3>
-              <Plus size={16} className="text-slate-300" />
+              <button className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors">
+                <Pencil size={12} />
+                <span>Modifier</span>
+              </button>
             </div>
             
             <div className="space-y-4 pt-3">
