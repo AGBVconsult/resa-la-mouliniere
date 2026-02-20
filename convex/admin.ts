@@ -369,6 +369,7 @@ function buildReservationAdmin(doc: {
   source: "online" | "admin" | "phone" | "walkin";
   tableIds: Id<"tables">[];
   primaryTableId?: Id<"tables">;
+  clientId?: Id<"clients">;
   version: number;
   createdAt: number;
   updatedAt: number;
@@ -377,7 +378,7 @@ function buildReservationAdmin(doc: {
   seatedAt: number | null;
   completedAt: number | null;
   noshowAt: number | null;
-}, totalVisits: number = 0) {
+}, totalVisits: number = 0, clientId?: Id<"clients">) {
   return {
     _id: doc._id,
     restaurantId: doc.restaurantId,
@@ -400,6 +401,7 @@ function buildReservationAdmin(doc: {
     source: doc.source,
     tableIds: doc.tableIds,
     primaryTableId: doc.primaryTableId ?? null,
+    clientId: clientId ?? doc.clientId ?? null,
     version: doc.version,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
@@ -505,22 +507,22 @@ export const listReservations = query({
     const phones = Array.from(phoneSet);
     
     // Batch lookup clients by phone
-    const clientsMap = new Map<string, number>();
+    const clientsMap = new Map<string, { totalVisits: number; clientId: Id<"clients"> }>();
     for (const phone of phones) {
       const client = await ctx.db
         .query("clients")
         .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
         .unique();
       if (client) {
-        clientsMap.set(phone, client.totalVisits);
+        clientsMap.set(phone, { totalVisits: client.totalVisits, clientId: client._id });
       }
     }
 
-    // Map to ReservationAdmin with totalVisits
+    // Map to ReservationAdmin with totalVisits and clientId
     const page = filteredDocs.map((doc) => {
       const normalizedPhone = normalizePhone(doc.phone);
-      const totalVisits = clientsMap.get(normalizedPhone) ?? 0;
-      return buildReservationAdmin(doc, totalVisits);
+      const clientData = clientsMap.get(normalizedPhone);
+      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId);
     });
 
     return {
@@ -550,15 +552,16 @@ export const getReservation = query({
       throw Errors.RESERVATION_NOT_FOUND(reservationId);
     }
 
-    // Lookup client totalVisits
+    // Lookup client totalVisits and clientId
     const phone = normalizePhone(reservation.phone);
     const client = await ctx.db
       .query("clients")
       .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
       .unique();
     const totalVisits = client?.totalVisits ?? 0;
+    const clientId = client?._id;
 
-    return buildReservationAdmin(reservation, totalVisits);
+    return buildReservationAdmin(reservation, totalVisits, clientId);
   },
 });
 
@@ -1529,23 +1532,23 @@ export const listPendingReservations = query({
       .order("desc")
       .collect();
 
-    // Batch lookup clients by phone for totalVisits
+    // Batch lookup clients by phone for totalVisits and clientId
     const phoneSet = new Set(pendingReservations.map((doc) => normalizePhone(doc.phone)));
     const phones = Array.from(phoneSet);
-    const clientsMap = new Map<string, number>();
+    const clientsMap = new Map<string, { totalVisits: number; clientId: Id<"clients"> }>();
     for (const phone of phones) {
       const client = await ctx.db
         .query("clients")
         .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
         .unique();
       if (client) {
-        clientsMap.set(phone, client.totalVisits);
+        clientsMap.set(phone, { totalVisits: client.totalVisits, clientId: client._id });
       }
     }
 
     return pendingReservations.map((doc) => {
-      const totalVisits = clientsMap.get(normalizePhone(doc.phone)) ?? 0;
-      return buildReservationAdmin(doc, totalVisits);
+      const clientData = clientsMap.get(normalizePhone(doc.phone));
+      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId);
     });
   },
 });
