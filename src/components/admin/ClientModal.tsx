@@ -142,19 +142,23 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
             </div>
             
             <div className="space-y-4 pt-3">
-              {client.phone && (
+              {(client.phone || ("primaryPhone" in client && client.primaryPhone)) && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-400">Téléphone</span>
-                  <span className="text-sm font-medium text-slate-900">{client.phone}</span>
+                  <span className="text-sm font-medium text-slate-900">
+                    {client.phone || ("primaryPhone" in client ? String(client.primaryPhone) : "")}
+                  </span>
                 </div>
               )}
 
-              {"email" in client && client.email && (
+              {("email" in client && client.email) || ("primaryEmail" in client && client.primaryEmail) ? (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-400">Email</span>
-                  <span className="text-sm font-medium text-slate-900">{String(client.email)}</span>
+                  <span className="text-sm font-medium text-slate-900">
+                    {"email" in client ? String(client.email) : "primaryEmail" in client ? String(client.primaryEmail) : ""}
+                  </span>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -358,9 +362,15 @@ interface ReservationCardProps {
     timeKey: string;
     service: string;
     partySize: number;
+    adults?: number;
+    childrenCount?: number;
+    babyCount?: number;
     status: string;
     tableNames?: string[];
     note?: string | null;
+    options?: string[];
+    source?: string;
+    language?: string;
   };
   isHighlighted?: boolean;
   formatDate: (dateKey: string) => string;
@@ -374,6 +384,21 @@ function ReservationCard({ reservation, isHighlighted, formatDate }: Reservation
     : reservation.status === "noshow" ? Ghost
     : Clock;
 
+  const sourceLabels: Record<string, string> = {
+    online: "En ligne",
+    phone: "Téléphone",
+    walkin: "Sur place",
+    admin: "Admin",
+  };
+
+  const languageLabels: Record<string, string> = {
+    fr: "Français",
+    nl: "Néerlandais",
+    en: "Anglais",
+    de: "Allemand",
+    it: "Italien",
+  };
+
   return (
     <div className={cn(
       "p-4 rounded-xl border transition-all",
@@ -381,29 +406,17 @@ function ReservationCard({ reservation, isHighlighted, formatDate }: Reservation
         ? "bg-blue-50 border-blue-300 ring-2 ring-blue-200" 
         : "bg-white border-slate-200 hover:border-slate-300"
     )}>
-      <div className="flex items-center justify-between">
+      {/* Ligne 1: Date, heure, statut */}
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-4">
-          <div className="text-center">
+          <div className="text-center min-w-[60px]">
             <div className="text-lg font-bold text-slate-900">{reservation.timeKey}</div>
             <div className="text-xs text-slate-500">{reservation.service === "lunch" ? "Midi" : "Soir"}</div>
           </div>
           
           <div className="h-10 w-px bg-slate-200" />
           
-          <div>
-            <div className="font-medium text-slate-900">{formatDate(reservation.dateKey)}</div>
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Users size={14} />
-              <span>{reservation.partySize} pers.</span>
-              {reservation.tableNames && reservation.tableNames.length > 0 && (
-                <>
-                  <span className="text-slate-300">•</span>
-                  <MapPin size={14} />
-                  <span>{reservation.tableNames.join(", ")}</span>
-                </>
-              )}
-            </div>
-          </div>
+          <div className="font-medium text-slate-900">{formatDate(reservation.dateKey)}</div>
         </div>
 
         <div className={cn(
@@ -415,6 +428,63 @@ function ReservationCard({ reservation, isHighlighted, formatDate }: Reservation
         </div>
       </div>
 
+      {/* Ligne 2: Détails réservation */}
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm border-t border-slate-100 pt-3">
+        {/* Nombre de personnes */}
+        <div className="flex items-center justify-between">
+          <span className="text-slate-400">Couverts</span>
+          <span className="font-medium text-slate-900">
+            {reservation.partySize} pers.
+            {(reservation.adults !== undefined || reservation.childrenCount || reservation.babyCount) && (
+              <span className="text-slate-400 font-normal ml-1">
+                ({reservation.adults || 0}A
+                {reservation.childrenCount ? ` ${reservation.childrenCount}E` : ""}
+                {reservation.babyCount ? ` ${reservation.babyCount}B` : ""})
+              </span>
+            )}
+          </span>
+        </div>
+
+        {/* Table */}
+        <div className="flex items-center justify-between">
+          <span className="text-slate-400">Table</span>
+          <span className="font-medium text-slate-900">
+            {reservation.tableNames && reservation.tableNames.length > 0 
+              ? reservation.tableNames.join(", ")
+              : <span className="text-amber-600 italic">Non assignée</span>
+            }
+          </span>
+        </div>
+
+        {/* Source */}
+        {reservation.source && (
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Source</span>
+            <span className="font-medium text-slate-900">{sourceLabels[reservation.source] || reservation.source}</span>
+          </div>
+        )}
+
+        {/* Langue */}
+        {reservation.language && (
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Langue</span>
+            <span className="font-medium text-slate-900">{languageLabels[reservation.language] || reservation.language}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Options */}
+      {reservation.options && reservation.options.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-slate-100">
+          {reservation.options.map((opt, i) => (
+            <span key={i} className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+              {opt}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Note */}
       {reservation.note && (
         <div className="mt-3 pt-3 border-t border-slate-100">
           <p className="text-sm text-slate-600 italic">"{reservation.note}"</p>
