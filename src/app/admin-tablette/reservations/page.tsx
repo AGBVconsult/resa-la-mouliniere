@@ -584,7 +584,7 @@ export default function TabletReservationsPage() {
               return (
                 <div className="flex items-center gap-1.5">
                   <span className={cn("text-gray-600", isCompact ? "text-sm" : "text-base")}>{res.firstName}</span>
-                  <span className={cn("font-semibold", isCompact ? "text-sm" : "text-base")}>{res.lastName}</span>
+                  <span className={cn("font-semibold mr-1.5", isCompact ? "text-sm" : "text-base")}>{res.lastName}</span>
                   <span className={cn(
                     "h-[18px] flex items-center justify-center",
                     visits === 0 ? "px-1.5 rounded-full" : "min-w-[18px] rounded-full",
@@ -594,15 +594,17 @@ export default function TabletReservationsPage() {
                   )}>
                     {visits === 0 ? "NEW" : visits}
                   </span>
-                  {res.hasClientNotes && (
-                    <Bookmark size={20} className="text-amber-500" strokeWidth={2} fill="currentColor" />
-                  )}
-                  {res.isLateClient && (
-                    <Timer size={18} className="text-orange-400" strokeWidth={2} />
-                  )}
-                  {res.isSlowClient && (
-                    <Coffee size={18} className="text-blue-400" strokeWidth={2} />
-                  )}
+                  <div className="flex items-center gap-1 ml-4">
+                    {res.hasClientNotes && (
+                      <Bookmark size={16} className="text-amber-500" strokeWidth={2} fill="currentColor" />
+                    )}
+                    {res.isLateClient && (
+                      <Timer size={18} className="text-orange-400" strokeWidth={2} />
+                    )}
+                    {res.isSlowClient && (
+                      <Coffee size={18} className="text-blue-400" strokeWidth={2} />
+                    )}
+                  </div>
                 </div>
               );
             })()}
