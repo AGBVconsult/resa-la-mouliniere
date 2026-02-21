@@ -244,11 +244,15 @@ export function ServiceFloorPlan({
   const handleUnassign = async () => {
     if (!editingTable || isAssigning) return;
     
+    // Get current version from tableStates to avoid version conflicts
+    const currentTable = tableStates?.tables.find(t => t.reservation?.id === editingTable.reservationId);
+    const currentVersion = currentTable?.reservation?.version ?? editingTable.reservationVersion;
+    
     setIsAssigning(true);
     try {
       await unassignMutation({
         reservationId: editingTable.reservationId,
-        expectedVersion: editingTable.reservationVersion,
+        expectedVersion: currentVersion,
       });
       toast.success("Affectation supprimée");
       setEditingTable(null);
@@ -263,6 +267,10 @@ export function ServiceFloorPlan({
   const handleMoveReservation = async (targetTableId: string) => {
     if (!editingTable || isAssigning) return;
     
+    // Get current version from tableStates to avoid version conflicts
+    const currentTable = tableStates?.tables.find(t => t.reservation?.id === editingTable.reservationId);
+    const currentVersion = currentTable?.reservation?.version ?? editingTable.reservationVersion;
+    
     const partySize = editingTable.partySize;
     const tablesToSelect = findCombinableTables(targetTableId, partySize);
     
@@ -272,7 +280,7 @@ export function ServiceFloorPlan({
         reservationId: editingTable.reservationId,
         tableIds: tablesToSelect as Id<"tables">[],
         primaryTableId: targetTableId as Id<"tables">,
-        expectedVersion: editingTable.reservationVersion,
+        expectedVersion: currentVersion,
       });
       toast.success("Réservation déplacée");
       setEditingTable(null);
@@ -287,16 +295,21 @@ export function ServiceFloorPlan({
   const handleSwapReservations = async (targetTable: typeof filteredTables[0]) => {
     if (!editingTable || isAssigning || !targetTable.reservation) return;
     
+    // Get current versions from tableStates to avoid version conflicts
+    const currentTableA = tableStates?.tables.find(t => t.reservation?.id === editingTable.reservationId);
+    const currentVersionA = currentTableA?.reservation?.version ?? editingTable.reservationVersion;
+    const currentVersionB = targetTable.reservation.version;
+    
     setIsAssigning(true);
     try {
       await swapMutation({
         reservationA: {
           id: editingTable.reservationId,
-          expectedVersion: editingTable.reservationVersion,
+          expectedVersion: currentVersionA,
         },
         reservationB: {
           id: targetTable.reservation.id,
-          expectedVersion: targetTable.reservation.version,
+          expectedVersion: currentVersionB,
         },
       });
       toast.success("Tables échangées");

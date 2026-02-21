@@ -349,9 +349,11 @@ export const unassign = mutation({
       createdAt: now,
     });
 
-    console.log("Table unassigned", {
+    console.log("Table unassigned successfully", {
       reservationId,
       previousTableIds,
+      previousStatus,
+      newStatus: "confirmed",
       newVersion,
     });
 
