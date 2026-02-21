@@ -595,13 +595,13 @@ export default function TabletReservationsPage() {
                     {visits === 0 ? "NEW" : visits}
                   </span>
                   {res.hasClientNotes && (
-                    <Bookmark size={16} className="text-amber-500" strokeWidth={2} fill="currentColor" />
+                    <Bookmark size={20} className="text-amber-500" strokeWidth={2} fill="currentColor" />
                   )}
                   {res.isLateClient && (
-                    <Timer size={14} className="text-orange-400" strokeWidth={2} />
+                    <Timer size={18} className="text-orange-400" strokeWidth={2} />
                   )}
                   {res.isSlowClient && (
-                    <Coffee size={14} className="text-blue-400" strokeWidth={2} />
+                    <Coffee size={18} className="text-blue-400" strokeWidth={2} />
                   )}
                 </div>
               );

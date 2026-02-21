@@ -200,7 +200,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
           [field]: !currentValue,
         },
       });
-      toast.success(field === "isLateClient" ? "Badge Retard mis à jour" : "Badge Prend son temps mis à jour");
+      toast.success(field === "isLateClient" ? "Badge Souvent en retard mis à jour" : "Badge Prend son temps mis à jour");
     } catch (error) {
       toast.error(formatConvexError(error));
     } finally {
@@ -255,7 +255,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sidebar gauche - Design épuré */}
-        <div className="w-96 bg-white p-8 flex flex-col gap-8 border-r border-slate-100 overflow-y-auto">
+        <div className="w-96 bg-slate-50 p-8 flex flex-col gap-8 border-r border-slate-100 overflow-y-auto">
           {/* Header client */}
           <div>
             <h2 className="text-2xl font-bold text-slate-900">
@@ -415,7 +415,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
                 )}
               >
                 <Timer size={12} />
-                Retard
+                Souvent en retard
               </button>
               
               {/* Badge Prend son temps */}
