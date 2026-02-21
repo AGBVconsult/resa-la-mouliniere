@@ -613,19 +613,19 @@ function ReservationCard({ reservation, isHighlighted, formatDate }: Reservation
 
   return (
     <div className={cn(
-      "p-4 rounded-xl border transition-all",
+      "p-3 rounded-xl border transition-all",
       isHighlighted 
         ? "bg-blue-50 border-blue-300 ring-2 ring-blue-200" 
         : "bg-white border-slate-200 hover:border-slate-300"
     )}>
       {/* Ligne 1: Date, heure, statut */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-4">
-          <div className="text-center min-w-[60px]">
-            <div className="text-lg font-bold text-slate-900">{reservation.timeKey}</div>
+          <div className="text-center min-w-[50px]">
+            <div className="text-base font-bold text-slate-900">{reservation.timeKey}</div>
           </div>
           
-          <div className="h-10 w-px bg-slate-200" />
+          <div className="h-8 w-px bg-slate-200" />
           
           <div className="font-medium text-slate-900">{formatDate(reservation.dateKey)}</div>
         </div>
@@ -640,7 +640,7 @@ function ReservationCard({ reservation, isHighlighted, formatDate }: Reservation
       </div>
 
       {/* Ligne 2: Détails réservation */}
-      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm border-t border-slate-100 pt-3">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm border-t border-slate-100 pt-2">
         {/* Nombre de personnes */}
         <div className="flex items-center justify-between">
           <span className="text-slate-400">Couverts</span>
@@ -671,18 +671,29 @@ function ReservationCard({ reservation, isHighlighted, formatDate }: Reservation
 
       {/* Options */}
       {reservation.options && reservation.options.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-slate-100">
-          {reservation.options.map((opt, i) => (
-            <span key={i} className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-              {opt}
-            </span>
-          ))}
+        <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-slate-100">
+          {reservation.options.map((opt, i) => {
+            const optionConfig: Record<string, { icon: typeof Accessibility; color: string }> = {
+              wheelchair: { icon: Accessibility, color: "bg-blue-500 text-white" },
+              stroller: { icon: Baby, color: "bg-pink-500 text-white" },
+              highChair: { icon: Baby, color: "bg-purple-500 text-white" },
+              dogAccess: { icon: PawPrint, color: "bg-amber-500 text-white" },
+            };
+            const config = optionConfig[opt];
+            const OptionIcon = config?.icon || Baby;
+            return (
+              <span key={i} className={cn("px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1", config?.color || "bg-slate-200 text-slate-700")}>
+                <OptionIcon size={10} />
+                {opt === "wheelchair" ? "PMR" : opt === "stroller" ? "Poussette" : opt === "highChair" ? "Chaise haute" : opt === "dogAccess" ? "Chien" : opt}
+              </span>
+            );
+          })}
         </div>
       )}
 
       {/* Note */}
       {reservation.note && (
-        <div className="mt-3 pt-3 border-t border-slate-100">
+        <div className="mt-2 pt-2 border-t border-slate-100">
           <p className="text-sm text-slate-600 italic">"{reservation.note}"</p>
         </div>
       )}

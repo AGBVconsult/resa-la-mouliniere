@@ -580,7 +580,7 @@ export default function TabletReservationsPage() {
         <div
           onClick={handleRowClick}
           className={cn(
-            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-2",
+            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-1.5",
             isExpanded && "bg-gray-50",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
             isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
