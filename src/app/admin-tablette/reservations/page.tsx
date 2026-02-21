@@ -46,6 +46,7 @@ import {
   Ban,
   ChevronDown,
   LayoutGrid,
+  StickyNote,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,7 @@ interface Reservation {
   version: number;
   totalVisits?: number;
   clientId?: Id<"clients">;
+  hasClientNotes?: boolean;
 }
 
 // Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
@@ -571,7 +573,7 @@ export default function TabletReservationsPage() {
         >
           {/* Column: 2 lignes */}
           <div className="flex flex-col gap-1 shrink-0 mr-4" style={{ width: isCompact ? "150px" : "240px" }}>
-            {/* Ligne 1: Prénom + Nom + Badge */}
+            {/* Ligne 1: Prénom + Nom + Badge + Notes indicator */}
             {(() => {
               const visits = res.totalVisits ?? 0;
               const visitBadge = getVisitBadgeStyle(visits);
@@ -587,6 +589,9 @@ export default function TabletReservationsPage() {
                   )}>
                     {visits === 0 ? "NEW" : visits}
                   </span>
+                  {res.hasClientNotes && (
+                    <StickyNote size={12} className="text-amber-500" strokeWidth={2} />
+                  )}
                 </div>
               );
             })()}
