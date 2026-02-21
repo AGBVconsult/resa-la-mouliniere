@@ -293,17 +293,14 @@ export default function TabletReservationsPage() {
   }, []);
 
   const formatDateLabel = () => {
-    const today = new Date();
-    const isToday = format(today, "yyyy-MM-dd") === dateKey;
-    if (isToday) return "Aujourd'hui";
-    // Format: "Mer. 18 Fév."
-    const dayName = format(selectedDate, "EEE", { locale: fr });
+    // Format: "SAM 21 FÉVR" (toujours ce format, même pour aujourd'hui)
+    const dayName = format(selectedDate, "EEE", { locale: fr }).toUpperCase().replace(".", "");
     const dayNum = format(selectedDate, "d", { locale: fr });
-    const monthName = format(selectedDate, "MMM", { locale: fr });
-    const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-    return `${capitalizedDay} ${dayNum} ${capitalizedMonth}`;
+    const monthName = format(selectedDate, "MMM", { locale: fr }).toUpperCase().replace(".", "");
+    return `${dayName} ${dayNum} ${monthName}`;
   };
+  
+  const isToday = format(new Date(), "yyyy-MM-dd") === dateKey;
 
   const lunchCapacity = useMemo(() => {
     if (!slotsData?.lunch) return 0;
@@ -860,35 +857,51 @@ export default function TabletReservationsPage() {
       {/* Header */}
       <header className="relative flex items-center py-12 px-4 border-b border-slate-200 bg-[#E4E4E4]">
         {/* Left: Date navigation */}
-        <div className="flex items-center h-[52px] bg-white/80 backdrop-blur-xl rounded-full p-1 border border-slate-200/60 shadow-sm">
-          <button
-            onClick={() => setShowCalendarPopup(true)}
-            className="w-[120px] h-[44px] flex items-center justify-center cursor-pointer group"
-          >
-            <span className="text-sm font-semibold text-slate-800 group-hover:text-slate-600 transition-colors text-center">
-              {formatDateLabel()}
-            </span>
-          </button>
-          <div className="w-px h-5 bg-slate-200/80" />
-          <button
-            onClick={goToToday}
-            className="w-[44px] h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
-            title="Aujourd'hui"
-          >
-            <CalendarCheck size={20} strokeWidth={1.5} />
-          </button>
-          <button
-            onClick={goToPreviousDay}
-            className="w-[44px] h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
-          >
-            <ChevronLeft size={20} strokeWidth={1.5} />
-          </button>
-          <button
-            onClick={goToNextDay}
-            className="w-[44px] h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/50 transition-all active:scale-95"
-          >
-            <ChevronRight size={20} strokeWidth={1.5} />
-          </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center h-[52px] bg-[#334156] rounded-full overflow-hidden shadow-lg">
+            {/* Bouton précédent */}
+            <button
+              onClick={goToPreviousDay}
+              className="w-[52px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+            >
+              <ChevronLeft size={20} strokeWidth={2} />
+            </button>
+            
+            {/* Séparateur */}
+            <div className="w-px h-6 bg-white/20" />
+            
+            {/* Date au centre */}
+            <button
+              onClick={() => setShowCalendarPopup(true)}
+              className="px-6 h-full flex items-center justify-center cursor-pointer group"
+            >
+              <span className="text-sm font-bold text-white tracking-wide">
+                {formatDateLabel()}
+              </span>
+            </button>
+            
+            {/* Séparateur */}
+            <div className="w-px h-6 bg-white/20" />
+            
+            {/* Bouton suivant */}
+            <button
+              onClick={goToNextDay}
+              className="w-[52px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+            >
+              <ChevronRight size={20} strokeWidth={2} />
+            </button>
+          </div>
+          
+          {/* Bouton Aujourd'hui (visible seulement si pas aujourd'hui) */}
+          {!isToday && (
+            <button
+              onClick={goToToday}
+              className="flex items-center gap-2 h-[52px] px-5 bg-blue-500 hover:bg-blue-600 rounded-full text-white font-semibold text-sm transition-all active:scale-95 shadow-lg"
+            >
+              <CalendarCheck size={18} strokeWidth={2} />
+              <span className="uppercase tracking-wide">Aujourd&apos;hui</span>
+            </button>
+          )}
         </div>
 
         {/* Switch Total/Midi/Soir - centré */}
