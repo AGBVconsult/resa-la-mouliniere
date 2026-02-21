@@ -512,6 +512,20 @@ export const update = mutation({
       overrideCapacity: v.optional(v.number()),
       maxGroupSize: v.optional(v.union(v.number(), v.null())),
       largeTableAllowed: v.optional(v.boolean()),
+      lunchSlots: v.optional(v.array(v.object({
+        timeKey: v.string(),
+        capacity: v.number(),
+        isActive: v.boolean(),
+        maxGroupSize: v.union(v.number(), v.null()),
+      }))),
+      dinnerSlots: v.optional(v.array(v.object({
+        timeKey: v.string(),
+        capacity: v.number(),
+        isActive: v.boolean(),
+        maxGroupSize: v.union(v.number(), v.null()),
+      }))),
+      lunchActiveDays: v.optional(v.array(v.number())),
+      dinnerActiveDays: v.optional(v.array(v.number())),
     })),
   },
   handler: async (ctx, args) => {
@@ -526,13 +540,17 @@ export const update = mutation({
     const name = args.name ?? period.name;
     const startDate = args.startDate ?? period.startDate;
     const endDate = args.endDate ?? period.endDate;
-    const applyRules: ApplyRules = {
+    const applyRules: ExtendedApplyRules = {
       status: args.applyRules?.status ?? period.applyRules.status,
       services: args.applyRules?.services ?? period.applyRules.services,
       activeDays: args.applyRules?.activeDays ?? period.applyRules.activeDays,
       overrideCapacity: args.applyRules?.overrideCapacity ?? period.applyRules.overrideCapacity,
       maxGroupSize: args.applyRules?.maxGroupSize ?? period.applyRules.maxGroupSize,
       largeTableAllowed: args.applyRules?.largeTableAllowed ?? period.applyRules.largeTableAllowed,
+      lunchSlots: args.applyRules?.lunchSlots ?? period.applyRules.lunchSlots,
+      dinnerSlots: args.applyRules?.dinnerSlots ?? period.applyRules.dinnerSlots,
+      lunchActiveDays: args.applyRules?.lunchActiveDays ?? period.applyRules.lunchActiveDays,
+      dinnerActiveDays: args.applyRules?.dinnerActiveDays ?? period.applyRules.dinnerActiveDays,
     };
 
     // Validate name
@@ -578,6 +596,15 @@ export const update = mutation({
 
     // Delete old period overrides
     await deleteOverrides(ctx, args.periodId);
+
+    // Delete old slots created by this period (for exceptional openings)
+    const oldSlots = await ctx.db
+      .query("slots")
+      .withIndex("by_createdByPeriodId", (q: any) => q.eq("createdByPeriodId", args.periodId))
+      .collect();
+    for (const slot of oldSlots) {
+      await ctx.db.delete(slot._id);
+    }
 
     // Update period
     await ctx.db.patch(args.periodId, {
