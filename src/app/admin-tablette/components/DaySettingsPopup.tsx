@@ -314,7 +314,7 @@ function ServiceSection({
       </div>
 
       {/* Slots */}
-      <div className="p-4 space-y-2">
+      <div className="p-3 space-y-0 divide-y divide-slate-100">
         {/* Créneaux horaires header */}
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-slate-500">Créneaux horaires</span>
@@ -377,24 +377,24 @@ function ServiceSection({
             <div
               key={slot._id}
               className={cn(
-                "flex items-center gap-4 px-4 py-3 rounded-xl transition-colors",
-                slot.isOpen ? "bg-white" : "bg-slate-200/50"
+                "flex items-center gap-3 px-3 py-2 transition-colors",
+                slot.isOpen ? "bg-transparent" : "bg-slate-100/50"
               )}
             >
-              <div className="flex items-center gap-2 text-slate-600">
-                <Clock size={16} />
-                <span className="font-mono text-sm font-medium">{slot.timeKey}</span>
+              <div className="flex items-center gap-1.5 text-slate-600 min-w-[60px]">
+                <Clock size={14} />
+                <span className="font-mono text-xs font-medium">{slot.timeKey}</span>
               </div>
 
-              <div className="flex items-center gap-2 flex-1">
-                <Users size={16} className="text-slate-400" />
+              <div className="flex items-center gap-1.5 flex-1">
+                <Users size={14} className="text-slate-400" />
                 <input
                   type="number"
                   min={0}
                   max={100}
                   value={slot.capacity}
                   onChange={(e) => onCapacityChange(slot._id, parseInt(e.target.value) || 0)}
-                  className="w-16 px-2 py-1.5 text-sm bg-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-12 px-1.5 py-1 text-xs bg-white border border-slate-200 rounded focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   disabled={!slot.isOpen}
                 />
               </div>
@@ -402,6 +402,7 @@ function ServiceSection({
               <Switch
                 checked={slot.isOpen}
                 onCheckedChange={(open) => onSlotToggle(slot._id, open)}
+                className="scale-75"
               />
             </div>
           ))
