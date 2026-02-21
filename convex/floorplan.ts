@@ -251,7 +251,7 @@ export const assign = mutation({
       }
     }
 
-    // 7. Apply assignment
+    // 7. Apply assignment (status remains unchanged - assignment is tracked via tableIds)
     const now = Date.now();
     const newVersion = reservation.version + 1;
 
