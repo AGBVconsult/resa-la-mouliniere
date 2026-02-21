@@ -857,11 +857,11 @@ export default function TabletReservationsPage() {
       {/* Header */}
       <header className="relative flex items-center py-12 px-8 border-b border-slate-200 bg-[#E4E4E4]">
         {/* Left: Date navigation */}
-        <div className="flex items-center h-[52px] bg-[#334156] rounded-full overflow-hidden shadow-lg">
+        <div className="flex items-center h-[52px] bg-[#334156] rounded-full shadow-lg pl-4 pr-2">
           {/* Bouton précédent */}
           <button
             onClick={goToPreviousDay}
-            className="w-[52px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+            className="w-[40px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 rounded-full"
           >
             <ChevronLeft size={20} strokeWidth={2} />
           </button>
@@ -885,7 +885,7 @@ export default function TabletReservationsPage() {
           {/* Bouton suivant */}
           <button
             onClick={goToNextDay}
-            className="w-[52px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+            className="w-[40px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 rounded-full"
           >
             <ChevronRight size={20} strokeWidth={2} />
           </button>
@@ -894,7 +894,7 @@ export default function TabletReservationsPage() {
           {!isToday && (
             <button
               onClick={goToToday}
-              className="flex items-center gap-1.5 h-[36px] ml-1 mr-1 px-3 bg-blue-500 hover:bg-blue-600 rounded-full text-white font-medium text-xs transition-all active:scale-95"
+              className="flex items-center gap-1.5 h-[36px] ml-2 px-3 bg-blue-500 hover:bg-blue-600 rounded-full text-white font-medium text-xs transition-all active:scale-95"
             >
               <RotateCcw size={14} strokeWidth={2} />
               <span className="uppercase tracking-wide">Aujourd&apos;hui</span>
