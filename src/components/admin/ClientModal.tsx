@@ -610,20 +610,6 @@ function ReservationCard({ reservation, isHighlighted, formatDate }: Reservation
     : reservation.status === "noshow" ? Ghost
     : Clock;
 
-  const sourceLabels: Record<string, string> = {
-    online: "En ligne",
-    phone: "Téléphone",
-    walkin: "Sur place",
-    admin: "Admin",
-  };
-
-  const languageLabels: Record<string, string> = {
-    fr: "Français",
-    nl: "Néerlandais",
-    en: "Anglais",
-    de: "Allemand",
-    it: "Italien",
-  };
 
   return (
     <div className={cn(
@@ -637,7 +623,6 @@ function ReservationCard({ reservation, isHighlighted, formatDate }: Reservation
         <div className="flex items-center gap-4">
           <div className="text-center min-w-[60px]">
             <div className="text-lg font-bold text-slate-900">{reservation.timeKey}</div>
-            <div className="text-xs text-slate-500">{reservation.service === "lunch" ? "Midi" : "Soir"}</div>
           </div>
           
           <div className="h-10 w-px bg-slate-200" />
@@ -682,21 +667,6 @@ function ReservationCard({ reservation, isHighlighted, formatDate }: Reservation
           </span>
         </div>
 
-        {/* Source */}
-        {reservation.source && (
-          <div className="flex items-center justify-between">
-            <span className="text-slate-400">Source</span>
-            <span className="font-medium text-slate-900">{sourceLabels[reservation.source] || reservation.source}</span>
-          </div>
-        )}
-
-        {/* Langue */}
-        {reservation.language && (
-          <div className="flex items-center justify-between">
-            <span className="text-slate-400">Langue</span>
-            <span className="font-medium text-slate-900">{languageLabels[reservation.language] || reservation.language}</span>
-          </div>
-        )}
       </div>
 
       {/* Options */}
