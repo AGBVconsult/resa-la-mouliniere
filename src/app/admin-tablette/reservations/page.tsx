@@ -518,7 +518,7 @@ export default function TabletReservationsPage() {
         })}
         
         {cancelledReservations.length > 0 && (
-          <div className="mt-4 border-t-2 border-slate-200">
+          <div className="border-t-2 border-slate-200">
             <div className={cn(
               "flex items-center gap-4 bg-slate-100 border-b border-slate-200",
               showFloorPlan || selectedService === "total" ? "px-3 py-1.5" : "px-4 py-2"
