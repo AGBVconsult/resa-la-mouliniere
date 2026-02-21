@@ -622,4 +622,12 @@ export default defineSchema({
     .index("by_scoring_version", ["scoringVersion"])
     .index("by_zone", ["assignedZone"])
     .index("by_created", ["createdAt"]),
+
+  // Tags globaux pour les clients
+  tags: defineTable({
+    name: v.string(),
+    createdAt: v.number(),
+    createdBy: v.optional(v.string()),
+  })
+    .index("by_name", ["name"]),
 });

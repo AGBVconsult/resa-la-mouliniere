@@ -23,11 +23,12 @@ export function TagSelectorPopup({ clientId, currentTags, onClose }: TagSelector
   const [newlyCreatedTags, setNewlyCreatedTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  const allTags = useQuery(api.clients.listAllTags) ?? [];
+  const allTags = useQuery(api.tags.list) ?? [];
+  const updateClient = useMutation(api.clients.update);
+  const createTag = useMutation(api.tags.create);
   
   // Combiner les tags existants avec les nouveaux créés localement
   const availableTags = [...new Set([...allTags, ...newlyCreatedTags])].sort((a, b) => a.localeCompare(b, "fr"));
-  const updateClient = useMutation(api.clients.update);
 
   // Filtrer les tags par recherche
   const filteredTags = availableTags.filter((tag) =>
@@ -45,16 +46,22 @@ export function TagSelectorPopup({ clientId, currentTags, onClose }: TagSelector
     );
   };
 
-  const handleAddNewTag = () => {
+  const handleAddNewTag = async () => {
     const trimmed = newTagInput.trim();
     if (!trimmed) return;
     if (newTagExists) {
       toast.error("Ce tag existe déjà");
       return;
     }
-    // Ajouter aux tags créés localement (non sélectionné)
-    setNewlyCreatedTags((prev) => [...prev, trimmed]);
-    setNewTagInput("");
+    try {
+      // Créer le tag dans Convex (persistant)
+      await createTag({ name: trimmed });
+      // Ajouter aux tags créés localement pour affichage immédiat
+      setNewlyCreatedTags((prev) => [...prev, trimmed]);
+      setNewTagInput("");
+    } catch (error) {
+      toast.error(formatConvexError(error));
+    }
   };
 
   const handleSave = async () => {

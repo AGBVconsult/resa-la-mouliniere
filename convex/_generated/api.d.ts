@@ -48,6 +48,7 @@ import type * as settings from "../settings.js";
 import type * as slots from "../slots.js";
 import type * as specialPeriods from "../specialPeriods.js";
 import type * as tables from "../tables.js";
+import type * as tags from "../tags.js";
 import type * as weeklyTemplates from "../weeklyTemplates.js";
 import type * as widget from "../widget.js";
 
@@ -98,6 +99,7 @@ declare const fullApi: ApiFromModules<{
   slots: typeof slots;
   specialPeriods: typeof specialPeriods;
   tables: typeof tables;
+  tags: typeof tags;
   weeklyTemplates: typeof weeklyTemplates;
   widget: typeof widget;
 }>;
