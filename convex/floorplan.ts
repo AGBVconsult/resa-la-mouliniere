@@ -448,3 +448,102 @@ export const checkAssignment = query({
     };
   },
 });
+
+/**
+ * Mutation: Échange les affectations de tables entre deux réservations.
+ */
+export const swap = mutation({
+  args: {
+    reservationA: v.object({
+      id: v.id("reservations"),
+      expectedVersion: v.number(),
+    }),
+    reservationB: v.object({
+      id: v.id("reservations"),
+      expectedVersion: v.number(),
+    }),
+  },
+  handler: async (ctx, { reservationA, reservationB }) => {
+    // 1. Load both reservations
+    const resaA = await ctx.db.get(reservationA.id);
+    const resaB = await ctx.db.get(reservationB.id);
+
+    if (!resaA) {
+      throw Errors.RESERVATION_NOT_FOUND(reservationA.id);
+    }
+    if (!resaB) {
+      throw Errors.RESERVATION_NOT_FOUND(reservationB.id);
+    }
+
+    // 2. Check versions
+    if (resaA.version !== reservationA.expectedVersion) {
+      throw Errors.VERSION_CONFLICT(reservationA.expectedVersion, resaA.version);
+    }
+    if (resaB.version !== reservationB.expectedVersion) {
+      throw Errors.VERSION_CONFLICT(reservationB.expectedVersion, resaB.version);
+    }
+
+    // 3. Get table IDs to swap
+    const tableIdsA = resaA.tableIds;
+    const tableIdsB = resaB.tableIds;
+
+    const now = Date.now();
+    const newVersionA = resaA.version + 1;
+    const newVersionB = resaB.version + 1;
+
+    // 4. Swap assignments
+    await ctx.db.patch(reservationA.id, {
+      tableIds: tableIdsB,
+      version: newVersionA,
+      updatedAt: now,
+    });
+
+    await ctx.db.patch(reservationB.id, {
+      tableIds: tableIdsA,
+      version: newVersionB,
+      updatedAt: now,
+    });
+
+    // 5. Log events
+    await ctx.db.insert("reservationEvents", {
+      reservationId: reservationA.id,
+      restaurantId: resaA.restaurantId,
+      eventType: "table_assignment",
+      actualTime: now,
+      metadata: {
+        previousTableIds: tableIdsA,
+        newTableIds: tableIdsB,
+        action: "swap",
+        swappedWith: reservationB.id,
+      },
+      createdAt: now,
+    });
+
+    await ctx.db.insert("reservationEvents", {
+      reservationId: reservationB.id,
+      restaurantId: resaB.restaurantId,
+      eventType: "table_assignment",
+      actualTime: now,
+      metadata: {
+        previousTableIds: tableIdsB,
+        newTableIds: tableIdsA,
+        action: "swap",
+        swappedWith: reservationA.id,
+      },
+      createdAt: now,
+    });
+
+    console.log("Tables swapped", {
+      reservationA: reservationA.id,
+      reservationB: reservationB.id,
+      tableIdsA,
+      tableIdsB,
+    });
+
+    return {
+      success: true,
+      newVersionA,
+      newVersionB,
+    };
+  },
+});

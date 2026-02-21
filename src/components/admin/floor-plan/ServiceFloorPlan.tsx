@@ -70,6 +70,7 @@ export function ServiceFloorPlan({
   const tableStates = useQuery(api.floorplan.getTableStates, { dateKey, service });
   const assignMutation = useMutation(api.floorplan.assign);
   const unassignMutation = useMutation(api.floorplan.unassign);
+  const swapMutation = useMutation(api.floorplan.swap);
 
   // Filter tables by active zone and valid names (exclude test tables like D-30)
   const filteredTables = useMemo(() => {
@@ -282,9 +283,34 @@ export function ServiceFloorPlan({
     }
   };
 
+  // Handle swap between two reservations
+  const handleSwapReservations = async (targetTable: typeof filteredTables[0]) => {
+    if (!editingTable || isAssigning || !targetTable.reservation) return;
+    
+    setIsAssigning(true);
+    try {
+      await swapMutation({
+        reservationA: {
+          id: editingTable.reservationId,
+          expectedVersion: editingTable.reservationVersion,
+        },
+        reservationB: {
+          id: targetTable.reservation.id,
+          expectedVersion: targetTable.reservation.version,
+        },
+      });
+      toast.success("Tables échangées");
+      setEditingTable(null);
+    } catch (error: unknown) {
+      toast.error(formatConvexError(error, "Erreur d'échange"));
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   // Handle table click - assign directly on click or highlight reservation
   const handleTableClick = async (tableId: string, status: TableStatus, reservationId?: Id<"reservations"> | null, table?: typeof filteredTables[0]) => {
-    // Mode édition actif : clic sur une autre table = déplacer la réservation
+    // Mode édition actif : clic sur une autre table = déplacer ou échanger
     if (editingTable) {
       if (tableId === editingTable.tableId) {
         // Clic sur la même table = désélectionner
@@ -302,7 +328,13 @@ export function ServiceFloorPlan({
         return;
       }
       
-      // Déplacer la réservation vers cette table
+      // Si la table cible a une réservation, échanger les affectations
+      if (table?.reservation) {
+        await handleSwapReservations(table);
+        return;
+      }
+      
+      // Sinon déplacer la réservation vers cette table
       await handleMoveReservation(tableId);
       return;
     }
