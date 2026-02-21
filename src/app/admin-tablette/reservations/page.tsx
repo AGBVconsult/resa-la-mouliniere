@@ -649,7 +649,7 @@ export default function TabletReservationsPage() {
           {/* Table - Full Height - clic active l'assignation */}
           <div 
             className={cn(
-              "self-stretch flex shrink-0 -my-2 cursor-pointer transition-all duration-300 border-l border-black/10 w-16",
+              "self-stretch flex shrink-0 -my-1.5 cursor-pointer transition-all duration-300 border-l border-black/10 w-16",
               isSelectedForAssignment 
                 ? "bg-blue-500" 
                 : "bg-slate-50 hover:bg-slate-100"
@@ -708,7 +708,7 @@ export default function TabletReservationsPage() {
             return (
               <div 
                 className={cn(
-                  "self-stretch flex shrink-0 -my-2 transition-all duration-300 border-l border-black/10",
+                  "self-stretch flex shrink-0 -my-1.5 transition-all duration-300 border-l border-black/10",
                   statusConfig.bg
                 )}
                 onClick={(e) => e.stopPropagation()}
