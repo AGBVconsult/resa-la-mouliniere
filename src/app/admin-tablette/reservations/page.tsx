@@ -580,7 +580,7 @@ export default function TabletReservationsPage() {
         <div
           onClick={handleRowClick}
           className={cn(
-            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-3",
+            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-2",
             isExpanded && "bg-gray-50",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
             isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
@@ -649,7 +649,7 @@ export default function TabletReservationsPage() {
           {/* Table - Full Height - clic active l'assignation */}
           <div 
             className={cn(
-              "self-stretch flex shrink-0 -my-3 cursor-pointer transition-all duration-300 border-l border-black/10 w-16",
+              "self-stretch flex shrink-0 -my-2 cursor-pointer transition-all duration-300 border-l border-black/10 w-16",
               isSelectedForAssignment 
                 ? "bg-blue-500" 
                 : "bg-slate-50 hover:bg-slate-100"
@@ -708,7 +708,7 @@ export default function TabletReservationsPage() {
             return (
               <div 
                 className={cn(
-                  "self-stretch flex shrink-0 -my-3 transition-all duration-300 border-l border-black/10",
+                  "self-stretch flex shrink-0 -my-2 transition-all duration-300 border-l border-black/10",
                   statusConfig.bg
                 )}
                 onClick={(e) => e.stopPropagation()}

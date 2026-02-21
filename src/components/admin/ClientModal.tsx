@@ -32,7 +32,11 @@ import {
   Pencil,
   Timer,
   Coffee,
+  Accessibility,
+  PawPrint,
+  Icon,
 } from "lucide-react";
+import { stroller } from "@lucide/lab";
 import { getFlag } from "@/lib/getFlag";
 import { TagSelectorPopup } from "./TagSelectorPopup";
 
@@ -778,10 +782,10 @@ const TIME_SLOTS = [
 ];
 
 const AVAILABLE_OPTIONS = [
-  { key: "wheelchair", label: "PMR" },
-  { key: "stroller", label: "Poussette" },
-  { key: "highChair", label: "Chaise haute" },
-  { key: "dogAccess", label: "Chien" },
+  { key: "wheelchair", label: "PMR", icon: Accessibility, activeColor: "bg-blue-500 text-white border-blue-500", hoverColor: "hover:border-blue-300 hover:text-blue-500" },
+  { key: "stroller", label: "Poussette", icon: null, activeColor: "bg-pink-500 text-white border-pink-500", hoverColor: "hover:border-pink-300 hover:text-pink-500" },
+  { key: "highChair", label: "Chaise haute", icon: Baby, activeColor: "bg-purple-500 text-white border-purple-500", hoverColor: "hover:border-purple-300 hover:text-purple-500" },
+  { key: "dogAccess", label: "Chien", icon: PawPrint, activeColor: "bg-amber-500 text-white border-amber-500", hoverColor: "hover:border-amber-300 hover:text-amber-500" },
 ];
 
 function ReservationEditForm({ 
@@ -931,21 +935,25 @@ function ReservationEditForm({
       <div className="space-y-3">
         <label className="text-sm font-medium text-slate-700">Options</label>
         <div className="flex flex-wrap gap-2">
-          {AVAILABLE_OPTIONS.map((option) => (
-            <button
-              key={option.key}
-              type="button"
-              onClick={() => toggleOption(option.key)}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-                formData.options.includes(option.key)
-                  ? "bg-purple-500 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
+          {AVAILABLE_OPTIONS.map((option) => {
+            const isActive = formData.options.includes(option.key);
+            return (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => toggleOption(option.key)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer border",
+                  isActive
+                    ? option.activeColor
+                    : `bg-white text-slate-500 border-slate-200 ${option.hoverColor}`
+                )}
+              >
+                {option.icon ? <option.icon size={12} /> : <Icon iconNode={stroller} size={12} />}
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
