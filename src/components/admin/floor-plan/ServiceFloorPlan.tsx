@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
-import { Users } from "lucide-react";
+import { Users, X } from "lucide-react";
 import {
   GRID_CELL_SIZE,
   TABLE_SIZE,
@@ -37,6 +37,15 @@ const STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: str
   blocked: { bg: "bg-gray-400", border: "border-transparent", text: "text-gray-700" },
 };
 
+// État pour le mode édition de table
+interface EditingTableState {
+  tableId: string;
+  reservationId: Id<"reservations">;
+  reservationVersion: number;
+  reservationName: string;
+  partySize: number;
+}
+
 export function ServiceFloorPlan({
   dateKey,
   service,
@@ -51,6 +60,7 @@ export function ServiceFloorPlan({
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
   const [tabletScale, setTabletScale] = useState(1);
+  const [editingTable, setEditingTable] = useState<EditingTableState | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tabletContainerRef = useRef<HTMLDivElement>(null);
@@ -59,6 +69,7 @@ export function ServiceFloorPlan({
   // Query table states for this service
   const tableStates = useQuery(api.floorplan.getTableStates, { dateKey, service });
   const assignMutation = useMutation(api.floorplan.assign);
+  const unassignMutation = useMutation(api.floorplan.unassign);
 
   // Filter tables by active zone and valid names (exclude test tables like D-30)
   const filteredTables = useMemo(() => {
@@ -228,11 +239,89 @@ export function ServiceFloorPlan({
     };
   }, [tableStates]);
 
+  // Handle unassign from editing table
+  const handleUnassign = async () => {
+    if (!editingTable || isAssigning) return;
+    
+    setIsAssigning(true);
+    try {
+      await unassignMutation({
+        reservationId: editingTable.reservationId,
+        expectedVersion: editingTable.reservationVersion,
+      });
+      toast.success("Affectation supprimée");
+      setEditingTable(null);
+    } catch (error: unknown) {
+      toast.error(formatConvexError(error, "Erreur de suppression"));
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  // Handle move reservation to another table
+  const handleMoveReservation = async (targetTableId: string) => {
+    if (!editingTable || isAssigning) return;
+    
+    const partySize = editingTable.partySize;
+    const tablesToSelect = findCombinableTables(targetTableId, partySize);
+    
+    setIsAssigning(true);
+    try {
+      await assignMutation({
+        reservationId: editingTable.reservationId,
+        tableIds: tablesToSelect as Id<"tables">[],
+        primaryTableId: targetTableId as Id<"tables">,
+        expectedVersion: editingTable.reservationVersion,
+      });
+      toast.success("Réservation déplacée");
+      setEditingTable(null);
+    } catch (error: unknown) {
+      toast.error(formatConvexError(error, "Erreur de déplacement"));
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   // Handle table click - assign directly on click or highlight reservation
-  const handleTableClick = async (tableId: string, status: TableStatus, reservationId?: Id<"reservations"> | null) => {
-    // Si pas de réservation sélectionnée pour assignation, on notifie la réservation de la table cliquée
+  const handleTableClick = async (tableId: string, status: TableStatus, reservationId?: Id<"reservations"> | null, table?: typeof filteredTables[0]) => {
+    // Mode édition actif : clic sur une autre table = déplacer la réservation
+    if (editingTable) {
+      if (tableId === editingTable.tableId) {
+        // Clic sur la même table = désélectionner
+        setEditingTable(null);
+        return;
+      }
+      
+      if (status === "blocked") {
+        toast.error("Cette table est désactivée");
+        return;
+      }
+      
+      if (status === "seated") {
+        toast.error("Cette table est occupée (client assis)");
+        return;
+      }
+      
+      // Déplacer la réservation vers cette table
+      await handleMoveReservation(tableId);
+      return;
+    }
+    
+    // Si pas de réservation sélectionnée pour assignation
     if (!selectedReservationId) {
-      // Notifier le parent de la réservation affectée à cette table (pour surbrillance)
+      // Si la table a une réservation, activer le mode édition
+      if (reservationId && table?.reservation) {
+        setEditingTable({
+          tableId,
+          reservationId,
+          reservationVersion: table.reservation.version,
+          reservationName: table.reservation.lastName,
+          partySize: table.reservation.partySize,
+        });
+        onTableClick?.(reservationId);
+        return;
+      }
+      // Sinon notifier le parent
       onTableClick?.(reservationId ?? null);
       return;
     }
@@ -276,6 +365,7 @@ export function ServiceFloorPlan({
   const renderTables = () => (
     <>
       {filteredTables.map((table) => {
+        const isEditing = editingTable?.tableId === table.tableId;
         const statusColors = STATUS_COLORS[table.status as TableStatus];
         const width = (table.width ?? 1) * TABLE_SIZE - 4;
         const height = (table.height ?? 1) * TABLE_SIZE - 4;
@@ -285,13 +375,18 @@ export function ServiceFloorPlan({
             key={table.tableId}
             className={cn(
               "absolute flex flex-col items-center justify-center rounded-lg transition-all duration-150",
-              statusColors.bg,
+              isEditing ? "bg-amber-400 ring-2 ring-amber-500 ring-offset-1" : statusColors.bg,
               statusColors.border,
               table.status === "blocked" && "opacity-50",
-              selectedReservationId &&
+              // Mode édition actif : toutes les tables sauf blocked/seated sont cliquables
+              editingTable && table.status !== "blocked" && table.status !== "seated" && "cursor-pointer hover:scale-[1.02] hover:shadow-md",
+              // Mode assignation normal
+              !editingTable && selectedReservationId &&
                 table.status !== "blocked" &&
                 table.status !== "seated" &&
                 "cursor-pointer hover:scale-[1.02] hover:shadow-md",
+              // Table avec réservation cliquable pour édition
+              !editingTable && !selectedReservationId && table.reservation && "cursor-pointer hover:scale-[1.02] hover:shadow-md",
               isAssigning && "pointer-events-none opacity-70"
             )}
             style={{
@@ -300,14 +395,26 @@ export function ServiceFloorPlan({
               width,
               height,
             }}
-            onClick={() => handleTableClick(table.tableId, table.status as TableStatus, table.reservation?.id)}
+            onClick={() => handleTableClick(table.tableId, table.status as TableStatus, table.reservation?.id, table)}
           >
+            {/* Bouton X pour supprimer l'affectation en mode édition */}
+            {isEditing && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUnassign();
+                }}
+                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-md z-10"
+              >
+                <X className="w-3 h-3 text-white" />
+              </button>
+            )}
             {table.reservation ? (
               <>
-                <span className={cn("text-[10px] font-bold leading-tight", statusColors.text)}>
+                <span className={cn("text-[10px] font-bold leading-tight", isEditing ? "text-amber-900" : statusColors.text)}>
                   {table.reservation.timeKey}
                 </span>
-                <span className={cn("text-[9px] leading-tight truncate max-w-full px-0.5", statusColors.text)}>
+                <span className={cn("text-[9px] leading-tight truncate max-w-full px-0.5", isEditing ? "text-amber-900" : statusColors.text)}>
                   {table.reservation.lastName}
                 </span>
               </>
