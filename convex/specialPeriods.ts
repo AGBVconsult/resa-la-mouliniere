@@ -839,8 +839,6 @@ async function generateExceptionalOpeningSlots(
       const lunchActiveDays = applyRules.lunchActiveDays ?? applyRules.activeDays;
       if (lunchActiveDays.includes(weekday)) {
         for (const slotConfig of applyRules.lunchSlots) {
-          if (!slotConfig.isActive) continue;
-          
           const slotKey = `${dateKey}#lunch#${slotConfig.timeKey}`;
           
           // Check if slot already exists
@@ -853,13 +851,14 @@ async function generateExceptionalOpeningSlots(
 
           if (!existingSlot) {
             // Create new slot - mark it as created by this period
+            // isOpen reflects slotConfig.isActive
             await ctx.db.insert("slots", {
               restaurantId,
               dateKey,
               service: "lunch" as const,
               timeKey: slotConfig.timeKey,
               slotKey,
-              isOpen: true,
+              isOpen: slotConfig.isActive,
               capacity: slotConfig.capacity,
               maxGroupSize: slotConfig.maxGroupSize,
               largeTableAllowed: false,
@@ -868,9 +867,9 @@ async function generateExceptionalOpeningSlots(
             });
             slotsCreated++;
           } else {
-            // Update existing slot to be open
+            // Update existing slot
             await ctx.db.patch(existingSlot._id, {
-              isOpen: true,
+              isOpen: slotConfig.isActive,
               capacity: slotConfig.capacity,
               maxGroupSize: slotConfig.maxGroupSize,
               updatedAt: now,
@@ -886,8 +885,6 @@ async function generateExceptionalOpeningSlots(
       const dinnerActiveDays = applyRules.dinnerActiveDays ?? applyRules.activeDays;
       if (dinnerActiveDays.includes(weekday)) {
         for (const slotConfig of applyRules.dinnerSlots) {
-          if (!slotConfig.isActive) continue;
-          
           const slotKey = `${dateKey}#dinner#${slotConfig.timeKey}`;
           
           // Check if slot already exists
@@ -900,13 +897,14 @@ async function generateExceptionalOpeningSlots(
 
           if (!existingSlot) {
             // Create new slot - mark it as created by this period
+            // isOpen reflects slotConfig.isActive
             await ctx.db.insert("slots", {
               restaurantId,
               dateKey,
               service: "dinner" as const,
               timeKey: slotConfig.timeKey,
               slotKey,
-              isOpen: true,
+              isOpen: slotConfig.isActive,
               capacity: slotConfig.capacity,
               maxGroupSize: slotConfig.maxGroupSize,
               largeTableAllowed: false,
@@ -915,9 +913,9 @@ async function generateExceptionalOpeningSlots(
             });
             slotsCreated++;
           } else {
-            // Update existing slot to be open
+            // Update existing slot
             await ctx.db.patch(existingSlot._id, {
-              isOpen: true,
+              isOpen: slotConfig.isActive,
               capacity: slotConfig.capacity,
               maxGroupSize: slotConfig.maxGroupSize,
               updatedAt: now,
