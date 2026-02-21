@@ -329,6 +329,7 @@ export const unassign = mutation({
     const previousStatus = reservation.status;
     await ctx.db.patch(reservationId, {
       tableIds: [],
+      primaryTableId: undefined,
       status: "confirmed",
       version: newVersion,
       updatedAt: now,
@@ -497,15 +498,20 @@ export const swap = mutation({
     const newVersionA = resaA.version + 1;
     const newVersionB = resaB.version + 1;
 
-    // 4. Swap assignments
+    // 4. Swap assignments (tableIds + primaryTableId)
+    const primaryTableIdA = resaA.primaryTableId;
+    const primaryTableIdB = resaB.primaryTableId;
+
     await ctx.db.patch(reservationA.id, {
       tableIds: tableIdsB,
+      primaryTableId: primaryTableIdB ?? tableIdsB[0],
       version: newVersionA,
       updatedAt: now,
     });
 
     await ctx.db.patch(reservationB.id, {
       tableIds: tableIdsA,
+      primaryTableId: primaryTableIdA ?? tableIdsA[0],
       version: newVersionB,
       updatedAt: now,
     });
