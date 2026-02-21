@@ -378,7 +378,7 @@ function buildReservationAdmin(doc: {
   seatedAt: number | null;
   completedAt: number | null;
   noshowAt: number | null;
-}, totalVisits: number = 0, clientId?: Id<"clients">, hasClientNotes: boolean = false) {
+}, totalVisits: number = 0, clientId?: Id<"clients">, clientBehavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } = { hasNotes: false, isLate: false, isSlow: false }) {
   return {
     _id: doc._id,
     restaurantId: doc.restaurantId,
@@ -411,7 +411,9 @@ function buildReservationAdmin(doc: {
     completedAt: doc.completedAt,
     noshowAt: doc.noshowAt,
     totalVisits,
-    hasClientNotes,
+    hasClientNotes: clientBehavior.hasNotes,
+    isLateClient: clientBehavior.isLate,
+    isSlowClient: clientBehavior.isSlow,
   };
 }
 
@@ -508,7 +510,7 @@ export const listReservations = query({
     const phones = Array.from(phoneSet);
     
     // Batch lookup clients by phone
-    const clientsMap = new Map<string, { totalVisits: number; clientId: Id<"clients">; hasNotes: boolean }>();
+    const clientsMap = new Map<string, { totalVisits: number; clientId: Id<"clients">; behavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } }>();
     for (const phone of phones) {
       const client = await ctx.db
         .query("clients")
@@ -518,7 +520,11 @@ export const listReservations = query({
         clientsMap.set(phone, { 
           totalVisits: client.totalVisits, 
           clientId: client._id,
-          hasNotes: (client.notes?.length ?? 0) > 0
+          behavior: {
+            hasNotes: (client.notes?.length ?? 0) > 0,
+            isLate: client.isLateClient ?? false,
+            isSlow: client.isSlowClient ?? false,
+          }
         });
       }
     }
@@ -527,7 +533,7 @@ export const listReservations = query({
     const page = filteredDocs.map((doc) => {
       const normalizedPhone = normalizePhone(doc.phone);
       const clientData = clientsMap.get(normalizedPhone);
-      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.hasNotes ?? false);
+      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false });
     });
 
     return {
@@ -565,9 +571,13 @@ export const getReservation = query({
       .unique();
     const totalVisits = client?.totalVisits ?? 0;
     const clientId = client?._id;
-    const hasClientNotes = (client?.notes?.length ?? 0) > 0;
+    const clientBehavior = {
+      hasNotes: (client?.notes?.length ?? 0) > 0,
+      isLate: client?.isLateClient ?? false,
+      isSlow: client?.isSlowClient ?? false,
+    };
 
-    return buildReservationAdmin(reservation, totalVisits, clientId, hasClientNotes);
+    return buildReservationAdmin(reservation, totalVisits, clientId, clientBehavior);
   },
 });
 
@@ -1541,7 +1551,7 @@ export const listPendingReservations = query({
     // Batch lookup clients by phone for totalVisits and clientId
     const phoneSet = new Set(pendingReservations.map((doc) => normalizePhone(doc.phone)));
     const phones = Array.from(phoneSet);
-    const clientsMap = new Map<string, { totalVisits: number; clientId: Id<"clients">; hasNotes: boolean }>();
+    const clientsMap = new Map<string, { totalVisits: number; clientId: Id<"clients">; behavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } }>();
     for (const phone of phones) {
       const client = await ctx.db
         .query("clients")
@@ -1551,14 +1561,18 @@ export const listPendingReservations = query({
         clientsMap.set(phone, { 
           totalVisits: client.totalVisits, 
           clientId: client._id,
-          hasNotes: (client.notes?.length ?? 0) > 0
+          behavior: {
+            hasNotes: (client.notes?.length ?? 0) > 0,
+            isLate: client.isLateClient ?? false,
+            isSlow: client.isSlowClient ?? false,
+          }
         });
       }
     }
 
     return pendingReservations.map((doc) => {
       const clientData = clientsMap.get(normalizePhone(doc.phone));
-      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.hasNotes ?? false);
+      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false });
     });
   },
 });

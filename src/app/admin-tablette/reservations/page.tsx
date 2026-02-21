@@ -47,6 +47,8 @@ import {
   ChevronDown,
   LayoutGrid,
   Bookmark,
+  Timer,
+  Coffee,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -84,6 +86,8 @@ interface Reservation {
   totalVisits?: number;
   clientId?: Id<"clients">;
   hasClientNotes?: boolean;
+  isLateClient?: boolean;
+  isSlowClient?: boolean;
 }
 
 // Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
@@ -592,6 +596,12 @@ export default function TabletReservationsPage() {
                   </span>
                   {res.hasClientNotes && (
                     <Bookmark size={16} className="text-amber-500" strokeWidth={2} fill="currentColor" />
+                  )}
+                  {res.isLateClient && (
+                    <Timer size={14} className="text-orange-400" strokeWidth={2} />
+                  )}
+                  {res.isSlowClient && (
+                    <Coffee size={14} className="text-blue-400" strokeWidth={2} />
                   )}
                 </div>
               );

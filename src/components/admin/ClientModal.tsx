@@ -30,6 +30,8 @@ import {
   User,
   Utensils,
   Pencil,
+  Timer,
+  Coffee,
 } from "lucide-react";
 import { getFlag } from "@/lib/getFlag";
 
@@ -68,6 +70,9 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   const [editPhone, setEditPhone] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [isSavingDetails, setIsSavingDetails] = useState(false);
+  
+  // État pour les badges de comportement
+  const [isSavingBehavior, setIsSavingBehavior] = useState(false);
 
   // Form state for reservation editing
   const [formData, setFormData] = useState({
@@ -179,6 +184,28 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   // Fonction pour annuler l'édition
   const handleCancelEditDetails = () => {
     setIsEditingDetails(false);
+  };
+
+  // Fonction pour basculer les badges de comportement
+  const handleToggleBehavior = async (field: "isLateClient" | "isSlowClient") => {
+    if (!client) return;
+    setIsSavingBehavior(true);
+    try {
+      const currentValue = field === "isLateClient" 
+        ? ("isLateClient" in client ? client.isLateClient : false)
+        : ("isSlowClient" in client ? client.isSlowClient : false);
+      await updateClient({
+        clientId,
+        patch: {
+          [field]: !currentValue,
+        },
+      });
+      toast.success(field === "isLateClient" ? "Badge Retard mis à jour" : "Badge Prend son temps mis à jour");
+    } catch (error) {
+      toast.error(formatConvexError(error));
+    } finally {
+      setIsSavingBehavior(false);
+    }
   };
 
   const handleSaveReservation = async () => {
@@ -373,20 +400,38 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
                 <Clock size={14} className="text-slate-400" />
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Comportement</h3>
               </div>
-              <Plus size={16} className="text-slate-300" />
             </div>
             
             <div className="flex flex-wrap gap-2 pt-3">
-              {client.dietaryRestrictions && client.dietaryRestrictions.length > 0 ? (
-                client.dietaryRestrictions.map((r, i) => (
-                  <span key={i} className="px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-medium flex items-center gap-1">
-                    {r}
-                    <X size={12} className="cursor-pointer hover:text-amber-900" />
-                  </span>
-                ))
-              ) : (
-                <span className="text-sm text-slate-400 italic">Aucune observation</span>
-              )}
+              {/* Badge Retard */}
+              <button
+                onClick={() => handleToggleBehavior("isLateClient")}
+                disabled={isSavingBehavior}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer",
+                  ("isLateClient" in client && client.isLateClient)
+                    ? "bg-orange-500 text-white border border-orange-500"
+                    : "bg-white text-slate-500 border border-slate-200 hover:border-orange-300 hover:text-orange-500"
+                )}
+              >
+                <Timer size={12} />
+                Retard
+              </button>
+              
+              {/* Badge Prend son temps */}
+              <button
+                onClick={() => handleToggleBehavior("isSlowClient")}
+                disabled={isSavingBehavior}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer",
+                  ("isSlowClient" in client && client.isSlowClient)
+                    ? "bg-blue-500 text-white border border-blue-500"
+                    : "bg-white text-slate-500 border border-slate-200 hover:border-blue-300 hover:text-blue-500"
+                )}
+              >
+                <Coffee size={12} />
+                Prend son temps
+              </button>
             </div>
           </div>
 

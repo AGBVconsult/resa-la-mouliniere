@@ -409,6 +409,8 @@ export const update = mutation({
       preferredTable: v.optional(v.string()),
       tags: v.optional(v.array(v.string())),
       isBlacklisted: v.optional(v.boolean()),
+      isLateClient: v.optional(v.boolean()),
+      isSlowClient: v.optional(v.boolean()),
     }),
   },
   handler: async (ctx, args) => {

@@ -441,6 +441,9 @@ export default defineSchema({
     avgPartySize: v.optional(v.number()),
     avgMealDurationMinutes: v.optional(v.number()),
     avgDelayMinutes: v.optional(v.number()),
+    // Comportement client
+    isLateClient: v.optional(v.boolean()),
+    isSlowClient: v.optional(v.boolean()),
   })
     .index("by_primaryPhone", ["primaryPhone"])
     .index("by_email", ["email"])
