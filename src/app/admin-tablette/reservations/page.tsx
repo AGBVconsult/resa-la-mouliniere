@@ -576,7 +576,7 @@ export default function TabletReservationsPage() {
           )}
         >
           {/* Column: 2 lignes */}
-          <div className="flex flex-col gap-1 shrink-0 mr-4" style={{ width: isCompact ? "150px" : "240px" }}>
+          <div className="flex flex-col gap-1 shrink-0 mr-4" style={{ width: isCompact ? "180px" : "300px" }}>
             {/* Ligne 1: Prénom + Nom + Badge + Notes indicator */}
             {(() => {
               const visits = res.totalVisits ?? 0;
@@ -631,8 +631,8 @@ export default function TabletReservationsPage() {
             </div>
           </div>
 
-          {/* Note preview - 2 lignes max */}
-          <span className={cn("flex-1 text-gray-500 line-clamp-2 mr-4", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
+          {/* Note preview - 3 lignes max */}
+          <span className={cn("flex-1 text-gray-500 line-clamp-3 mr-4", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
 
           {/* Table - Full Height - clic active l'assignation */}
           <div 
