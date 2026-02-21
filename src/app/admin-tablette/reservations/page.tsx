@@ -46,7 +46,7 @@ import {
   Ban,
   ChevronDown,
   LayoutGrid,
-  StickyNote,
+  Bookmark,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -582,15 +582,15 @@ export default function TabletReservationsPage() {
                   <span className={cn("text-gray-600", isCompact ? "text-sm" : "text-base")}>{res.firstName}</span>
                   <span className={cn("font-semibold", isCompact ? "text-sm" : "text-base")}>{res.lastName}</span>
                   <span className={cn(
-                    "px-1 py-0.5 rounded-full",
+                    "min-w-[18px] h-[18px] flex items-center justify-center rounded-full",
                     visitBadge.classes,
                     visitBadge.fontWeight,
-                    "text-[7px]"
+                    "text-[9px]"
                   )}>
                     {visits === 0 ? "NEW" : visits}
                   </span>
                   {res.hasClientNotes && (
-                    <StickyNote size={12} className="text-amber-500" strokeWidth={2} />
+                    <Bookmark size={16} className="text-amber-500" strokeWidth={2} fill="currentColor" />
                   )}
                 </div>
               );
