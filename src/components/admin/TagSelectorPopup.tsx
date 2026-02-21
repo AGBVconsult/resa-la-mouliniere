@@ -20,18 +20,22 @@ export function TagSelectorPopup({ clientId, currentTags, onClose }: TagSelector
   const [searchQuery, setSearchQuery] = useState("");
   const [newTagInput, setNewTagInput] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>(currentTags);
+  const [newlyCreatedTags, setNewlyCreatedTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   const allTags = useQuery(api.clients.listAllTags) ?? [];
+  
+  // Combiner les tags existants avec les nouveaux créés localement
+  const availableTags = [...new Set([...allTags, ...newlyCreatedTags])].sort((a, b) => a.localeCompare(b, "fr"));
   const updateClient = useMutation(api.clients.update);
 
   // Filtrer les tags par recherche
-  const filteredTags = allTags.filter((tag) =>
+  const filteredTags = availableTags.filter((tag) =>
     tag.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Vérifier si le nouveau tag existe déjà
-  const newTagExists = allTags.some(
+  const newTagExists = availableTags.some(
     (tag) => tag.toLowerCase() === newTagInput.trim().toLowerCase()
   );
 
@@ -48,7 +52,8 @@ export function TagSelectorPopup({ clientId, currentTags, onClose }: TagSelector
       toast.error("Ce tag existe déjà");
       return;
     }
-    setSelectedTags((prev) => [...prev, trimmed]);
+    // Ajouter aux tags créés localement (non sélectionné)
+    setNewlyCreatedTags((prev) => [...prev, trimmed]);
     setNewTagInput("");
   };
 
