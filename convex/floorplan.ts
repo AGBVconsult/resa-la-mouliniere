@@ -325,9 +325,11 @@ export const unassign = mutation({
     const now = Date.now();
     const newVersion = reservation.version + 1;
 
-    // 3. Remove assignment
+    // 3. Remove assignment and set status back to confirmed
+    const previousStatus = reservation.status;
     await ctx.db.patch(reservationId, {
       tableIds: [],
+      status: "confirmed",
       version: newVersion,
       updatedAt: now,
     });
@@ -340,6 +342,8 @@ export const unassign = mutation({
       actualTime: now,
       metadata: {
         previousTableIds,
+        previousStatus,
+        newStatus: "confirmed",
         action: "unassign",
       },
       createdAt: now,
