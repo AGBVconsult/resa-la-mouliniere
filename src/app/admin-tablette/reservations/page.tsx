@@ -857,48 +857,46 @@ export default function TabletReservationsPage() {
       {/* Header */}
       <header className="relative flex items-center py-12 px-4 border-b border-slate-200 bg-[#E4E4E4]">
         {/* Left: Date navigation */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center h-[52px] bg-[#334156] rounded-full overflow-hidden shadow-lg">
-            {/* Bouton précédent */}
-            <button
-              onClick={goToPreviousDay}
-              className="w-[52px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95"
-            >
-              <ChevronLeft size={20} strokeWidth={2} />
-            </button>
-            
-            {/* Séparateur */}
-            <div className="w-px h-6 bg-white/20" />
-            
-            {/* Date au centre */}
-            <button
-              onClick={() => setShowCalendarPopup(true)}
-              className="px-6 h-full flex items-center justify-center cursor-pointer group"
-            >
-              <span className="text-sm font-bold text-white tracking-wide">
-                {formatDateLabel()}
-              </span>
-            </button>
-            
-            {/* Séparateur */}
-            <div className="w-px h-6 bg-white/20" />
-            
-            {/* Bouton suivant */}
-            <button
-              onClick={goToNextDay}
-              className="w-[52px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95"
-            >
-              <ChevronRight size={20} strokeWidth={2} />
-            </button>
-          </div>
+        <div className="flex items-center h-[52px] bg-[#334156] rounded-full overflow-hidden shadow-lg">
+          {/* Bouton précédent */}
+          <button
+            onClick={goToPreviousDay}
+            className="w-[52px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+          >
+            <ChevronLeft size={20} strokeWidth={2} />
+          </button>
           
-          {/* Bouton Aujourd'hui (visible seulement si pas aujourd'hui) */}
+          {/* Séparateur */}
+          <div className="w-px h-6 bg-white/20" />
+          
+          {/* Date au centre */}
+          <button
+            onClick={() => setShowCalendarPopup(true)}
+            className="px-6 h-full flex items-center justify-center cursor-pointer group"
+          >
+            <span className="text-sm font-bold text-white tracking-wide">
+              {formatDateLabel()}
+            </span>
+          </button>
+          
+          {/* Séparateur */}
+          <div className="w-px h-6 bg-white/20" />
+          
+          {/* Bouton suivant */}
+          <button
+            onClick={goToNextDay}
+            className="w-[52px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+          >
+            <ChevronRight size={20} strokeWidth={2} />
+          </button>
+          
+          {/* Bouton Aujourd'hui intégré (visible seulement si pas aujourd'hui) */}
           {!isToday && (
             <button
               onClick={goToToday}
-              className="flex items-center gap-2 h-[52px] px-5 bg-blue-500 hover:bg-blue-600 rounded-full text-white font-semibold text-sm transition-all active:scale-95 shadow-lg"
+              className="flex items-center gap-2 h-[44px] ml-1 mr-1 px-4 bg-blue-500 hover:bg-blue-600 rounded-full text-white font-semibold text-sm transition-all active:scale-95"
             >
-              <CalendarCheck size={18} strokeWidth={2} />
+              <RotateCcw size={16} strokeWidth={2} />
               <span className="uppercase tracking-wide">Aujourd&apos;hui</span>
             </button>
           )}
