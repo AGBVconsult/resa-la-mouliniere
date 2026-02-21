@@ -140,7 +140,7 @@ export function computeServiceOccupancy(
   reservationsCount: number;
   zoneOccupancies: { salle: number; terrasse: number };
 } {
-  const activeStatuses = ["pending", "confirmed", "seated"];
+  const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"];
   const activeReservations = reservations.filter(r => 
     activeStatuses.includes(r.status)
   );

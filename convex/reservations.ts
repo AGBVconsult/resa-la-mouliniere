@@ -367,7 +367,7 @@ export const _create = internalMutation({
       .collect();
 
     const usedCapacity = existingReservations
-      .filter((r) => r.status === "pending" || r.status === "confirmed" || r.status === "seated")
+      .filter((r) => r.status === "pending" || r.status === "confirmed" || r.status === "cardPlaced" || r.status === "seated")
       .reduce((sum, r) => sum + r.partySize, 0);
 
     const remainingCapacity = slot.capacity - usedCapacity;
@@ -960,7 +960,7 @@ export const _update = internalMutation({
     const usedCapacity = existingReservations
       .filter((r) =>
         r._id !== args.reservationId &&
-        (r.status === "pending" || r.status === "confirmed" || r.status === "seated")
+        (r.status === "pending" || r.status === "confirmed" || r.status === "cardPlaced" || r.status === "seated")
       )
       .reduce((sum, r) => sum + r.partySize, 0);
 

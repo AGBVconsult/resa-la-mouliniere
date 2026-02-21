@@ -14,6 +14,7 @@ const language = v.union(
 const reservationStatus = v.union(
   v.literal("pending"),
   v.literal("confirmed"),
+  v.literal("cardPlaced"),
   v.literal("seated"),
   v.literal("completed"),
   v.literal("noshow"),

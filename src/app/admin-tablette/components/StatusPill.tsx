@@ -5,6 +5,7 @@ import type { ReservationStatus } from "../../../../spec/contracts.generated";
 const STATUS_COLORS: Record<ReservationStatus, string> = {
   pending: "bg-amber-400",
   confirmed: "bg-emerald-400",
+  cardPlaced: "bg-blue-500",
   seated: "bg-blue-400",
   completed: "bg-slate-300",
   cancelled: "bg-red-300",

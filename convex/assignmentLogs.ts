@@ -80,7 +80,7 @@ export const logAssignment = internalMutation({
       .collect();
 
     // Compute available vs taken tables
-    const activeStatuses = ["pending", "confirmed", "seated"];
+    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"];
     const takenTableIds = new Set<string>();
     for (const r of reservations) {
       if (activeStatuses.includes(r.status)) {

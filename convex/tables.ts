@@ -163,7 +163,7 @@ export const getTableStates = query({
       .collect();
 
     // Filter active reservations
-    const activeStatuses = ["pending", "confirmed", "seated"];
+    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"];
     const activeReservations = reservations.filter((r) =>
       activeStatuses.includes(r.status)
     );
@@ -352,7 +352,7 @@ export const remove = mutation({
       )
       .collect();
 
-    const activeStatuses = ["pending", "confirmed", "seated"];
+    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"];
     const hasActiveReservation = reservations.some(
       (r) => activeStatuses.includes(r.status) && r.tableIds.includes(tableId)
     );
@@ -597,7 +597,7 @@ export const assignToReservation = mutation({
       )
       .collect();
 
-    const activeStatuses = ["pending", "confirmed", "seated"];
+    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"];
     const activeReservations = serviceReservations.filter(
       (r) => r._id !== reservationId && activeStatuses.includes(r.status)
     );
@@ -689,7 +689,7 @@ export const findCombinableTables = query({
       )
       .collect();
 
-    const activeStatuses = ["pending", "confirmed", "seated"];
+    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"];
     const occupiedTableIds = new Set<string>();
     for (const r of reservations) {
       if (activeStatuses.includes(r.status)) {

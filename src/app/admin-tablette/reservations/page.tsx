@@ -47,6 +47,7 @@ import {
   ChevronDown,
   LayoutGrid,
   Bookmark,
+  BookmarkCheck,
   Timer,
   Coffee,
 } from "lucide-react";
@@ -98,6 +99,7 @@ function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: stri
 
 const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
   confirmed: { bg: "bg-emerald-500" },
+  cardPlaced: { bg: "bg-blue-500" },
   seated: { bg: "bg-emerald-500" },
   arrived: { bg: "bg-emerald-500" },
   pending: { bg: "bg-orange-500", animate: true },
@@ -128,8 +130,15 @@ const SMART_STATUS_CONFIG: Record<string, {
     bg: "bg-[#FEF3C7]", // Jaune crème
     iconColor: "text-amber-700",
     icon: ShieldQuestion,
-    nextStatus: "seated",
+    nextStatus: "cardPlaced",
     label: "Confirmé",
+  },
+  cardPlaced: {
+    bg: "bg-[#B8D0EA]", // Bleu légèrement plus foncé
+    iconColor: "text-blue-800",
+    icon: CheckCheck,
+    nextStatus: "seated",
+    label: "Carton de réservation",
   },
   seated: {
     bg: "bg-[#91BDA0]", // Vert sauge
@@ -141,7 +150,7 @@ const SMART_STATUS_CONFIG: Record<string, {
   completed: {
     bg: "bg-[#F1F5F9]", // Gris nuage
     iconColor: "text-slate-600",
-    icon: CheckCheck,
+    icon: BookmarkCheck,
     nextStatus: null,
     label: "Terminé",
   },
@@ -354,6 +363,8 @@ export default function TabletReservationsPage() {
       case "pending":
         return { label: "À valider", color: "bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100", nextStatus: "confirmed" };
       case "confirmed":
+        return { label: "Carton placé", color: "bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100", nextStatus: "cardPlaced" };
+      case "cardPlaced":
         return { label: "Arrivé", color: "bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100", nextStatus: "seated" };
       case "seated":
         return { label: "Terminé", color: "bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100", nextStatus: "completed" };
@@ -389,6 +400,10 @@ export default function TabletReservationsPage() {
       case "confirmed":
         actions.push({ label: "Annuler", nextStatus: "cancelled", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
         actions.push({ label: "Annulation client", nextStatus: "cancelled_by_client" as ReservationStatus, textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
+        break;
+      case "cardPlaced":
+        actions.push({ label: "Annuler", nextStatus: "cancelled", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
+        actions.push({ label: "Signaler Incident", nextStatus: "incident", textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
         break;
       case "seated":
         actions.push({ label: "Signaler Incident", nextStatus: "incident", textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
@@ -684,7 +699,7 @@ export default function TabletReservationsPage() {
             const isConfirmedWithTable = displayStatus === "confirmed" && hasTable;
             
             const statusConfig = isConfirmedWithTable 
-              ? { bg: "bg-[#D0E1F9]", iconColor: "text-blue-700", icon: Check, nextStatus: "seated", label: "Table assignée" }
+              ? { bg: "bg-[#D0E1F9]", iconColor: "text-blue-700", icon: Check, nextStatus: "cardPlaced", label: "Table assignée" }
               : baseConfig;
             
             const StatusIcon = statusConfig.icon;
@@ -753,8 +768,9 @@ export default function TabletReservationsPage() {
                       { status: "pending", label: "En attente", desc: "Nécessite une validation", bg: "bg-[#FFEDD5]", iconColor: "text-orange-600", icon: Clock },
                       { status: "confirmed", label: "Confirmé", desc: "À assigner", bg: "bg-[#FEF3C7]", iconColor: "text-amber-600", icon: ShieldQuestion },
                       { status: "assigned", label: "Table assignée", desc: "Prêt pour accueil", bg: "bg-[#D0E1F9]", iconColor: "text-blue-600", icon: Check },
+                      { status: "cardPlaced", label: "Carton de réservation", desc: "Carton placé sur table", bg: "bg-[#B8D0EA]", iconColor: "text-blue-800", icon: CheckCheck },
                       { status: "seated", label: "Installé", desc: "Client à table", bg: "bg-[#91BDA0]", iconColor: "text-green-900", icon: UserRoundCheck },
-                      { status: "completed", label: "Terminé", desc: "Table libérée", bg: "bg-[#F1F5F9]", iconColor: "text-slate-600", icon: CheckCheck },
+                      { status: "completed", label: "Terminé", desc: "Table libérée", bg: "bg-[#F1F5F9]", iconColor: "text-slate-600", icon: BookmarkCheck },
                       { status: "noshow", label: "No-show", desc: "Absent", bg: "bg-[#FCE7F3]", iconColor: "text-pink-600", icon: Ghost },
                       { status: "cancelled", label: "Annulé", desc: "Annulation client", bg: "bg-[#FEE2E2]", iconColor: "text-red-600", icon: XCircle },
                       { status: "refused", label: "Refusé", desc: "Refus établissement", bg: "bg-[#E7E5E4]", iconColor: "text-stone-600", icon: Ban },
@@ -773,8 +789,9 @@ export default function TabletReservationsPage() {
                       if (status === "pending") return [];
                       if (status === "confirmed" && !hasTableAssigned) return ["pending"];
                       if (status === "confirmed" && hasTableAssigned) return ["pending", "confirmed"];
-                      // Tous les autres statuts masquent pending et confirmed
-                      return ["pending", "confirmed"];
+                      if (status === "cardPlaced") return ["pending", "confirmed", "assigned"];
+                      // Tous les autres statuts masquent pending, confirmed et cardPlaced
+                      return ["pending", "confirmed", "cardPlaced"];
                     };
                     
                     const hiddenStatuses = getHiddenStatuses(currentStatus, hasTable);

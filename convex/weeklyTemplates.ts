@@ -823,7 +823,7 @@ export const syncSlotsWithTemplate = mutation({
 
     const activeReservationsBySlot = new Map<string, number>();
     for (const r of reservations) {
-      if (r.status === "pending" || r.status === "confirmed" || r.status === "seated") {
+      if (r.status === "pending" || r.status === "confirmed" || r.status === "cardPlaced" || r.status === "seated") {
         activeReservationsBySlot.set(r.slotKey, (activeReservationsBySlot.get(r.slotKey) ?? 0) + 1);
       }
     }

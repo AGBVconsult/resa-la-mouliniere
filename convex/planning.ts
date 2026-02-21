@@ -195,7 +195,7 @@ export const getMonthEffective = query({
       .collect();
 
     // Filter reservations in date range with active statuses
-    const activeStatuses = ["pending", "confirmed", "seated", "completed"];
+    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated", "completed"];
     const monthReservations = allReservations.filter(
       (r) =>
         r.dateKey >= startDate &&

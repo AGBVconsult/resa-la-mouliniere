@@ -15,7 +15,7 @@ export function computeRemainingCapacityBySlotKey(args: {
 }): Map<string, number> {
   const used = new Map<string, number>();
   for (const r of args.reservations) {
-    if (r.status !== "pending" && r.status !== "confirmed" && r.status !== "seated") continue;
+    if (r.status !== "pending" && r.status !== "confirmed" && r.status !== "cardPlaced" && r.status !== "seated") continue;
     used.set(r.slotKey, (used.get(r.slotKey) ?? 0) + r.partySize);
   }
 
@@ -69,7 +69,7 @@ function applyProgressiveFilling(
   // Calculate fill rate per slot
   const fillBySlotKey = new Map<string, number>();
   for (const r of reservations) {
-    if (r.status === "pending" || r.status === "confirmed" || r.status === "seated") {
+    if (r.status === "pending" || r.status === "confirmed" || r.status === "cardPlaced" || r.status === "seated") {
       fillBySlotKey.set(r.slotKey, (fillBySlotKey.get(r.slotKey) ?? 0) + r.partySize);
     }
   }

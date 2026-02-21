@@ -430,6 +430,7 @@ export const listReservations = query({
     status: v.optional(v.union(
       v.literal("pending"),
       v.literal("confirmed"),
+      v.literal("cardPlaced"),
       v.literal("seated"),
       v.literal("completed"),
       v.literal("noshow"),
@@ -698,6 +699,7 @@ export const updateReservation = mutation({
     status: v.optional(v.union(
       v.literal("pending"),
       v.literal("confirmed"),
+      v.literal("cardPlaced"),
       v.literal("seated"),
       v.literal("completed"),
       v.literal("noshow"),

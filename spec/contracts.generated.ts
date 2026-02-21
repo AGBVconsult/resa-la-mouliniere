@@ -4,7 +4,7 @@
   Source of truth: spec/CONTRACTS.md
 */
 
-export const ReservationStatus = ["pending", "confirmed", "seated", "completed", "noshow", "cancelled", "refused", "incident"] as const;
+export const ReservationStatus = ["pending", "confirmed", "cardPlaced", "seated", "completed", "noshow", "cancelled", "refused", "incident"] as const;
 export type ReservationStatus = (typeof ReservationStatus)[number];
 
 export const ErrorCode = ["VALIDATION_ERROR", "TURNSTILE_FAILED", "RATE_LIMITED", "SLOT_TAKEN", "INSUFFICIENT_CAPACITY", "TOKEN_INVALID", "TOKEN_EXPIRED", "VERSION_CONFLICT", "TABLE_CONFLICT", "FORBIDDEN", "NOT_FOUND", "SAME_TYPE_OVERLAP"] as const;

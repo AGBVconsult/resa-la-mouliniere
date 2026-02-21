@@ -20,8 +20,8 @@ import { internal } from "./_generated/api";
 type TableStatus = "seated" | "reserved" | "free" | "blocked";
 
 // Statuts actifs pour le calcul
-const ACTIVE_STATUSES = ["pending", "confirmed", "seated"] as const;
-const PLANNING_STATUSES = ["pending", "confirmed"] as const;
+const ACTIVE_STATUSES = ["pending", "confirmed", "cardPlaced", "seated"] as const;
+const PLANNING_STATUSES = ["pending", "confirmed", "cardPlaced"] as const;
 
 /**
  * Calcule le statut d'une table pour un service donné.
@@ -192,7 +192,7 @@ export const assign = mutation({
     }
 
     // 3. Check reservation status is assignable
-    const ASSIGNABLE_STATUSES = ["pending", "confirmed", "seated"];
+    const ASSIGNABLE_STATUSES = ["pending", "confirmed", "cardPlaced", "seated"];
     if (!ASSIGNABLE_STATUSES.includes(reservation.status)) {
       throw Errors.INVALID_STATUS(reservation.status);
     }
@@ -382,7 +382,7 @@ export const checkAssignment = query({
     }
 
     // Check status
-    const ASSIGNABLE_STATUSES = ["pending", "confirmed", "seated"];
+    const ASSIGNABLE_STATUSES = ["pending", "confirmed", "cardPlaced", "seated"];
     if (!ASSIGNABLE_STATUSES.includes(reservation.status)) {
       return { valid: false, error: `INVALID_STATUS|${reservation.status}` };
     }
