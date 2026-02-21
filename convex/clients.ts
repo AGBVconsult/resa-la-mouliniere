@@ -975,3 +975,30 @@ export const importFromCSV = mutation({
     return { created, updated, errors };
   },
 });
+
+/**
+ * List all unique tags used across all clients.
+ * Returns tags sorted alphabetically.
+ */
+export const listAllTags = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireRole(ctx, "staff");
+
+    const clients = await ctx.db
+      .query("clients")
+      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .collect();
+
+    const tagsSet = new Set<string>();
+    for (const client of clients) {
+      if (client.tags) {
+        for (const tag of client.tags) {
+          tagsSet.add(tag);
+        }
+      }
+    }
+
+    return Array.from(tagsSet).sort((a, b) => a.localeCompare(b, "fr"));
+  },
+});

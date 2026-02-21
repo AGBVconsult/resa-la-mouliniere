@@ -34,6 +34,7 @@ import {
   Coffee,
 } from "lucide-react";
 import { getFlag } from "@/lib/getFlag";
+import { TagSelectorPopup } from "./TagSelectorPopup";
 
 interface ClientModalProps {
   clientId: Id<"clients">;
@@ -73,6 +74,9 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   
   // État pour les badges de comportement
   const [isSavingBehavior, setIsSavingBehavior] = useState(false);
+  
+  // État pour le popup de sélection des tags
+  const [showTagSelector, setShowTagSelector] = useState(false);
 
   // Form state for reservation editing
   const [formData, setFormData] = useState({
@@ -246,6 +250,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   };
 
   return (
+    <>
     <div 
       className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
@@ -367,7 +372,12 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
                 <Tag size={14} className="text-slate-400" />
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tags profil</h3>
               </div>
-              <Plus size={16} className="text-slate-300" />
+              <button
+                onClick={() => setShowTagSelector(true)}
+                className="p-1 rounded-full hover:bg-slate-200 transition-colors"
+              >
+                <Plus size={16} className="text-slate-400 hover:text-slate-600" />
+              </button>
             </div>
             
             <div className="flex flex-wrap gap-2 pt-3">
@@ -554,6 +564,16 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
         </div>
       </div>
     </div>
+
+    {/* Tag Selector Popup */}
+    {showTagSelector && (
+      <TagSelectorPopup
+        clientId={clientId}
+        currentTags={client.tags ?? []}
+        onClose={() => setShowTagSelector(false)}
+      />
+    )}
+    </>
   );
 }
 
