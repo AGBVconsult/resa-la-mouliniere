@@ -855,7 +855,7 @@ export default function TabletReservationsPage() {
   return (
     <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F2F2F2]">
       {/* Header */}
-      <header className="relative flex items-center py-12 px-4 border-b border-slate-200 bg-[#E4E4E4]">
+      <header className="relative flex items-center py-12 px-8 border-b border-slate-200 bg-[#E4E4E4]">
         {/* Left: Date navigation */}
         <div className="flex items-center h-[52px] bg-[#334156] rounded-full overflow-hidden shadow-lg">
           {/* Bouton précédent */}
@@ -894,9 +894,9 @@ export default function TabletReservationsPage() {
           {!isToday && (
             <button
               onClick={goToToday}
-              className="flex items-center gap-2 h-[44px] ml-1 mr-1 px-4 bg-blue-500 hover:bg-blue-600 rounded-full text-white font-semibold text-sm transition-all active:scale-95"
+              className="flex items-center gap-1.5 h-[36px] ml-1 mr-1 px-3 bg-blue-500 hover:bg-blue-600 rounded-full text-white font-medium text-xs transition-all active:scale-95"
             >
-              <RotateCcw size={16} strokeWidth={2} />
+              <RotateCcw size={14} strokeWidth={2} />
               <span className="uppercase tracking-wide">Aujourd&apos;hui</span>
             </button>
           )}
