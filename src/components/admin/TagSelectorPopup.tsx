@@ -124,7 +124,6 @@ export function TagSelectorPopup({ clientId, currentTags, onClose }: TagSelector
                         : "bg-white text-slate-600 border border-slate-200 hover:border-blue-300"
                     )}
                   >
-                    {isSelected && <Check size={12} />}
                     {tag}
                   </button>
                 );
@@ -171,31 +170,6 @@ export function TagSelectorPopup({ clientId, currentTags, onClose }: TagSelector
             <p className="text-xs text-amber-600 mt-1">Ce tag existe déjà</p>
           )}
         </div>
-
-        {/* Selected tags preview */}
-        {selectedTags.length > 0 && (
-          <div className="px-6 py-3 border-t border-slate-100">
-            <p className="text-xs font-medium text-slate-500 mb-2">
-              Tags sélectionnés ({selectedTags.length})
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {selectedTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium flex items-center gap-1"
-                >
-                  {tag}
-                  <button
-                    onClick={() => handleToggleTag(tag)}
-                    className="hover:text-blue-900"
-                  >
-                    <X size={10} />
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-white">
