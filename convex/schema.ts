@@ -8,7 +8,8 @@ const language = v.union(
   v.literal("nl"),
   v.literal("en"),
   v.literal("de"),
-  v.literal("it")
+  v.literal("it"),
+  v.literal("es")
 );
 
 const reservationStatus = v.union(

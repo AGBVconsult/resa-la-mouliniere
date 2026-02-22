@@ -36,6 +36,7 @@ export interface ApiError {
     en: string;
     de: string;
     it: string;
+    es: string;
   };
 }
 
@@ -46,6 +47,7 @@ const ERROR_MESSAGES: Record<ErrorCode, ApiError["userMessage"]> = {
     en: "Connection problem. Please check your internet connection and try again.",
     de: "Verbindungsproblem. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
     it: "Problema di connessione. Controlla la tua connessione internet e riprova.",
+    es: "Problema de conexión. Verifique su conexión a internet e inténtelo de nuevo.",
   },
   TIMEOUT: {
     fr: "La requête a pris trop de temps. Veuillez réessayer.",
@@ -53,6 +55,7 @@ const ERROR_MESSAGES: Record<ErrorCode, ApiError["userMessage"]> = {
     en: "The request took too long. Please try again.",
     de: "Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.",
     it: "La richiesta ha impiegato troppo tempo. Per favore riprova.",
+    es: "La solicitud tardó demasiado. Por favor, inténtelo de nuevo.",
   },
   OFFLINE: {
     fr: "Vous êtes hors ligne. Veuillez vous reconnecter à internet.",
@@ -60,6 +63,7 @@ const ERROR_MESSAGES: Record<ErrorCode, ApiError["userMessage"]> = {
     en: "You are offline. Please reconnect to the internet.",
     de: "Sie sind offline. Bitte stellen Sie die Internetverbindung wieder her.",
     it: "Sei offline. Per favore riconnettiti a internet.",
+    es: "Está sin conexión. Por favor, reconéctese a internet.",
   },
   SERVER_ERROR: {
     fr: "Une erreur serveur s'est produite. Veuillez réessayer dans quelques instants.",
@@ -67,6 +71,7 @@ const ERROR_MESSAGES: Record<ErrorCode, ApiError["userMessage"]> = {
     en: "A server error occurred. Please try again in a few moments.",
     de: "Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es in wenigen Augenblicken erneut.",
     it: "Si è verificato un errore del server. Per favore riprova tra qualche istante.",
+    es: "Se ha producido un error del servidor. Por favor, inténtelo de nuevo en unos instantes.",
   },
   VALIDATION_ERROR: {
     fr: "Les informations saisies sont incorrectes. Veuillez vérifier et réessayer.",
@@ -74,6 +79,7 @@ const ERROR_MESSAGES: Record<ErrorCode, ApiError["userMessage"]> = {
     en: "The information entered is incorrect. Please check and try again.",
     de: "Die eingegebenen Informationen sind falsch. Bitte überprüfen und erneut versuchen.",
     it: "Le informazioni inserite non sono corrette. Per favore controlla e riprova.",
+    es: "La información introducida es incorrecta. Por favor, verifique e inténtelo de nuevo.",
   },
   RATE_LIMITED: {
     fr: "Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.",
@@ -81,6 +87,7 @@ const ERROR_MESSAGES: Record<ErrorCode, ApiError["userMessage"]> = {
     en: "Too many attempts. Please wait a few minutes before trying again.",
     de: "Zu viele Versuche. Bitte warten Sie einige Minuten, bevor Sie es erneut versuchen.",
     it: "Troppi tentativi. Per favore attendi qualche minuto prima di riprovare.",
+    es: "Demasiados intentos. Por favor, espere unos minutos antes de intentarlo de nuevo.",
   },
   UNKNOWN: {
     fr: "Une erreur inattendue s'est produite. Veuillez réessayer.",
@@ -88,6 +95,7 @@ const ERROR_MESSAGES: Record<ErrorCode, ApiError["userMessage"]> = {
     en: "An unexpected error occurred. Please try again.",
     de: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     it: "Si è verificato un errore imprevisto. Per favore riprova.",
+    es: "Se ha producido un error inesperado. Por favor, inténtelo de nuevo.",
   },
 };
 

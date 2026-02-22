@@ -17,7 +17,7 @@ export function buildSettingsPublic(args: {
 
 export const getSettings = query({
   args: {
-    lang: v.union(v.literal("fr"), v.literal("nl"), v.literal("en"), v.literal("de"), v.literal("it")),
+    lang: v.union(v.literal("fr"), v.literal("nl"), v.literal("en"), v.literal("de"), v.literal("it"), v.literal("es")),
   },
   handler: async (ctx) => {
     const activeRestaurants = await ctx.db

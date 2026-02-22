@@ -529,7 +529,7 @@ const TEST_STATUSES = ["pending", "confirmed", "cardPlaced", "seated", "complete
 const TEST_TIMES_LUNCH = ["12:00", "12:15", "12:30", "12:45", "13:00", "13:15"];
 const TEST_TIMES_DINNER = ["19:00", "19:15", "19:30", "19:45", "20:00", "20:15", "20:30"];
 const TEST_OPTIONS = ["highChair", "wheelchair", "dogAccess"];
-const TEST_LANGUAGES = ["fr", "nl", "en", "de", "it"] as const;
+const TEST_LANGUAGES = ["fr", "nl", "en", "de", "it", "es"] as const;
 const TEST_PHONE_PREFIXES = ["+32", "+33", "+31", "+49", "+44"];
 
 function randomElement<T>(arr: readonly T[]): T {
@@ -737,7 +737,7 @@ export const seedWeekReservations = internalMutation({
       firstName: string;
       lastName: string;
       phone: string;
-      language: "fr" | "nl" | "en" | "de" | "it";
+      language: "fr" | "nl" | "en" | "de" | "it" | "es";
       status: string;
       source: "online" | "admin" | "phone" | "walkin";
       options: string[];

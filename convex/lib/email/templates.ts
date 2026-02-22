@@ -32,7 +32,7 @@ export interface TemplateData {
   adults?: number;
   childrenCount?: number;
   babyCount?: number;
-  language?: "fr" | "nl" | "en" | "de" | "it";
+  language?: "fr" | "nl" | "en" | "de" | "it" | "es";
   manageUrl?: string;
   editUrl?: string;
   cancelUrl?: string;
@@ -432,6 +432,67 @@ const translations: Record<Language, Translations> = {
     "address": "Visserskaai 17, 8400 Oostende",
     "reason": "Motivo",
   },
+  es: {
+    "subject.confirmed": "¡Reserva confirmada!",
+    "subject.pending": "Solicitud recibida (Validación en curso ⏳)",
+    "subject.validated": "¡Reserva confirmada!",
+    "subject.refused": "Su solicitud no ha podido ser confirmada",
+    "subject.cancelled": "Cancelación confirmada",
+    "subject.modified": "Reserva modificada",
+    "subject.reminder": "¡Le esperamos pronto!",
+    "subject.noshow": "Le estuvimos esperando",
+    "subject.review": "¡Gracias por su visita!",
+    "subject.cancelled_by_restaurant": "Lo sentimos sinceramente...",
+    "greeting": "Hola",
+    "body.confirmed": "¡Reserva confirmada!",
+    "body.confirmed.subtitle": "Su mesa está reservada.",
+    "body.confirmed.intro": "Todo está listo para recibirle.",
+    "body.pending": "Solicitud en trámite",
+    "body.pending.subtitle": "Estamos verificando la disponibilidad para su grupo.",
+    "body.pending.intro": "Para garantizarle una acogida de calidad, Allisson verifica personalmente la planificación antes de confirmar su reserva.",
+    "body.validated": "¡Reserva confirmada!",
+    "body.validated.subtitle": "Su mesa está reservada.",
+    "body.validated.intro": "Todo está listo para recibirle.",
+    "body.refused": "Solicitud no confirmada",
+    "body.refused.subtitle": "Nos ponemos en contacto con usted respecto a su reserva.",
+    "body.refused.intro": "Como acordado, Allisson ha verificado personalmente nuestra planificación. Lamentablemente, estamos completos a esa hora.",
+    "body.cancelled": "Cancelación confirmada",
+    "body.cancelled.subtitle": "Su reserva ha sido cancelada.",
+    "body.cancelled.intro": "Entendido. Gracias por avisarnos — es muy valioso para nuestra organización.",
+    "body.reminder": "¡Le esperamos!",
+    "body.reminder.subtitle": "Su mesa está lista.",
+    "body.reminder.intro": "Estamos trabajando en la cocina: ¡su mesa está lista!",
+    "body.review": "¡Gracias por su visita!",
+    "body.review.subtitle": "Su opinión es importante para nosotros.",
+    "body.review.intro": "Esperamos que haya pasado un buen momento en nuestra mesa. Si es así, una reseña en línea nos ayuda enormemente.",
+    "body.modified": "Reserva modificada",
+    "body.modified.subtitle": "Su reserva ha sido actualizada.",
+    "body.modified.intro": "Aquí tiene su nuevo resumen.",
+    "body.noshow": "Le estuvimos esperando",
+    "body.noshow.subtitle": "Su mesa quedó vacía.",
+    "body.noshow.intro": "Le estábamos esperando, pero no se presentó. Los imprevistos ocurren, lo entendemos.",
+    "body.cancelled_by_restaurant": "Lo sentimos sinceramente",
+    "body.cancelled_by_restaurant.subtitle": "Lamentablemente debemos cancelar su reserva.",
+    "body.cancelled_by_restaurant.intro": "Este es el mensaje que odiamos escribir, pero lamentablemente no podemos recibirle como estaba previsto.",
+    "details.date": "Fecha",
+    "details.time": "Hora",
+    "details.guests": "personas",
+    "details.adults": "Adultos",
+    "details.children": "Niño",
+    "details.babies": "Bebé",
+    "manage.link": "Gestionar mi reserva",
+    "edit.link": "Modificar mi reserva",
+    "cancel.link": "Cancelar mi reserva",
+    "review.link": "Dejar una reseña",
+    "footer": "Allisson & Benjamin",
+    "footer.signature": "Nos alegramos de recibirle,",
+    "footer.signature.negative": "Atentamente,",
+    "footer.signature.review": "Esperamos poder recibirle de nuevo pronto,",
+    "payment.title": "Bueno saberlo para el pago:",
+    "payment.text": "No tenemos terminal de tarjetas. Para un pago rápido y sencillo, utilizamos Payconiq (cuentas belgas), también puede pagar en efectivo.",
+    "address": "Visserskaai 17, 8400 Oostende",
+    "reason": "Motivo",
+  },
 };
 
 function t(locale: Language, key: TranslationKey): string {
@@ -520,6 +581,7 @@ function formatDateForDisplay(dateKey: string, locale: Language): string {
     en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     de: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
     it: ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"],
+    es: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
   };
   
   const months: Record<Language, string[]> = {
@@ -528,6 +590,7 @@ function formatDateForDisplay(dateKey: string, locale: Language): string {
     en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
     de: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
     it: ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"],
+    es: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
   };
   
   const weekday = weekdays[locale][date.getDay()];
@@ -545,6 +608,7 @@ const optionLabels: Record<Language, Record<string, string>> = {
   en: { highChair: "High chair", dogAccess: "Dog", wheelchair: "Wheelchair" },
   de: { highChair: "Hochstuhl", dogAccess: "Hund", wheelchair: "Rollstuhl" },
   it: { highChair: "Seggiolone", dogAccess: "Cane", wheelchair: "Sedia a rotelle" },
+  es: { highChair: "Trona", dogAccess: "Perro", wheelchair: "Silla de ruedas" },
 };
 
 /**

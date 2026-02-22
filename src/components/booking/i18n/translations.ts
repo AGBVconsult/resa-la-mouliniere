@@ -561,6 +561,155 @@ export const translations = {
     closure_understood: "Verstanden",
   },
 
+  es: {
+    // Header
+    title: "Reservar una mesa",
+    
+    // Step 1
+    step1_title: "¿Quién estará presente?",
+    step1_subtitle: "Seleccione el número de comensales",
+    adults: "Adultos",
+    children: "Niños",
+    children_age: "4-12 años",
+    babies: "Bebés",
+    babies_age: "0-3 años",
+    high_chair: "Trona",
+    stroller: "Vengo con un cochecito",
+    wheelchair: "Acceso para sillas de ruedas",
+    dog: "Vengo con mi perro",
+    convives: "comensales",
+    convive: "comensal",
+    
+    // Step 1 Baby
+    step1_baby_title: "Su bebé es bienvenido",
+    step1_baby_subtitle: "Todo está preparado para recibirle con tranquilidad",
+    baby_changing_table: "Cambiador",
+    baby_play_corner: "Rincón de juegos y libros",
+    baby_seating_question: "¿Cómo se sentará su bebé?",
+    baby_seating_lap: "En nuestro regazo",
+    baby_seating_highchair: "En la mesa con nosotros",
+    
+    // Step 2
+    step2_title: "¿Cuándo le gustaría venir?",
+    step2_subtitle: "Elija una fecha y hora",
+    step2_slots_subtitle: "Elija una franja horaria",
+    back_to_calendar: "Volver al calendario",
+    show_monthly_calendar: "Mostrar calendario mensual",
+    hide_monthly_calendar: "Ocultar calendario mensual",
+    lunch: "Mediodía",
+    lunch_hours: "12:00 - 14:00",
+    dinner: "Noche",
+    dinner_hours: "18:00 - 21:00",
+    no_slots: "No hay franjas horarias disponibles para esta fecha.",
+    choose_other_date: "Elegir otra fecha",
+    
+    // Step 3
+    step3_title: "¿Cómo podemos contactarle?",
+    step3_subtitle: "Para confirmar su reserva",
+    first_name: "Nombre",
+    last_name: "Apellido",
+    email: "Correo electrónico",
+    phone: "Teléfono",
+    message: "Mensaje (opcional)",
+    message_placeholder: "Alergias, ocasión especial...",
+    
+    // Step 4
+    step4_title: "Último paso",
+    step4_subtitle: "Revise y confirme su reserva",
+    summary: "Resumen",
+    date: "Fecha",
+    time: "Hora",
+    guests: "Comensales",
+    contact: "Contacto",
+    options: "Opciones",
+    note: "Nota",
+    client_info: "Datos del cliente",
+    accept_practical_info: "He leído la información práctica",
+    practical_info_intro: "Información antes de su visita:",
+    practical_info_delay_1: "Para recibirle en las mejores condiciones, mantenemos su reserva",
+    practical_info_delay_2: "después de la hora prevista.",
+    practical_info_payment_1: "Para un pago rápido y sencillo, utilizamos",
+    practical_info_payment_2: "Sin tarjeta bancaria",
+    practical_info_payment_3: ", también puede pagar en efectivo.",
+    practical_info_email_1: "Para simplificar, le enviamos un",
+    practical_info_email_2: "correo de confirmación",
+    practical_info_email_3: "Puede modificar, cancelar o escribirnos directamente desde ese correo.",
+    practical_info_signature_1: "Nos alegramos de recibirle",
+    accept_policy: "Acepto la política de cancelación",
+    accept_rules: "He leído la información práctica",
+    confirm_booking: "Confirmar reserva",
+    modify_booking: "Modificar",
+    edit_title: "Modificar mi reserva",
+    edit_subtitle: "Ajuste los detalles de su reserva",
+    cancel_title: "Cancelar mi reserva",
+    cancel_subtitle: "¿Está seguro de que desea cancelar?",
+    cancel_confirm: "Confirmar cancelación",
+    cancel_warning: "Esta acción es irreversible. Su reserva será cancelada definitivamente.",
+    cancelled_title: "Reserva cancelada",
+    cancelled_subtitle: "Su reserva ha sido cancelada con éxito.",
+    new_reservation: "Nueva reserva",
+    sending: "Enviando...",
+    
+    // Step 5 - Practical Info Page
+    practical_info_title_line1: "Información importante",
+    practical_info_title_line2: "antes de su visita",
+    practical_info_delay_text_1: "Para recibirle en las mejores condiciones, mantenemos su reserva",
+    practical_info_15min: "15 minutos",
+    practical_info_delay_text_2: "después de la hora prevista.",
+    practical_info_payment_text_1: "Para un pago rápido y sencillo, utilizamos",
+    practical_info_no_card: "Sin tarjeta bancaria",
+    practical_info_cash: "También puede pagar en efectivo.",
+    practical_info_email_text_1: "Para simplificar, le enviamos un",
+    practical_info_email_confirm: "correo de confirmación",
+    practical_info_email_text_2: "Puede modificar, cancelar o escribirnos directamente desde ese correo.",
+    practical_info_welcome: "Nos alegramos de recibirle",
+    practical_info_noted: "¡Entendido!",
+
+    // Step 6 - Confirmation
+    confirmed_title: "¡Gracias!",
+    confirmed_subtitle: "Su mesa está reservada",
+    pending_title: "Solicitud recibida",
+    pending_subtitle: "Su solicitud está pendiente de confirmación",
+    add_calendar: "Calendario",
+    share: "Compartir",
+    email_sent: "Se ha enviado un correo de confirmación a",
+    back_to_website: "Volver al sitio web",
+    
+    // Navigation
+    back: "Atrás",
+    continue: "Continuar",
+    
+    // Calendar
+    months: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+    days_short: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
+    
+    // Legend
+    legend: {
+      lunchAvailable: "Mediodía disponible",
+      dinnerAvailable: "Noche disponible",
+      unavailable: "No disponible",
+      full: "Completo",
+    },
+    
+    // Validation
+    error_required: "Este campo es obligatorio",
+    error_email: "Correo electrónico no válido",
+    error_phone: "Teléfono no válido (formato: +32...)",
+    error_min_chars: "Mínimo 2 caracteres",
+    
+    // Persons
+    person: "persona",
+    persons: "personas",
+    
+    // Closure notice
+    closure_title: "Cerrado",
+    closure_message_1: "Estamos cerrados del",
+    closure_message_2: "al",
+    closure_message_3: "incluido.",
+    closure_thanks: "Gracias por su comprensión — le recibiremos con mucho gusto a partir del",
+    closure_understood: "Entendido",
+  },
+
   it: {
     // Header
     title: "Prenota un tavolo",

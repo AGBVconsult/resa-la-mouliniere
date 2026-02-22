@@ -1,4 +1,4 @@
-export type Language = "fr" | "nl" | "en" | "de" | "it";
+export type Language = "fr" | "nl" | "en" | "de" | "it" | "es";
 
 // Backend utilise "lunch" | "dinner" - on garde ce format
 export type Service = "lunch" | "dinner";

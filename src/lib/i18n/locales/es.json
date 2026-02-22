@@ -1,0 +1,203 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Se ha producido un error",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "close": "Cerrar",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "widget": {
+    "title": "Reservar una mesa",
+    "disabled": "Las reservas en línea están temporalmente desactivadas.",
+    "step1": {
+      "title": "¿Quién estará presente?",
+      "subtitle": "Seleccione el número de comensales"
+    },
+    "step2": {
+      "title": "¿Cuándo le gustaría venir?",
+      "subtitle": "Elija una fecha y una franja horaria"
+    },
+    "step3": {
+      "title": "Sus datos de contacto",
+      "subtitle": "Último paso antes de la confirmación"
+    },
+    "step4": {
+      "title": "Información importante",
+      "summary": "Resumen",
+      "date": "Fecha",
+      "time": "Hora",
+      "guests": "Comensales",
+      "contact": "Contacto"
+    },
+    "step5": {
+      "confirmed": {
+        "title": "¡Gracias!",
+        "subtitle": "Su mesa está reservada"
+      },
+      "pending": {
+        "title": "Solicitud recibida",
+        "subtitle": "Pendiente de confirmación"
+      },
+      "groupRequest": {
+        "title": "Solicitud enviada",
+        "subtitle": "Le contactaremos rápidamente"
+      },
+      "time": "Hora",
+      "guests": "Comensales",
+      "addToCalendar": "Añadir al calendario",
+      "share": "Compartir",
+      "shareTitle": "Mi reserva",
+      "shareText": "He reservado una mesa",
+      "emailSent": "Se le ha enviado un correo de confirmación."
+    },
+    "guests": {
+      "adults": "Adultos",
+      "children": "Niños",
+      "childrenAge": "2-12 años",
+      "babies": "Bebés",
+      "babiesAge": "0-2 años",
+      "total": "Total",
+      "guests": "comensales"
+    },
+    "options": {
+      "highChair": "¿Necesita una trona?",
+      "wheelchair": "Acceso para silla de ruedas",
+      "dog": "Vengo con mi perro"
+    },
+    "calendar": {
+      "lunch": "Almuerzo",
+      "dinner": "Cena",
+      "legend": {
+        "lunch": "Mediodía disponible",
+        "dinner": "Noche disponible"
+      },
+      "noAvailability": "No hay disponibilidad para esta fecha",
+      "chooseOtherDate": "Elegir otra fecha",
+      "backToCalendar": "Volver al calendario"
+    },
+    "contact": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "phoneHint": "Formato internacional (+32...)"
+    },
+    "policy": {
+      "cancellation": "He leído y acepto la política de cancelación",
+      "rules": "He leído la información práctica"
+    },
+    "button": {
+      "continue": "Continuar",
+      "back": "Atrás",
+      "confirm": "Confirmar la reserva",
+      "submitting": "Enviando..."
+    },
+    "groupRequest": {
+      "title": "Solicitud de grupo",
+      "subtitle": "Para grupos de 16 personas o más",
+      "partySize": "Número de personas",
+      "partySizeHint": "Mínimo 16 personas",
+      "preferredDate": "Fecha deseada",
+      "preferredService": "Servicio",
+      "message": "Mensaje (opcional)",
+      "messagePlaceholder": "Información adicional, alergias, ocasión especial...",
+      "submit": "Enviar la solicitud",
+      "success": {
+        "title": "Solicitud enviada",
+        "subtitle": "Le contactaremos lo antes posible."
+      }
+    },
+    "success": {
+      "title": "¡Reserva confirmada!",
+      "message": "Recibirá un correo de confirmación.",
+      "pending": "Su solicitud está pendiente de validación.",
+      "backToSite": "Volver al sitio"
+    }
+  },
+  "reservation": {
+    "title": "Mi reserva",
+    "status": {
+      "pending": "Pendiente",
+      "confirmed": "Confirmada",
+      "seated": "En curso",
+      "completed": "Finalizada",
+      "noshow": "No presentado",
+      "cancelled": "Cancelada",
+      "refused": "Rechazada"
+    },
+    "details": {
+      "date": "Fecha",
+      "time": "Hora",
+      "guests": "Número de personas",
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "notes": "Notas"
+    },
+    "actions": {
+      "cancel": "Cancelar la reserva",
+      "cancelConfirm": "¿Está seguro de que desea cancelar?",
+      "cancelled": "Reserva cancelada"
+    },
+    "expired": "Este enlace ha expirado",
+    "notFound": "Reserva no encontrada"
+  },
+  "error": {
+    "slotTaken": "Esta franja horaria ya no está disponible",
+    "insufficientCapacity": "Capacidad insuficiente para esta franja",
+    "invalidInput": "Datos no válidos",
+    "turnstileFailed": "Verificación anti-spam fallida",
+    "rateLimited": "Demasiados intentos, por favor inténtelo más tarde",
+    "tokenInvalid": "Enlace no válido",
+    "tokenExpired": "Este enlace ha expirado",
+    "notFound": "Recurso no encontrado",
+    "forbidden": "Acceso denegado",
+    "versionConflict": "La reserva ha sido modificada, por favor actualice",
+    "sameTypeOverlap": "Solapamiento con un período existente",
+    "unknown": "Se ha producido un error. Por favor, inténtelo de nuevo.",
+    "invalidDateFormat": "Formato de fecha no válido",
+    "validation": {
+      "nameMin": "Mínimo 2 caracteres",
+      "nameMax": "Máximo 50 caracteres",
+      "email": "Correo electrónico no válido",
+      "phone": "Formato: +32 XXX XX XX XX",
+      "dateFormat": "Formato de fecha no válido"
+    }
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "email": "Correo electrónico no válido",
+    "phone": "Número de teléfono no válido",
+    "minLength": "Mínimo {min} caracteres",
+    "maxLength": "Máximo {max} caracteres"
+  },
+  "days": {
+    "monday": "Lunes",
+    "tuesday": "Martes",
+    "wednesday": "Miércoles",
+    "thursday": "Jueves",
+    "friday": "Viernes",
+    "saturday": "Sábado",
+    "sunday": "Domingo"
+  },
+  "months": {
+    "january": "Enero",
+    "february": "Febrero",
+    "march": "Marzo",
+    "april": "Abril",
+    "may": "Mayo",
+    "june": "Junio",
+    "july": "Julio",
+    "august": "Agosto",
+    "september": "Septiembre",
+    "october": "Octubre",
+    "november": "Noviembre",
+    "december": "Diciembre"
+  }
+}

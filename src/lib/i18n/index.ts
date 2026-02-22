@@ -5,6 +5,7 @@ import nl from "./locales/nl.json";
 import en from "./locales/en.json";
 import de from "./locales/de.json";
 import it from "./locales/it.json";
+import es from "./locales/es.json";
 
 export type TranslationKey = string;
 
@@ -16,11 +17,12 @@ const locales: Record<Language, NestedObject> = {
   en,
   de,
   it,
+  es,
 };
 
 export const DEFAULT_LANGUAGE: Language = "nl";
 
-export const SUPPORTED_LANGUAGES: Language[] = ["fr", "nl", "en", "de", "it"];
+export const SUPPORTED_LANGUAGES: Language[] = ["fr", "nl", "en", "de", "it", "es"];
 
 export function getNestedValue(obj: NestedObject, path: string): string | undefined {
   const keys = path.split(".");

@@ -31,7 +31,8 @@ const payloadValidator = v.object({
     v.literal("nl"),
     v.literal("en"),
     v.literal("de"),
-    v.literal("it")
+    v.literal("it"),
+    v.literal("es")
   ),
 });
 
@@ -144,7 +145,8 @@ export const _insert = internalMutation({
       v.literal("nl"),
       v.literal("en"),
       v.literal("de"),
-      v.literal("it")
+      v.literal("it"),
+      v.literal("es")
     ),
     now: v.number(),
   },

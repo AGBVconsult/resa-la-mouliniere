@@ -362,7 +362,7 @@ function buildReservationAdmin(doc: {
   lastName: string;
   email: string;
   phone: string;
-  language: "fr" | "nl" | "en" | "de" | "it";
+  language: "fr" | "nl" | "en" | "de" | "it" | "es";
   note?: string;
   options?: string[];
   status: string;

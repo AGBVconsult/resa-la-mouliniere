@@ -6,7 +6,7 @@ export const COLORS = {
   full: "#ef4444",  // red-500
 } as const;
 
-export const SUPPORTED_LANGUAGES: Language[] = ["fr", "nl", "en", "de", "it"];
+export const SUPPORTED_LANGUAGES: Language[] = ["fr", "nl", "en", "de", "it", "es"];
 export const DEFAULT_LANGUAGE: Language = "nl";
 
 export const LANGUAGES = [
@@ -15,6 +15,7 @@ export const LANGUAGES = [
   { code: "en" as const, label: "EN" },
   { code: "de" as const, label: "DE" },
   { code: "it" as const, label: "IT" },
+  { code: "es" as const, label: "ES" },
 ] as const;
 
 // Seuils métier (CONTRACTS.md §3.3)

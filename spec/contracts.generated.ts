@@ -13,7 +13,7 @@ export type ErrorCode = (typeof ErrorCode)[number];
 export const Service = ["lunch", "dinner"] as const;
 export type Service = (typeof Service)[number];
 
-export const Language = ["fr", "nl", "en", "de", "it"] as const;
+export const Language = ["fr", "nl", "en", "de", "it", "es"] as const;
 export type Language = (typeof Language)[number];
 
 export const SlotTakenReason = ["closed", "taken"] as const;

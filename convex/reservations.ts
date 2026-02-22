@@ -159,7 +159,7 @@ function buildReservationAdmin(doc: {
   lastName: string;
   email: string;
   phone: string;
-  language: "fr" | "nl" | "en" | "de" | "it";
+  language: "fr" | "nl" | "en" | "de" | "it" | "es";
   note?: string;
   options?: string[];
   status: string;
@@ -315,7 +315,8 @@ export const _create = internalMutation({
       v.literal("nl"),
       v.literal("en"),
       v.literal("de"),
-      v.literal("it")
+      v.literal("it"),
+      v.literal("es")
     ),
     note: v.optional(v.string()),
     options: v.optional(v.array(v.string())),
@@ -706,7 +707,8 @@ const payloadSchema = {
     v.literal("nl"),
     v.literal("en"),
     v.literal("de"),
-    v.literal("it")
+    v.literal("it"),
+    v.literal("es")
   ),
   note: v.optional(v.string()),
   options: v.optional(v.array(v.string())),
