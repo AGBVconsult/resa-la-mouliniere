@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react";
 
 const VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const BUILD_ID_ENDPOINT = "/api/version";
+const DAILY_REFRESH_HOUR = 3; // 3h du matin
 
 interface VersionCheckerProps {
   checkInterval?: number;
@@ -71,6 +72,30 @@ export function VersionChecker({ checkInterval = VERSION_CHECK_INTERVAL }: Versi
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [initialBuildId, checkInterval, checkForUpdate]);
+
+  // Daily refresh at 3am to update the "today" date
+  useEffect(() => {
+    const scheduleNextRefresh = () => {
+      const now = new Date();
+      const nextRefresh = new Date();
+      nextRefresh.setHours(DAILY_REFRESH_HOUR, 0, 0, 0);
+      
+      // If it's already past 3am today, schedule for tomorrow
+      if (now >= nextRefresh) {
+        nextRefresh.setDate(nextRefresh.getDate() + 1);
+      }
+      
+      const msUntilRefresh = nextRefresh.getTime() - now.getTime();
+      
+      return setTimeout(() => {
+        window.location.reload();
+      }, msUntilRefresh);
+    };
+
+    const timeoutId = scheduleNextRefresh();
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   if (!updateAvailable) return null;
 
