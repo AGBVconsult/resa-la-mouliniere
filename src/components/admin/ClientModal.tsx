@@ -281,6 +281,11 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
                 {client.totalVisits} visite{client.totalVisits > 1 ? "s" : ""}
               </span>
+              {client.lastVisitAt && (
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+                  Dernière visite {format(new Date(client.lastVisitAt), "d MMM yyyy", { locale: fr })}
+                </span>
+              )}
               {client.totalNoShows > 0 && (
                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600">
                   {client.totalNoShows} no-show{client.totalNoShows > 1 ? "s" : ""}
