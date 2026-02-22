@@ -6,6 +6,7 @@ import { CalendarDays, ListChecks, LogOut } from "lucide-react";
 import { ToastProvider } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
+import { VersionChecker } from "@/components/VersionChecker";
 
 interface TabletLayoutClientProps {
   children: ReactNode;
@@ -34,6 +35,7 @@ export function TabletLayoutClient({ children }: TabletLayoutClientProps) {
         <main className="w-screen h-screen overflow-hidden">
           {children}
         </main>
+        <VersionChecker />
       </div>
     </ToastProvider>
   );
