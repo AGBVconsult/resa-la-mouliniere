@@ -267,17 +267,13 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
         <div className="w-96 bg-slate-50 p-8 flex flex-col gap-8 border-r border-slate-100 overflow-y-auto">
           {/* Header client */}
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">
-              {client.firstName} {client.lastName}
-            </h2>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2">
               <span className="text-lg">{getFlag(client.phone || ("primaryPhone" in client ? String(client.primaryPhone) : ""), currentReservation?.language || "fr")}</span>
-              <span className={cn(
-                "px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide",
-                clientStatusConfig.color
-              )}>
-                {clientStatusConfig.label}
-              </span>
+              <h2 className="text-2xl font-bold text-slate-900">
+                {client.firstName} {client.lastName}
+              </h2>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
                 {client.totalVisits} visite{client.totalVisits > 1 ? "s" : ""}
               </span>
