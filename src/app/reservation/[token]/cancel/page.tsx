@@ -36,9 +36,15 @@ export default function CancelReservationPage({ params }: PageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [idemKey] = useState(() => generateUUID());
+  const [cancelSuccess, setCancelSuccess] = useState(false);
 
-  // Fetch reservation
-  const reservation = useQuery(api.reservations.getByToken, { token });
+  // Skip query after successful cancellation to avoid race condition:
+  // cancelByToken marks the token as used, which causes getByToken to throw
+  // TOKEN_INVALID before the router.push redirect completes.
+  const reservation = useQuery(
+    api.reservations.getByToken,
+    cancelSuccess ? "skip" : { token }
+  );
   const cancelByToken = useAction(api.reservations.cancelByToken);
 
   const handleCancel = async () => {
@@ -50,6 +56,7 @@ export default function CancelReservationPage({ params }: PageProps) {
         token,
         idemKey,
       });
+      setCancelSuccess(true);
       router.push(`/reservation/cancelled?lang=${lang}`);
     } catch (err: unknown) {
       const errorMessage =
@@ -70,6 +77,19 @@ export default function CancelReservationPage({ params }: PageProps) {
       reservation.reservation.childrenCount +
       reservation.reservation.babyCount
     : 0;
+
+  // Redirecting after successful cancellation
+  if (cancelSuccess) {
+    return (
+      <div className="min-h-screen md:bg-slate-100 md:flex md:items-center md:justify-center md:p-4">
+        <div className="w-full min-h-[100dvh] flex flex-col bg-white md:min-h-0 md:max-w-[400px] md:h-[750px] md:rounded-3xl md:shadow-2xl md:border md:border-slate-200 overflow-hidden">
+          <div className="flex-1 flex items-center justify-center bg-slate-50">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state
   if (reservation === undefined) {
