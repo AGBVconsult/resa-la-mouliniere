@@ -405,10 +405,17 @@ export const enqueueReminders = internalMutation({
 
     const restaurant = activeRestaurants[0];
     const timezone = restaurant.timezone;
-    
+
+    // Get settings for appUrl
+    const settings = await ctx.db
+      .query("settings")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", restaurant._id))
+      .unique();
+    const appUrl = settings?.appUrl ?? "";
+
     // Get today's date key
     const todayDateKey = computeTodayDateKey(timezone, now);
-    
+
     // H-2 reminder window: 2 hours before reservation
     // We check reservations starting between now+1h45 and now+2h15 (30 min window)
     // This ensures we catch reservations even with cron timing variations
@@ -465,6 +472,16 @@ export const enqueueReminders = internalMutation({
         continue;
       }
 
+      // Get manage token for cancel/edit URLs
+      const tokenDoc = await ctx.db
+        .query("reservationTokens")
+        .withIndex("by_reservation_type", (q) =>
+          q.eq("reservationId", reservation._id).eq("type", "manage")
+        )
+        .unique();
+
+      const manageToken = tokenDoc?.token ?? "";
+
       // Enqueue reminder
       await ctx.db.insert("emailJobs", {
         restaurantId: restaurant._id,
@@ -479,7 +496,15 @@ export const enqueueReminders = internalMutation({
           timeKey: reservation.timeKey,
           service: reservation.service,
           partySize: reservation.partySize,
+          adults: reservation.adults,
+          childrenCount: reservation.childrenCount,
+          babyCount: reservation.babyCount,
           language: reservation.language,
+          manageUrl: manageToken ? `${appUrl}/reservation/${manageToken}` : "",
+          editUrl: manageToken ? `${appUrl}/reservation/${manageToken}/edit` : "",
+          cancelUrl: manageToken ? `${appUrl}/reservation/${manageToken}/cancel` : "",
+          note: reservation.note ?? "",
+          options: reservation.options ?? [],
         },
         icsBase64: null,
         status: "queued",
