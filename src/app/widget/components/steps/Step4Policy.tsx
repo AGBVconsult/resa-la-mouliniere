@@ -85,6 +85,7 @@ export function Step4Policy({
         children: data.childrenCount,
         babies: data.babyCount,
         options,
+        language: lang,
       });
 
       const payload = {
@@ -131,7 +132,8 @@ export function Step4Policy({
       trackBookingError(
         apiError.code || 'UNKNOWN',
         apiError.userMessage[lang] || 'Unknown error',
-        apiError.retryable
+        apiError.retryable,
+        lang
       );
       
       setError(apiError);

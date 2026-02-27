@@ -16,7 +16,7 @@ export function Step1Baby({ lang, data, onUpdate }: Step1BabyProps) {
   const { t } = useTranslation(lang);
 
   const handleSeatingChange = (seating: BabySeating) => {
-    trackBabySeatingSelected(seating);
+    trackBabySeatingSelected(seating, lang);
     onUpdate({ 
       babySeating: seating,
       requiresHighChair: seating === "highchair"

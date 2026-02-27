@@ -78,7 +78,7 @@ export function Step3Contact({
                           errorMsg === t.error_min_chars ? 'min_chars' :
                           errorMsg === t.error_email ? 'invalid_email' :
                           errorMsg === t.error_phone ? 'invalid_phone' : 'unknown';
-        trackContactFormError(field, errorType);
+        trackContactFormError(field, errorType, lang);
       }
     });
 

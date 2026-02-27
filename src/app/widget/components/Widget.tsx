@@ -125,7 +125,7 @@ export default function Widget() {
       6: 'confirmation',
     };
     const stepNumber = step === '1b' ? 1.5 : step;
-    trackStepView(stepNumber as number, stepNames[step]);
+    trackStepView(stepNumber as number, stepNames[step], lang);
   }, [step]);
 
   const nextStep = () => {
@@ -142,6 +142,7 @@ export default function Widget() {
           children: data.childrenCount,
           babies: data.babyCount,
           options,
+          language: lang,
         });
         // Si bébé sélectionné, aller à l'étape bébé
         return data.babyCount > 0 ? "1b" : 2;
@@ -151,7 +152,7 @@ export default function Widget() {
       if (prev === 3) return 4;
       if (prev === 4) {
         // Track policy viewed when leaving practical info
-        trackPolicyViewed();
+        trackPolicyViewed(lang);
         return 5;
       }
       if (prev === 5) return 6;

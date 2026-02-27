@@ -6,6 +6,7 @@
 // Types for event parameters
 interface BaseEventParams {
   widget_version?: string;
+  language?: string;
 }
 
 interface StepViewParams extends BaseEventParams {
@@ -132,11 +133,12 @@ function isDataLayerAvailable(): boolean {
 /**
  * Core tracking function - sends to GA4 via gtag or GTM dataLayer
  */
-export function trackEvent(eventName: string, params?: AnalyticsEventParams): void {
-  // Add widget version to all events
+export function trackEvent(eventName: string, params?: AnalyticsEventParams, language?: string): void {
+  // Add widget version and language to all events
   const enrichedParams = {
     ...params,
     widget_version: '1.0.0',
+    language: language || 'fr',
   };
 
   // Debug logging in development
@@ -165,11 +167,11 @@ export function trackEvent(eventName: string, params?: AnalyticsEventParams): vo
 /**
  * Track step view - fires when user enters a step
  */
-export function trackStepView(stepNumber: number, stepName: string): void {
+export function trackStepView(stepNumber: number, stepName: string, language: string): void {
   trackEvent(AnalyticsEvents.STEP_VIEW, {
     step_number: stepNumber,
     step_name: stepName,
-  });
+  }, language);
 }
 
 /**
@@ -180,6 +182,7 @@ export function trackGuestsSelected(params: {
   children: number;
   babies: number;
   options: string[];
+  language: string;
 }): void {
   trackEvent(AnalyticsEvents.GUESTS_SELECTED, {
     adults: params.adults,
@@ -188,22 +191,22 @@ export function trackGuestsSelected(params: {
     total_guests: params.adults + params.children + params.babies,
     has_options: params.options.length > 0,
     options: params.options.length > 0 ? params.options : undefined,
-  });
+  }, params.language);
 }
 
 /**
  * Track baby seating choice - fires on Step 1B
  */
-export function trackBabySeatingSelected(seating: 'lap' | 'highchair'): void {
+export function trackBabySeatingSelected(seating: 'lap' | 'highchair', language: string): void {
   trackEvent(AnalyticsEvents.BABY_SEATING_SELECTED, {
     seating_choice: seating,
-  });
+  }, language);
 }
 
 /**
  * Track date selection - fires when user picks a date
  */
-export function trackDateSelected(dateKey: string): void {
+export function trackDateSelected(dateKey: string, language: string): void {
   const selectedDate = new Date(dateKey);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -212,7 +215,7 @@ export function trackDateSelected(dateKey: string): void {
   trackEvent(AnalyticsEvents.DATE_SELECTED, {
     date: dateKey,
     days_in_advance: daysInAdvance,
-  });
+  }, language);
 }
 
 /**
@@ -223,40 +226,41 @@ export function trackTimeSlotSelected(params: {
   time: string;
   service: 'lunch' | 'dinner';
   totalGuests: number;
+  language: string;
 }): void {
   trackEvent(AnalyticsEvents.TIME_SLOT_SELECTED, {
     date: params.date,
     time: params.time,
     service: params.service,
     total_guests: params.totalGuests,
-  });
+  }, params.language);
 }
 
 /**
  * Track no slots available - fires when date has no availability
  */
-export function trackNoSlotsAvailable(dateKey: string, totalGuests: number): void {
+export function trackNoSlotsAvailable(dateKey: string, totalGuests: number, language: string): void {
   trackEvent(AnalyticsEvents.NO_SLOTS_AVAILABLE, {
     date: dateKey,
     total_guests: totalGuests,
-  });
+  }, language);
 }
 
 /**
  * Track contact form validation error
  */
-export function trackContactFormError(field: string, errorType: string): void {
+export function trackContactFormError(field: string, errorType: string, language: string): void {
   trackEvent(AnalyticsEvents.CONTACT_FORM_ERROR, {
     field,
     error_type: errorType,
-  });
+  }, language);
 }
 
 /**
  * Track policy/practical info viewed
  */
-export function trackPolicyViewed(): void {
-  trackEvent(AnalyticsEvents.POLICY_VIEWED, {});
+export function trackPolicyViewed(language: string): void {
+  trackEvent(AnalyticsEvents.POLICY_VIEWED, {}, language);
 }
 
 /**
@@ -270,6 +274,7 @@ export function trackBookingSubmitted(params: {
   children: number;
   babies: number;
   options: string[];
+  language: string;
 }): void {
   trackEvent(AnalyticsEvents.BOOKING_SUBMITTED, {
     date: params.date,
@@ -281,18 +286,18 @@ export function trackBookingSubmitted(params: {
     babies: params.babies,
     has_options: params.options.length > 0,
     options: params.options.length > 0 ? params.options : undefined,
-  });
+  }, params.language);
 }
 
 /**
  * Track booking error
  */
-export function trackBookingError(errorCode: string, errorMessage: string, isRetryable: boolean): void {
+export function trackBookingError(errorCode: string, errorMessage: string, isRetryable: boolean, language: string): void {
   trackEvent(AnalyticsEvents.BOOKING_ERROR, {
     error_code: errorCode,
     error_message: errorMessage,
     is_retryable: isRetryable,
-  });
+  }, language);
 }
 
 /**
@@ -305,6 +310,7 @@ export function trackBookingConfirmed(params: {
   time: string;
   service: 'lunch' | 'dinner';
   totalGuests: number;
+  language: string;
 }): void {
   trackEvent(AnalyticsEvents.BOOKING_CONFIRMED, {
     reservation_id: params.reservationId,
@@ -313,7 +319,7 @@ export function trackBookingConfirmed(params: {
     time: params.time,
     service: params.service,
     total_guests: params.totalGuests,
-  });
+  }, params.language);
 }
 
 // Type declarations for global window object

@@ -34,6 +34,7 @@ export function Step6Confirmation({ lang, data, partySize, result }: Step6Confir
         time: data.timeKey,
         service: data.service,
         totalGuests: partySize,
+        language: lang,
       });
       trackedRef.current = true;
     }

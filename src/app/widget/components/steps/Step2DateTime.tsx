@@ -62,13 +62,13 @@ export function Step2DateTime({
   };
 
   const handleDateSelectFromCalendar = (dateKey: string) => {
-    trackDateSelected(dateKey);
+    trackDateSelected(dateKey, lang);
     onUpdate({ dateKey, service: null, timeKey: null });
     setTimeout(() => setIsCalendarCollapsed(true), 150);
   };
 
   const handleDateSelectFromStrip = (dateKey: string) => {
-    trackDateSelected(dateKey);
+    trackDateSelected(dateKey, lang);
     onUpdate({ dateKey, service: null, timeKey: null });
   };
 
@@ -82,6 +82,7 @@ export function Step2DateTime({
       time: timeKey,
       service,
       totalGuests: partySize,
+      language: lang,
     });
     onUpdate({ timeKey, service });
   };
@@ -121,7 +122,7 @@ export function Step2DateTime({
       dinnerSlots.length === 0 &&
       trackedNoSlotsRef.current !== data.dateKey
     ) {
-      trackNoSlotsAvailable(data.dateKey, partySize);
+      trackNoSlotsAvailable(data.dateKey, partySize, lang);
       trackedNoSlotsRef.current = data.dateKey;
     }
   }, [data.dateKey, isCalendarCollapsed, dayData, lunchSlots.length, dinnerSlots.length, partySize]);
