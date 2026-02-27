@@ -10,6 +10,7 @@ import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import { formatDateDisplayFull, generateUUID } from "@/lib/utils";
 import { withRetry, parseError, isOnline, setupOnlineListener, type ApiError } from "@/lib/api-client";
+import { trackBookingSubmitted, trackBookingError } from "@/lib/analytics";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
 
 interface Step4PolicyProps {
@@ -75,6 +76,17 @@ export function Step4Policy({
       if (data.requiresDogAccess) options.push("dogAccess");
       if (data.requiresWheelchair) options.push("wheelchair");
 
+      // Track booking submission attempt
+      trackBookingSubmitted({
+        date: data.dateKey!,
+        time: data.timeKey!,
+        service: data.service!,
+        adults: data.adults,
+        children: data.childrenCount,
+        babies: data.babyCount,
+        options,
+      });
+
       const payload = {
         dateKey: data.dateKey,
         service: data.service,
@@ -89,6 +101,7 @@ export function Step4Policy({
         language: lang,
         note: data.message || undefined,
         options: options.length > 0 ? options : undefined,
+        referralSource: data.referralSource || undefined,
       };
 
       const result = await createReservation({
@@ -113,6 +126,14 @@ export function Step4Policy({
     } catch (err: unknown) {
       console.error("Reservation error:", err);
       const apiError = parseError(err);
+      
+      // Track booking error
+      trackBookingError(
+        apiError.code || 'UNKNOWN',
+        apiError.userMessage[lang] || 'Unknown error',
+        apiError.retryable
+      );
+      
       setError(apiError);
       setRetryCount((c) => c + 1);
       // Only regenerate idemKey for non-retryable errors to avoid duplicates

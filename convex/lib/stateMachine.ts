@@ -22,13 +22,13 @@ import type { ReservationStatus } from "../../spec/contracts.generated";
 const VALID_TRANSITIONS: Record<ReservationStatus, ReservationStatus[]> = {
   pending: ["confirmed", "refused", "cancelled"],
   confirmed: ["cardPlaced", "seated", "cancelled", "noshow", "completed"],
-  cardPlaced: ["seated", "cancelled", "incident", "confirmed"],
-  seated: ["completed", "incident", "noshow", "confirmed"], // Can complete, report incident, mark as noshow, or revert to confirmed
-  completed: ["seated", "confirmed", "incident"], // Allow reopening, reverting to confirmed, or reporting incident
-  noshow: ["seated", "confirmed"], // Allow marking as arrived or restoring
+  cardPlaced: ["seated", "cancelled", "noshow", "incident", "confirmed"],
+  seated: ["completed", "incident", "noshow", "confirmed", "cancelled"], // Can complete, report incident, mark as noshow, revert, or cancel
+  completed: ["seated", "confirmed", "incident", "cancelled"], // Allow reopening, reverting, reporting incident, or cancelling
+  noshow: ["seated", "confirmed", "cancelled"], // Allow marking as arrived, restoring, or cancelling
   cancelled: ["confirmed"], // Allow restoring
-  refused: ["confirmed"], // Allow restoring
-  incident: ["seated", "completed"], // Can reopen or mark as completed
+  refused: ["confirmed", "cancelled"], // Allow restoring or cancelling
+  incident: ["seated", "completed", "cancelled"], // Can reopen, complete, or cancel
 };
 
 /**

@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { StepHeader } from "../ui/StepHeader";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language, BookingState, BabySeating } from "@/components/booking/types";
+import { trackBabySeatingSelected } from "@/lib/analytics";
 
 interface Step1BabyProps {
   lang: Language;
@@ -15,6 +16,7 @@ export function Step1Baby({ lang, data, onUpdate }: Step1BabyProps) {
   const { t } = useTranslation(lang);
 
   const handleSeatingChange = (seating: BabySeating) => {
+    trackBabySeatingSelected(seating);
     onUpdate({ 
       babySeating: seating,
       requiresHighChair: seating === "highchair"

@@ -26,6 +26,7 @@ import type { Language, BookingState, ReservationResult } from "@/components/boo
 import { initialBookingState } from "@/components/booking/types";
 import { formatDateShort } from "@/lib/utils";
 import { useTranslation } from "@/components/booking/i18n/translations";
+import { trackStepView, trackGuestsSelected, trackPolicyViewed } from "@/lib/analytics";
 
 type Step = 1 | "1b" | 2 | 3 | 4 | 5 | 6;
 
@@ -55,7 +56,10 @@ export default function Widget() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ReservationResult | null>(null);
 
-  const [data, setData] = useState<BookingState>(initialBookingState);
+  const [data, setData] = useState<BookingState>(() => ({
+    ...initialBookingState,
+    referralSource: searchParams.get("ref") || null,
+  }));
 
   const [requestPrimaryToken, setRequestPrimaryToken] = useState(0);
   const [canContinueStep3, setCanContinueStep3] = useState(false);
@@ -109,17 +113,47 @@ export default function Widget() {
     setStep(newStep);
   };
 
+  // Track step views
+  useEffect(() => {
+    const stepNames: Record<Step, string> = {
+      1: 'guests',
+      '1b': 'baby_seating',
+      2: 'date_time',
+      3: 'contact',
+      4: 'practical_info',
+      5: 'summary_confirm',
+      6: 'confirmation',
+    };
+    const stepNumber = step === '1b' ? 1.5 : step;
+    trackStepView(stepNumber as number, stepNames[step]);
+  }, [step]);
+
   const nextStep = () => {
     setDirection("forward");
     setStep((prev) => {
       if (prev === 1) {
+        // Track guests selected when leaving step 1
+        const options: string[] = [];
+        if (data.requiresStroller) options.push('stroller');
+        if (data.requiresWheelchair) options.push('wheelchair');
+        if (data.requiresDogAccess) options.push('dog');
+        trackGuestsSelected({
+          adults: data.adults,
+          children: data.childrenCount,
+          babies: data.babyCount,
+          options,
+        });
         // Si bébé sélectionné, aller à l'étape bébé
         return data.babyCount > 0 ? "1b" : 2;
       }
       if (prev === "1b") return 2;
       if (prev === 2) return 3;
       if (prev === 3) return 4;
-      if (prev === 4) return 5;
+      if (prev === 4) {
+        // Track policy viewed when leaving practical info
+        trackPolicyViewed();
+        return 5;
+      }
       if (prev === 5) return 6;
       return prev;
     });

@@ -111,7 +111,7 @@ export default function ReservationPage({ params }: PageProps) {
   };
 
   const res = reservation.reservation;
-  const canCancel = ["pending", "confirmed"].includes(res.status);
+  const canCancel = res.status !== "cancelled";
 
   return (
     <div className="container mx-auto max-w-lg p-4">

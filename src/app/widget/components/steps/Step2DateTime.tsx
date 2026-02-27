@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { StepHeader } from "../ui/StepHeader";
@@ -9,6 +9,7 @@ import { MonthCalendar } from "../calendar/MonthCalendar";
 import { MiniCalendarStrip } from "../calendar/MiniCalendarStrip";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language, BookingState, Service } from "@/components/booking/types";
+import { trackDateSelected, trackTimeSlotSelected, trackNoSlotsAvailable } from "@/lib/analytics";
 
 interface Step2DateTimeProps {
   lang: Language;
@@ -61,11 +62,13 @@ export function Step2DateTime({
   };
 
   const handleDateSelectFromCalendar = (dateKey: string) => {
+    trackDateSelected(dateKey);
     onUpdate({ dateKey, service: null, timeKey: null });
     setTimeout(() => setIsCalendarCollapsed(true), 150);
   };
 
   const handleDateSelectFromStrip = (dateKey: string) => {
+    trackDateSelected(dateKey);
     onUpdate({ dateKey, service: null, timeKey: null });
   };
 
@@ -74,6 +77,12 @@ export function Step2DateTime({
   };
 
   const handleTimeSelect = (timeKey: string, service: Service) => {
+    trackTimeSlotSelected({
+      date: data.dateKey!,
+      time: timeKey,
+      service,
+      totalGuests: partySize,
+    });
     onUpdate({ timeKey, service });
   };
 
@@ -100,6 +109,22 @@ export function Step2DateTime({
       }
     ) || [];
   }, [dayData, partySize]);
+
+  // Track no slots available (only once per date)
+  const trackedNoSlotsRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      data.dateKey &&
+      isCalendarCollapsed &&
+      dayData &&
+      lunchSlots.length === 0 &&
+      dinnerSlots.length === 0 &&
+      trackedNoSlotsRef.current !== data.dateKey
+    ) {
+      trackNoSlotsAvailable(data.dateKey, partySize);
+      trackedNoSlotsRef.current = data.dateKey;
+    }
+  }, [data.dateKey, isCalendarCollapsed, dayData, lunchSlots.length, dinnerSlots.length, partySize]);
 
   return (
     <div 

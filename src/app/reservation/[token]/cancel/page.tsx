@@ -124,7 +124,7 @@ export default function CancelReservationPage({ params }: PageProps) {
   }
 
   const res = reservation.reservation;
-  const canCancel = ["pending", "confirmed"].includes(res.status);
+  const canCancel = res.status !== "cancelled";
   const dateKey = res.dateKey;
   const timeKey = res.timeKey;
 

@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { CheckCircle, Clock, Calendar, Share2, User, Phone, Mail, MessageSquare, Users, Baby, Accessibility, PawPrint, Icon } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import { formatDateDisplay } from "@/lib/utils";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
+import { trackBookingConfirmed } from "@/lib/analytics";
 
 interface Step6ConfirmationProps {
   lang: Language;
@@ -19,6 +21,23 @@ export function Step6Confirmation({ lang, data, partySize, result }: Step6Confir
   const isConfirmed = result.kind === "reservation" && result.status === "confirmed";
   const isPending = result.kind === "reservation" && result.status === "pending";
   const isGroupRequest = result.kind === "groupRequest";
+
+  // Track booking confirmed (only once)
+  const trackedRef = useRef(false);
+  useEffect(() => {
+    if (!trackedRef.current && data.dateKey && data.timeKey && data.service) {
+      const status = isGroupRequest ? 'group_request' : (isConfirmed ? 'confirmed' : 'pending');
+      trackBookingConfirmed({
+        reservationId: result.kind === 'reservation' ? result.reservationId : undefined,
+        status,
+        date: data.dateKey,
+        time: data.timeKey,
+        service: data.service,
+        totalGuests: partySize,
+      });
+      trackedRef.current = true;
+    }
+  }, [data.dateKey, data.timeKey, data.service, isConfirmed, isGroupRequest, partySize, result]);
 
   const serviceLabel = data.service === "lunch" ? t.lunch : t.dinner;
 

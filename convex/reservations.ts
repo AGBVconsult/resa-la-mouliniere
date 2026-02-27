@@ -211,7 +211,8 @@ function buildReservationAdmin(doc: {
  * Pure helper, testable.
  */
 export function canCancel(status: string): boolean {
-  return status === "pending" || status === "confirmed";
+  // Seul statut non-annulable : déjà annulé
+  return status !== "cancelled";
 }
 
 export const getByToken = query({
@@ -235,10 +236,7 @@ export const getByToken = query({
       throw Errors.TOKEN_INVALID();
     }
 
-    // Token expired
-    if (tokenDoc.expiresAt <= now) {
-      throw Errors.TOKEN_EXPIRED();
-    }
+    // Note: no expiry check — client can always view/cancel their reservation
 
     // Load reservation
     const reservation = await ctx.db.get(tokenDoc.reservationId);
@@ -321,6 +319,7 @@ export const _create = internalMutation({
     note: v.optional(v.string()),
     options: v.optional(v.array(v.string())),
     source: v.union(v.literal("online"), v.literal("admin"), v.literal("phone"), v.literal("walkin")),
+    referralSource: v.optional(v.string()),
     manageTokenExpireBeforeSlotMs: v.number(),
     timezone: v.string(),
     appUrl: v.string(),
@@ -417,6 +416,7 @@ export const _create = internalMutation({
       options: args.options,
       status,
       source: args.source,
+      referralSource: args.referralSource,
       tableIds: [],
       version: 1,
       createdAt: now,
@@ -712,6 +712,7 @@ const payloadSchema = {
   ),
   note: v.optional(v.string()),
   options: v.optional(v.array(v.string())),
+  referralSource: v.optional(v.string()),
 };
 
 type ReservationCreateResult =
@@ -850,6 +851,7 @@ export const create = action({
       note: payload.note,
       options: payload.options,
       source: "online",
+      referralSource: payload.referralSource,
       manageTokenExpireBeforeSlotMs: settings.manageTokenExpireBeforeSlotMs,
       timezone: settings.timezone,
       appUrl: settings.appUrl,
@@ -1214,10 +1216,7 @@ export const cancelByToken = action({
       throw Errors.TOKEN_INVALID();
     }
 
-    // Token expired
-    if (tokenDoc.expiresAt <= now) {
-      throw Errors.TOKEN_EXPIRED();
-    }
+    // Note: no expiry check for cancellation — a client who cancels is always preferable to a no-show
 
     // Load reservation to get current version and status
     const reservation = await ctx.runQuery(internal.reservations._getById, {

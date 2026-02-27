@@ -12,6 +12,7 @@ import {
   getPhoneCountry,
   getCountryFlag,
 } from "@/lib/phone";
+import { trackContactFormError } from "@/lib/analytics";
 
 interface Step3ContactProps {
   lang: Language;
@@ -69,6 +70,17 @@ export function Step3Contact({
     } else if (!validatePhone(data.phone)) {
       newErrors.phone = t.error_phone;
     }
+
+    // Track validation errors
+    Object.entries(newErrors).forEach(([field, errorMsg]) => {
+      if (errorMsg) {
+        const errorType = errorMsg === t.error_required ? 'required' :
+                          errorMsg === t.error_min_chars ? 'min_chars' :
+                          errorMsg === t.error_email ? 'invalid_email' :
+                          errorMsg === t.error_phone ? 'invalid_phone' : 'unknown';
+        trackContactFormError(field, errorType);
+      }
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

@@ -54,6 +54,8 @@ export interface BookingState {
   email: string;
   phone: string;
   message: string;
+  // Marketing tracking
+  referralSource: string | null;
 }
 
 export const initialBookingState: BookingState = {
@@ -73,6 +75,7 @@ export const initialBookingState: BookingState = {
   email: "",
   phone: "",
   message: "",
+  referralSource: null,
 };
 
 // Types backend (CONTRACTS.md)

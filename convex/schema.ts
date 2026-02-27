@@ -168,6 +168,7 @@ export default defineSchema({
 
     status: reservationStatus,
     source: reservationSource,
+    referralSource: v.optional(v.string()), // Marketing ref (e.g., "gmb_reserve" from ?ref=gmb_reserve)
 
     tableIds: v.array(v.id("tables")),
     primaryTableId: v.optional(v.id("tables")), // Table cliquée lors de l'assignation (affichée dans le listing)
