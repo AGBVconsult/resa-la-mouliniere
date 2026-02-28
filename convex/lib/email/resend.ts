@@ -10,6 +10,7 @@ export interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
+  reply_to?: string;
 }
 
 export interface SendEmailResult {
@@ -52,7 +53,7 @@ export async function sendEmail(
         to: [params.to],
         subject: params.subject,
         html: params.html,
-        reply_to: "info@lamouliniere.be",
+        reply_to: params.reply_to || "info@lamouliniere.be",
       }),
     });
 

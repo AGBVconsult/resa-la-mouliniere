@@ -35,10 +35,12 @@ import {
   Accessibility,
   PawPrint,
   Icon,
+  MessageCircle,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { getFlag } from "@/lib/getFlag";
 import { TagSelectorPopup } from "./TagSelectorPopup";
+import { MessageTab } from "./MessageTab";
 
 interface ClientModalProps {
   clientId: Id<"clients">;
@@ -65,7 +67,7 @@ const CLIENT_STATUS_CONFIG: Record<string, { label: string; icon: typeof Star; c
 };
 
 export function ClientModal({ clientId, currentReservationId, onClose }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState<"reservation" | "history">("reservation");
+  const [activeTab, setActiveTab] = useState<"reservation" | "history" | "messages">("reservation");
   const [newNote, setNewNote] = useState("");
   const [noteType, setNoteType] = useState<"info" | "preference" | "incident" | "alert">("info");
   const [isSaving, setIsSaving] = useState(false);
@@ -526,6 +528,18 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
                 <History size={14} className="inline mr-2" />
                 Historique
               </button>
+              <button
+                onClick={() => setActiveTab("messages")}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                  activeTab === "messages"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                <MessageCircle size={14} className="inline mr-2" />
+                Messages
+              </button>
             </div>
             
             <button
@@ -537,35 +551,44 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
           </div>
 
           {/* Contenu des onglets */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {activeTab === "reservation" ? (
-              <ReservationEditForm
-                reservation={currentReservation}
-                formData={formData}
-                setFormData={setFormData}
-                isSaving={isSaving}
-                onSave={handleSaveReservation}
-                formatDate={formatDate}
+          {activeTab === "messages" ? (
+            <div className="flex-1 min-h-0">
+              <MessageTab
+                clientId={clientId}
+                clientName={`${client.firstName ?? ""} ${client.lastName ?? ""}`.trim()}
               />
-            ) : (
-              <div className="space-y-3">
-                {pastReservations.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400">
-                    <History size={48} className="mx-auto mb-4 opacity-50" />
-                    <p>Aucun historique</p>
-                  </div>
-                ) : (
-                  pastReservations.map((res) => (
-                    <ReservationCard 
-                      key={res._id} 
-                      reservation={res}
-                      formatDate={formatDate}
-                    />
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-6">
+              {activeTab === "reservation" ? (
+                <ReservationEditForm
+                  reservation={currentReservation}
+                  formData={formData}
+                  setFormData={setFormData}
+                  isSaving={isSaving}
+                  onSave={handleSaveReservation}
+                  formatDate={formatDate}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {pastReservations.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400">
+                      <History size={48} className="mx-auto mb-4 opacity-50" />
+                      <p>Aucun historique</p>
+                    </div>
+                  ) : (
+                    pastReservations.map((res) => (
+                      <ReservationCard 
+                        key={res._id} 
+                        reservation={res}
+                        formatDate={formatDate}
+                      />
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

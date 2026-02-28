@@ -662,6 +662,29 @@ export default defineSchema({
     .index("by_restaurant_date", ["restaurantId", "dateKey"])
     .index("by_expiresAt", ["expiresAt"]),
 
+  // Messages entre le restaurant et les clients (style iMessage)
+  clientMessages: defineTable({
+    restaurantId: v.id("restaurants"),
+    clientId: v.id("clients"),
+    // Thread unique par client
+    direction: v.union(v.literal("outbound"), v.literal("inbound")),
+    body: v.string(),
+    // Email tracking
+    emailMessageId: v.optional(v.string()), // Resend message ID
+    emailTo: v.optional(v.string()),
+    emailStatus: v.optional(v.union(
+      v.literal("sent"),
+      v.literal("delivered"),
+      v.literal("failed")
+    )),
+    // Metadata
+    sentBy: v.optional(v.string()), // Clerk userId for outbound
+    createdAt: v.number(),
+  })
+    .index("by_client", ["clientId", "createdAt"])
+    .index("by_restaurant_client", ["restaurantId", "clientId", "createdAt"])
+    .index("by_emailMessageId", ["emailMessageId"]),
+
   // Tags globaux pour les clients
   tags: defineTable({
     name: v.string(),
