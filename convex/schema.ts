@@ -649,6 +649,9 @@ export default defineSchema({
     lastStep: v.number(),
     // Source marketing
     referralSource: v.optional(v.string()),
+    // Deprecated — conservés pour rétrocompatibilité avec anciens documents
+    convertedAt: v.optional(v.number()),
+    reservationId: v.optional(v.id("reservations")),
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
