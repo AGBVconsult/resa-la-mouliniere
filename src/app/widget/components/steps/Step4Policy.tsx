@@ -290,16 +290,14 @@ export function Step4Policy({
           </div>
         )}
 
-        {/* Turnstile */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5vh' }}>
-          <Turnstile
-            siteKey={settings.turnstileSiteKey}
-            options={{ size: "normal" }}
-            onSuccess={setTurnstileToken}
-            onError={() => setTurnstileToken(null)}
-            onExpire={() => setTurnstileToken(null)}
-          />
-        </div>
+        {/* Turnstile (invisible — no confusing "Succès" checkbox) */}
+        <Turnstile
+          siteKey={settings.turnstileSiteKey}
+          options={{ size: "invisible" }}
+          onSuccess={setTurnstileToken}
+          onError={() => setTurnstileToken(null)}
+          onExpire={() => setTurnstileToken(null)}
+        />
 
         {/* Offline warning */}
         {isOffline && (
