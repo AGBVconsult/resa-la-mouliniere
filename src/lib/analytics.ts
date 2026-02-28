@@ -117,7 +117,7 @@ export const AnalyticsEvents = {
   BOOKING_ERROR: 'booking_error',
   
   // Step 6 - Confirmation
-  BOOKING_CONFIRMED: 'booking_confirmed',
+  BOOKING_COMPLETED: 'booking_completed',
 } as const;
 
 // Check if gtag is available
@@ -312,7 +312,7 @@ export function trackBookingConfirmed(params: {
   totalGuests: number;
   language: string;
 }): void {
-  trackEvent(AnalyticsEvents.BOOKING_CONFIRMED, {
+  trackEvent(AnalyticsEvents.BOOKING_COMPLETED, {
     reservation_id: params.reservationId,
     status: params.status,
     date: params.date,
