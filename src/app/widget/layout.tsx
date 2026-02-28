@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "Réserver une table - La Moulinière",
-  description: "Réservez votre table au restaurant La Moulinière. Cuisine française traditionnelle à Chaumont-Gistoux.",
-  keywords: ["restaurant", "réservation", "La Moulinière", "Chaumont-Gistoux", "cuisine française"],
+  title: "Réserver une table - La Moulinière Ostende",
+  description: "Réservez votre table à La Moulinière, restaurant de moules à Ostende depuis 2011. Plus de 40 préparations de moules fraîches de Zélande. Visserskaai 17, face au port de pêche.",
+  keywords: ["restaurant", "réservation", "La Moulinière", "Ostende", "moules", "Zélande", "fruits de mer", "Visserskaai"],
   robots: { index: true, follow: true },
   openGraph: {
-    title: "Réserver une table - La Moulinière",
-    description: "Réservez votre table au restaurant La Moulinière",
+    title: "Réserver une table - La Moulinière Ostende",
+    description: "Restaurant de moules à Ostende depuis 2011. Plus de 40 préparations uniques, moules fraîches de Zélande.",
     type: "website",
     locale: "fr_BE",
   },
@@ -30,17 +30,19 @@ export default function WidgetLayout({
     "@context": "https://schema.org",
     "@type": "Restaurant",
     name: "La Moulinière",
-    description: "Restaurant de cuisine française traditionnelle",
+    description: "Restaurant de moules à Ostende depuis 2011. Plus de 40 préparations de moules fraîches de Zélande, réalisées à la minute par le Chef Benjamin.",
     address: {
       "@type": "PostalAddress",
-      streetAddress: "Rue de la Station 73",
-      addressLocality: "Chaumont-Gistoux",
-      postalCode: "1325",
+      streetAddress: "Visserskaai 17",
+      addressLocality: "Ostende",
+      postalCode: "8400",
       addressCountry: "BE",
     },
-    servesCuisine: "French",
+    servesCuisine: ["Seafood", "Belgian", "Mussels"],
     priceRange: "€€",
     acceptsReservations: "True",
+    telephone: "+32 59 70 17 65",
+    url: "https://resa.lamouliniere.be",
   };
 
   return (
