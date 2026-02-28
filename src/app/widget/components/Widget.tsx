@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { AnimatePresence } from "framer-motion";
 import { api } from "../../../../convex/_generated/api";
 
@@ -24,7 +24,7 @@ import { ClosureNoticeModal } from "./ClosureNoticeModal";
 import { THRESHOLDS, DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from "@/components/booking/constants";
 import type { Language, BookingState, ReservationResult } from "@/components/booking/types";
 import { initialBookingState } from "@/components/booking/types";
-import { formatDateShort } from "@/lib/utils";
+import { formatDateShort, generateUUID } from "@/lib/utils";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import { trackStepView, trackGuestsSelected, trackPolicyViewed } from "@/lib/analytics";
 
@@ -61,6 +61,7 @@ export default function Widget() {
     referralSource: searchParams.get("ref") || null,
   }));
 
+  const [sessionId] = useState(() => generateUUID());
   const [requestPrimaryToken, setRequestPrimaryToken] = useState(0);
   const [canContinueStep3, setCanContinueStep3] = useState(false);
   const [step5FooterState, setStep5FooterState] = useState<{
@@ -71,6 +72,8 @@ export default function Widget() {
 
   const settings = useQuery(api.widget.getSettings, { lang });
   const activeClosure = useQuery(api.specialPeriods.getActiveClosure, {});
+  const saveDraft = useMutation(api.bookingDrafts.save);
+  const markDraftConverted = useMutation(api.bookingDrafts.markConverted);
   const [showClosureModal, setShowClosureModal] = useState(true);
   const { t } = useTranslation(lang);
 
@@ -149,7 +152,27 @@ export default function Widget() {
       }
       if (prev === "1b") return 2;
       if (prev === 2) return 3;
-      if (prev === 3) return 4;
+      if (prev === 3) {
+        // Sauvegarder le brouillon quand le client passe l'étape contact
+        saveDraft({
+          sessionId,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          language: lang,
+          adults: data.adults,
+          childrenCount: data.childrenCount,
+          babyCount: data.babyCount,
+          dateKey: data.dateKey || undefined,
+          service: data.service || undefined,
+          timeKey: data.timeKey || undefined,
+          note: data.message || undefined,
+          lastStep: 4,
+          referralSource: data.referralSource || undefined,
+        }).catch(() => {}); // fire-and-forget, ne pas bloquer le flow
+        return 4;
+      }
       if (prev === 4) {
         // Track policy viewed when leaving practical info
         trackPolicyViewed(lang);
@@ -381,6 +404,11 @@ export default function Widget() {
                   settings={settings}
                   onSuccess={(res: ReservationResult) => {
                     setResult(res);
+                    // Marquer le brouillon comme converti
+                    markDraftConverted({
+                      sessionId,
+                      reservationId: res.kind === 'reservation' ? res.reservationId as any : undefined,
+                    }).catch(() => {});
                     goToStep(6);
                   }}
                   setLoading={setLoading}

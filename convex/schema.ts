@@ -626,6 +626,43 @@ export default defineSchema({
     .index("by_zone", ["assignedZone"])
     .index("by_created", ["createdAt"]),
 
+  // Brouillons de réservation — clients ayant rempli le formulaire mais pas finalisé
+  bookingDrafts: defineTable({
+    restaurantId: v.id("restaurants"),
+    // Identifiant unique du brouillon (côté widget, pour éviter les doublons)
+    sessionId: v.string(),
+    // Infos contact (remplies à l'étape 3)
+    firstName: v.string(),
+    lastName: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    language: v.optional(language),
+    // Infos réservation (remplies aux étapes 1-2)
+    adults: v.number(),
+    childrenCount: v.number(),
+    babyCount: v.number(),
+    dateKey: v.optional(v.string()),
+    service: v.optional(service),
+    timeKey: v.optional(v.string()),
+    note: v.optional(v.string()),
+    // Étape atteinte par le client (4 = infos pratiques, 5 = récap)
+    lastStep: v.number(),
+    // Source marketing
+    referralSource: v.optional(v.string()),
+    // Converti en réservation ?
+    convertedAt: v.optional(v.number()),
+    reservationId: v.optional(v.id("reservations")),
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    // Auto-expiration (nettoyage après 7 jours)
+    expiresAt: v.number(),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_restaurant_date", ["restaurantId", "dateKey"])
+    .index("by_restaurant_unconverted", ["restaurantId", "convertedAt"])
+    .index("by_expiresAt", ["expiresAt"]),
+
   // Tags globaux pour les clients
   tags: defineTable({
     name: v.string(),
