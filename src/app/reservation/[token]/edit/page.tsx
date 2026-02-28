@@ -225,7 +225,7 @@ export default function EditReservationPage({ params }: PageProps) {
   }
 
   const res = reservation.reservation;
-  const canEdit = ["pending", "confirmed"].includes(res.status);
+  const canEdit = !["cancelled", "completed", "noshow"].includes(res.status);
 
   // Cannot edit
   if (!canEdit) {

@@ -885,7 +885,9 @@ export const create = action({
  * Pure helper, testable.
  */
 export function canModify(status: string): boolean {
-  return status === "pending" || status === "confirmed";
+  // Un client qui modifie est toujours préférable à un client qui ne vient pas
+  const nonModifiable = ["cancelled", "completed", "noshow"];
+  return !nonModifiable.includes(status);
 }
 
 export const _update = internalMutation({
@@ -1120,9 +1122,7 @@ export const updateByToken = action({
       throw Errors.TOKEN_INVALID();
     }
 
-    if (tokenDoc.expiresAt <= now) {
-      throw Errors.TOKEN_EXPIRED();
-    }
+    // Note: no expiry check for modification — a client who modifies is always preferable to a no-show
 
     // Load reservation
     const reservation = await ctx.runQuery(internal.reservations._getById, {
