@@ -649,9 +649,6 @@ export default defineSchema({
     lastStep: v.number(),
     // Source marketing
     referralSource: v.optional(v.string()),
-    // Converti en réservation ?
-    convertedAt: v.optional(v.number()),
-    reservationId: v.optional(v.id("reservations")),
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -660,7 +657,6 @@ export default defineSchema({
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_restaurant_date", ["restaurantId", "dateKey"])
-    .index("by_restaurant_unconverted", ["restaurantId", "convertedAt"])
     .index("by_expiresAt", ["expiresAt"]),
 
   // Tags globaux pour les clients

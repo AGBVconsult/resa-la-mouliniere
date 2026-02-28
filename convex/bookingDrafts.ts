@@ -97,13 +97,11 @@ export const save = mutation({
 });
 
 /**
- * Marque un brouillon comme converti en réservation.
- * Appelé après la création réussie de la réservation.
+ * Supprime le brouillon après confirmation de la réservation.
  */
-export const markConverted = mutation({
+export const deleteDraft = mutation({
   args: {
     sessionId: v.string(),
-    reservationId: v.optional(v.id("reservations")),
   },
   handler: async (ctx, args) => {
     const draft = await ctx.db
@@ -112,20 +110,18 @@ export const markConverted = mutation({
       .unique();
 
     if (draft) {
-      await ctx.db.patch(draft._id, {
-        convertedAt: Date.now(),
-        reservationId: args.reservationId,
-        updatedAt: Date.now(),
-      });
+      await ctx.db.delete(draft._id);
     }
   },
 });
 
 /**
- * Liste les brouillons non convertis pour le dashboard admin.
+ * Liste les brouillons (non finalisés) pour le dashboard admin.
+ * Tous les drafts présents en base sont des réservations non finalisées
+ * (les finalisées sont supprimées à la confirmation).
  * Filtré par date optionnelle.
  */
-export const listUnconverted = query({
+export const list = query({
   args: {
     dateKey: v.optional(v.string()),
   },
@@ -148,19 +144,16 @@ export const listUnconverted = query({
     } else {
       drafts = await ctx.db
         .query("bookingDrafts")
-        .withIndex("by_restaurant_unconverted", (q) =>
-          q.eq("restaurantId", restaurant._id).eq("convertedAt", undefined)
+        .withIndex("by_restaurant_date", (q) =>
+          q.eq("restaurantId", restaurant._id)
         )
         .collect();
     }
 
-    // Filter out converted drafts (if dateKey filter was used)
     return drafts
-      .filter((d) => d.convertedAt === undefined)
       .sort((a, b) => b.createdAt - a.createdAt)
       .map((d) => ({
         _id: d._id,
-        sessionId: d.sessionId,
         firstName: d.firstName,
         lastName: d.lastName,
         email: d.email,

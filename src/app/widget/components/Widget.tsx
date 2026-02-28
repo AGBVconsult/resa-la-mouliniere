@@ -73,7 +73,7 @@ export default function Widget() {
   const settings = useQuery(api.widget.getSettings, { lang });
   const activeClosure = useQuery(api.specialPeriods.getActiveClosure, {});
   const saveDraft = useMutation(api.bookingDrafts.save);
-  const markDraftConverted = useMutation(api.bookingDrafts.markConverted);
+  const deleteDraft = useMutation(api.bookingDrafts.deleteDraft);
   const [showClosureModal, setShowClosureModal] = useState(true);
   const { t } = useTranslation(lang);
 
@@ -404,11 +404,8 @@ export default function Widget() {
                   settings={settings}
                   onSuccess={(res: ReservationResult) => {
                     setResult(res);
-                    // Marquer le brouillon comme converti
-                    markDraftConverted({
-                      sessionId,
-                      reservationId: res.kind === 'reservation' ? res.reservationId as any : undefined,
-                    }).catch(() => {});
+                    // Supprimer le brouillon
+                    deleteDraft({ sessionId }).catch(() => {});
                     goToStep(6);
                   }}
                   setLoading={setLoading}
