@@ -50,6 +50,7 @@ import {
   BookmarkCheck,
   Timer,
   Coffee,
+  Search,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ import { ServiceFloorPlan } from "@/components/admin/floor-plan/ServiceFloorPlan
 import { CalendarPopup } from "../components/CalendarPopup";
 import { EditReservationPopup } from "../components/EditReservationPopup";
 import { DaySettingsPopup } from "../components/DaySettingsPopup";
+import { ClientSearchPopup } from "../components/ClientSearchPopup";
 import { ClientModal } from "@/components/admin/ClientModal";
 
 interface Reservation {
@@ -212,6 +214,7 @@ export default function TabletReservationsPage() {
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showClientSearch, setShowClientSearch] = useState(false);
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ReservationStatus>>({});
   const [selectedClientModal, setSelectedClientModal] = useState<{ clientId: Id<"clients">; reservationId: Id<"reservations"> } | null>(null);
 
@@ -971,8 +974,14 @@ export default function TabletReservationsPage() {
           </button>
         </div>
 
-        {/* Settings + Map - aligné à droite */}
+        {/* Search + Settings + Map - aligné à droite */}
         <div className="flex items-center gap-2 ml-auto">
+          <button
+            onClick={() => setShowClientSearch(true)}
+            className="w-[52px] h-[52px] bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
+          >
+            <Search size={20} strokeWidth={1.5} />
+          </button>
           <button
             onClick={() => setShowSettings(true)}
             className="w-[52px] h-[52px] bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
@@ -1087,6 +1096,17 @@ export default function TabletReservationsPage() {
         <DaySettingsPopup
           dateKey={dateKey}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Client Search Popup */}
+      {showClientSearch && (
+        <ClientSearchPopup
+          onClose={() => setShowClientSearch(false)}
+          onSelectClient={(clientId) => {
+            setShowClientSearch(false);
+            setSelectedClientModal({ clientId, reservationId: "" as any });
+          }}
         />
       )}
 
