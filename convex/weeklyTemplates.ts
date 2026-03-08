@@ -843,7 +843,6 @@ export const syncSlotsWithTemplate = mutation({
     }
 
     // Template slot timeKeys
-    const templateTimeKeys = new Set(template.slots.filter((s) => s.isActive).map((s) => s.timeKey));
     const templateSlotMap = new Map(template.slots.map((s) => [s.timeKey, s]));
 
     // Process each future date
@@ -891,30 +890,30 @@ export const syncSlotsWithTemplate = mutation({
           continue;
         }
 
-        if (!templateSlot || !templateSlot.isActive) {
-          // Slot should be removed/closed
+        if (!templateSlot) {
+          // Slot no longer in template — remove/close
           if (!hasReservations) {
             await ctx.db.delete(slot._id);
             deleted++;
           } else {
-            // Has reservations, just close it
             if (slot.isOpen) {
               await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
               updated++;
             }
           }
         } else {
-          // Update slot with template values
+          // Update slot with template values (isOpen follows isActive)
+          const expectedOpen = templateSlot.isActive;
           const needsUpdate =
             slot.capacity !== templateSlot.capacity ||
-            slot.isOpen !== true ||
+            slot.isOpen !== expectedOpen ||
             slot.maxGroupSize !== templateSlot.maxGroupSize ||
             slot.largeTableAllowed !== templateSlot.largeTableAllowed;
 
           if (needsUpdate) {
             await ctx.db.patch(slot._id, {
               capacity: templateSlot.capacity,
-              isOpen: true,
+              isOpen: expectedOpen,
               maxGroupSize: templateSlot.maxGroupSize,
               largeTableAllowed: templateSlot.largeTableAllowed,
               updatedAt: now,
@@ -924,9 +923,8 @@ export const syncSlotsWithTemplate = mutation({
         }
       }
 
-      // Create missing slots
+      // Create missing slots (including inactive ones)
       for (const templateSlot of template.slots) {
-        if (!templateSlot.isActive) continue;
         if (existingTimeKeys.has(templateSlot.timeKey)) continue;
 
         const slotKey = makeSlotKey({ dateKey, service, timeKey: templateSlot.timeKey });
@@ -936,7 +934,7 @@ export const syncSlotsWithTemplate = mutation({
           service,
           timeKey: templateSlot.timeKey,
           slotKey,
-          isOpen: true,
+          isOpen: templateSlot.isActive,
           capacity: templateSlot.capacity,
           maxGroupSize: templateSlot.maxGroupSize,
           largeTableAllowed: templateSlot.largeTableAllowed,
@@ -1155,7 +1153,6 @@ export const ensureSlotsForDate = mutation({
         periodOverrides.filter((o) => slotKeys.has(o.slotKey)).map((o) => o.slotKey)
       );
 
-      const templateTimeKeys = new Set(template.slots.filter((s) => s.isActive).map((s) => s.timeKey));
       const templateSlotMap = new Map(template.slots.map((s) => [s.timeKey, s]));
 
       // Update or close existing slots based on template
@@ -1164,24 +1161,25 @@ export const ensureSlotsForDate = mutation({
 
         const templateSlot = templateSlotMap.get(slot.timeKey);
 
-        if (!templateSlot || !templateSlot.isActive) {
+        if (!templateSlot) {
           // Slot no longer in template — close it (don't delete, may have reservations)
           if (slot.isOpen) {
             await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
             updated++;
           }
         } else {
-          // Update slot with current template values
+          // Update slot with current template values (isOpen follows isActive)
+          const expectedOpen = templateSlot.isActive;
           const needsUpdate =
             slot.capacity !== templateSlot.capacity ||
-            slot.isOpen !== true ||
+            slot.isOpen !== expectedOpen ||
             slot.maxGroupSize !== templateSlot.maxGroupSize ||
             slot.largeTableAllowed !== templateSlot.largeTableAllowed;
 
           if (needsUpdate) {
             await ctx.db.patch(slot._id, {
               capacity: templateSlot.capacity,
-              isOpen: true,
+              isOpen: expectedOpen,
               maxGroupSize: templateSlot.maxGroupSize,
               largeTableAllowed: templateSlot.largeTableAllowed,
               updatedAt: now,
@@ -1191,9 +1189,8 @@ export const ensureSlotsForDate = mutation({
         }
       }
 
-      // Create missing slots from template
+      // Create missing slots from template (including inactive ones)
       for (const templateSlot of template.slots) {
-        if (!templateSlot.isActive) continue;
         if (existingByTimeKey.has(templateSlot.timeKey)) continue;
 
         const slotKey = makeSlotKey({ dateKey, service, timeKey: templateSlot.timeKey });
@@ -1203,7 +1200,7 @@ export const ensureSlotsForDate = mutation({
           service,
           timeKey: templateSlot.timeKey,
           slotKey,
-          isOpen: true,
+          isOpen: templateSlot.isActive,
           capacity: templateSlot.capacity,
           maxGroupSize: templateSlot.maxGroupSize,
           largeTableAllowed: templateSlot.largeTableAllowed,
