@@ -82,6 +82,14 @@ export default function MobileReservationsPage() {
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
+  // Ensure slots are synced from weekly templates for the selected date
+  const ensureSlots = useMutation(api.weeklyTemplates.ensureSlotsForDate);
+  useEffect(() => {
+    ensureSlots({ dateKey }).catch((err) =>
+      console.error("Error ensuring slots for date:", err)
+    );
+  }, [dateKey, ensureSlots]);
+
   const slotsData = useQuery(api.slots.listByDate, { dateKey });
   const tablesData = useQuery(api.tables.list, {});
 

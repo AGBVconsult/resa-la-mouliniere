@@ -55,6 +55,14 @@ export default function ReservationsPage() {
   // Format date for API
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
+  // Ensure slots are synced from weekly templates for the selected date
+  const ensureSlots = useMutation(api.weeklyTemplates.ensureSlotsForDate);
+  useEffect(() => {
+    ensureSlots({ dateKey }).catch((err) =>
+      console.error("Error ensuring slots for date:", err)
+    );
+  }, [dateKey, ensureSlots]);
+
   // Fetch slots for capacities
   const slotsData = useQuery(api.slots.listByDate, { dateKey });
 

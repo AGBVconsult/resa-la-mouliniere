@@ -1080,6 +1080,147 @@ export const generateFromTemplates = internalMutation({
   },
 });
 
+/**
+ * Ensure slots exist for a specific date based on weekly templates.
+ * Called lazily (e.g., when DaySettingsPopup opens) to guarantee
+ * that template changes are reflected in the slots table.
+ */
+export const ensureSlotsForDate = mutation({
+  args: {
+    dateKey: v.string(),
+  },
+  handler: async (ctx, { dateKey }) => {
+    await requireRole(ctx, "admin");
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+      throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
+    }
+
+    const restaurant = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .first();
+
+    if (!restaurant) return { created: 0, updated: 0, deleted: 0 };
+
+    const restaurantId = restaurant._id;
+    const date = new Date(dateKey + "T12:00:00"); // noon to avoid timezone edge cases
+    const dayOfWeek = getISOWeekday(date);
+    const now = Date.now();
+
+    let created = 0;
+    let updated = 0;
+    let deleted = 0;
+
+    for (const service of ["lunch", "dinner"] as Service[]) {
+      // Get template for this day of week
+      const template = await ctx.db
+        .query("weeklyTemplates")
+        .withIndex("by_restaurant_day_service", (q) =>
+          q.eq("restaurantId", restaurantId).eq("dayOfWeek", dayOfWeek).eq("service", service)
+        )
+        .unique();
+
+      // Get existing slots for this date and service
+      const existingSlots = await ctx.db
+        .query("slots")
+        .withIndex("by_restaurant_date_service", (q) =>
+          q.eq("restaurantId", restaurantId).eq("dateKey", dateKey).eq("service", service)
+        )
+        .collect();
+
+      const existingByTimeKey = new Map(existingSlots.map((s) => [s.timeKey, s]));
+
+      // If no template or template is closed, close all existing slots
+      if (!template || !template.isOpen) {
+        for (const slot of existingSlots) {
+          if (slot.isOpen) {
+            await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
+            updated++;
+          }
+        }
+        continue;
+      }
+
+      // Get overrides for this date to avoid overwriting manual/period overrides
+      const slotKeys = new Set(existingSlots.map((s) => s.slotKey));
+      const periodOverrides = await ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) =>
+          q.eq("restaurantId", restaurantId).eq("origin", "period")
+        )
+        .collect();
+
+      const periodOverrideSlotKeys = new Set(
+        periodOverrides.filter((o) => slotKeys.has(o.slotKey)).map((o) => o.slotKey)
+      );
+
+      const templateTimeKeys = new Set(template.slots.filter((s) => s.isActive).map((s) => s.timeKey));
+      const templateSlotMap = new Map(template.slots.map((s) => [s.timeKey, s]));
+
+      // Update or close existing slots based on template
+      for (const slot of existingSlots) {
+        if (periodOverrideSlotKeys.has(slot.slotKey)) continue; // skip overridden slots
+
+        const templateSlot = templateSlotMap.get(slot.timeKey);
+
+        if (!templateSlot || !templateSlot.isActive) {
+          // Slot no longer in template — close it (don't delete, may have reservations)
+          if (slot.isOpen) {
+            await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
+            updated++;
+          }
+        } else {
+          // Update slot with current template values
+          const needsUpdate =
+            slot.capacity !== templateSlot.capacity ||
+            slot.isOpen !== true ||
+            slot.maxGroupSize !== templateSlot.maxGroupSize ||
+            slot.largeTableAllowed !== templateSlot.largeTableAllowed;
+
+          if (needsUpdate) {
+            await ctx.db.patch(slot._id, {
+              capacity: templateSlot.capacity,
+              isOpen: true,
+              maxGroupSize: templateSlot.maxGroupSize,
+              largeTableAllowed: templateSlot.largeTableAllowed,
+              updatedAt: now,
+            });
+            updated++;
+          }
+        }
+      }
+
+      // Create missing slots from template
+      for (const templateSlot of template.slots) {
+        if (!templateSlot.isActive) continue;
+        if (existingByTimeKey.has(templateSlot.timeKey)) continue;
+
+        const slotKey = makeSlotKey({ dateKey, service, timeKey: templateSlot.timeKey });
+        await ctx.db.insert("slots", {
+          restaurantId,
+          dateKey,
+          service,
+          timeKey: templateSlot.timeKey,
+          slotKey,
+          isOpen: true,
+          capacity: templateSlot.capacity,
+          maxGroupSize: templateSlot.maxGroupSize,
+          largeTableAllowed: templateSlot.largeTableAllowed,
+          updatedAt: now,
+        });
+        created++;
+      }
+    }
+
+    if (created > 0 || updated > 0 || deleted > 0) {
+      console.log("ensureSlotsForDate", { dateKey, created, updated, deleted });
+    }
+
+    return { created, updated, deleted };
+  },
+});
+
 // Helper functions
 
 function formatDateKey(date: Date): string {

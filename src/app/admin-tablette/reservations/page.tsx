@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { format, parseISO, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -219,6 +219,14 @@ export default function TabletReservationsPage() {
   const [selectedClientModal, setSelectedClientModal] = useState<{ clientId: Id<"clients">; reservationId: Id<"reservations"> } | null>(null);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
+
+  // Ensure slots are synced from weekly templates for the selected date
+  const ensureSlots = useMutation(api.weeklyTemplates.ensureSlotsForDate);
+  useEffect(() => {
+    ensureSlots({ dateKey }).catch((err) =>
+      console.error("Error ensuring slots for date:", err)
+    );
+  }, [dateKey, ensureSlots]);
 
   const slotsData = useQuery(api.slots.listByDate, { dateKey });
   const tablesData = useQuery(api.tables.list, {});

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -29,6 +29,18 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
   const slotsData = useQuery(api.slots.listByDate, { dateKey });
   const batchUpdateSlots = useMutation(api.slots.batchUpdateSlots);
   const addSlot = useMutation(api.slots.addSlot);
+  const ensureSlots = useMutation(api.weeklyTemplates.ensureSlotsForDate);
+  const hasSynced = useRef(false);
+
+  // Sync slots from weekly templates on mount
+  useEffect(() => {
+    if (!hasSynced.current) {
+      hasSynced.current = true;
+      ensureSlots({ dateKey }).catch((err) =>
+        console.error("Error ensuring slots for date:", err)
+      );
+    }
+  }, [dateKey, ensureSlots]);
 
   const [lunchSlots, setLunchSlots] = useState<SlotState[]>([]);
   const [dinnerSlots, setDinnerSlots] = useState<SlotState[]>([]);
