@@ -671,6 +671,80 @@ export const remove = mutation({
   },
 });
 
+/**
+ * Regenerate slots for all exceptional opening periods.
+ * Use after fixing the template sync bug to restore missing slots.
+ */
+export const regenerateAllSlots = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireRole(ctx, "admin");
+
+    const restaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(1);
+
+    if (restaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+
+    const restaurantId = restaurants[0]._id;
+
+    // Get all event periods (ouvertures)
+    const periods = await ctx.db
+      .query("specialPeriods")
+      .withIndex("by_restaurant_type", (q) =>
+        q.eq("restaurantId", restaurantId).eq("type", "event")
+      )
+      .collect();
+
+    const today = new Date().toISOString().split("T")[0];
+    const activePeriods = periods.filter((p) => p.endDate >= today);
+
+    let totalCreated = 0;
+    let totalModified = 0;
+
+    for (const period of activePeriods) {
+      // Delete existing slots for this period
+      const oldSlots = await ctx.db
+        .query("slots")
+        .withIndex("by_createdByPeriodId", (q: any) => q.eq("createdByPeriodId", period._id))
+        .collect();
+      for (const slot of oldSlots) {
+        await ctx.db.delete(slot._id);
+      }
+
+      // Delete existing overrides for this period
+      await deleteOverrides(ctx, period._id);
+
+      // Regenerate
+      if (period.applyRules.status !== "open") {
+        const result = await generateOverrides(
+          ctx,
+          restaurantId,
+          period._id,
+          period.startDate,
+          period.endDate,
+          period.applyRules as ExtendedApplyRules
+        );
+        if (result) {
+          totalCreated += result.slotsCreated;
+          totalModified += result.slotsModified;
+        }
+      }
+    }
+
+    console.log("Regenerated slots for all exceptional opening periods", {
+      periodsProcessed: activePeriods.length,
+      totalCreated,
+      totalModified,
+    });
+
+    return { periodsProcessed: activePeriods.length, totalCreated, totalModified };
+  },
+});
+
 // ============================================================================
 // Internal helpers
 // ============================================================================

@@ -332,6 +332,11 @@ export const triggerSlotGeneration = mutation({
               continue;
             }
 
+            // Skip slots created by exceptional opening periods
+            if (existingSlot.createdByPeriodId) {
+              continue;
+            }
+
             // Update slot with template values
             const needsUpdate =
               existingSlot.capacity !== templateSlot.capacity ||
@@ -863,10 +868,11 @@ export const syncSlotsWithTemplate = mutation({
     for (const dateKey of processedDates) {
       if (dateKey < todayKey) continue;
 
-      // If template is closed, mark all slots as closed
+      // If template is closed, mark all slots as closed (except period-created slots)
       if (!template.isOpen) {
         const slotsForDate = futureSlots.filter((s) => s.dateKey === dateKey);
         for (const slot of slotsForDate) {
+          if (slot.createdByPeriodId) continue;
           if (slot.isOpen) {
             await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
             updated++;
@@ -887,6 +893,11 @@ export const syncSlotsWithTemplate = mutation({
 
         // Skip slots that have a period override (closure/modification from specialPeriods)
         if (hasPeriodOverride) {
+          continue;
+        }
+
+        // Skip slots created by exceptional opening periods
+        if (slot.createdByPeriodId) {
           continue;
         }
 
@@ -1033,6 +1044,11 @@ export const generateFromTemplates = internalMutation({
 
             if (periodOverride) {
               // Skip - this slot is controlled by a special period
+              continue;
+            }
+
+            // Skip slots created by exceptional opening periods
+            if (existingSlot.createdByPeriodId) {
               continue;
             }
 

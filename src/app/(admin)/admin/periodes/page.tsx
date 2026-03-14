@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { Loader2, AlertTriangle, DoorOpen, DoorClosed, Plus } from "lucide-react";
+import { Loader2, AlertTriangle, DoorOpen, DoorClosed, Plus, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PeriodList } from "./components/PeriodList";
@@ -13,6 +13,8 @@ export default function PeriodesPage() {
   const periods = useQuery(api.specialPeriods.list, {});
   const [showAddOuverture, setShowAddOuverture] = useState(false);
   const [showAddFermeture, setShowAddFermeture] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const regenerateSlots = useMutation(api.specialPeriods.regenerateAllSlots);
 
   if (periods === undefined) {
     return (
@@ -50,9 +52,36 @@ export default function PeriodesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Périodes spéciales</h1>
-        <p className="text-slate-600">Gérez les ouvertures et fermetures exceptionnelles</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Périodes spéciales</h1>
+          <p className="text-slate-600">Gérez les ouvertures et fermetures exceptionnelles</p>
+        </div>
+        {ouvertures.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isRegenerating}
+            onClick={async () => {
+              setIsRegenerating(true);
+              try {
+                const result = await regenerateSlots({});
+                console.log("Slots régénérés", result);
+              } catch (e) {
+                console.error("Erreur régénération", e);
+              } finally {
+                setIsRegenerating(false);
+              }
+            }}
+          >
+            {isRegenerating ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-1" />
+            )}
+            Régénérer les créneaux
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
