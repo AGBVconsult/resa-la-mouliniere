@@ -32,6 +32,7 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
   const addSlot = useMutation(api.slots.addSlot);
   const ensureSlots = useMutation(api.weeklyTemplates.ensureSlotsForDate);
   const hasSynced = useRef(false);
+  const hasInitialized = useRef(false);
 
   // Sync slots from weekly templates on mount
   useEffect(() => {
@@ -50,9 +51,10 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
   const [newSlotTime, setNewSlotTime] = useState("");
   const [newSlotCapacity, setNewSlotCapacity] = useState(50);
 
-  // Initialize local state from query
+  // Initialize local state from query — only on first load
   useEffect(() => {
-    if (slotsData) {
+    if (slotsData && !hasInitialized.current) {
+      hasInitialized.current = true;
       setLunchSlots(
         slotsData.lunch.map((s) => ({
           _id: s._id,

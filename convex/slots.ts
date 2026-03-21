@@ -582,19 +582,49 @@ export const updateSlot = mutation({
       throw Errors.SLOT_NOT_FOUND(slotId);
     }
 
-    const patch: Record<string, unknown> = { updatedAt: Date.now() };
+    const now = Date.now();
 
+    // Build the override patch
+    const overridePatch: { isOpen?: boolean; capacity?: number } = {};
     if (isOpen !== undefined) {
-      patch.isOpen = isOpen;
+      overridePatch.isOpen = isOpen;
     }
     if (capacity !== undefined) {
       if (capacity < 0) {
         throw Errors.INVALID_INPUT("capacity", "Doit être >= 0");
       }
-      patch.capacity = capacity;
+      overridePatch.capacity = capacity;
     }
 
-    await ctx.db.patch(slotId, patch);
+    if (Object.keys(overridePatch).length === 0) {
+      return { ok: true };
+    }
+
+    // Check if a manual override already exists for this slotKey
+    const existingManual = await ctx.db
+      .query("slotOverrides")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", slot.restaurantId).eq("slotKey", slot.slotKey)
+      )
+      .filter((q) => q.eq(q.field("origin"), "manual"))
+      .first();
+
+    if (existingManual) {
+      const mergedPatch = { ...existingManual.patch, ...overridePatch };
+      await ctx.db.patch(existingManual._id, {
+        patch: mergedPatch,
+        updatedAt: now,
+      });
+    } else {
+      await ctx.db.insert("slotOverrides", {
+        restaurantId: slot.restaurantId,
+        slotKey: slot.slotKey,
+        origin: "manual",
+        patch: overridePatch,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     return { ok: true };
   },
@@ -625,22 +655,49 @@ export const batchUpdateSlots = mutation({
       const slot = await ctx.db.get(update.slotId);
       if (!slot) continue;
 
-      const patch: Record<string, unknown> = { updatedAt: now };
-
+      // Build the override patch
+      const overridePatch: { isOpen?: boolean; capacity?: number } = {};
       if (update.isOpen !== undefined) {
-        patch.isOpen = update.isOpen;
+        overridePatch.isOpen = update.isOpen;
       }
-      if (update.capacity !== undefined) {
-        if (update.capacity >= 0) {
-          patch.capacity = update.capacity;
-        }
+      if (update.capacity !== undefined && update.capacity >= 0) {
+        overridePatch.capacity = update.capacity;
       }
 
-      await ctx.db.patch(update.slotId, patch);
+      if (Object.keys(overridePatch).length === 0) continue;
+
+      // Check if a manual override already exists for this slotKey
+      const existingManual = await ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_slotKey", (q) =>
+          q.eq("restaurantId", slot.restaurantId).eq("slotKey", slot.slotKey)
+        )
+        .filter((q) => q.eq(q.field("origin"), "manual"))
+        .first();
+
+      if (existingManual) {
+        // Merge with existing manual override patch
+        const mergedPatch = { ...existingManual.patch, ...overridePatch };
+        await ctx.db.patch(existingManual._id, {
+          patch: mergedPatch,
+          updatedAt: now,
+        });
+      } else {
+        // Create new manual override
+        await ctx.db.insert("slotOverrides", {
+          restaurantId: slot.restaurantId,
+          slotKey: slot.slotKey,
+          origin: "manual",
+          patch: overridePatch,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
       updatedCount++;
     }
 
-    console.log("Batch slots updated", { updatedCount });
+    console.log("Batch slots updated (via slotOverrides manual)", { updatedCount });
 
     return { updatedCount };
   },
