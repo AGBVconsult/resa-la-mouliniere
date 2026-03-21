@@ -833,17 +833,28 @@ export const syncSlotsWithTemplate = mutation({
       }
     }
 
-    // Fetch slotOverrides to check if slots have period overrides (closures)
+    // Fetch slotOverrides to check if slots have period or manual overrides
     const slotKeysSet = new Set(slotKeys);
-    const periodOverrides = await ctx.db
-      .query("slotOverrides")
-      .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurantId).eq("origin", "period"))
-      .collect();
+    const [periodOverrides, manualOverrides] = await Promise.all([
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurantId).eq("origin", "period"))
+        .collect(),
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurantId).eq("origin", "manual"))
+        .collect(),
+    ]);
     
-    const periodOverridesBySlotKey = new Map<string, { isOpen?: boolean }>();
+    const overriddenSlotKeys = new Set<string>();
     for (const override of periodOverrides) {
       if (slotKeysSet.has(override.slotKey)) {
-        periodOverridesBySlotKey.set(override.slotKey, override.patch);
+        overriddenSlotKeys.add(override.slotKey);
+      }
+    }
+    for (const override of manualOverrides) {
+      if (slotKeysSet.has(override.slotKey)) {
+        overriddenSlotKeys.add(override.slotKey);
       }
     }
 
@@ -889,10 +900,10 @@ export const syncSlotsWithTemplate = mutation({
       for (const slot of existingSlotsForDate) {
         const templateSlot = templateSlotMap.get(slot.timeKey);
         const hasReservations = (activeReservationsBySlot.get(slot.slotKey) ?? 0) > 0;
-        const hasPeriodOverride = periodOverridesBySlotKey.has(slot.slotKey);
+        const hasOverride = overriddenSlotKeys.has(slot.slotKey);
 
-        // Skip slots that have a period override (closure/modification from specialPeriods)
-        if (hasPeriodOverride) {
+        // Skip slots that have an override (manual or period)
+        if (hasOverride) {
           continue;
         }
 
@@ -1158,22 +1169,31 @@ export const ensureSlotsForDate = mutation({
 
       // Get overrides for this date to avoid overwriting manual/period overrides
       const slotKeys = new Set(existingSlots.map((s) => s.slotKey));
-      const periodOverrides = await ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) =>
-          q.eq("restaurantId", restaurantId).eq("origin", "period")
-        )
-        .collect();
+      const [periodOverrides, manualOverrides] = await Promise.all([
+        ctx.db
+          .query("slotOverrides")
+          .withIndex("by_restaurant_origin", (q) =>
+            q.eq("restaurantId", restaurantId).eq("origin", "period")
+          )
+          .collect(),
+        ctx.db
+          .query("slotOverrides")
+          .withIndex("by_restaurant_origin", (q) =>
+            q.eq("restaurantId", restaurantId).eq("origin", "manual")
+          )
+          .collect(),
+      ]);
 
-      const periodOverrideSlotKeys = new Set(
-        periodOverrides.filter((o) => slotKeys.has(o.slotKey)).map((o) => o.slotKey)
-      );
+      const overriddenSlotKeys = new Set([
+        ...periodOverrides.filter((o) => slotKeys.has(o.slotKey)).map((o) => o.slotKey),
+        ...manualOverrides.filter((o) => slotKeys.has(o.slotKey)).map((o) => o.slotKey),
+      ]);
 
       const templateSlotMap = new Map(template.slots.map((s) => [s.timeKey, s]));
 
       // Update or close existing slots based on template
       for (const slot of existingSlots) {
-        if (periodOverrideSlotKeys.has(slot.slotKey)) continue; // skip overridden slots
+        if (overriddenSlotKeys.has(slot.slotKey)) continue; // skip overridden slots (manual or period)
 
         const templateSlot = templateSlotMap.get(slot.timeKey);
 

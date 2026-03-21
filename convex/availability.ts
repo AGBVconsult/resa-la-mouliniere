@@ -289,7 +289,8 @@ export const getMonth = query({
     const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
     const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
-    // 1. Récupérer tous les slots ouverts du mois
+    // 1. Récupérer tous les slots du mois (sans pré-filtre isOpen
+    //    pour que les overrides manuels puissent rouvrir des slots fermés)
     const slots = await ctx.db
       .query("slots")
       .withIndex("by_restaurant_date_service", (q) =>
@@ -298,8 +299,7 @@ export const getMonth = query({
       .filter((q) =>
         q.and(
           q.gte(q.field("dateKey"), startDate),
-          q.lte(q.field("dateKey"), endDate),
-          q.eq(q.field("isOpen"), true)
+          q.lte(q.field("dateKey"), endDate)
         )
       )
       .collect();
