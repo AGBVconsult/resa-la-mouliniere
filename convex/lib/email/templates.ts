@@ -759,7 +759,11 @@ function renderModernTemplate(
   const formattedDate = formatDateForDisplay(data.dateKey, locale);
   const partySizeDetail = buildPartySizeDetail(data, locale);
   const editUrl = data.editUrl ?? data.manageUrl ?? "#";
-  const cancelUrl = data.cancelUrl ?? data.manageUrl ?? "#";
+  // SECURITY FIX: Use manageUrl (not cancelUrl) for the cancel button in emails.
+  // Enterprise email security scanners (Microsoft Safe Links, Proofpoint, etc.)
+  // visit links in headless browsers and can trigger direct cancel pages.
+  // The manage page requires 2 human clicks (button + dialog confirmation).
+  const cancelUrl = data.manageUrl ?? "#";
   const safeNote = data.note ? escapeHtml(data.note) : "";
   const safeCancelReason = data.cancelReason ? escapeHtml(data.cancelReason) : "";
   const optionsString = buildOptionsString(data.options, locale);

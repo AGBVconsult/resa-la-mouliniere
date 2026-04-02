@@ -71,10 +71,11 @@ async function getOrCreateClientIdFromReservation(
   const email = normalizeEmail(reservation.email);
   const now = Date.now();
 
+  // Use .first() to avoid crash on duplicate clients (unique() throws if >1 result)
   const existing = await ctx.db
     .query("clients")
     .withIndex("by_primaryPhone", (q: any) => q.eq("primaryPhone", phone))
-    .unique();
+    .first();
 
   if (existing) {
     const patch: Record<string, unknown> = { lastUpdatedAt: now };
@@ -332,13 +333,13 @@ export const _create = internalMutation({
       timeKey: args.timeKey,
     });
 
-    // Load slot via index
+    // Load slot via index (use .first() to avoid crash on duplicate slots from sync bugs)
     const slot = await ctx.db
       .query("slots")
       .withIndex("by_restaurant_slotKey", (q) =>
         q.eq("restaurantId", args.restaurantId).eq("slotKey", slotKey)
       )
-      .unique();
+      .first();
 
     if (!slot) {
       throw Errors.SLOT_NOT_FOUND(slotKey);
@@ -750,77 +751,121 @@ export const create = action({
   handler: async (ctx, args): Promise<ReservationCreateResult> => {
     const { payload, turnstileToken, idemKey } = args;
 
-    // Validate dateKey format
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.dateKey)) {
-      throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
-    }
-
-    // Validate timeKey format
-    if (!/^\d{2}:\d{2}$/.test(payload.timeKey)) {
-      throw Errors.INVALID_INPUT("timeKey", "Format HH:MM requis");
-    }
-
-    // Validate adults >= 1
-    if (payload.adults < 1) {
-      throw Errors.INVALID_INPUT("adults", "Doit être >= 1");
-    }
-
-    // Compute partySize for routing
-    const partySize = computePartySize(payload.adults, payload.childrenCount, payload.babyCount);
-
-    // Compute request hash for idempotency
-    const requestHash = computeRequestHash({
-      ...payload,
-      partySize,
-    });
-
-    // Check idempotency
-    const idemCheck: IdempotencyCheckResult = await ctx.runQuery(internal.lib.idempotency.check, {
-      key: idemKey,
-      requestHash,
-    });
-
-    if (idemCheck.found) {
-      if (idemCheck.hashMismatch) {
-        throw Errors.INVALID_INPUT("idemKey", "Idempotency key already used with different payload");
+    try {
+      // Validate dateKey format
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.dateKey)) {
+        throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
       }
-      // Return cached result
-      return idemCheck.resultData as ReservationCreateResult;
-    }
 
-    // Load settings (including secrets) via internal mutation
-    const settings: SettingsInternal = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+      // Validate timeKey format
+      if (!/^\d{2}:\d{2}$/.test(payload.timeKey)) {
+        throw Errors.INVALID_INPUT("timeKey", "Format HH:MM requis");
+      }
 
-    if (!settings) {
-      throw Errors.SETTINGS_NOT_FOUND();
-    }
+      // Validate adults >= 1
+      if (payload.adults < 1) {
+        throw Errors.INVALID_INPUT("adults", "Doit être >= 1");
+      }
 
-    // Verify Turnstile
-    const turnstileResult = await verifyTurnstile(turnstileToken, settings.turnstileSecretKey);
-    if (!turnstileResult.success) {
-      throw Errors.TURNSTILE_FAILED({
-        errorCodes: turnstileResult.errorCodes,
-        reason: turnstileResult.reason,
-      });
-    }
+      // Compute partySize for routing
+      const partySize = computePartySize(payload.adults, payload.childrenCount, payload.babyCount);
 
-    // Route to groupRequest if partySize >= 16
-    if (partySize >= 16) {
-      const groupRequestId: Id<"groupRequests"> = await ctx.runMutation(internal.groupRequests._insert, {
-        restaurantId: settings.restaurantId,
+      // Compute request hash for idempotency
+      const requestHash = computeRequestHash({
+        ...payload,
         partySize,
-        preferredDateKey: payload.dateKey,
-        preferredService: payload.service,
+      });
+
+      // Check idempotency
+      const idemCheck: IdempotencyCheckResult = await ctx.runQuery(internal.lib.idempotency.check, {
+        key: idemKey,
+        requestHash,
+      });
+
+      if (idemCheck.found) {
+        if (idemCheck.hashMismatch) {
+          throw Errors.INVALID_INPUT("idemKey", "Idempotency key already used with different payload");
+        }
+        // Return cached result
+        return idemCheck.resultData as ReservationCreateResult;
+      }
+
+      // Load settings (including secrets) via internal mutation
+      const settings: SettingsInternal = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+
+      if (!settings) {
+        throw Errors.SETTINGS_NOT_FOUND();
+      }
+
+      // Verify Turnstile
+      const turnstileResult = await verifyTurnstile(turnstileToken, settings.turnstileSecretKey);
+      if (!turnstileResult.success) {
+        throw Errors.TURNSTILE_FAILED({
+          errorCodes: turnstileResult.errorCodes,
+          reason: turnstileResult.reason,
+        });
+      }
+
+      // Route to groupRequest if partySize >= 16
+      if (partySize >= 16) {
+        const groupRequestId: Id<"groupRequests"> = await ctx.runMutation(internal.groupRequests._insert, {
+          restaurantId: settings.restaurantId,
+          partySize,
+          preferredDateKey: payload.dateKey,
+          preferredService: payload.service,
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          email: payload.email,
+          phone: payload.phone,
+          message: "",
+          language: payload.language,
+          now: Date.now(),
+        });
+
+        const result: ReservationCreateResult = { kind: "groupRequest", groupRequestId };
+
+        // Store idempotency result
+        await ctx.runMutation(internal.lib.idempotency.store, {
+          key: idemKey,
+          action: "reservations.create",
+          requestHash,
+          resultData: result,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
+        });
+
+        return result;
+      }
+
+      // Create reservation via internal mutation
+      const createResult: CreateMutationResult = await ctx.runMutation(internal.reservations._create, {
+        restaurantId: settings.restaurantId,
+        dateKey: payload.dateKey,
+        service: payload.service,
+        timeKey: payload.timeKey,
+        adults: payload.adults,
+        childrenCount: payload.childrenCount,
+        babyCount: payload.babyCount,
         firstName: payload.firstName,
         lastName: payload.lastName,
         email: payload.email,
         phone: payload.phone,
-        message: "",
         language: payload.language,
-        now: Date.now(),
+        note: payload.note,
+        options: payload.options,
+        source: "online",
+        referralSource: payload.referralSource,
+        manageTokenExpireBeforeSlotMs: settings.manageTokenExpireBeforeSlotMs,
+        timezone: settings.timezone,
+        appUrl: settings.appUrl,
+        adminNotificationEmail: settings.adminNotificationEmail,
       });
 
-      const result: ReservationCreateResult = { kind: "groupRequest", groupRequestId };
+      const result: ReservationCreateResult = {
+        kind: "reservation",
+        reservationId: createResult.reservationId,
+        status: createResult.status,
+        manageUrlPath: `/reservation/${createResult.manageToken}`,
+      };
 
       // Store idempotency result
       await ctx.runMutation(internal.lib.idempotency.store, {
@@ -831,52 +876,22 @@ export const create = action({
         expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
       });
 
+      // Email is now enqueued in _create mutation
+
       return result;
+    } catch (error: unknown) {
+      // Log full error details for debugging (no PII — only slotKey and error)
+      const slotKey = `${payload.dateKey}#${payload.service}#${payload.timeKey}`;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorName = error instanceof Error ? error.constructor.name : typeof error;
+      console.error("reservations:create FAILED", {
+        slotKey,
+        partySize: computePartySize(payload.adults, payload.childrenCount, payload.babyCount),
+        errorName,
+        errorMessage,
+      });
+      throw error;
     }
-
-    // Create reservation via internal mutation
-    const createResult: CreateMutationResult = await ctx.runMutation(internal.reservations._create, {
-      restaurantId: settings.restaurantId,
-      dateKey: payload.dateKey,
-      service: payload.service,
-      timeKey: payload.timeKey,
-      adults: payload.adults,
-      childrenCount: payload.childrenCount,
-      babyCount: payload.babyCount,
-      firstName: payload.firstName,
-      lastName: payload.lastName,
-      email: payload.email,
-      phone: payload.phone,
-      language: payload.language,
-      note: payload.note,
-      options: payload.options,
-      source: "online",
-      referralSource: payload.referralSource,
-      manageTokenExpireBeforeSlotMs: settings.manageTokenExpireBeforeSlotMs,
-      timezone: settings.timezone,
-      appUrl: settings.appUrl,
-      adminNotificationEmail: settings.adminNotificationEmail,
-    });
-
-    const result: ReservationCreateResult = {
-      kind: "reservation",
-      reservationId: createResult.reservationId,
-      status: createResult.status,
-      manageUrlPath: `/reservation/${createResult.manageToken}`,
-    };
-
-    // Store idempotency result
-    await ctx.runMutation(internal.lib.idempotency.store, {
-      key: idemKey,
-      action: "reservations.create",
-      requestHash,
-      resultData: result,
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
-    });
-
-    // Email is now enqueued in _create mutation
-
-    return result;
   },
 });
 

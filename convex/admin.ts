@@ -66,10 +66,11 @@ async function getOrCreateClientIdFromReservation(
   const email = normalizeEmail(reservation.email);
   const now = Date.now();
 
+  // Use .first() to avoid crash on duplicate clients (unique() throws if >1 result)
   const existing = await ctx.db
     .query("clients")
     .withIndex("by_primaryPhone", (q: any) => q.eq("primaryPhone", phone))
-    .unique();
+    .first();
 
   if (existing) {
     const patch: Record<string, unknown> = { lastUpdatedAt: now };
