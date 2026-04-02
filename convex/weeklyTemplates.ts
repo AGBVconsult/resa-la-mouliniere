@@ -319,16 +319,15 @@ export const triggerSlotGeneration = mutation({
             .unique();
 
           if (existingSlot) {
-            // Check for period override
-            const periodOverride = await ctx.db
+            // Check for period or manual override
+            const override = await ctx.db
               .query("slotOverrides")
               .withIndex("by_restaurant_slotKey", (q) =>
                 q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
               )
-              .filter((q) => q.eq(q.field("origin"), "period"))
               .first();
 
-            if (periodOverride) {
+            if (override) {
               continue;
             }
 
@@ -337,15 +336,17 @@ export const triggerSlotGeneration = mutation({
               continue;
             }
 
-            // Update slot with template values
+            // Update slot with template values (including isOpen)
             const needsUpdate =
               existingSlot.capacity !== templateSlot.capacity ||
+              existingSlot.isOpen !== true ||
               existingSlot.maxGroupSize !== templateSlot.maxGroupSize ||
               existingSlot.largeTableAllowed !== templateSlot.largeTableAllowed;
 
             if (needsUpdate) {
               await ctx.db.patch(existingSlot._id, {
                 capacity: templateSlot.capacity,
+                isOpen: true,
                 maxGroupSize: templateSlot.maxGroupSize,
                 largeTableAllowed: templateSlot.largeTableAllowed,
                 updatedAt: now,
@@ -1043,18 +1044,15 @@ export const generateFromTemplates = internalMutation({
             .unique();
 
           if (existingSlot) {
-            // Update existing slot with template values (capacity, maxGroupSize, etc.)
-            // but only if it doesn't have a period override
-            const periodOverride = await ctx.db
+            // Check for any override (period or manual)
+            const override = await ctx.db
               .query("slotOverrides")
               .withIndex("by_restaurant_slotKey", (q) =>
                 q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
               )
-              .filter((q) => q.eq(q.field("origin"), "period"))
               .first();
 
-            if (periodOverride) {
-              // Skip - this slot is controlled by a special period
+            if (override) {
               continue;
             }
 
@@ -1063,15 +1061,17 @@ export const generateFromTemplates = internalMutation({
               continue;
             }
 
-            // Update slot with template values
+            // Update slot with template values (including isOpen)
             const needsUpdate =
               existingSlot.capacity !== templateSlot.capacity ||
+              existingSlot.isOpen !== true ||
               existingSlot.maxGroupSize !== templateSlot.maxGroupSize ||
               existingSlot.largeTableAllowed !== templateSlot.largeTableAllowed;
 
             if (needsUpdate) {
               await ctx.db.patch(existingSlot._id, {
                 capacity: templateSlot.capacity,
+                isOpen: true,
                 maxGroupSize: templateSlot.maxGroupSize,
                 largeTableAllowed: templateSlot.largeTableAllowed,
                 updatedAt: now,
