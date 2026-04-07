@@ -122,10 +122,11 @@ export const logAssignment = internalMutation({
       // Get available tables (not yet assigned)
       const availableTables = activeTables.filter(t => !takenTableIds.has(t._id));
       
-      // Generate prediction
+      // Generate prediction (seatingSize excludes babies — high chair / stroller)
+      const seatingSize = args.partySize - (args.babiesCount ?? 0);
       const prediction = quickPredict(
         availableTables,
-        args.partySize,
+        seatingSize,
         occupancy.zoneOccupancies
       );
 

@@ -44,6 +44,7 @@ interface EditingTableState {
   reservationVersion: number;
   reservationName: string;
   partySize: number;
+  babyCount: number;
 }
 
 export function ServiceFloorPlan({
@@ -271,8 +272,8 @@ export function ServiceFloorPlan({
     const currentTable = tableStates?.tables.find(t => t.reservation?.id === editingTable.reservationId);
     const currentVersion = currentTable?.reservation?.version ?? editingTable.reservationVersion;
     
-    const partySize = editingTable.partySize;
-    const tablesToSelect = findCombinableTables(targetTableId, partySize);
+    const seatingSize = editingTable.partySize - editingTable.babyCount;
+    const tablesToSelect = findCombinableTables(targetTableId, seatingSize);
     
     setIsAssigning(true);
     try {
@@ -362,6 +363,7 @@ export function ServiceFloorPlan({
           reservationVersion: table.reservation.version,
           reservationName: table.reservation.lastName,
           partySize: table.reservation.partySize,
+          babyCount: table.reservation.babyCount ?? 0,
         });
         onTableClick?.(reservationId);
         return;
@@ -384,9 +386,9 @@ export function ServiceFloorPlan({
     if (selectedReservationVersion === undefined) return;
     if (isAssigning) return;
 
-    // Auto-select combinable tables based on party size
-    const partySize = selectedPartySize ?? 4;
-    const tablesToSelect = findCombinableTables(tableId, partySize);
+    // Auto-select combinable tables based on seating size (exclude babies)
+    const seatingSize = selectedPartySize ?? 4;
+    const tablesToSelect = findCombinableTables(tableId, seatingSize);
     
     // Assign directly
     setIsAssigning(true);

@@ -214,7 +214,7 @@ export default function ReservationsPage() {
               service={currentService}
               selectedReservationId={selectedForAssignment?._id}
               selectedReservationVersion={selectedForAssignment?.version}
-              selectedPartySize={selectedForAssignment?.partySize}
+              selectedPartySize={selectedForAssignment ? selectedForAssignment.partySize - selectedForAssignment.babyCount : undefined}
               selectedReservationName={selectedForAssignment ? `${selectedForAssignment.lastName} (${selectedForAssignment.partySize}p)` : undefined}
               onAssignmentComplete={handleAssignmentComplete}
               onTableClick={setHighlightedReservationId}

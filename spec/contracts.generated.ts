@@ -77,6 +77,14 @@ export function computePartySize(adults: number, childrenCount: number, babyCoun
   return adults + childrenCount + babyCount;
 }
 
+/**
+ * Nombre de sièges nécessaires à table (bébés exclus — chaise haute / poussette).
+ * Utilisé uniquement pour l'assignation de tables, PAS pour la capacité créneau.
+ */
+export function computeSeatingSize(adults: number, childrenCount: number): number {
+  return adults + childrenCount;
+}
+
 export function computeEffectiveOpen(isOpen: boolean, capacity: number): boolean {
   return isOpen === true && capacity > 0;
 }

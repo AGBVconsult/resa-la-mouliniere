@@ -1067,7 +1067,7 @@ export default function TabletReservationsPage() {
               service={selectedService as "lunch" | "dinner"}
               selectedReservationId={selectedForAssignment?._id}
               selectedReservationVersion={selectedForAssignment?.version}
-              selectedPartySize={selectedForAssignment?.partySize}
+              selectedPartySize={selectedForAssignment ? selectedForAssignment.partySize - selectedForAssignment.babyCount : undefined}
               selectedReservationName={selectedForAssignment ? `${selectedForAssignment.lastName} (${selectedForAssignment.partySize}p)` : undefined}
               onAssignmentComplete={handleAssignmentComplete}
               onTableClick={setHighlightedReservationId}

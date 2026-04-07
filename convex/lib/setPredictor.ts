@@ -34,14 +34,14 @@ interface CandidateSet {
  */
 function generateCandidateSets(
   availableTables: Doc<"tables">[],
-  partySize: number,
+  seatingSize: number,
   maxTables: number = 3
 ): CandidateSet[] {
   const candidates: CandidateSet[] = [];
 
   // 1. Single tables with sufficient capacity
   for (const t of availableTables) {
-    if (t.capacity >= partySize) {
+    if (t.capacity >= seatingSize) {
       candidates.push({
         tables: [t],
         totalCapacity: t.capacity,
@@ -51,11 +51,11 @@ function generateCandidateSets(
 
   // 2. Pairs of tables (if needed)
   const maxSingleCapacity = Math.max(0, ...availableTables.map(t => t.capacity));
-  if (partySize > maxSingleCapacity || candidates.length < 3) {
+  if (seatingSize > maxSingleCapacity || candidates.length < 3) {
     for (let i = 0; i < availableTables.length; i++) {
       for (let j = i + 1; j < availableTables.length; j++) {
         const combined = availableTables[i].capacity + availableTables[j].capacity;
-        if (combined >= partySize) {
+        if (combined >= seatingSize) {
           candidates.push({
             tables: [availableTables[i], availableTables[j]],
             totalCapacity: combined,
@@ -66,19 +66,19 @@ function generateCandidateSets(
   }
 
   // 3. Triplets (for large groups > 10)
-  if (maxTables >= 3 && partySize > 10) {
+  if (maxTables >= 3 && seatingSize > 10) {
     const maxPairCapacity = Math.max(0, ...candidates
       .filter(c => c.tables.length === 2)
       .map(c => c.totalCapacity));
     
-    if (partySize > maxPairCapacity) {
+    if (seatingSize > maxPairCapacity) {
       for (let i = 0; i < availableTables.length; i++) {
         for (let j = i + 1; j < availableTables.length; j++) {
           for (let k = j + 1; k < availableTables.length; k++) {
             const combined = availableTables[i].capacity + 
                            availableTables[j].capacity + 
                            availableTables[k].capacity;
-            if (combined >= partySize) {
+            if (combined >= seatingSize) {
               candidates.push({
                 tables: [availableTables[i], availableTables[j], availableTables[k]],
                 totalCapacity: combined,
@@ -98,7 +98,7 @@ function generateCandidateSets(
  */
 function scoreCandidateSets(
   candidates: CandidateSet[],
-  partySize: number,
+  seatingSize: number,
   clientContext: ClientContext | null,
   serviceContext: ServiceContext
 ): SetPrediction[] {
@@ -110,7 +110,7 @@ function scoreCandidateSets(
     
     const scoringDetails = scoreTableSet(
       candidate.tables,
-      partySize,
+      seatingSize,
       clientContext,
       serviceContext,
       isAdjacent
@@ -139,7 +139,7 @@ function scoreCandidateSets(
  */
 export function generateSetPredictions(
   availableTables: Doc<"tables">[],
-  partySize: number,
+  seatingSize: number,
   clientContext: ClientContext | null,
   serviceContext: ServiceContext
 ): PredictionResult | null {
@@ -151,7 +151,7 @@ export function generateSetPredictions(
   }
 
   // Generate candidates
-  const candidates = generateCandidateSets(activeTables, partySize);
+  const candidates = generateCandidateSets(activeTables, seatingSize);
 
   if (candidates.length === 0) {
     return null;
@@ -160,7 +160,7 @@ export function generateSetPredictions(
   // Score and rank
   const scored = scoreCandidateSets(
     candidates,
-    partySize,
+    seatingSize,
     clientContext,
     serviceContext
   );
@@ -180,7 +180,7 @@ export function generateSetPredictions(
  */
 export function quickPredict(
   availableTables: Doc<"tables">[],
-  partySize: number,
+  seatingSize: number,
   zoneOccupancies: { salle: number; terrasse: number }
 ): PredictionResult | null {
   // Simple client context (no client data in Phase 2)
@@ -193,7 +193,7 @@ export function quickPredict(
 
   return generateSetPredictions(
     availableTables,
-    partySize,
+    seatingSize,
     clientContext,
     serviceContext
   );

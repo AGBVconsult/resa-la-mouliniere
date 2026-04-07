@@ -48,16 +48,16 @@ export interface ServiceContext {
  */
 export function scoreTable(
   table: Doc<"tables">,
-  partySize: number,
+  seatingSize: number,
   clientContext: ClientContext | null,
   serviceContext: ServiceContext
 ): number {
   let score = 0;
 
   // 1. Capacity fit (25 points max)
-  // Optimal: table capacity = partySize or partySize + 1
-  // Penalty for waste
-  const capacityDiff = table.capacity - partySize;
+  // Optimal: table capacity = seatingSize or seatingSize + 1
+  // Penalty for waste (seatingSize excludes babies — high chair / stroller)
+  const capacityDiff = table.capacity - seatingSize;
   if (capacityDiff < 0) {
     // Table too small - heavy penalty
     score += 0;
@@ -120,7 +120,7 @@ export function scoreTable(
  */
 export function scoreTableSet(
   tables: Doc<"tables">[],
-  partySize: number,
+  seatingSize: number,
   clientContext: ClientContext | null,
   serviceContext: ServiceContext,
   isAdjacent: boolean
@@ -139,8 +139,8 @@ export function scoreTableSet(
 
   const totalCapacity = tables.reduce((sum, t) => sum + t.capacity, 0);
   
-  // 1. Capacity score
-  const capacityDiff = totalCapacity - partySize;
+  // 1. Capacity score (seatingSize excludes babies — high chair / stroller)
+  const capacityDiff = totalCapacity - seatingSize;
   let capacityScore = 0;
   if (capacityDiff < 0) {
     capacityScore = 0;

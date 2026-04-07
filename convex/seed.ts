@@ -807,9 +807,9 @@ export const seedWeekReservations = internalMutation({
       // Assign tables for seated/completed reservations
       const tableIds: string[] = [];
       if ((status === "seated" || status === "completed" || status === "incident") && tables.length > 0) {
-        const partySize = adults + childrenCount + babyCount;
+        const seatingSize = adults + childrenCount; // babies don't need a seat
         // Find suitable table(s)
-        const suitableTables = tables.filter(t => t.capacity >= Math.min(partySize, 4));
+        const suitableTables = tables.filter(t => t.capacity >= Math.min(seatingSize, 4));
         if (suitableTables.length > 0) {
           const table = suitableTables[Math.floor(Math.random() * suitableTables.length)];
           tableIds.push(table._id);

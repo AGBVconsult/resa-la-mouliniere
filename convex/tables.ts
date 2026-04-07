@@ -7,6 +7,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireRole } from "./lib/rbac";
 import { Errors } from "./lib/errors";
+import { computeSeatingSize } from "../spec/contracts.generated";
 
 // Types
 type Zone = "salle" | "terrasse";
@@ -648,11 +649,11 @@ export const assignToReservation = mutation({
 export const findCombinableTables = query({
   args: {
     startTableId: v.id("tables"),
-    partySize: v.number(),
+    seatingSize: v.number(),
     dateKey: v.string(),
     service: v.union(v.literal("lunch"), v.literal("dinner")),
   },
-  handler: async (ctx, { startTableId, partySize, dateKey, service }) => {
+  handler: async (ctx, { startTableId, seatingSize, dateKey, service }) => {
     await requireRole(ctx, "admin");
 
     const startTable = await ctx.db.get(startTableId);
@@ -661,7 +662,7 @@ export const findCombinableTables = query({
     }
 
     // If single table is enough
-    if (startTable.capacity >= partySize) {
+    if (startTable.capacity >= seatingSize) {
       return { tableIds: [startTableId], totalCapacity: startTable.capacity };
     }
 
@@ -733,7 +734,7 @@ export const findCombinableTables = query({
     let lastAdded = startTable;
     let lastPos = startPos;
     for (const candidate of sorted) {
-      if (totalCapacity >= partySize) break;
+      if (totalCapacity >= seatingSize) break;
 
       const candPos = getPosition(candidate);
       // Check adjacency

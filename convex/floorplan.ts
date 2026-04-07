@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id, Doc } from "./_generated/dataModel";
 import { Errors } from "./lib/errors";
 import { internal } from "./_generated/api";
+import { computeSeatingSize } from "../spec/contracts.generated";
 
 /**
  * PRD-004: Floor Plan Module
@@ -129,6 +130,7 @@ export const getTableStates = query({
               firstName: currentResa.firstName,
               lastName: currentResa.lastName,
               partySize: currentResa.partySize,
+              babyCount: currentResa.babyCount,
               timeKey: currentResa.timeKey,
               status: currentResa.status,
               version: currentResa.version,
@@ -147,6 +149,7 @@ export const getTableStates = query({
         firstName: r.firstName,
         lastName: r.lastName,
         partySize: r.partySize,
+        babyCount: r.babyCount,
         timeKey: r.timeKey,
         status: r.status,
         version: r.version,
@@ -210,10 +213,11 @@ export const assign = mutation({
       }
     }
 
-    // 5. Check total capacity
+    // 5. Check total capacity (seatingSize excludes babies — they use high chairs, not seats)
     const totalCapacity = tables.reduce((sum, t) => sum + (t?.capacity ?? 0), 0);
-    if (totalCapacity < reservation.partySize) {
-      throw Errors.INSUFFICIENT_TABLE_CAPACITY(totalCapacity, reservation.partySize);
+    const seatingSize = computeSeatingSize(reservation.adults, reservation.childrenCount);
+    if (totalCapacity < seatingSize) {
+      throw Errors.INSUFFICIENT_TABLE_CAPACITY(totalCapacity, seatingSize);
     }
 
     // 6. Check for conflicts (other reservations on same tables, same service)
@@ -400,12 +404,13 @@ export const checkAssignment = query({
       }
     }
 
-    // Check capacity
+    // Check capacity (seatingSize excludes babies — they use high chairs, not seats)
     const totalCapacity = tables.reduce((sum, t) => sum + (t?.capacity ?? 0), 0);
-    if (totalCapacity < reservation.partySize) {
+    const seatingSize = computeSeatingSize(reservation.adults, reservation.childrenCount);
+    if (totalCapacity < seatingSize) {
       return {
         valid: false,
-        error: `INSUFFICIENT_CAPACITY|${totalCapacity}|${reservation.partySize}`,
+        error: `INSUFFICIENT_CAPACITY|${totalCapacity}|${seatingSize}`,
       };
     }
 
