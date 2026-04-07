@@ -466,37 +466,54 @@ export const adminOverrideSlot = mutation({
       throw Errors.SLOT_NOT_FOUND(slotKey);
     }
 
-    // Build patch object with only defined fields
-    const updateData: Partial<{
-      isOpen: boolean;
-      capacity: number;
-      maxGroupSize: number | null;
-      largeTableAllowed: boolean;
-      updatedAt: number;
-    }> = {
-      updatedAt: Date.now(),
-    };
+    // Build override patch with only defined fields
+    const overridePatch: Record<string, any> = {};
 
     if (patch.isOpen !== undefined) {
-      updateData.isOpen = patch.isOpen;
+      overridePatch.isOpen = patch.isOpen;
     }
     if (patch.capacity !== undefined) {
       if (patch.capacity < 0) {
         throw Errors.INVALID_INPUT("capacity", "Doit être >= 0");
       }
-      updateData.capacity = patch.capacity;
+      overridePatch.capacity = patch.capacity;
     }
     if (patch.maxGroupSize !== undefined) {
       if (patch.maxGroupSize !== null && patch.maxGroupSize < 1) {
         throw Errors.INVALID_INPUT("maxGroupSize", "Doit être >= 1 ou null");
       }
-      updateData.maxGroupSize = patch.maxGroupSize;
+      overridePatch.maxGroupSize = patch.maxGroupSize;
     }
     if (patch.largeTableAllowed !== undefined) {
-      updateData.largeTableAllowed = patch.largeTableAllowed;
+      overridePatch.largeTableAllowed = patch.largeTableAllowed;
     }
 
-    await ctx.db.patch(existingSlot._id, updateData);
+    const now = Date.now();
+
+    // Create/update slotOverride manual instead of patching slot directly
+    const existingOverride = await ctx.db
+      .query("slotOverrides")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
+      )
+      .filter((q) => q.eq(q.field("origin"), "manual"))
+      .first();
+
+    if (existingOverride) {
+      await ctx.db.patch(existingOverride._id, {
+        patch: { ...existingOverride.patch, ...overridePatch },
+        updatedAt: now,
+      });
+    } else {
+      await ctx.db.insert("slotOverrides", {
+        restaurantId,
+        slotKey,
+        origin: "manual",
+        patch: overridePatch,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     return { slotKey };
   },

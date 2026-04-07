@@ -880,11 +880,12 @@ export const syncSlotsWithTemplate = mutation({
     for (const dateKey of processedDates) {
       if (dateKey < todayKey) continue;
 
-      // If template is closed, mark all slots as closed (except period-created slots)
+      // If template is closed, mark all slots as closed (except protected slots)
       if (!template.isOpen) {
         const slotsForDate = futureSlots.filter((s) => s.dateKey === dateKey);
         for (const slot of slotsForDate) {
           if (slot.createdByPeriodId) continue;
+          if (overriddenSlotKeys.has(slot.slotKey)) continue; // respect manual/period overrides
           if (slot.isOpen) {
             await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
             updated++;
@@ -1156,18 +1157,8 @@ export const ensureSlotsForDate = mutation({
 
       const existingByTimeKey = new Map(existingSlots.map((s) => [s.timeKey, s]));
 
-      // If no template or template is closed, close all existing slots
-      if (!template || !template.isOpen) {
-        for (const slot of existingSlots) {
-          if (slot.isOpen) {
-            await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
-            updated++;
-          }
-        }
-        continue;
-      }
-
       // Get overrides for this date to avoid overwriting manual/period overrides
+      // NOTE: loaded BEFORE the template-closed check to protect overridden slots
       const slotKeys = new Set(existingSlots.map((s) => s.slotKey));
       const [periodOverrides, manualOverrides] = await Promise.all([
         ctx.db
@@ -1188,6 +1179,19 @@ export const ensureSlotsForDate = mutation({
         ...periodOverrides.filter((o) => slotKeys.has(o.slotKey)).map((o) => o.slotKey),
         ...manualOverrides.filter((o) => slotKeys.has(o.slotKey)).map((o) => o.slotKey),
       ]);
+
+      // If no template or template is closed, close non-protected slots only
+      if (!template || !template.isOpen) {
+        for (const slot of existingSlots) {
+          if (overriddenSlotKeys.has(slot.slotKey)) continue; // respect manual/period overrides
+          if (slot.createdByPeriodId) continue; // respect exceptional opening periods
+          if (slot.isOpen) {
+            await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
+            updated++;
+          }
+        }
+        continue;
+      }
 
       const templateSlotMap = new Map(template.slots.map((s) => [s.timeKey, s]));
 

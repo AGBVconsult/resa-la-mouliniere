@@ -982,8 +982,34 @@ export const _update = internalMutation({
       throw Errors.SLOT_NOT_FOUND(newSlotKey);
     }
 
-    // Check effectiveOpen
-    const effectiveOpen = computeEffectiveOpen(newSlot.isOpen, newSlot.capacity);
+    // Load overrides (same pattern as _create)
+    const overrides = await ctx.db
+      .query("slotOverrides")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", reservation.restaurantId).eq("slotKey", newSlotKey)
+      )
+      .collect();
+
+    // Apply overrides: period first (lower priority), then manual (higher priority)
+    let effectiveIsOpen = newSlot.isOpen;
+    let effectiveCapacity = newSlot.capacity;
+    let effectiveMaxGroupSize = newSlot.maxGroupSize;
+
+    const periodOverride = overrides.find((o) => o.origin === "period");
+    if (periodOverride?.patch) {
+      if (periodOverride.patch.isOpen !== undefined) effectiveIsOpen = periodOverride.patch.isOpen;
+      if (periodOverride.patch.capacity !== undefined) effectiveCapacity = periodOverride.patch.capacity;
+      if (periodOverride.patch.maxGroupSize !== undefined) effectiveMaxGroupSize = periodOverride.patch.maxGroupSize;
+    }
+    const manualOverride = overrides.find((o) => o.origin === "manual");
+    if (manualOverride?.patch) {
+      if (manualOverride.patch.isOpen !== undefined) effectiveIsOpen = manualOverride.patch.isOpen;
+      if (manualOverride.patch.capacity !== undefined) effectiveCapacity = manualOverride.patch.capacity;
+      if (manualOverride.patch.maxGroupSize !== undefined) effectiveMaxGroupSize = manualOverride.patch.maxGroupSize;
+    }
+
+    // Check effectiveOpen (with overrides applied)
+    const effectiveOpen = computeEffectiveOpen(effectiveIsOpen, effectiveCapacity);
     if (!effectiveOpen) {
       throw Errors.SLOT_TAKEN(newSlotKey, "closed");
     }
@@ -992,7 +1018,7 @@ export const _update = internalMutation({
     const newPartySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
 
     // Check maxGroupSize
-    if (newSlot.maxGroupSize !== null && newPartySize > newSlot.maxGroupSize) {
+    if (effectiveMaxGroupSize !== null && newPartySize > effectiveMaxGroupSize) {
       throw Errors.SLOT_TAKEN(newSlotKey, "taken");
     }
 
@@ -1011,7 +1037,7 @@ export const _update = internalMutation({
       )
       .reduce((sum, r) => sum + r.partySize, 0);
 
-    const remainingCapacity = newSlot.capacity - usedCapacity;
+    const remainingCapacity = effectiveCapacity - usedCapacity;
 
     if (newPartySize > remainingCapacity) {
       throw Errors.INSUFFICIENT_CAPACITY(newSlotKey, newPartySize, remainingCapacity);

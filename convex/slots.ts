@@ -338,12 +338,45 @@ export const listByDateService = query({
       )
       .collect();
 
-    // Sort by timeKey and add effectiveOpen
+    // Fetch slotOverrides (same pattern as listByDate)
+    const slotKeysSet = new Set(slots.map((s) => s.slotKey));
+    const [manualOverrides, periodOverrides] = await Promise.all([
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "manual"))
+        .collect(),
+      ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "period"))
+        .collect(),
+    ]);
+
+    // Build overrides map with priority: MANUAL > PERIOD
+    const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number }>();
+    for (const override of periodOverrides) {
+      if (slotKeysSet.has(override.slotKey)) {
+        overridesMap.set(override.slotKey, override.patch);
+      }
+    }
+    for (const override of manualOverrides) {
+      if (slotKeysSet.has(override.slotKey)) {
+        overridesMap.set(override.slotKey, override.patch);
+      }
+    }
+
+    // Sort by timeKey and add effectiveOpen with overrides applied
     const result = slots
-      .map((slot) => ({
-        ...slot,
-        effectiveOpen: computeEffectiveOpen(slot.isOpen, slot.capacity),
-      }))
+      .map((slot) => {
+        const override = overridesMap.get(slot.slotKey);
+        const effectiveIsOpen = override?.isOpen ?? slot.isOpen;
+        const effectiveCapacity = override?.capacity ?? slot.capacity;
+        return {
+          ...slot,
+          isOpen: effectiveIsOpen,
+          capacity: effectiveCapacity,
+          effectiveOpen: computeEffectiveOpen(effectiveIsOpen, effectiveCapacity),
+        };
+      })
       .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
 
     return { slots: result };
@@ -405,11 +438,34 @@ export const closeRange = mutation({
     });
 
     for (const slot of slotsToClose) {
-      await ctx.db.patch(slot._id, { isOpen: false, updatedAt: now });
+      // Create/update slotOverride manual instead of patching slot directly
+      const existingOverride = await ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_slotKey", (q) =>
+          q.eq("restaurantId", restaurant._id).eq("slotKey", slot.slotKey)
+        )
+        .filter((q) => q.eq(q.field("origin"), "manual"))
+        .first();
+
+      if (existingOverride) {
+        await ctx.db.patch(existingOverride._id, {
+          patch: { ...existingOverride.patch, isOpen: false },
+          updatedAt: now,
+        });
+      } else {
+        await ctx.db.insert("slotOverrides", {
+          restaurantId: restaurant._id,
+          slotKey: slot.slotKey,
+          origin: "manual",
+          patch: { isOpen: false },
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
       closedCount++;
     }
 
-    console.log("Slots closed", { dateStart, dateEnd, service, closedCount });
+    console.log("Slots closed (via slotOverrides manual)", { dateStart, dateEnd, service, closedCount });
 
     return { closedCount };
   },
@@ -470,11 +526,34 @@ export const openRange = mutation({
     });
 
     for (const slot of slotsToOpen) {
-      await ctx.db.patch(slot._id, { isOpen: true, updatedAt: now });
+      // Create/update slotOverride manual instead of patching slot directly
+      const existingOverride = await ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_slotKey", (q) =>
+          q.eq("restaurantId", restaurant._id).eq("slotKey", slot.slotKey)
+        )
+        .filter((q) => q.eq(q.field("origin"), "manual"))
+        .first();
+
+      if (existingOverride) {
+        await ctx.db.patch(existingOverride._id, {
+          patch: { ...existingOverride.patch, isOpen: true },
+          updatedAt: now,
+        });
+      } else {
+        await ctx.db.insert("slotOverrides", {
+          restaurantId: restaurant._id,
+          slotKey: slot.slotKey,
+          origin: "manual",
+          patch: { isOpen: true },
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
       openedCount++;
     }
 
-    console.log("Slots opened", { dateStart, dateEnd, service, openedCount });
+    console.log("Slots opened (via slotOverrides manual)", { dateStart, dateEnd, service, openedCount });
 
     return { openedCount };
   },
@@ -741,13 +820,34 @@ export const toggleServiceSlots = mutation({
     let updatedCount = 0;
 
     for (const slot of slots) {
-      if (slot.isOpen !== isOpen) {
-        await ctx.db.patch(slot._id, { isOpen, updatedAt: now });
-        updatedCount++;
+      // Create/update slotOverride manual instead of patching slot directly
+      const existingOverride = await ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_slotKey", (q) =>
+          q.eq("restaurantId", restaurant._id).eq("slotKey", slot.slotKey)
+        )
+        .filter((q) => q.eq(q.field("origin"), "manual"))
+        .first();
+
+      if (existingOverride) {
+        await ctx.db.patch(existingOverride._id, {
+          patch: { ...existingOverride.patch, isOpen },
+          updatedAt: now,
+        });
+      } else {
+        await ctx.db.insert("slotOverrides", {
+          restaurantId: restaurant._id,
+          slotKey: slot.slotKey,
+          origin: "manual",
+          patch: { isOpen },
+          createdAt: now,
+          updatedAt: now,
+        });
       }
+      updatedCount++;
     }
 
-    console.log("Service slots toggled", { dateKey, service, isOpen, updatedCount });
+    console.log("Service slots toggled (via slotOverrides manual)", { dateKey, service, isOpen, updatedCount });
 
     return { updatedCount };
   },
@@ -790,13 +890,34 @@ export const toggleDaySlots = mutation({
     let updatedCount = 0;
 
     for (const slot of slots) {
-      if (slot.isOpen !== isOpen) {
-        await ctx.db.patch(slot._id, { isOpen, updatedAt: now });
-        updatedCount++;
+      // Create/update slotOverride manual instead of patching slot directly
+      const existingOverride = await ctx.db
+        .query("slotOverrides")
+        .withIndex("by_restaurant_slotKey", (q) =>
+          q.eq("restaurantId", restaurant._id).eq("slotKey", slot.slotKey)
+        )
+        .filter((q) => q.eq(q.field("origin"), "manual"))
+        .first();
+
+      if (existingOverride) {
+        await ctx.db.patch(existingOverride._id, {
+          patch: { ...existingOverride.patch, isOpen },
+          updatedAt: now,
+        });
+      } else {
+        await ctx.db.insert("slotOverrides", {
+          restaurantId: restaurant._id,
+          slotKey: slot.slotKey,
+          origin: "manual",
+          patch: { isOpen },
+          createdAt: now,
+          updatedAt: now,
+        });
       }
+      updatedCount++;
     }
 
-    console.log("Day slots toggled", { dateKey, isOpen, updatedCount });
+    console.log("Day slots toggled (via slotOverrides manual)", { dateKey, isOpen, updatedCount });
 
     return { updatedCount };
   },

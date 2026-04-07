@@ -594,6 +594,10 @@ export const update = mutation({
 
     const now = Date.now();
 
+    // NOTE: deleteOverrides + patch + generateOverrides run within the same Convex mutation transaction.
+    // No other mutation can observe the intermediate state (no overrides).
+    // This is safe because Convex mutations are serialized/atomic.
+
     // Delete old period overrides
     await deleteOverrides(ctx, args.periodId);
 
@@ -846,29 +850,33 @@ async function generateOverrides(
           continue;
         }
 
-        // Check if period override already exists for this period
-        const existingPeriod = await ctx.db
+        // Check if ANY period override exists for this slot
+        const existingPeriodOverride = await ctx.db
           .query("slotOverrides")
           .withIndex("by_restaurant_slotKey", (q: any) =>
             q.eq("restaurantId", restaurantId).eq("slotKey", slot.slotKey)
           )
-          .filter((q: any) => 
-            q.and(
-              q.eq(q.field("origin"), "period"),
-              q.eq(q.field("specialPeriodId"), periodId)
-            )
-          )
+          .filter((q: any) => q.eq(q.field("origin"), "period"))
           .first();
 
-        if (existingPeriod) {
-          // Update existing
-          await ctx.db.patch(existingPeriod._id, {
-            patch,
-            updatedAt: now,
-          });
-          slotsModified++;
+        if (existingPeriodOverride) {
+          if (existingPeriodOverride.specialPeriodId === periodId) {
+            // Our own override → update
+            await ctx.db.patch(existingPeriodOverride._id, {
+              patch,
+              updatedAt: now,
+            });
+            slotsModified++;
+          } else {
+            // Override from ANOTHER period → skip, first period keeps priority
+            console.warn("Period override conflict — skipping", {
+              slotKey: slot.slotKey,
+              existingPeriodId: existingPeriodOverride.specialPeriodId,
+              newPeriodId: periodId,
+            });
+          }
         } else {
-          // Create new
+          // No period override → create new
           await ctx.db.insert("slotOverrides", {
             restaurantId,
             slotKey: slot.slotKey,
@@ -941,13 +949,40 @@ async function generateExceptionalOpeningSlots(
             });
             slotsCreated++;
           } else {
-            // Update existing slot
-            await ctx.db.patch(existingSlot._id, {
+            // Create/update period override instead of patching slot directly
+            const existingPeriodOverride = await ctx.db
+              .query("slotOverrides")
+              .withIndex("by_restaurant_slotKey", (q: any) =>
+                q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
+              )
+              .filter((q: any) => q.and(
+                q.eq(q.field("origin"), "period"),
+                q.eq(q.field("specialPeriodId"), periodId)
+              ))
+              .first();
+
+            const overridePatch = {
               isOpen: slotConfig.isActive,
               capacity: slotConfig.capacity,
               maxGroupSize: slotConfig.maxGroupSize,
-              updatedAt: now,
-            });
+            };
+
+            if (existingPeriodOverride) {
+              await ctx.db.patch(existingPeriodOverride._id, {
+                patch: overridePatch,
+                updatedAt: now,
+              });
+            } else {
+              await ctx.db.insert("slotOverrides", {
+                restaurantId,
+                slotKey,
+                origin: "period",
+                patch: overridePatch,
+                specialPeriodId: periodId,
+                createdAt: now,
+                updatedAt: now,
+              });
+            }
             slotsModified++;
           }
         }
@@ -987,13 +1022,40 @@ async function generateExceptionalOpeningSlots(
             });
             slotsCreated++;
           } else {
-            // Update existing slot
-            await ctx.db.patch(existingSlot._id, {
+            // Create/update period override instead of patching slot directly
+            const existingPeriodOverride = await ctx.db
+              .query("slotOverrides")
+              .withIndex("by_restaurant_slotKey", (q: any) =>
+                q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
+              )
+              .filter((q: any) => q.and(
+                q.eq(q.field("origin"), "period"),
+                q.eq(q.field("specialPeriodId"), periodId)
+              ))
+              .first();
+
+            const overridePatch = {
               isOpen: slotConfig.isActive,
               capacity: slotConfig.capacity,
               maxGroupSize: slotConfig.maxGroupSize,
-              updatedAt: now,
-            });
+            };
+
+            if (existingPeriodOverride) {
+              await ctx.db.patch(existingPeriodOverride._id, {
+                patch: overridePatch,
+                updatedAt: now,
+              });
+            } else {
+              await ctx.db.insert("slotOverrides", {
+                restaurantId,
+                slotKey,
+                origin: "period",
+                patch: overridePatch,
+                specialPeriodId: periodId,
+                createdAt: now,
+                updatedAt: now,
+              });
+            }
             slotsModified++;
           }
         }
