@@ -581,6 +581,7 @@ export default defineSchema({
         balanceScore: v.number(),
         adjacencyBonus: v.number(),
         characteristicsScore: v.number(),
+        totalScore: v.number(),
       }),
     })),
 
