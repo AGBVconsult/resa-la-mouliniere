@@ -137,7 +137,7 @@ async function getOrCreateClientId(ctx: any, reservation: any): Promise<string |
   const existing = await ctx.db
     .query("clients")
     .withIndex("by_primaryPhone", (q: any) => q.eq("primaryPhone", phone))
-    .unique();
+    .first();
 
   const now = Date.now();
 

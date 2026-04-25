@@ -517,7 +517,7 @@ export const listReservations = query({
       const client = await ctx.db
         .query("clients")
         .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
-        .unique();
+        .first();
       if (client) {
         clientsMap.set(phone, { 
           totalVisits: client.totalVisits, 
@@ -570,7 +570,7 @@ export const getReservation = query({
     const client = await ctx.db
       .query("clients")
       .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
-      .unique();
+      .first();
     const totalVisits = client?.totalVisits ?? 0;
     const clientId = client?._id;
     const clientBehavior = {
@@ -1559,7 +1559,7 @@ export const listPendingReservations = query({
       const client = await ctx.db
         .query("clients")
         .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
-        .unique();
+        .first();
       if (client) {
         clientsMap.set(phone, { 
           totalVisits: client.totalVisits, 

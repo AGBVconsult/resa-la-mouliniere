@@ -216,7 +216,7 @@ export const getByPhone = query({
     const client = await ctx.db
       .query("clients")
       .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
-      .unique();
+      .first();
 
     if (!client) return null;
 
@@ -312,7 +312,7 @@ export const getOrCreate = mutation({
     const existing = await ctx.db
       .query("clients")
       .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
-      .unique();
+      .first();
 
     if (existing) {
       const patch: Record<string, unknown> = {
@@ -874,7 +874,7 @@ export const importFromCSV = mutation({
         const existing = await ctx.db
           .query("clients")
           .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
-          .unique();
+          .first();
 
         if (existing) {
           // Update existing client
