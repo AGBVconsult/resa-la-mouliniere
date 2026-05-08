@@ -103,7 +103,7 @@ export const translations = {
     practical_info_email_confirm: "email de confirmation",
     practical_info_email_text_2: "Vous pourrez modifier, annuler ou nous écrire directement depuis ce mail.",
     practical_info_welcome: "On se réjouit de vous accueillir",
-    practical_info_noted: "C'est noté !",
+    practical_info_noted: "Continuer \u2192",
 
     // Step 6 - Confirmation
     confirmed_title: "Merci !",
@@ -244,7 +244,7 @@ export const translations = {
     practical_info_email_confirm: "bevestigingsmail",
     practical_info_email_text_2: "U kunt wijzigen, annuleren of ons rechtstreeks vanuit deze mail schrijven.",
     practical_info_welcome: "We kijken ernaar uit u te verwelkomen",
-    practical_info_noted: "Begrepen!",
+    practical_info_noted: "Doorgaan \u2192",
 
     // Step 6 - Confirmation
     confirmed_title: "Bedankt!",
@@ -375,7 +375,7 @@ export const translations = {
     practical_info_email_confirm: "confirmation email",
     practical_info_email_text_2: "You can modify, cancel or write to us directly from this email.",
     practical_info_welcome: "We look forward to welcoming you",
-    practical_info_noted: "Got it!",
+    practical_info_noted: "Continue \u2192",
 
     // Step 6 - Confirmation
     confirmed_title: "Thank you!",
@@ -514,7 +514,7 @@ export const translations = {
     practical_info_email_confirm: "Bestätigungs-E-Mail",
     practical_info_email_text_2: "Sie können direkt aus dieser E-Mail ändern, stornieren oder uns schreiben.",
     practical_info_welcome: "Wir freuen uns, Sie zu begrüßen",
-    practical_info_noted: "Verstanden!",
+    practical_info_noted: "Weiter \u2192",
 
     // Step 6 - Confirmation
     confirmed_title: "Vielen Dank!",
@@ -663,7 +663,7 @@ export const translations = {
     practical_info_email_confirm: "correo de confirmación",
     practical_info_email_text_2: "Puede modificar, cancelar o escribirnos directamente desde ese correo.",
     practical_info_welcome: "Nos alegramos de recibirle",
-    practical_info_noted: "¡Entendido!",
+    practical_info_noted: "Continuar \u2192",
 
     // Step 6 - Confirmation
     confirmed_title: "¡Gracias!",
@@ -812,7 +812,7 @@ export const translations = {
     practical_info_email_confirm: "email di conferma",
     practical_info_email_text_2: "Puoi modificare, annullare o scriverci direttamente da questa email.",
     practical_info_welcome: "Non vediamo l'ora di accoglierti",
-    practical_info_noted: "Capito!",
+    practical_info_noted: "Continua \u2192",
 
     // Step 6 - Confirmation
     confirmed_title: "Grazie!",
