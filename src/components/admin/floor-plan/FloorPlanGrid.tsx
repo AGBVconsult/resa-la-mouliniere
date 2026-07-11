@@ -5,13 +5,10 @@ import { useDroppable } from "@dnd-kit/core";
 import { AnimatePresence } from "framer-motion";
 import {
   GRID_CELL_SIZE,
-  TABLE_SIZE,
   GRID_WIDTH,
   GRID_HEIGHT,
-  COMBINATION_LINE_COLORS,
   TABLE_GRID_SPAN,
 } from "@/lib/constants/grid";
-import { areTablesAdjacent } from "@/lib/floor-plan/combination";
 import { FloorPlanTable } from "./FloorPlanTable";
 import { FloorPlanDropIndicator } from "./FloorPlanDropIndicator";
 import { useFloorPlanContext } from "./FloorPlanProvider";
@@ -84,52 +81,6 @@ function FloorPlanGridInner({
     };
   }, [tables]);
 
-  // Calculate combination lines
-  const combinationLines = useMemo(() => {
-    const lines: Array<{
-      key: string;
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-      color: string;
-    }> = [];
-
-    for (const table of tables) {
-      if (!table.isActive || table.combinationDirection === "none") continue;
-
-      const tableWidth = (table.width ?? 1) * TABLE_SIZE;
-      const tableHeight = (table.height ?? 1) * TABLE_SIZE;
-      const centerX = table.positionX * GRID_CELL_SIZE + tableWidth / 2;
-      const centerY = table.positionY * GRID_CELL_SIZE + tableHeight / 2;
-
-      // Find adjacent table (shared adjacency rule)
-      const adjacent = tables.find((t) => {
-        if (!t.isActive || t._id === table._id) return false;
-        if (t.combinationDirection !== table.combinationDirection) return false;
-        return areTablesAdjacent(table, t, table.combinationDirection);
-      });
-
-      if (adjacent) {
-        const adjWidth = (adjacent.width ?? 1) * TABLE_SIZE;
-        const adjHeight = (adjacent.height ?? 1) * TABLE_SIZE;
-        const adjCenterX = adjacent.positionX * GRID_CELL_SIZE + adjWidth / 2;
-        const adjCenterY = adjacent.positionY * GRID_CELL_SIZE + adjHeight / 2;
-
-        lines.push({
-          key: `${table._id}-${adjacent._id}`,
-          x1: centerX,
-          y1: centerY,
-          x2: adjCenterX,
-          y2: adjCenterY,
-          color: COMBINATION_LINE_COLORS[table.combinationDirection],
-        });
-      }
-    }
-
-    return lines;
-  }, [tables]);
-
   return (
     <div
       ref={setNodeRef}
@@ -158,28 +109,6 @@ function FloorPlanGridInner({
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#grid)" />
-      </svg>
-
-      {/* Combination lines */}
-      <svg
-        className="absolute inset-0 pointer-events-none"
-        width={gridDimensions.width}
-        height={gridDimensions.height}
-        style={{ zIndex: 5 }}
-      >
-        {combinationLines.map((line) => (
-          <line
-            key={line.key}
-            x1={line.x1}
-            y1={line.y1}
-            x2={line.x2}
-            y2={line.y2}
-            stroke={line.color}
-            strokeWidth={3}
-            strokeDasharray="6 4"
-            opacity={0.5}
-          />
-        ))}
       </svg>
 
       {/* Tables */}

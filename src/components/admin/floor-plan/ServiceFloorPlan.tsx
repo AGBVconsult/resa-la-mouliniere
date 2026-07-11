@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
-import { Users, X } from "lucide-react";
+import { Users, X, Check, AlertTriangle } from "lucide-react";
 import {
   GRID_CELL_SIZE,
   TABLE_SIZE,
@@ -15,7 +15,6 @@ import {
 } from "@/lib/constants/grid";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
-import { findCombinationChain, type CombinableTable } from "@/lib/floor-plan/combination";
 
 interface ServiceFloorPlanProps {
   dateKey: string;
@@ -63,6 +62,8 @@ export function ServiceFloorPlan({
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
   const [tabletScale, setTabletScale] = useState(1);
   const [editingTable, setEditingTable] = useState<EditingTableState | null>(null);
+  // Sélection manuelle de tables en attente de confirmation (assignation multi-tables)
+  const [pendingTableIds, setPendingTableIds] = useState<string[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tabletContainerRef = useRef<HTMLDivElement>(null);
@@ -155,56 +156,32 @@ export function ServiceFloorPlan({
     return () => observer.disconnect();
   }, [hideHeader, gridLayout.width, gridLayout.height]);
 
-  // Find adjacent combinable tables using the shared adjacency rule.
-  // Returns null when the target capacity cannot be reached (no partial chains).
-  const findCombinableTables = useMemo(() => {
-    if (!tableStates) return () => null;
+  // Reset pending selection whenever the assignment context changes
+  useEffect(() => {
+    setPendingTableIds([]);
+  }, [selectedReservationId, editingTable?.reservationId, activeZone, dateKey, service]);
 
-    return (clickedTableId: string, seatingSize: number): string[] | null => {
-      const clickedTable = tableStates.tables.find((t) => t.tableId === clickedTableId);
-      if (!clickedTable) return null;
+  // Capacity of the current pending selection (informative, non-blocking)
+  const pendingCapacity = useMemo(
+    () =>
+      pendingTableIds.reduce(
+        (sum, id) => sum + (filteredTables.find((t) => t.tableId === id)?.capacity ?? 0),
+        0
+      ),
+    [pendingTableIds, filteredTables]
+  );
 
-      const direction = clickedTable.combinationDirection ?? "none";
-      const clickedNormalizedZone = clickedTable.zone === "dining" ? "salle" : clickedTable.zone === "terrace" ? "terrasse" : clickedTable.zone;
+  // Seating size of the reservation being assigned/moved (babies excluded)
+  const targetSeatingSize = editingTable
+    ? editingTable.partySize - editingTable.babyCount
+    : selectedPartySize ?? null;
 
-      // Candidates: free tables with same combination direction in same zone
-      const candidates: CombinableTable[] = tableStates.tables
-        .filter((t) => {
-          const normalizedZone = t.zone === "dining" ? "salle" : t.zone === "terrace" ? "terrasse" : t.zone;
-          return (
-            t.tableId !== clickedTableId &&
-            normalizedZone === clickedNormalizedZone &&
-            (t.combinationDirection ?? "none") === direction &&
-            t.isActive &&
-            t.status === "free"
-          );
-        })
-        .map((t) => ({
-          id: t.tableId,
-          capacity: t.capacity,
-          positionX: t.positionX,
-          positionY: t.positionY,
-          width: t.width,
-          height: t.height,
-        }));
-
-      const result = findCombinationChain(
-        {
-          id: clickedTableId,
-          capacity: clickedTable.capacity,
-          positionX: clickedTable.positionX,
-          positionY: clickedTable.positionY,
-          width: clickedTable.width,
-          height: clickedTable.height,
-        },
-        candidates,
-        seatingSize,
-        direction
-      );
-
-      return result ? result.tableIds : null;
-    };
-  }, [tableStates]);
+  // Toggle a table in the pending selection
+  const togglePendingTable = (tableId: string) => {
+    setPendingTableIds((prev) =>
+      prev.includes(tableId) ? prev.filter((id) => id !== tableId) : [...prev, tableId]
+    );
+  };
 
   // Handle unassign from editing table
   const handleUnassign = async () => {
@@ -229,31 +206,25 @@ export function ServiceFloorPlan({
     }
   };
 
-  // Handle move reservation to another table
-  const handleMoveReservation = async (targetTableId: string) => {
-    if (!editingTable || isAssigning) return;
+  // Confirm move of the editing reservation to the pending selection
+  const handleConfirmMove = async () => {
+    if (!editingTable || isAssigning || pendingTableIds.length === 0) return;
     
     // Get current version from tableStates to avoid version conflicts
     const currentTable = tableStates?.tables.find(t => t.reservation?.id === editingTable.reservationId);
     const currentVersion = currentTable?.reservation?.version ?? editingTable.reservationVersion;
     
-    const seatingSize = editingTable.partySize - editingTable.babyCount;
-    const tablesToSelect = findCombinableTables(targetTableId, seatingSize);
-    if (!tablesToSelect) {
-      toast.error(`Capacité insuffisante pour ${seatingSize} couverts sur cette table (ou ses tables combinables)`);
-      return;
-    }
-    
     setIsAssigning(true);
     try {
       await assignMutation({
         reservationId: editingTable.reservationId,
-        tableIds: tablesToSelect as Id<"tables">[],
-        primaryTableId: targetTableId as Id<"tables">,
+        tableIds: pendingTableIds as Id<"tables">[],
+        primaryTableId: pendingTableIds[0] as Id<"tables">,
         expectedVersion: currentVersion,
       });
       toast.success("Réservation déplacée");
       setEditingTable(null);
+      setPendingTableIds([]);
     } catch (error: unknown) {
       toast.error(formatConvexError(error, "Erreur de déplacement"));
     } finally {
@@ -291,13 +262,37 @@ export function ServiceFloorPlan({
     }
   };
 
-  // Handle table click - assign directly on click or highlight reservation
+  // Confirm assignment of the selected reservation to the pending selection
+  const handleConfirmAssign = async () => {
+    if (!selectedReservationId || selectedReservationVersion === undefined) return;
+    if (isAssigning || pendingTableIds.length === 0) return;
+
+    setIsAssigning(true);
+    try {
+      await assignMutation({
+        reservationId: selectedReservationId,
+        tableIds: pendingTableIds as Id<"tables">[],
+        primaryTableId: pendingTableIds[0] as Id<"tables">,
+        expectedVersion: selectedReservationVersion,
+      });
+      toast.success(pendingTableIds.length > 1 ? "Tables assignées" : "Table assignée");
+      setPendingTableIds([]);
+      onAssignmentComplete?.();
+    } catch (error: unknown) {
+      toast.error(formatConvexError(error, "Erreur d'assignation"));
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  // Handle table click - toggle manual selection or highlight reservation
   const handleTableClick = async (tableId: string, status: TableStatus, reservationId?: Id<"reservations"> | null, table?: typeof filteredTables[0]) => {
-    // Mode édition actif : clic sur une autre table = déplacer ou échanger
+    // Mode édition actif : sélectionner les tables cibles ou échanger
     if (editingTable) {
       if (tableId === editingTable.tableId) {
         // Clic sur la même table = désélectionner
         setEditingTable(null);
+        setPendingTableIds([]);
         return;
       }
       
@@ -317,8 +312,8 @@ export function ServiceFloorPlan({
         return;
       }
       
-      // Sinon déplacer la réservation vers cette table
-      await handleMoveReservation(tableId);
+      // Sinon ajouter/retirer la table de la sélection de destination
+      togglePendingTable(tableId);
       return;
     }
     
@@ -352,33 +347,52 @@ export function ServiceFloorPlan({
       return;
     }
 
+    if (status === "reserved" || table?.reservation) {
+      toast.error("Cette table est déjà réservée");
+      return;
+    }
+
     if (selectedReservationVersion === undefined) return;
     if (isAssigning) return;
 
-    // Auto-select combinable tables based on seating size (exclude babies)
-    const seatingSize = selectedPartySize ?? 4;
-    const tablesToSelect = findCombinableTables(tableId, seatingSize);
-    if (!tablesToSelect) {
-      toast.error(`Capacité insuffisante pour ${seatingSize} couverts sur cette table (ou ses tables combinables)`);
-      return;
-    }
-    
-    // Assign directly
-    setIsAssigning(true);
-    try {
-      await assignMutation({
-        reservationId: selectedReservationId,
-        tableIds: tablesToSelect as Id<"tables">[],
-        primaryTableId: tableId as Id<"tables">,
-        expectedVersion: selectedReservationVersion,
-      });
-      toast.success("Table assignée");
-      onAssignmentComplete?.();
-    } catch (error: unknown) {
-      toast.error(formatConvexError(error, "Erreur d'assignation"));
-    } finally {
-      setIsAssigning(false);
-    }
+    // Sélection manuelle : ajouter/retirer la table
+    togglePendingTable(tableId);
+  };
+
+  // Selection banner (confirm/cancel the pending multi-table selection)
+  const renderSelectionBanner = () => {
+    if (pendingTableIds.length === 0) return null;
+    const insufficient = targetSeatingSize !== null && pendingCapacity < targetSeatingSize;
+
+    return (
+      <div className="flex items-center gap-3 bg-white rounded-xl shadow-lg border border-gray-200 px-4 py-2">
+        <span className="text-sm font-medium whitespace-nowrap">
+          {pendingTableIds.length} table{pendingTableIds.length > 1 ? "s" : ""} · {pendingCapacity} place{pendingCapacity > 1 ? "s" : ""}
+        </span>
+        {insufficient && (
+          <span className="text-xs text-orange-600 flex items-center gap-1 whitespace-nowrap">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            {targetSeatingSize} couverts attendus
+          </span>
+        )}
+        <button
+          onClick={editingTable ? handleConfirmMove : handleConfirmAssign}
+          disabled={isAssigning}
+          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-700 disabled:opacity-50 transition-colors"
+        >
+          <Check className="w-3.5 h-3.5" />
+          {editingTable ? "Déplacer" : "Assigner"}
+        </button>
+        <button
+          onClick={() => setPendingTableIds([])}
+          disabled={isAssigning}
+          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+        >
+          <X className="w-3.5 h-3.5" />
+          Annuler
+        </button>
+      </div>
+    );
   };
 
   // Render tables content (shared between desktop and tablet modes)
@@ -386,6 +400,7 @@ export function ServiceFloorPlan({
     <>
       {filteredTables.map((table) => {
         const isEditing = editingTable?.tableId === table.tableId;
+        const isPending = pendingTableIds.includes(table.tableId);
         const statusColors = STATUS_COLORS[table.status as TableStatus];
         const width = (table.width ?? 1) * TABLE_SIZE - 4;
         const height = (table.height ?? 1) * TABLE_SIZE - 4;
@@ -395,7 +410,11 @@ export function ServiceFloorPlan({
             key={table.tableId}
             className={cn(
               "absolute flex flex-col items-center justify-center rounded-lg transition-all duration-150",
-              isEditing ? "bg-amber-400 ring-2 ring-amber-500 ring-offset-1" : statusColors.bg,
+              isEditing
+                ? "bg-amber-400 ring-2 ring-amber-500 ring-offset-1"
+                : isPending
+                  ? "bg-blue-200 ring-2 ring-blue-500 ring-offset-1"
+                  : statusColors.bg,
               statusColors.border,
               table.status === "blocked" && "opacity-50",
               // Mode édition actif : toutes les tables sauf blocked/seated sont cliquables
@@ -464,7 +483,7 @@ export function ServiceFloorPlan({
 
   if (hideHeader) {
     return (
-      <div ref={tabletContainerRef} className="w-full h-full overflow-hidden flex items-center justify-center p-4">
+      <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center p-4">
         <div
           className="relative shrink-0"
           style={{
@@ -476,6 +495,11 @@ export function ServiceFloorPlan({
         >
           {renderTables()}
         </div>
+        {pendingTableIds.length > 0 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+            {renderSelectionBanner()}
+          </div>
+        )}
       </div>
     );
   }
@@ -527,6 +551,13 @@ export function ServiceFloorPlan({
             </span>
           </div>
       </div>
+
+      {/* Selection banner */}
+      {pendingTableIds.length > 0 && (
+        <div className="flex justify-center mt-3 shrink-0">
+          {renderSelectionBanner()}
+        </div>
+      )}
 
       {/* Floor plan grid */}
       <div

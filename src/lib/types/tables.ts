@@ -5,7 +5,6 @@
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export type Zone = "salle" | "terrasse";
-export type CombinationDirection = "horizontal" | "vertical" | "none";
 
 export interface Table {
   _id: Id<"tables">;
@@ -18,7 +17,6 @@ export interface Table {
   positionY: number;
   width?: number;
   height?: number;
-  combinationDirection?: CombinationDirection;
   isActive: boolean;
   createdAt: number;
   updatedAt: number;
@@ -33,7 +31,6 @@ export interface TableInfo {
   positionY: number;
   width: number;
   height: number;
-  combinationDirection: CombinationDirection;
   isActive: boolean;
 }
 

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import type { Zone, CombinationDirection } from "@/lib/types/tables";
+import type { Zone } from "@/lib/types/tables";
 
 interface TableModalProps {
   isOpen: boolean;
@@ -17,7 +17,6 @@ interface TableModalProps {
     zone: Zone;
     positionX: number;
     positionY: number;
-    combinationDirection: CombinationDirection;
   }) => void;
   defaultPosition?: { x: number; y: number };
 }
@@ -31,7 +30,6 @@ export function TableModal({
   const [name, setName] = useState("");
   const [capacity, setCapacity] = useState(4);
   const [zone, setZone] = useState<Zone>("salle");
-  const [combinationDirection, setCombinationDirection] = useState<CombinationDirection>("none");
 
   if (!isOpen) return null;
 
@@ -45,14 +43,12 @@ export function TableModal({
       zone,
       positionX: defaultPosition.x,
       positionY: defaultPosition.y,
-      combinationDirection,
     });
 
     // Reset form
     setName("");
     setCapacity(4);
     setZone("salle");
-    setCombinationDirection("none");
     onClose();
   };
 
@@ -123,49 +119,6 @@ export function TableModal({
                 )}
               >
                 Terrasse
-              </button>
-            </div>
-          </div>
-
-          {/* Combination Direction */}
-          <div className="space-y-1.5">
-            <Label>Combinaison</Label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setCombinationDirection("none")}
-                className={cn(
-                  "flex-1 py-2 px-2 rounded-lg border-2 text-xs font-medium transition-colors",
-                  combinationDirection === "none"
-                    ? "bg-gray-200 border-gray-400 text-gray-800"
-                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-                )}
-              >
-                Aucune
-              </button>
-              <button
-                type="button"
-                onClick={() => setCombinationDirection("horizontal")}
-                className={cn(
-                  "flex-1 py-2 px-2 rounded-lg border-2 text-xs font-medium transition-colors",
-                  combinationDirection === "horizontal"
-                    ? "bg-violet-100 border-violet-400 text-violet-800"
-                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-                )}
-              >
-                Horizontale
-              </button>
-              <button
-                type="button"
-                onClick={() => setCombinationDirection("vertical")}
-                className={cn(
-                  "flex-1 py-2 px-2 rounded-lg border-2 text-xs font-medium transition-colors",
-                  combinationDirection === "vertical"
-                    ? "bg-blue-100 border-blue-400 text-blue-800"
-                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-                )}
-              >
-                Verticale
               </button>
             </div>
           </div>

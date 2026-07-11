@@ -7,13 +7,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireRole } from "./lib/rbac";
 import { Errors } from "./lib/errors";
-import { computeSeatingSize } from "../spec/contracts.generated";
-import { findCombinationChain } from "../src/lib/floor-plan/combination";
 import type { Id } from "./_generated/dataModel";
-
-// Types
-type Zone = "salle" | "terrasse";
-type CombinationDirection = "horizontal" | "vertical" | "none";
 
 // Constants
 const TABLE_GRID_SPAN = 3; // Cellules par table
@@ -26,9 +20,6 @@ function getPosition(table: { positionX?: number; positionY?: number; gridX?: nu
   };
 }
 
-function getCombinationDirection(table: { combinationDirection?: CombinationDirection }): CombinationDirection {
-  return table.combinationDirection ?? "none";
-}
 
 // ═══════════════════════════════════════════════════════════════
 // QUERIES
@@ -202,7 +193,7 @@ export const create = mutation({
     positionY: v.number(),
     width: v.optional(v.number()),
     height: v.optional(v.number()),
-    combinationDirection: v.union(v.literal("horizontal"), v.literal("vertical"), v.literal("none")),
+    combinationDirection: v.optional(v.union(v.literal("horizontal"), v.literal("vertical"), v.literal("none"))),
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, "admin");
@@ -250,7 +241,6 @@ export const create = mutation({
       positionY: args.positionY,
       width: args.width,
       height: args.height,
-      combinationDirection: args.combinationDirection,
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -322,7 +312,6 @@ export const update = mutation({
     if (updates.positionY !== undefined) patch.positionY = updates.positionY;
     if (updates.width !== undefined) patch.width = updates.width;
     if (updates.height !== undefined) patch.height = updates.height;
-    if (updates.combinationDirection !== undefined) patch.combinationDirection = updates.combinationDirection;
 
     await ctx.db.patch(args.tableId, patch);
 
@@ -470,7 +459,6 @@ export const duplicate = mutation({
       positionY: pos.y,
       width: table.width,
       height: table.height,
-      combinationDirection: getCombinationDirection(table),
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -645,111 +633,3 @@ export const assignToReservation = mutation({
   },
 });
 
-/**
- * Find combinable tables for a party size starting from a table
- */
-export const findCombinableTables = query({
-  args: {
-    startTableId: v.id("tables"),
-    seatingSize: v.number(),
-    dateKey: v.string(),
-    service: v.union(v.literal("lunch"), v.literal("dinner")),
-  },
-  handler: async (ctx, { startTableId, seatingSize, dateKey, service }) => {
-    await requireRole(ctx, "admin");
-
-    const startTable = await ctx.db.get(startTableId);
-    if (!startTable) {
-      throw Errors.NOT_FOUND("tables", startTableId);
-    }
-
-    // If single table is enough
-    if (startTable.capacity >= seatingSize) {
-      return { tableIds: [startTableId], totalCapacity: startTable.capacity };
-    }
-
-    // If not combinable
-    if (startTable.combinationDirection === "none") {
-      return { tableIds: [startTableId], totalCapacity: startTable.capacity };
-    }
-
-    // Get all active tables
-    const allTables = await ctx.db
-      .query("tables")
-      .withIndex("by_restaurant_isActive", (q) =>
-        q.eq("restaurantId", startTable.restaurantId).eq("isActive", true)
-      )
-      .collect();
-
-    // Get occupied tables for this service
-    const reservations = await ctx.db
-      .query("reservations")
-      .withIndex("by_restaurant_date_service", (q) =>
-        q
-          .eq("restaurantId", startTable.restaurantId)
-          .eq("dateKey", dateKey)
-          .eq("service", service)
-      )
-      .collect();
-
-    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"];
-    const occupiedTableIds = new Set<string>();
-    for (const r of reservations) {
-      if (activeStatuses.includes(r.status)) {
-        for (const id of r.tableIds) {
-          occupiedTableIds.add(id);
-        }
-      }
-    }
-
-    // Find adjacent tables using the shared adjacency rule
-    const direction = getCombinationDirection(startTable);
-    const startPos = getPosition(startTable);
-
-    // Filter candidates (available, same direction, same zone)
-    const candidates = allTables
-      .filter(
-        (t) =>
-          t._id !== startTableId &&
-          !occupiedTableIds.has(t._id) &&
-          getCombinationDirection(t) === direction &&
-          t.zone === startTable.zone
-      )
-      .map((t) => {
-        const pos = getPosition(t);
-        return {
-          id: t._id as string,
-          capacity: t.capacity,
-          positionX: pos.x,
-          positionY: pos.y,
-          width: t.width,
-          height: t.height,
-        };
-      });
-
-    const result = findCombinationChain(
-      {
-        id: startTableId as string,
-        capacity: startTable.capacity,
-        positionX: startPos.x,
-        positionY: startPos.y,
-        width: startTable.width,
-        height: startTable.height,
-      },
-      candidates,
-      seatingSize,
-      direction
-    );
-
-    // No sufficient combination found: return the start table alone so the
-    // caller can detect totalCapacity < seatingSize.
-    if (!result) {
-      return { tableIds: [startTableId], totalCapacity: startTable.capacity };
-    }
-
-    return {
-      tableIds: result.tableIds as Id<"tables">[],
-      totalCapacity: result.totalCapacity,
-    };
-  },
-});

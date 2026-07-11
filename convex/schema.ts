@@ -37,7 +37,6 @@ const tableZone = v.union(
   v.literal("dining"),   // Deprecated, pour migration
   v.literal("terrace")   // Deprecated, pour migration
 );
-const combinationDirection = v.union(v.literal("horizontal"), v.literal("vertical"), v.literal("none"));
 
 const emailJobType = v.union(
   v.literal("reservation.confirmed"),
@@ -132,8 +131,8 @@ export default defineSchema({
     // Dimensions (en cellules, défaut 1x1)
     width: v.optional(v.number()),
     height: v.optional(v.number()),
-    // Combinaison de tables
-    combinationDirection: v.optional(combinationDirection),
+    // Deprecated: combinaison de tables (conservé pour migration)
+    combinationDirection: v.optional(v.union(v.literal("horizontal"), v.literal("vertical"), v.literal("none"))),
     // État
     isActive: v.boolean(),
     createdAt: v.optional(v.number()),

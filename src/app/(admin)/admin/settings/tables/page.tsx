@@ -14,7 +14,7 @@ import {
   FloorPlanStats,
   TableModal,
 } from "@/components/admin/floor-plan";
-import type { TableInfo, Zone, CombinationDirection } from "@/lib/types/tables";
+import type { TableInfo, Zone } from "@/lib/types/tables";
 import { TABLE_GRID_SPAN } from "@/lib/constants/grid";
 
 type ZoneFilter = "salle" | "terrasse";
@@ -51,7 +51,6 @@ export default function TablesPage() {
     positionY: t.positionY ?? (t.gridY ?? 0) * TABLE_GRID_SPAN,
     width: t.width ?? 1,
     height: t.height ?? 1,
-    combinationDirection: (t.combinationDirection ?? "none") as CombinationDirection,
     isActive: t.isActive,
   }));
 
@@ -95,7 +94,6 @@ export default function TablesPage() {
     zone: Zone;
     positionX: number;
     positionY: number;
-    combinationDirection: CombinationDirection;
   }) => {
     try {
       await createTable(data);
@@ -108,7 +106,6 @@ export default function TablesPage() {
     name: string;
     capacity: number;
     zone: Zone;
-    combinationDirection: CombinationDirection;
   }) => {
     if (!selectedTableId) return;
     try {

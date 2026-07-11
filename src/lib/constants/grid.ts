@@ -12,7 +12,6 @@ export const GRID_HEIGHT = GRID_ROWS * GRID_CELL_SIZE; // 800px
 
 export const Z_INDEX = {
   grid: 1,
-  combinationLines: 5,
   table: 10,
   tableSelected: 20,
   dropIndicator: 30,
@@ -35,9 +34,4 @@ export const ZONE_STYLES = {
     bgHex: "#d1fae5",
     borderHex: "#34d399",
   },
-} as const;
-
-export const COMBINATION_LINE_COLORS = {
-  horizontal: "#8B5CF6", // violet
-  vertical: "#3B82F6", // bleu
 } as const;
