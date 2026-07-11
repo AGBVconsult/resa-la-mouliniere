@@ -8,6 +8,8 @@ import { mutation, query } from "./_generated/server";
 import { requireRole } from "./lib/rbac";
 import { Errors } from "./lib/errors";
 import { computeSeatingSize } from "../spec/contracts.generated";
+import { findCombinationChain } from "../src/lib/floor-plan/combination";
+import type { Id } from "./_generated/dataModel";
 
 // Types
 type Zone = "salle" | "terrasse";
@@ -700,62 +702,54 @@ export const findCombinableTables = query({
       }
     }
 
-    // Find adjacent tables
-    const chain = [startTable];
-    let totalCapacity = startTable.capacity;
+    // Find adjacent tables using the shared adjacency rule
     const direction = getCombinationDirection(startTable);
     const startPos = getPosition(startTable);
 
-    // Filter candidates
-    const candidates = allTables.filter(
-      (t) =>
-        t._id !== startTableId &&
-        !occupiedTableIds.has(t._id) &&
-        getCombinationDirection(t) === direction &&
-        t.zone === startTable.zone
+    // Filter candidates (available, same direction, same zone)
+    const candidates = allTables
+      .filter(
+        (t) =>
+          t._id !== startTableId &&
+          !occupiedTableIds.has(t._id) &&
+          getCombinationDirection(t) === direction &&
+          t.zone === startTable.zone
+      )
+      .map((t) => {
+        const pos = getPosition(t);
+        return {
+          id: t._id as string,
+          capacity: t.capacity,
+          positionX: pos.x,
+          positionY: pos.y,
+          width: t.width,
+          height: t.height,
+        };
+      });
+
+    const result = findCombinationChain(
+      {
+        id: startTableId as string,
+        capacity: startTable.capacity,
+        positionX: startPos.x,
+        positionY: startPos.y,
+        width: startTable.width,
+        height: startTable.height,
+      },
+      candidates,
+      seatingSize,
+      direction
     );
 
-    // Sort by proximity
-    const sorted = candidates.sort((a, b) => {
-      const posA = getPosition(a);
-      const posB = getPosition(b);
-      if (direction === "horizontal") {
-        const distA = Math.abs(posA.y - startPos.y) * 100 + Math.abs(posA.x - startPos.x);
-        const distB = Math.abs(posB.y - startPos.y) * 100 + Math.abs(posB.x - startPos.x);
-        return distA - distB;
-      } else {
-        const distA = Math.abs(posA.x - startPos.x) * 100 + Math.abs(posA.y - startPos.y);
-        const distB = Math.abs(posB.x - startPos.x) * 100 + Math.abs(posB.y - startPos.y);
-        return distA - distB;
-      }
-    });
-
-    // Build chain
-    let lastAdded = startTable;
-    let lastPos = startPos;
-    for (const candidate of sorted) {
-      if (totalCapacity >= seatingSize) break;
-
-      const candPos = getPosition(candidate);
-      // Check adjacency
-      const isAdjacent =
-        direction === "horizontal"
-          ? candPos.y === lastPos.y &&
-            Math.abs(candPos.x - lastPos.x) === TABLE_GRID_SPAN
-          : candPos.x === lastPos.x &&
-            Math.abs(candPos.y - lastPos.y) === TABLE_GRID_SPAN;
-
-      if (isAdjacent) {
-        chain.push(candidate);
-        totalCapacity += candidate.capacity;
-        lastAdded = candidate;
-        lastPos = candPos;
-      }
+    // No sufficient combination found: return the start table alone so the
+    // caller can detect totalCapacity < seatingSize.
+    if (!result) {
+      return { tableIds: [startTableId], totalCapacity: startTable.capacity };
     }
 
     return {
-      tableIds: chain.map((t) => t._id),
-      totalCapacity,
+      tableIds: result.tableIds as Id<"tables">[],
+      totalCapacity: result.totalCapacity,
     };
   },
 });

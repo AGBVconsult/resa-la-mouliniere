@@ -15,6 +15,7 @@ import {
 } from "@/lib/constants/grid";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
+import { findCombinationChain, type CombinableTable } from "@/lib/floor-plan/combination";
 
 interface ServiceFloorPlanProps {
   dateKey: string;
@@ -154,90 +155,54 @@ export function ServiceFloorPlan({
     return () => observer.disconnect();
   }, [hideHeader, gridLayout.width, gridLayout.height]);
 
-  // Find adjacent combinable tables - analyzes both directions and picks the best option
-  // The clicked table is always included, then we find the best combination (forward or backward)
+  // Find adjacent combinable tables using the shared adjacency rule.
+  // Returns null when the target capacity cannot be reached (no partial chains).
   const findCombinableTables = useMemo(() => {
-    if (!tableStates) return () => [];
-    
-    return (clickedTableId: string, partySize: number): string[] => {
+    if (!tableStates) return () => null;
+
+    return (clickedTableId: string, seatingSize: number): string[] | null => {
       const clickedTable = tableStates.tables.find((t) => t.tableId === clickedTableId);
-      if (!clickedTable) return [clickedTableId];
-      
-      // If table has no combination direction, just return the clicked table
-      if (clickedTable.combinationDirection === "none") {
-        return [clickedTableId];
-      }
-      
-      // Find all tables with same combination direction in same zone
-      const combinableTables = tableStates.tables.filter((t) => {
-        const normalizedZone = t.zone === "dining" ? "salle" : t.zone === "terrace" ? "terrasse" : t.zone;
-        const clickedNormalizedZone = clickedTable.zone === "dining" ? "salle" : clickedTable.zone === "terrace" ? "terrasse" : clickedTable.zone;
-        return (
-          normalizedZone === clickedNormalizedZone &&
-          t.combinationDirection === clickedTable.combinationDirection &&
-          t.isActive &&
-          t.status !== "seated" &&
-          t.status !== "blocked"
-        );
-      });
-      
-      // Sort by position to find adjacent tables
-      const isHorizontal = clickedTable.combinationDirection === "horizontal";
-      const sorted = [...combinableTables].sort((a, b) => {
-        if (isHorizontal) {
-          return a.positionX - b.positionX;
-        }
-        return a.positionY - b.positionY;
-      });
-      
-      // Find the clicked table index
-      const clickedIndex = sorted.findIndex((t) => t.tableId === clickedTableId);
-      if (clickedIndex === -1) return [clickedTableId];
-      
-      // Helper to check if two tables are adjacent
-      const areAdjacent = (t1: typeof sorted[0], t2: typeof sorted[0]): boolean => {
-        const t1Size = isHorizontal ? (t1.width ?? 1) : (t1.height ?? 1);
-        const t1End = isHorizontal 
-          ? t1.positionX + t1Size * TABLE_GRID_SPAN
-          : t1.positionY + t1Size * TABLE_GRID_SPAN;
-        const t2Start = isHorizontal ? t2.positionX : t2.positionY;
-        return t2Start - t1End <= TABLE_GRID_SPAN;
-      };
-      
-      // Try FORWARD combination (clicked table + tables after)
-      const forwardResult: string[] = [clickedTableId];
-      let forwardCapacity = clickedTable.capacity;
-      for (let i = clickedIndex + 1; i < sorted.length && forwardCapacity < partySize; i++) {
-        const table = sorted[i];
-        const prevTable = sorted[i - 1];
-        if (!areAdjacent(prevTable, table)) break;
-        forwardResult.push(table.tableId);
-        forwardCapacity += table.capacity;
-      }
-      
-      // Try BACKWARD combination (clicked table + tables before)
-      const backwardResult: string[] = [clickedTableId];
-      let backwardCapacity = clickedTable.capacity;
-      for (let i = clickedIndex - 1; i >= 0 && backwardCapacity < partySize; i--) {
-        const table = sorted[i];
-        const nextTable = sorted[i + 1];
-        if (!areAdjacent(table, nextTable)) break;
-        backwardResult.unshift(table.tableId);
-        backwardCapacity += table.capacity;
-      }
-      
-      // Choose the best option:
-      // 1. If forward meets capacity, use forward
-      // 2. If backward meets capacity but forward doesn't, use backward
-      // 3. If neither meets capacity, use the one with more capacity
-      if (forwardCapacity >= partySize) {
-        return forwardResult;
-      }
-      if (backwardCapacity >= partySize) {
-        return backwardResult;
-      }
-      // Neither meets capacity - return the one with more capacity
-      return forwardCapacity >= backwardCapacity ? forwardResult : backwardResult;
+      if (!clickedTable) return null;
+
+      const direction = clickedTable.combinationDirection ?? "none";
+      const clickedNormalizedZone = clickedTable.zone === "dining" ? "salle" : clickedTable.zone === "terrace" ? "terrasse" : clickedTable.zone;
+
+      // Candidates: free tables with same combination direction in same zone
+      const candidates: CombinableTable[] = tableStates.tables
+        .filter((t) => {
+          const normalizedZone = t.zone === "dining" ? "salle" : t.zone === "terrace" ? "terrasse" : t.zone;
+          return (
+            t.tableId !== clickedTableId &&
+            normalizedZone === clickedNormalizedZone &&
+            (t.combinationDirection ?? "none") === direction &&
+            t.isActive &&
+            t.status === "free"
+          );
+        })
+        .map((t) => ({
+          id: t.tableId,
+          capacity: t.capacity,
+          positionX: t.positionX,
+          positionY: t.positionY,
+          width: t.width,
+          height: t.height,
+        }));
+
+      const result = findCombinationChain(
+        {
+          id: clickedTableId,
+          capacity: clickedTable.capacity,
+          positionX: clickedTable.positionX,
+          positionY: clickedTable.positionY,
+          width: clickedTable.width,
+          height: clickedTable.height,
+        },
+        candidates,
+        seatingSize,
+        direction
+      );
+
+      return result ? result.tableIds : null;
     };
   }, [tableStates]);
 
@@ -274,6 +239,10 @@ export function ServiceFloorPlan({
     
     const seatingSize = editingTable.partySize - editingTable.babyCount;
     const tablesToSelect = findCombinableTables(targetTableId, seatingSize);
+    if (!tablesToSelect) {
+      toast.error(`Capacité insuffisante pour ${seatingSize} couverts sur cette table (ou ses tables combinables)`);
+      return;
+    }
     
     setIsAssigning(true);
     try {
@@ -389,6 +358,10 @@ export function ServiceFloorPlan({
     // Auto-select combinable tables based on seating size (exclude babies)
     const seatingSize = selectedPartySize ?? 4;
     const tablesToSelect = findCombinableTables(tableId, seatingSize);
+    if (!tablesToSelect) {
+      toast.error(`Capacité insuffisante pour ${seatingSize} couverts sur cette table (ou ses tables combinables)`);
+      return;
+    }
     
     // Assign directly
     setIsAssigning(true);

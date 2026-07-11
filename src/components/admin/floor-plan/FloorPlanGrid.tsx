@@ -11,6 +11,7 @@ import {
   COMBINATION_LINE_COLORS,
   TABLE_GRID_SPAN,
 } from "@/lib/constants/grid";
+import { areTablesAdjacent } from "@/lib/floor-plan/combination";
 import { FloorPlanTable } from "./FloorPlanTable";
 import { FloorPlanDropIndicator } from "./FloorPlanDropIndicator";
 import { useFloorPlanContext } from "./FloorPlanProvider";
@@ -102,22 +103,11 @@ function FloorPlanGridInner({
       const centerX = table.positionX * GRID_CELL_SIZE + tableWidth / 2;
       const centerY = table.positionY * GRID_CELL_SIZE + tableHeight / 2;
 
-      // Find adjacent table
+      // Find adjacent table (shared adjacency rule)
       const adjacent = tables.find((t) => {
         if (!t.isActive || t._id === table._id) return false;
         if (t.combinationDirection !== table.combinationDirection) return false;
-
-        if (table.combinationDirection === "horizontal") {
-          return (
-            t.positionY === table.positionY &&
-            t.positionX === table.positionX + TABLE_GRID_SPAN * (table.width ?? 1)
-          );
-        } else {
-          return (
-            t.positionX === table.positionX &&
-            t.positionY === table.positionY + TABLE_GRID_SPAN * (table.height ?? 1)
-          );
-        }
+        return areTablesAdjacent(table, t, table.combinationDirection);
       });
 
       if (adjacent) {

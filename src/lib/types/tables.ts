@@ -18,7 +18,7 @@ export interface Table {
   positionY: number;
   width?: number;
   height?: number;
-  combinationDirection: CombinationDirection;
+  combinationDirection?: CombinationDirection;
   isActive: boolean;
   createdAt: number;
   updatedAt: number;
