@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import type { Id, Doc } from "./_generated/dataModel";
 import { Errors } from "./lib/errors";
 import { internal } from "./_generated/api";
-import { computeSeatingSize } from "../spec/contracts.generated";
+
 
 /**
  * PRD-004: Floor Plan Module
@@ -212,14 +212,7 @@ export const assign = mutation({
       }
     }
 
-    // 5. Check total capacity (seatingSize excludes babies — they use high chairs, not seats)
-    const totalCapacity = tables.reduce((sum, t) => sum + (t?.capacity ?? 0), 0);
-    const seatingSize = computeSeatingSize(reservation.adults, reservation.childrenCount);
-    if (totalCapacity < seatingSize) {
-      throw Errors.INSUFFICIENT_TABLE_CAPACITY(totalCapacity, seatingSize);
-    }
-
-    // 6. Check for conflicts (other reservations on same tables, same service)
+    // 5. Check for conflicts (other reservations on same tables, same service)
     const allReservations = await ctx.db
       .query("reservations")
       .withIndex("by_restaurant_date_service", (q) =>
@@ -403,16 +396,6 @@ export const checkAssignment = query({
       }
     }
 
-    // Check capacity (seatingSize excludes babies — they use high chairs, not seats)
-    const totalCapacity = tables.reduce((sum, t) => sum + (t?.capacity ?? 0), 0);
-    const seatingSize = computeSeatingSize(reservation.adults, reservation.childrenCount);
-    if (totalCapacity < seatingSize) {
-      return {
-        valid: false,
-        error: `INSUFFICIENT_CAPACITY|${totalCapacity}|${seatingSize}`,
-      };
-    }
-
     // Check conflicts
     const allReservations = await ctx.db
       .query("reservations")
@@ -453,7 +436,6 @@ export const checkAssignment = query({
 
     return {
       valid: true,
-      totalCapacity,
       partySize: reservation.partySize,
       tableNames: tables.map((t) => t?.name),
     };

@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
-import { Users, X, Check, AlertTriangle } from "lucide-react";
+import { Users, X, Check } from "lucide-react";
 import {
   GRID_CELL_SIZE,
   TABLE_SIZE,
@@ -161,20 +161,6 @@ export function ServiceFloorPlan({
     setPendingTableIds([]);
   }, [selectedReservationId, editingTable?.reservationId, activeZone, dateKey, service]);
 
-  // Capacity of the current pending selection (informative, non-blocking)
-  const pendingCapacity = useMemo(
-    () =>
-      pendingTableIds.reduce(
-        (sum, id) => sum + (filteredTables.find((t) => t.tableId === id)?.capacity ?? 0),
-        0
-      ),
-    [pendingTableIds, filteredTables]
-  );
-
-  // Seating size of the reservation being assigned/moved (babies excluded)
-  const targetSeatingSize = editingTable
-    ? editingTable.partySize - editingTable.babyCount
-    : selectedPartySize ?? null;
 
   // Toggle a table in the pending selection
   const togglePendingTable = (tableId: string) => {
@@ -362,19 +348,12 @@ export function ServiceFloorPlan({
   // Selection banner (confirm/cancel the pending multi-table selection)
   const renderSelectionBanner = () => {
     if (pendingTableIds.length === 0) return null;
-    const insufficient = targetSeatingSize !== null && pendingCapacity < targetSeatingSize;
 
     return (
       <div className="flex items-center gap-3 bg-white rounded-xl shadow-lg border border-gray-200 px-4 py-2">
         <span className="text-sm font-medium whitespace-nowrap">
-          {pendingTableIds.length} table{pendingTableIds.length > 1 ? "s" : ""} · {pendingCapacity} place{pendingCapacity > 1 ? "s" : ""}
+          {pendingTableIds.length} table{pendingTableIds.length > 1 ? "s" : ""}
         </span>
-        {insufficient && (
-          <span className="text-xs text-orange-600 flex items-center gap-1 whitespace-nowrap">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            {targetSeatingSize} couverts attendus
-          </span>
-        )}
         <button
           onClick={editingTable ? handleConfirmMove : handleConfirmAssign}
           disabled={isAssigning}
