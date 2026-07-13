@@ -990,10 +990,9 @@ export default function TabletReservationsPage() {
         <div className="flex items-center gap-2 ml-auto">
           <button
             onClick={() => setShowCreatePopup(true)}
-            className="h-[52px] px-5 bg-emerald-500 hover:bg-emerald-600 rounded-full shadow-sm flex items-center gap-2 text-white font-semibold transition-all active:scale-95"
+            className="w-[52px] h-[52px] bg-emerald-500 hover:bg-emerald-600 rounded-full shadow-sm flex items-center justify-center text-white transition-all active:scale-95"
           >
-            <Plus size={20} strokeWidth={2.5} />
-            <span className="text-sm">Réservation</span>
+            <Plus size={22} strokeWidth={2.5} />
           </button>
           <TabletNotificationBell
             onNavigateToReservation={(dateKey, service, reservationId) => {
