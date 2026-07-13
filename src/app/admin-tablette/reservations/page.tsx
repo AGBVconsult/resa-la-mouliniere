@@ -64,6 +64,7 @@ import { EditReservationPopup } from "../components/EditReservationPopup";
 import { DaySettingsPopup } from "../components/DaySettingsPopup";
 import { ClientSearchPopup } from "../components/ClientSearchPopup";
 import { ClientModal } from "@/components/admin/ClientModal";
+import { TabletNotificationBell } from "../components/TabletNotificationBell";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -984,6 +985,14 @@ export default function TabletReservationsPage() {
 
         {/* Search + Settings + Map - aligné à droite */}
         <div className="flex items-center gap-2 ml-auto">
+          <TabletNotificationBell
+            onNavigateToReservation={(dateKey, service, reservationId) => {
+              const [y, m, d] = dateKey.split("-").map(Number);
+              setSelectedDate(new Date(y, m - 1, d));
+              setSelectedService(service);
+              setHighlightedReservationId(reservationId);
+            }}
+          />
           <button
             onClick={() => setShowClientSearch(true)}
             className="w-[52px] h-[52px] bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
