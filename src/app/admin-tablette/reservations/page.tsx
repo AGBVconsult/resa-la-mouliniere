@@ -51,6 +51,7 @@ import {
   Timer,
   Coffee,
   Search,
+  Plus,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ import { DaySettingsPopup } from "../components/DaySettingsPopup";
 import { ClientSearchPopup } from "../components/ClientSearchPopup";
 import { ClientModal } from "@/components/admin/ClientModal";
 import { TabletNotificationBell } from "../components/TabletNotificationBell";
+import { TabletCreateReservationPopup } from "../components/TabletCreateReservationPopup";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -216,6 +218,7 @@ export default function TabletReservationsPage() {
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showClientSearch, setShowClientSearch] = useState(false);
+  const [showCreatePopup, setShowCreatePopup] = useState(false);
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ReservationStatus>>({});
   const [selectedClientModal, setSelectedClientModal] = useState<{ clientId: Id<"clients">; reservationId: Id<"reservations"> } | null>(null);
 
@@ -985,6 +988,13 @@ export default function TabletReservationsPage() {
 
         {/* Search + Settings + Map - aligné à droite */}
         <div className="flex items-center gap-2 ml-auto">
+          <button
+            onClick={() => setShowCreatePopup(true)}
+            className="h-[52px] px-5 bg-emerald-500 hover:bg-emerald-600 rounded-full shadow-sm flex items-center gap-2 text-white font-semibold transition-all active:scale-95"
+          >
+            <Plus size={20} strokeWidth={2.5} />
+            <span className="text-sm">Réservation</span>
+          </button>
           <TabletNotificationBell
             onNavigateToReservation={(dateKey, service, reservationId) => {
               const [y, m, d] = dateKey.split("-").map(Number);
@@ -1124,6 +1134,16 @@ export default function TabletReservationsPage() {
             setShowClientSearch(false);
             setSelectedClientModal({ clientId, reservationId: "" as any });
           }}
+        />
+      )}
+
+      {/* Create Reservation Popup */}
+      {showCreatePopup && (
+        <TabletCreateReservationPopup
+          defaultDateKey={dateKey}
+          defaultService={selectedService === "dinner" ? "dinner" : "lunch"}
+          onClose={() => setShowCreatePopup(false)}
+          onSuccess={() => setShowCreatePopup(false)}
         />
       )}
 

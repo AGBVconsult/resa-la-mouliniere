@@ -1522,6 +1522,173 @@ export const importReservation = mutation({
 });
 
 /**
+ * Quick manual reservation from the tablet.
+ * Non-blocking: does NOT require the slot to exist, does NOT check capacity
+ * or open state. Contact fields are optional. Confirmation email is sent
+ * only when a non-empty email is provided.
+ *
+ * Autorisation: admin|owner
+ */
+export const createReservationQuick = mutation({
+  args: {
+    dateKey: v.string(),
+    service: v.union(v.literal("lunch"), v.literal("dinner")),
+    timeKey: v.string(),
+    adults: v.number(),
+    childrenCount: v.number(),
+    babyCount: v.number(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    language: v.union(
+      v.literal("fr"), v.literal("nl"), v.literal("en"),
+      v.literal("de"), v.literal("it")
+    ),
+    note: v.optional(v.string()),
+    options: v.optional(v.array(v.string())),
+    source: v.union(v.literal("admin"), v.literal("phone"), v.literal("walkin")),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
+
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(1);
+    if (activeRestaurants.length === 0) throw Errors.NO_ACTIVE_RESTAURANT();
+    const restaurant = activeRestaurants[0];
+
+    const settings = await ctx.db
+      .query("settings")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", restaurant._id))
+      .unique();
+    if (!settings) throw Errors.SETTINGS_NOT_FOUND();
+
+    const slotKey = makeSlotKey({
+      dateKey: args.dateKey,
+      service: args.service,
+      timeKey: args.timeKey,
+    });
+
+    // NON-BLOQUANT : on ne vérifie ni l'existence du créneau, ni la capacité,
+    // ni l'état d'ouverture. C'est le comportement voulu pour la saisie rapide.
+
+    const partySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
+    const now = Date.now();
+
+    const email = args.email?.trim() ?? "";
+    const phone = args.phone?.trim() ?? "";
+    const hasEmail = email.length > 0;
+    const hasPhone = phone.length > 0;
+
+    const formattedFirstName = capitalizeName(args.firstName?.trim() ?? "");
+    const formattedLastName = capitalizeName(args.lastName?.trim() ?? "");
+    const formattedPhone = hasPhone ? formatPhoneNumber(phone) : "";
+
+    // Ne rattacher/créer un client QUE si un téléphone est fourni
+    let clientId: Id<"clients"> | undefined = undefined;
+    if (hasPhone) {
+      clientId = await getOrCreateClientIdFromReservation(ctx, {
+        firstName: formattedFirstName,
+        lastName: formattedLastName,
+        email,
+        phone: formattedPhone,
+        language: args.language as Language,
+        source: args.source,
+      });
+    }
+
+    const status = "confirmed";
+
+    const reservationId = await ctx.db.insert("reservations", {
+      restaurantId: restaurant._id,
+      dateKey: args.dateKey,
+      service: args.service,
+      timeKey: args.timeKey,
+      slotKey,
+      clientId,
+      adults: args.adults,
+      childrenCount: args.childrenCount,
+      babyCount: args.babyCount,
+      partySize,
+      firstName: formattedFirstName,
+      lastName: formattedLastName,
+      email,
+      phone: formattedPhone,
+      language: args.language,
+      note: args.note?.trim() || undefined,
+      options: args.options ?? [],
+      status,
+      source: args.source,
+      tableIds: [],
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+      cancelledAt: null,
+      refusedAt: null,
+      seatedAt: null,
+      completedAt: null,
+      noshowAt: null,
+      markedNoshowAt: null,
+    });
+
+    // Manage token
+    const manageToken = generateSecureToken();
+    const slotStartAt = computeSlotStartAt(args.dateKey, args.timeKey, restaurant.timezone);
+    const tokenExpiresAt = computeTokenExpiry(slotStartAt, settings.manageTokenExpireBeforeSlotMs);
+    await ctx.db.insert("reservationTokens", {
+      reservationId, token: manageToken, type: "manage",
+      expiresAt: tokenExpiresAt, usedAt: null, rotatedAt: null, createdAt: now,
+    });
+
+    await ctx.db.insert("reservationEvents", {
+      reservationId,
+      restaurantId: restaurant._id,
+      eventType: "created",
+      fromStatus: undefined,
+      toStatus: status,
+      scheduledTime: args.timeKey,
+      actualTime: now,
+      performedBy: "admin",
+      metadata: { source: args.source, quick: true },
+      createdAt: now,
+    });
+
+    // Email UNIQUEMENT si email renseigné
+    if (hasEmail) {
+      await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
+        restaurantId: restaurant._id,
+        type: "reservation.confirmed",
+        to: email,
+        subjectKey: "email.reservation.confirmed.subject",
+        templateKey: "reservation.confirmed",
+        templateData: {
+          firstName: formattedFirstName,
+          lastName: formattedLastName,
+          dateKey: args.dateKey,
+          timeKey: args.timeKey,
+          service: args.service,
+          partySize,
+          adults: args.adults,
+          childrenCount: args.childrenCount,
+          babyCount: args.babyCount,
+          language: args.language,
+          manageUrl: `${settings.appUrl ?? ""}/reservation/${manageToken}`,
+          editUrl: `${settings.appUrl ?? ""}/reservation/${manageToken}/edit`,
+          cancelUrl: `${settings.appUrl ?? ""}/reservation/${manageToken}/cancel`,
+          note: args.note?.trim() ?? "",
+          options: args.options ?? [],
+        },
+        dedupeKey: `email:reservation.confirmed:${reservationId}:1`,
+      });
+    }
+
+    return { reservationId, status, manageToken };
+  },
+});
+
+/**
  * List pending reservations for notification bell.
  * Returns all reservations with status "pending" for the active restaurant.
  * 
