@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Loader2, Users, Clock, Calendar, MessageSquare, Phone, Mail } from "lucide-react";
+import { CalendarPopup } from "./CalendarPopup";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -58,6 +59,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
   const updateReservationFull = useMutation(api.admin.updateReservationFull);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [formData, setFormData] = useState({
     dateKey: reservation.dateKey,
     service: reservation.service,
@@ -143,12 +145,14 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
                 <Calendar size={14} className="inline mr-1" />
                 Date
               </label>
-              <input
-                type="date"
-                value={formData.dateKey}
-                onChange={(e) => setFormData((prev) => ({ ...prev, dateKey: e.target.value }))}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
+              <button
+                type="button"
+                onClick={() => setShowCalendar(true)}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-left flex items-center gap-2 hover:bg-slate-50 active:scale-[0.98] transition-all"
+              >
+                <Calendar size={16} className="text-slate-400 shrink-0" />
+                {new Date(formData.dateKey + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" })}
+              </button>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
@@ -392,6 +396,12 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
           </Button>
         </div>
       </div>
+      <CalendarPopup
+        isOpen={showCalendar}
+        onClose={() => setShowCalendar(false)}
+        onSelectDate={(dk) => setFormData((prev) => ({ ...prev, dateKey: dk }))}
+        selectedDateKey={formData.dateKey}
+      />
     </>
   );
 }

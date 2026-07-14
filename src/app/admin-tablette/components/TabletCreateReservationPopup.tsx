@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useMutation } from "convex/react";
-import { X, Loader2, Plus, Minus, Check } from "lucide-react";
+import { X, Loader2, Plus, Minus, Check, Calendar } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
+import { CalendarPopup } from "./CalendarPopup";
 
 interface Props {
   defaultDateKey: string;
@@ -57,6 +58,7 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, o
   const [source, setSource] = useState<SourceValue>("walkin");
   const [note, setNote] = useState("");
   const [options, setOptions] = useState<string[]>([]);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const timeSlots = service === "lunch" ? TIME_SLOTS_LUNCH : TIME_SLOTS_DINNER;
   const partySize = adults + children + babies;
@@ -123,8 +125,14 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, o
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Date</label>
-              <input type="date" value={dateKey} onChange={(e) => setDateKey(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <button
+                type="button"
+                onClick={() => setShowCalendar(true)}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-left flex items-center gap-2 hover:bg-slate-50 active:scale-[0.98] transition-all"
+              >
+                <Calendar size={16} className="text-slate-400 shrink-0" />
+                {new Date(dateKey + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" })}
+              </button>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Service</label>
@@ -243,6 +251,12 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, o
           </button>
         </div>
       </div>
+      <CalendarPopup
+        isOpen={showCalendar}
+        onClose={() => setShowCalendar(false)}
+        onSelectDate={(dk) => setDateKey(dk)}
+        selectedDateKey={dateKey}
+      />
     </>
   );
 }
