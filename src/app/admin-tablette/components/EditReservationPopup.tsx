@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X, Loader2, Users, Clock, Calendar, MessageSquare, Phone, Mail } from "lucide-react";
-import { CalendarPopup } from "./CalendarPopup";
+import { SimpleDatePicker } from "./SimpleDatePicker";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -396,7 +396,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
           </Button>
         </div>
       </div>
-      <CalendarPopup
+      <SimpleDatePicker
         isOpen={showCalendar}
         onClose={() => setShowCalendar(false)}
         onSelectDate={(dk) => setFormData((prev) => ({ ...prev, dateKey: dk }))}

@@ -7,7 +7,7 @@ import { api } from "../../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
-import { CalendarPopup } from "./CalendarPopup";
+import { SimpleDatePicker } from "./SimpleDatePicker";
 
 interface Props {
   defaultDateKey: string;
@@ -251,7 +251,7 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, o
           </button>
         </div>
       </div>
-      <CalendarPopup
+      <SimpleDatePicker
         isOpen={showCalendar}
         onClose={() => setShowCalendar(false)}
         onSelectDate={(dk) => setDateKey(dk)}
