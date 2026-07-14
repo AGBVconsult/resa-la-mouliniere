@@ -10,6 +10,7 @@ import type { ReservationStatus, Language } from "../spec/contracts.generated";
 import { makeSlotKey, computePartySize, computeEffectiveOpen } from "../spec/contracts.generated";
 import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./lib/tokens";
 import { capitalizeName, formatPhoneNumber } from "./lib/formatters";
+import { getTodayDateKey } from "./lib/dateUtils";
 
 const CRM_SCORE_VERSION = "v1";
 
@@ -1710,13 +1711,18 @@ export const listPendingReservations = query({
 
     const restaurant = activeRestaurants[0];
 
-    const pendingReservations = await ctx.db
+    const allPending = await ctx.db
       .query("reservations")
       .withIndex("by_restaurant_status", (q) =>
         q.eq("restaurantId", restaurant._id).eq("status", "pending")
       )
       .order("desc")
       .collect();
+
+    // Exclure les réservations antérieures à aujourd'hui
+    const timezone = restaurant.timezone ?? "Europe/Brussels";
+    const todayKey = getTodayDateKey(timezone);
+    const pendingReservations = allPending.filter((r) => r.dateKey >= todayKey);
 
     // Batch lookup clients by phone for totalVisits and clientId
     const phoneSet = new Set(pendingReservations.map((doc) => normalizePhone(doc.phone)));
