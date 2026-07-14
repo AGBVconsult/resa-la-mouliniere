@@ -7,6 +7,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireRole } from "./lib/rbac";
 import { Errors } from "./lib/errors";
+import { getTodayDateKey } from "./lib/dateUtils";
 import type { Id } from "./_generated/dataModel";
 
 // Constants
@@ -340,21 +341,24 @@ export const remove = mutation({
       throw Errors.NOT_FOUND("tables", tableId);
     }
 
-    // Check if table is assigned to any active reservation
-    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"] as const;
-    let hasActiveReservation = false;
-    for (const status of activeStatuses) {
-      const reservations = await ctx.db
-        .query("reservations")
-        .withIndex("by_restaurant_status", (q) =>
-          q.eq("restaurantId", table.restaurantId).eq("status", status)
-        )
-        .collect();
-      if (reservations.some((r) => r.tableIds.includes(tableId))) {
-        hasActiveReservation = true;
-        break;
-      }
-    }
+    // Ne bloquer que sur les réservations en cours ou à venir.
+    // La requête bornée à aujourd'hui+ (via l'index date) évite le
+    // dépassement de la limite de lecture Convex ("Server Error").
+    const restaurant = await ctx.db.get(table.restaurantId);
+    const todayKey = getTodayDateKey(restaurant?.timezone ?? "Europe/Brussels");
+
+    const activeStatuses = new Set(["pending", "confirmed", "cardPlaced", "seated"]);
+
+    const upcomingReservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", table.restaurantId).gte("dateKey", todayKey)
+      )
+      .collect();
+
+    const hasActiveReservation = upcomingReservations.some(
+      (r) => activeStatuses.has(r.status) && r.tableIds.includes(tableId)
+    );
 
     if (hasActiveReservation) {
       throw Errors.INVALID_INPUT(
