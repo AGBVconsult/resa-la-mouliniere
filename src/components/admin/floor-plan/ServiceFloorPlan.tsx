@@ -16,6 +16,35 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 
+function computeGridLayout(
+  tables: Array<{ positionX: number; positionY: number; width?: number; height?: number; status: string }>
+) {
+  if (tables.length === 0) return { width: 400, height: 200, offsetX: 0, offsetY: 0 };
+
+  const active = tables.filter((t) => t.status !== "blocked");
+  const bbox = active.length > 0 ? active : tables;
+
+  let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
+  for (const t of bbox) {
+    const w = (t.width ?? 1) * TABLE_GRID_SPAN;
+    const h = (t.height ?? 1) * TABLE_GRID_SPAN;
+    if (t.positionX < minX) minX = t.positionX;
+    if (t.positionY < minY) minY = t.positionY;
+    if (t.positionX + w > maxX) maxX = t.positionX + w;
+    if (t.positionY + h > maxY) maxY = t.positionY + h;
+  }
+
+  const pad = 2;
+  const originX = Math.max(minX - pad, 0);
+  const originY = Math.max(minY - pad, 0);
+  return {
+    width: Math.min(Math.max((maxX - originX + pad) * GRID_CELL_SIZE, 400), GRID_WIDTH),
+    height: Math.min(Math.max((maxY - originY + pad) * GRID_CELL_SIZE, 200), GRID_HEIGHT),
+    offsetX: originX * GRID_CELL_SIZE,
+    offsetY: originY * GRID_CELL_SIZE,
+  };
+}
+
 interface ServiceFloorPlanProps {
   dateKey: string;
   service: "lunch" | "dinner";
@@ -91,72 +120,44 @@ export function ServiceFloorPlan({
     });
   }, [tableStates, activeZone]);
 
-  // Calculate dynamic grid dimensions and offset based on filtered table positions
-  // Only active (non-blocked) tables drive the bounding box — blocked tables at
-  // default position (0,0) would otherwise stretch the grid to the origin.
-  const gridLayout = useMemo(() => {
-    if (filteredTables.length === 0) {
-      return { width: 400, height: 200, offsetX: 0, offsetY: 0 };
-    }
+  // Bbox de la zone active (dimensions + offset du conteneur affiché)
+  const gridLayout = useMemo(() => computeGridLayout(filteredTables), [filteredTables]);
 
-    // Use only active tables for the bounding box
-    const activeTables = filteredTables.filter((t) => t.status !== "blocked");
-    const bboxTables = activeTables.length > 0 ? activeTables : filteredTables;
+  // Tables de la SALLE, indépendamment de la zone active → référence de taille
+  const salleTables = useMemo(() => {
+    if (!tableStates) return [];
+    return tableStates.tables.filter((t) => {
+      const z = t.zone === "dining" ? "salle" : t.zone === "terrace" ? "terrasse" : t.zone;
+      return z === "salle" && !/^D[0-9-]/.test(t.name);
+    });
+  }, [tableStates]);
 
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = 0;
-    let maxY = 0;
-
-    for (const table of bboxTables) {
-      const tableWidth = (table.width ?? 1) * TABLE_GRID_SPAN;
-      const tableHeight = (table.height ?? 1) * TABLE_GRID_SPAN;
-      const tableEndX = table.positionX + tableWidth;
-      const tableEndY = table.positionY + tableHeight;
-
-      if (table.positionX < minX) minX = table.positionX;
-      if (table.positionY < minY) minY = table.positionY;
-      if (tableEndX > maxX) maxX = tableEndX;
-      if (tableEndY > maxY) maxY = tableEndY;
-    }
-
-    const paddingCells = 2;
-    const originX = Math.max(minX - paddingCells, 0);
-    const originY = Math.max(minY - paddingCells, 0);
-    const croppedWidth = Math.max((maxX - originX + paddingCells) * GRID_CELL_SIZE, 400);
-    const croppedHeight = Math.max((maxY - originY + paddingCells) * GRID_CELL_SIZE, 200);
-
-    return {
-      width: Math.min(croppedWidth, GRID_WIDTH),
-      height: Math.min(croppedHeight, GRID_HEIGHT),
-      offsetX: originX * GRID_CELL_SIZE,
-      offsetY: originY * GRID_CELL_SIZE,
-    };
-  }, [filteredTables]);
+  const referenceLayout = useMemo(() => computeGridLayout(salleTables), [salleTables]);
 
   // Tablet mode: observe container and compute scale to fill available space
+  // Scale basé sur referenceLayout (Salle) pour taille de tables identique entre zones
   useEffect(() => {
     if (!hideHeader) return;
     const el = tabletContainerRef.current;
     if (!el) return;
 
-    const PADDING = 32; // 16px * 2 (p-4)
+    const PADDING = 32;
     const compute = () => {
       const rect = el.getBoundingClientRect();
       const availableW = rect.width - PADDING;
       const availableH = rect.height - PADDING;
-      if (availableW > 0 && availableH > 0 && gridLayout.width > 0 && gridLayout.height > 0) {
-        const scaleX = availableW / gridLayout.width;
-        const scaleY = availableH / gridLayout.height;
+      if (availableW > 0 && availableH > 0 && referenceLayout.width > 0 && referenceLayout.height > 0) {
+        const scaleX = availableW / referenceLayout.width;
+        const scaleY = availableH / referenceLayout.height;
         setTabletScale(Math.min(scaleX, scaleY));
       }
     };
 
     const observer = new ResizeObserver(compute);
     observer.observe(el);
-    compute(); // immediate first calculation
+    compute();
     return () => observer.disconnect();
-  }, [hideHeader, gridLayout.width, gridLayout.height]);
+  }, [hideHeader, referenceLayout.width, referenceLayout.height]);
 
   // Reset pending selection whenever the assignment context changes
   useEffect(() => {
@@ -468,13 +469,13 @@ export function ServiceFloorPlan({
   if (hideHeader) {
     return (
       <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center p-4">
-        {/* Switch de zone Salle / Terrasse — overlay flottant (mode tablette) */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 bg-white/90 backdrop-blur-md rounded-xl p-1 shadow-lg border border-white/40">
+        {/* Switch de zone — pilule, aligné à droite */}
+        <div className="absolute top-3 right-3 z-30 flex items-center gap-1 bg-white/90 backdrop-blur-md rounded-full p-1 shadow-lg border border-white/40">
           <button
             type="button"
             onClick={() => setActiveZone("salle")}
             className={cn(
-              "px-5 py-2 text-sm font-semibold rounded-lg transition-all active:scale-95",
+              "px-5 py-2 text-sm font-semibold rounded-full transition-all active:scale-95",
               activeZone === "salle"
                 ? "bg-slate-800 text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-800"
@@ -486,7 +487,7 @@ export function ServiceFloorPlan({
             type="button"
             onClick={() => setActiveZone("terrasse")}
             className={cn(
-              "px-5 py-2 text-sm font-semibold rounded-lg transition-all active:scale-95",
+              "px-5 py-2 text-sm font-semibold rounded-full transition-all active:scale-95",
               activeZone === "terrasse"
                 ? "bg-slate-800 text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-800"
