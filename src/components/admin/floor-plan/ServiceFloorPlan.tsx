@@ -468,6 +468,34 @@ export function ServiceFloorPlan({
   if (hideHeader) {
     return (
       <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center p-4">
+        {/* Switch de zone Salle / Terrasse — overlay flottant (mode tablette) */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 bg-white/90 backdrop-blur-md rounded-xl p-1 shadow-lg border border-white/40">
+          <button
+            type="button"
+            onClick={() => setActiveZone("salle")}
+            className={cn(
+              "px-5 py-2 text-sm font-semibold rounded-lg transition-all active:scale-95",
+              activeZone === "salle"
+                ? "bg-slate-800 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
+            )}
+          >
+            Salle
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveZone("terrasse")}
+            className={cn(
+              "px-5 py-2 text-sm font-semibold rounded-lg transition-all active:scale-95",
+              activeZone === "terrasse"
+                ? "bg-slate-800 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
+            )}
+          >
+            Terrasse
+          </button>
+        </div>
+
         <div
           className="relative shrink-0"
           style={{
