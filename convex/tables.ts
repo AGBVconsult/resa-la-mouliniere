@@ -341,17 +341,20 @@ export const remove = mutation({
     }
 
     // Check if table is assigned to any active reservation
-    const reservations = await ctx.db
-      .query("reservations")
-      .withIndex("by_restaurant_status", (q) =>
-        q.eq("restaurantId", table.restaurantId)
-      )
-      .collect();
-
-    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"];
-    const hasActiveReservation = reservations.some(
-      (r) => activeStatuses.includes(r.status) && r.tableIds.includes(tableId)
-    );
+    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"] as const;
+    let hasActiveReservation = false;
+    for (const status of activeStatuses) {
+      const reservations = await ctx.db
+        .query("reservations")
+        .withIndex("by_restaurant_status", (q) =>
+          q.eq("restaurantId", table.restaurantId).eq("status", status)
+        )
+        .collect();
+      if (reservations.some((r) => r.tableIds.includes(tableId))) {
+        hasActiveReservation = true;
+        break;
+      }
+    }
 
     if (hasActiveReservation) {
       throw Errors.INVALID_INPUT(
