@@ -17,6 +17,7 @@ export interface Table {
   positionY: number;
   width?: number;
   height?: number;
+  shape?: "square" | "round";
   isActive: boolean;
   createdAt: number;
   updatedAt: number;
@@ -31,6 +32,7 @@ export interface TableInfo {
   positionY: number;
   width: number;
   height: number;
+  shape: "square" | "round";
   isActive: boolean;
 }
 

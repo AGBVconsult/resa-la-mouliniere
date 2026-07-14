@@ -390,7 +390,8 @@ export function ServiceFloorPlan({
           <div
             key={table.tableId}
             className={cn(
-              "absolute flex flex-col items-center justify-center rounded-lg transition-all duration-150",
+              "absolute flex flex-col items-center justify-center transition-all duration-150",
+              table.shape === "round" ? "rounded-full" : "rounded-lg",
               isEditing
                 ? "bg-amber-400 ring-2 ring-amber-500 ring-offset-1"
                 : isPending

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Copy, Power, PowerOff, Trash2 } from "lucide-react";
+import { X, Copy, Power, PowerOff, Trash2, Circle, Square } from "lucide-react";
+
+type TableShape = "square" | "round";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +17,7 @@ interface TableEditPanelProps {
     name: string;
     capacity: number;
     zone: Zone;
+    shape: TableShape;
   }) => void;
   onDuplicate: () => void;
   onToggleActive: () => void;
@@ -34,6 +37,7 @@ export function TableEditPanel({
   const [name, setName] = useState("");
   const [capacity, setCapacity] = useState(4);
   const [zone, setZone] = useState<Zone>("salle");
+  const [shape, setShape] = useState<TableShape>("square");
 
   // Sync state when table changes
   useEffect(() => {
@@ -41,6 +45,7 @@ export function TableEditPanel({
       setName(table.name);
       setCapacity(table.capacity);
       setZone(table.zone);
+      setShape(table.shape ?? "square");
     }
   }, [table]);
 
@@ -61,7 +66,7 @@ export function TableEditPanel({
   }
 
   const handleSave = () => {
-    onSave({ name, capacity, zone });
+    onSave({ name, capacity, zone, shape });
   };
 
   return (
@@ -131,6 +136,39 @@ export function TableEditPanel({
               )}
             >
               Terrasse
+            </button>
+          </div>
+        </div>
+
+        {/* Forme */}
+        <div className="space-y-1.5">
+          <Label>Forme</Label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShape("square")}
+              className={cn(
+                "flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex items-center justify-center gap-2",
+                shape === "square"
+                  ? "bg-slate-100 border-slate-400 text-slate-800"
+                  : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              <Square className="h-4 w-4" />
+              Carrée
+            </button>
+            <button
+              type="button"
+              onClick={() => setShape("round")}
+              className={cn(
+                "flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex items-center justify-center gap-2",
+                shape === "round"
+                  ? "bg-slate-100 border-slate-400 text-slate-800"
+                  : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              <Circle className="h-4 w-4" />
+              Ronde
             </button>
           </div>
         </div>

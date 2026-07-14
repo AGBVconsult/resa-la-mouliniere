@@ -51,6 +51,7 @@ export default function TablesPage() {
     positionY: t.positionY ?? (t.gridY ?? 0) * TABLE_GRID_SPAN,
     width: t.width ?? 1,
     height: t.height ?? 1,
+    shape: t.shape ?? "square",
     isActive: t.isActive,
   }));
 
@@ -92,6 +93,7 @@ export default function TablesPage() {
     name: string;
     capacity: number;
     zone: Zone;
+    shape: "square" | "round";
     positionX: number;
     positionY: number;
   }) => {
@@ -106,6 +108,7 @@ export default function TablesPage() {
     name: string;
     capacity: number;
     zone: Zone;
+    shape: "square" | "round";
   }) => {
     if (!selectedTableId) return;
     try {

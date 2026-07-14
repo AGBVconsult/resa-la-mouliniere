@@ -131,6 +131,8 @@ export default defineSchema({
     // Dimensions (en cellules, défaut 1x1)
     width: v.optional(v.number()),
     height: v.optional(v.number()),
+    // Forme visuelle (carré par défaut)
+    shape: v.optional(v.union(v.literal("square"), v.literal("round"))),
     // Deprecated: combinaison de tables (conservé pour migration)
     combinationDirection: v.optional(v.union(v.literal("horizontal"), v.literal("vertical"), v.literal("none"))),
     // État

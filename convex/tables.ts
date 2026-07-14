@@ -193,6 +193,7 @@ export const create = mutation({
     positionY: v.number(),
     width: v.optional(v.number()),
     height: v.optional(v.number()),
+    shape: v.optional(v.union(v.literal("square"), v.literal("round"))),
     combinationDirection: v.optional(v.union(v.literal("horizontal"), v.literal("vertical"), v.literal("none"))),
   },
   handler: async (ctx, args) => {
@@ -241,6 +242,7 @@ export const create = mutation({
       positionY: args.positionY,
       width: args.width,
       height: args.height,
+      shape: args.shape,
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -265,6 +267,7 @@ export const update = mutation({
     positionY: v.optional(v.number()),
     width: v.optional(v.number()),
     height: v.optional(v.number()),
+    shape: v.optional(v.union(v.literal("square"), v.literal("round"))),
     combinationDirection: v.optional(v.union(v.literal("horizontal"), v.literal("vertical"), v.literal("none"))),
   },
   handler: async (ctx, args) => {
@@ -312,6 +315,7 @@ export const update = mutation({
     if (updates.positionY !== undefined) patch.positionY = updates.positionY;
     if (updates.width !== undefined) patch.width = updates.width;
     if (updates.height !== undefined) patch.height = updates.height;
+    if (updates.shape !== undefined) patch.shape = updates.shape;
 
     await ctx.db.patch(args.tableId, patch);
 
@@ -459,6 +463,7 @@ export const duplicate = mutation({
       positionY: pos.y,
       width: table.width,
       height: table.height,
+      shape: table.shape,
       isActive: true,
       createdAt: now,
       updatedAt: now,

@@ -19,7 +19,8 @@ export function FloorPlanTableGhost({ table, isValid }: FloorPlanTableGhostProps
   return (
     <motion.div
       className={cn(
-        "flex flex-col items-center justify-center rounded-lg border-2",
+        "flex flex-col items-center justify-center border-2",
+        table.shape === "round" ? "rounded-full" : "rounded-lg",
         isValid
           ? cn(zoneStyle.bg, "border-blue-500")
           : "bg-red-100 border-red-500"
