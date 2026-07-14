@@ -1090,6 +1090,7 @@ export default function TabletReservationsPage() {
               onAssignmentComplete={handleAssignmentComplete}
               onTableClick={setHighlightedReservationId}
               hideHeader
+              hideCapacity
             />
           </div>
         )}

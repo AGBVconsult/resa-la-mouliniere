@@ -26,6 +26,7 @@ interface ServiceFloorPlanProps {
   onAssignmentComplete?: () => void;
   onTableClick?: (reservationId: Id<"reservations"> | null) => void;
   hideHeader?: boolean;
+  hideCapacity?: boolean;
 }
 
 type TableStatus = "seated" | "reserved" | "free" | "blocked";
@@ -57,6 +58,7 @@ export function ServiceFloorPlan({
   onAssignmentComplete,
   onTableClick,
   hideHeader = false,
+  hideCapacity = false,
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
@@ -441,9 +443,11 @@ export function ServiceFloorPlan({
                 <span className={cn("text-xs font-semibold", statusColors.text)}>
                   {table.name}
                 </span>
-                <span className={cn("text-[10px] flex items-center gap-0.5", statusColors.text, "opacity-75")}>
-                  {table.capacity} <Users className="w-2.5 h-2.5" />
-                </span>
+                {!hideCapacity && (
+                  <span className={cn("text-[10px] flex items-center gap-0.5", statusColors.text, "opacity-75")}>
+                    {table.capacity} <Users className="w-2.5 h-2.5" />
+                  </span>
+                )}
               </>
             )}
           </div>
