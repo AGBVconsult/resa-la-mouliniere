@@ -193,9 +193,11 @@ export default function TablesPage() {
 
   // Calculate next position for new table
   const getNextPosition = () => {
-    if (tables.length === 0) return { x: 0, y: 0 };
-    const maxX = Math.max(...tables.map((t) => t.positionX));
-    const maxY = Math.max(...tables.map((t) => t.positionY));
+    // Utiliser les tables de la zone active pour calculer la position
+    const zoneTables = tables.filter((t) => t.zone === zoneFilter);
+    if (zoneTables.length === 0) return { x: 0, y: 0 };
+    const maxX = Math.max(...zoneTables.map((t) => t.positionX));
+    const maxY = Math.max(...zoneTables.map((t) => t.positionY));
     // Try to place next to last table
     if (maxX + TABLE_GRID_SPAN < 45) {
       return { x: maxX + TABLE_GRID_SPAN, y: maxY };

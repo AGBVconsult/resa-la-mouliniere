@@ -74,10 +74,9 @@ function FloorPlanGridInner({
     const calculatedWidth = Math.max((maxX + paddingCells) * GRID_CELL_SIZE, 400);
     const calculatedHeight = Math.max((maxY + paddingCells) * GRID_CELL_SIZE, 200);
 
-    // Cap at maximum grid size
     return {
-      width: Math.min(calculatedWidth, GRID_WIDTH),
-      height: Math.min(calculatedHeight, GRID_HEIGHT),
+      width: calculatedWidth,
+      height: calculatedHeight,
     };
   }, [tables]);
 
