@@ -48,10 +48,10 @@ const TIME_SLOTS_DINNER = [
 ];
 
 const OPTIONS = [
-  { id: "highchair", label: "Chaise haute" },
+  { id: "highChair", label: "Chaise haute" },
   { id: "wheelchair", label: "PMR" },
   { id: "stroller", label: "Poussette" },
-  { id: "dog", label: "Chien" },
+  { id: "dogAccess", label: "Chien" },
 ];
 
 export function EditReservationPopup({ reservation, onClose, onSuccess }: EditReservationPopupProps) {

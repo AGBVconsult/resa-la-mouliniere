@@ -587,6 +587,8 @@ export default function TabletReservationsPage() {
       // Ouvrir le ClientModal au clic sur une réservation
       if (res.clientId) {
         setSelectedClientModal({ clientId: res.clientId, reservationId: res._id });
+      } else {
+        setEditingReservation(res);
       }
     };
 
