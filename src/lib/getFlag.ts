@@ -284,6 +284,7 @@ const LANGUAGE_DEFAULT_COUNTRY: Record<string, string> = {
   en: "gb",
   de: "de",
   it: "it",
+  be: "be",
 };
 
 /**

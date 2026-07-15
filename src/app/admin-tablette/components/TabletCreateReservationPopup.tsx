@@ -18,16 +18,10 @@ interface Props {
 
 const LANGUAGES = [
   { value: "fr", label: "FR" }, { value: "nl", label: "NL" },
-  { value: "en", label: "EN" }, { value: "de", label: "DE" }, { value: "it", label: "IT" },
+  { value: "en", label: "EN" }, { value: "de", label: "DE" },
+  { value: "it", label: "IT" }, { value: "be", label: "BE" },
 ] as const;
 type LanguageValue = (typeof LANGUAGES)[number]["value"];
-
-const SOURCES = [
-  { value: "walkin", label: "Walk-in" },
-  { value: "phone", label: "Téléphone" },
-  { value: "admin", label: "Admin" },
-] as const;
-type SourceValue = (typeof SOURCES)[number]["value"];
 
 const TIME_SLOTS_LUNCH = ["12:00","12:15","12:30","12:45","13:00","13:15","13:30","13:45","14:00"];
 const TIME_SLOTS_DINNER = ["18:00","18:30","19:00","19:30","20:00","20:30","21:00","21:30"];
@@ -55,7 +49,6 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, o
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [language, setLanguage] = useState<LanguageValue>("fr");
-  const [source, setSource] = useState<SourceValue>("walkin");
   const [note, setNote] = useState("");
   const [options, setOptions] = useState<string[]>([]);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -76,7 +69,7 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, o
         lastName: lastName.trim() || undefined,
         email: email.trim() || undefined,
         phone: phone.trim() || undefined,
-        language, source,
+        language, source: "walkin",
         note: note.trim() || undefined,
         options: options.length ? options : undefined,
       });
@@ -187,31 +180,17 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, o
               className="px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
 
-          {/* Langue & Source */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Langue</label>
-              <div className="flex gap-1.5">
-                {LANGUAGES.map((l) => (
-                  <button key={l.value} type="button" onClick={() => setLanguage(l.value)}
-                    className={cn("flex-1 py-2.5 rounded-lg text-xs font-bold",
-                      language === l.value ? "bg-slate-700 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}>
-                    {l.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Source</label>
-              <div className="flex gap-1.5">
-                {SOURCES.map((s) => (
-                  <button key={s.value} type="button" onClick={() => setSource(s.value)}
-                    className={cn("flex-1 py-2.5 rounded-lg text-xs font-medium",
-                      source === s.value ? "bg-slate-700 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}>
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+          {/* Langue */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Langue</label>
+            <div className="flex gap-1.5">
+              {LANGUAGES.map((l) => (
+                <button key={l.value} type="button" onClick={() => setLanguage(l.value)}
+                  className={cn("flex-1 py-2.5 rounded-lg text-xs font-bold",
+                    language === l.value ? "bg-slate-700 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}>
+                  {l.label}
+                </button>
+              ))}
             </div>
           </div>
 

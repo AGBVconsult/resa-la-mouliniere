@@ -735,7 +735,7 @@ export const seedWeekReservations = internalMutation({
       firstName: string;
       lastName: string;
       phone: string;
-      language: "fr" | "nl" | "en" | "de" | "it" | "es";
+      language: "fr" | "nl" | "en" | "de" | "it" | "es" | "be";
       status: string;
       source: "online" | "admin" | "phone" | "walkin";
       options: string[];

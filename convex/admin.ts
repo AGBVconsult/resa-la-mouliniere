@@ -369,7 +369,7 @@ function buildReservationAdmin(doc: {
   lastName: string;
   email: string;
   phone: string;
-  language: "fr" | "nl" | "en" | "de" | "it" | "es";
+  language: "fr" | "nl" | "en" | "de" | "it" | "es" | "be";
   note?: string;
   options?: string[];
   status: string;
@@ -1163,7 +1163,8 @@ export const createReservation = mutation({
       v.literal("nl"),
       v.literal("en"),
       v.literal("de"),
-      v.literal("it")
+      v.literal("it"),
+      v.literal("be")
     ),
     note: v.optional(v.string()),
     options: v.optional(v.array(v.string())),
@@ -1390,7 +1391,8 @@ export const importReservation = mutation({
       v.literal("nl"),
       v.literal("en"),
       v.literal("de"),
-      v.literal("it")
+      v.literal("it"),
+      v.literal("be")
     ),
     note: v.optional(v.string()),
   },
@@ -1560,7 +1562,7 @@ export const createReservationQuick = mutation({
     phone: v.optional(v.string()),
     language: v.union(
       v.literal("fr"), v.literal("nl"), v.literal("en"),
-      v.literal("de"), v.literal("it")
+      v.literal("de"), v.literal("it"), v.literal("be")
     ),
     note: v.optional(v.string()),
     options: v.optional(v.array(v.string())),

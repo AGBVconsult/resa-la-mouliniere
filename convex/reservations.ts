@@ -160,7 +160,7 @@ function buildReservationAdmin(doc: {
   lastName: string;
   email: string;
   phone: string;
-  language: "fr" | "nl" | "en" | "de" | "it" | "es";
+  language: "fr" | "nl" | "en" | "de" | "it" | "es" | "be";
   note?: string;
   options?: string[];
   status: string;

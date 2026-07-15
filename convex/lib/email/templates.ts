@@ -9,6 +9,8 @@
 import { Errors } from "../errors";
 import type { Language } from "../../../spec/contracts.generated";
 
+type ContentLocale = Exclude<Language, "be">;
+
 export type EmailJobType =
   | "reservation.confirmed"
   | "reservation.pending"
@@ -32,7 +34,7 @@ export interface TemplateData {
   adults?: number;
   childrenCount?: number;
   babyCount?: number;
-  language?: "fr" | "nl" | "en" | "de" | "it" | "es";
+  language?: "fr" | "nl" | "en" | "de" | "it" | "es" | "be";
   manageUrl?: string;
   editUrl?: string;
   cancelUrl?: string;
@@ -61,7 +63,7 @@ export function escapeHtml(str: string): string {
 }
 
 // NON-SPECIFIE: Locale fallback order is not defined in contract. Using "en" as default fallback.
-const FALLBACK_LOCALE: Language = "en";
+const FALLBACK_LOCALE: ContentLocale = "en";
 
 type TranslationKey = 
   | "subject.confirmed"
@@ -126,7 +128,7 @@ type TranslationKey =
 
 type Translations = Record<TranslationKey, string>;
 
-const translations: Record<Language, Translations> = {
+const translations: Record<ContentLocale, Translations> = {
   fr: {
     "subject.confirmed": "Réservation confirmée !",
     "subject.pending": "Demande bien reçue (Validation en cours ⏳)",
@@ -495,7 +497,7 @@ const translations: Record<Language, Translations> = {
   },
 };
 
-function t(locale: Language, key: TranslationKey): string {
+function t(locale: ContentLocale, key: TranslationKey): string {
   const localeTranslations = translations[locale] ?? translations[FALLBACK_LOCALE];
   return localeTranslations[key] ?? translations[FALLBACK_LOCALE][key];
 }
@@ -571,11 +573,11 @@ const VALID_EMAIL_TYPES: EmailJobType[] = [
 /**
  * Format date for display (e.g., "2025-01-15" -> "Mercredi 15 Janvier")
  */
-function formatDateForDisplay(dateKey: string, locale: Language): string {
+function formatDateForDisplay(dateKey: string, locale: ContentLocale): string {
   const [year, month, day] = dateKey.split("-").map(Number);
   const date = new Date(year, month - 1, day);
   
-  const weekdays: Record<Language, string[]> = {
+  const weekdays: Record<ContentLocale, string[]> = {
     fr: ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"],
     nl: ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"],
     en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
@@ -584,7 +586,7 @@ function formatDateForDisplay(dateKey: string, locale: Language): string {
     es: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
   };
   
-  const months: Record<Language, string[]> = {
+  const months: Record<ContentLocale, string[]> = {
     fr: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"],
     nl: ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"],
     en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -602,7 +604,7 @@ function formatDateForDisplay(dateKey: string, locale: Language): string {
 /**
  * Option labels by locale
  */
-const optionLabels: Record<Language, Record<string, string>> = {
+const optionLabels: Record<ContentLocale, Record<string, string>> = {
   fr: { highChair: "Chaise haute", dogAccess: "Chien", wheelchair: "PMR" },
   nl: { highChair: "Kinderstoel", dogAccess: "Hond", wheelchair: "Rolstoel" },
   en: { highChair: "High chair", dogAccess: "Dog", wheelchair: "Wheelchair" },
@@ -614,7 +616,7 @@ const optionLabels: Record<Language, Record<string, string>> = {
 /**
  * Build options string for display
  */
-function buildOptionsString(options: string[] | undefined, locale: Language): string {
+function buildOptionsString(options: string[] | undefined, locale: ContentLocale): string {
   if (!options || options.length === 0) return "";
   const labels = optionLabels[locale] ?? optionLabels.en;
   return options.map(opt => labels[opt] ?? opt).join(", ");
@@ -623,7 +625,7 @@ function buildOptionsString(options: string[] | undefined, locale: Language): st
 /**
  * Build party size detail string (e.g., "4 personnes (2 Adultes, 1 Enfant, 1 Bébé)")
  */
-function buildPartySizeDetail(data: TemplateData, locale: Language): string {
+function buildPartySizeDetail(data: TemplateData, locale: ContentLocale): string {
   const guestsLabel = t(locale, "details.guests");
   const adultsLabel = t(locale, "details.adults");
   const childrenLabel = t(locale, "details.children");
@@ -736,7 +738,7 @@ function getIntroKey(type: EmailJobType): TranslationKey {
  */
 function renderModernTemplate(
   type: EmailJobType,
-  locale: Language,
+  locale: ContentLocale,
   data: TemplateData
 ): string {
   const safeFirstName = escapeHtml(data.firstName);
@@ -1029,7 +1031,8 @@ export function renderTemplate(
     };
   }
 
-  const effectiveLocale = translations[locale] ? locale : FALLBACK_LOCALE;
+  const resolvedLocale: ContentLocale = locale === "be" ? "fr" : locale;
+  const effectiveLocale = translations[resolvedLocale] ? resolvedLocale : FALLBACK_LOCALE;
   const subject = t(effectiveLocale, getSubjectKey(emailType));
 
   // Use modern template for all other email types
