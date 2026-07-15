@@ -32,6 +32,10 @@ function normalizePhone(phone: string): string {
   return `+${cleaned}`;
 }
 
+function hasUsablePhone(phone: string | undefined | null): boolean {
+  return !!phone && /\d/.test(phone);
+}
+
 function buildSearchText(client: {
   firstName?: string;
   lastName?: string;
@@ -62,7 +66,8 @@ async function getOrCreateClientIdFromReservation(
     language: Language;
     source: "online" | "admin" | "phone" | "walkin";
   }
-): Promise<Id<"clients">> {
+): Promise<Id<"clients"> | undefined> {
+  if (!hasUsablePhone(reservation.phone)) return undefined;
   const phone = normalizePhone(reservation.phone);
   const email = normalizeEmail(reservation.email);
   const now = Date.now();
@@ -508,8 +513,10 @@ export const listReservations = query({
       filteredDocs = filteredDocs.filter((doc) => doc.status === status);
     }
 
-    // Collect unique phone numbers to batch lookup clients
-    const phoneSet = new Set(filteredDocs.map((doc) => normalizePhone(doc.phone)));
+    // Collect unique phone numbers to batch lookup clients (ignore empty phones)
+    const phoneSet = new Set(
+      filteredDocs.filter((doc) => hasUsablePhone(doc.phone)).map((doc) => normalizePhone(doc.phone))
+    );
     const phones = Array.from(phoneSet);
     
     // Batch lookup clients by phone
@@ -534,8 +541,9 @@ export const listReservations = query({
 
     // Map to ReservationAdmin with totalVisits and clientId
     const page = filteredDocs.map((doc) => {
-      const normalizedPhone = normalizePhone(doc.phone);
-      const clientData = clientsMap.get(normalizedPhone);
+      const clientData = hasUsablePhone(doc.phone)
+        ? clientsMap.get(normalizePhone(doc.phone))
+        : undefined;
       return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false });
     });
 
@@ -566,19 +574,25 @@ export const getReservation = query({
       throw Errors.RESERVATION_NOT_FOUND(reservationId);
     }
 
-    // Lookup client totalVisits and clientId
-    const phone = normalizePhone(reservation.phone);
-    const client = await ctx.db
-      .query("clients")
-      .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
-      .first();
-    const totalVisits = client?.totalVisits ?? 0;
-    const clientId = client?._id;
-    const clientBehavior = {
-      hasNotes: (client?.notes?.length ?? 0) > 0,
-      isLate: client?.isLateClient ?? false,
-      isSlow: client?.isSlowClient ?? false,
-    };
+    // Lookup client totalVisits and clientId (only if usable phone)
+    let totalVisits = 0;
+    let clientId: Id<"clients"> | undefined = undefined;
+    let clientBehavior = { hasNotes: false, isLate: false, isSlow: false };
+
+    if (hasUsablePhone(reservation.phone)) {
+      const phone = normalizePhone(reservation.phone);
+      const client = await ctx.db
+        .query("clients")
+        .withIndex("by_primaryPhone", (q) => q.eq("primaryPhone", phone))
+        .first();
+      totalVisits = client?.totalVisits ?? 0;
+      clientId = client?._id;
+      clientBehavior = {
+        hasNotes: (client?.notes?.length ?? 0) > 0,
+        isLate: client?.isLateClient ?? false,
+        isSlow: client?.isSlowClient ?? false,
+      };
+    }
 
     return buildReservationAdmin(reservation, totalVisits, clientId, clientBehavior);
   },
@@ -1233,14 +1247,16 @@ export const createReservation = mutation({
     const formattedLastName = capitalizeName(args.lastName);
     const formattedPhone = formatPhoneNumber(args.phone);
 
-    const clientId = await getOrCreateClientIdFromReservation(ctx, {
-      firstName: formattedFirstName,
-      lastName: formattedLastName,
-      email: args.email,
-      phone: formattedPhone,
-      language: args.language as Language,
-      source: args.source,
-    });
+    const clientId = hasUsablePhone(formattedPhone)
+      ? await getOrCreateClientIdFromReservation(ctx, {
+          firstName: formattedFirstName,
+          lastName: formattedLastName,
+          email: args.email,
+          phone: formattedPhone,
+          language: args.language as Language,
+          source: args.source,
+        })
+      : undefined;
 
     // Admin reservations are always confirmed
     const status = "confirmed";
@@ -1724,8 +1740,10 @@ export const listPendingReservations = query({
     const todayKey = getTodayDateKey(timezone);
     const pendingReservations = allPending.filter((r) => r.dateKey >= todayKey);
 
-    // Batch lookup clients by phone for totalVisits and clientId
-    const phoneSet = new Set(pendingReservations.map((doc) => normalizePhone(doc.phone)));
+    // Batch lookup clients by phone for totalVisits and clientId (ignore empty phones)
+    const phoneSet = new Set(
+      pendingReservations.filter((doc) => hasUsablePhone(doc.phone)).map((doc) => normalizePhone(doc.phone))
+    );
     const phones = Array.from(phoneSet);
     const clientsMap = new Map<string, { totalVisits: number; clientId: Id<"clients">; behavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } }>();
     for (const phone of phones) {
@@ -1747,7 +1765,9 @@ export const listPendingReservations = query({
     }
 
     return pendingReservations.map((doc) => {
-      const clientData = clientsMap.get(normalizePhone(doc.phone));
+      const clientData = hasUsablePhone(doc.phone)
+        ? clientsMap.get(normalizePhone(doc.phone))
+        : undefined;
       return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false });
     });
   },
