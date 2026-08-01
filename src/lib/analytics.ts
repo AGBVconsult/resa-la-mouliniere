@@ -29,14 +29,30 @@ const EVENT_TO_STEP: Record<string, string> = {
 };
 
 // Client-side kill-switch gate — mirrors settings.funnelAnalyticsEnabled
-let _funnelAnalyticsEnabled = false;
+// Three states: 'pending' (settings not yet loaded), 'enabled', 'disabled'
+let _funnelAnalyticsState: 'pending' | 'enabled' | 'disabled' = 'pending';
+
+// Buffer for events emitted before settings resolve (e.g. booking_step_view at mount)
+type BufferedEvent = { eventName: string; params?: AnalyticsEventParams; language?: string };
+let _eventBuffer: BufferedEvent[] = [];
+const MAX_BUFFER_SIZE = 50;
 
 /**
  * Set by Widget.tsx when settings load. Controls whether Convex double-write fires.
  * When false: zero network requests to Convex for analytics.
+ * On first call with true: flushes buffered events.
  */
 export function setFunnelAnalyticsEnabled(enabled: boolean): void {
-  _funnelAnalyticsEnabled = enabled;
+  _funnelAnalyticsState = enabled ? 'enabled' : 'disabled';
+  if (enabled && _eventBuffer.length > 0) {
+    const buffered = _eventBuffer;
+    _eventBuffer = [];
+    for (const evt of buffered) {
+      _sendToConvex(evt.eventName, evt.params, evt.language);
+    }
+  } else {
+    _eventBuffer = [];
+  }
 }
 
 // Dedicated HTTP client for analytics (isolated from the reactive websocket)
@@ -211,28 +227,50 @@ export function trackEvent(eventName: string, params?: AnalyticsEventParams, lan
     }
 
     // Double-write to Convex funnelEvents (fire-and-forget, isolated transport)
-    // Client-side gate: skip entirely if kill-switch is off
-    if (!_funnelAnalyticsEnabled) return;
-    const ctx = getSessionContext();
-    if (ctx) {
-      const client = getAnalyticsClient();
-      if (client) {
-        // Strip PII-free props for storage (never email/phone/name)
-        const { widget_version, language: _lang, ...safeProps } = enrichedParams;
-        client.mutation(api.funnelEvents.record, {
-          sessionId: ctx.sessionId,
-          eventName,
-          step: EVENT_TO_STEP[eventName] || (params as Record<string, unknown>)?.step_name as string | undefined,
-          device: ctx.device,
-          language: ctx.language,
-          referralSource: ctx.referralSource,
-          isReturning: ctx.isReturning,
-          props: Object.keys(safeProps).length > 0 ? safeProps : undefined,
-        }).catch(() => {}); // Swallow errors — analytics must never fail
+    if (_funnelAnalyticsState === 'disabled') return;
+    if (_funnelAnalyticsState === 'pending') {
+      // Buffer until settings resolve
+      if (_eventBuffer.length < MAX_BUFFER_SIZE) {
+        _eventBuffer.push({ eventName, params, language });
       }
+      return;
     }
+    // State is 'enabled' — send immediately
+    _sendToConvex(eventName, params, language);
   } catch {
     // Analytics must never crash the booking flow
+  }
+}
+
+/**
+ * Internal: send a single event to Convex funnelEvents. Assumes flag is enabled.
+ */
+function _sendToConvex(eventName: string, params?: AnalyticsEventParams, language?: string): void {
+  try {
+    const ctx = getSessionContext();
+    if (!ctx) return;
+    const client = getAnalyticsClient();
+    if (!client) return;
+
+    const enrichedParams = {
+      ...params,
+      widget_version: '1.0.0',
+      language: language || 'fr',
+    };
+    // Strip metadata — keep only domain-specific props
+    const { widget_version, language: _lang, ...safeProps } = enrichedParams;
+    client.mutation(api.funnelEvents.record, {
+      sessionId: ctx.sessionId,
+      eventName,
+      step: EVENT_TO_STEP[eventName] || (params as Record<string, unknown>)?.step_name as string | undefined,
+      device: ctx.device,
+      language: ctx.language,
+      referralSource: ctx.referralSource,
+      isReturning: ctx.isReturning,
+      props: Object.keys(safeProps).length > 0 ? safeProps : undefined,
+    }).catch(() => {}); // Swallow errors — analytics must never fail
+  } catch {
+    // Silent
   }
 }
 

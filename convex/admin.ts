@@ -220,6 +220,7 @@ export const getSettings = query({
         dinnerThreshold: "19:00",
         minFillPercent: 20,
       },
+      funnelAnalyticsEnabled: settings.funnelAnalyticsEnabled ?? false,
     };
   },
 });
@@ -228,6 +229,44 @@ export const updateSettings = mutation({
   args: { patch: v.any() },
   handler: async () => {
     return { ok: true } as any;
+  },
+});
+
+export const updateFunnelAnalytics = mutation({
+  args: {
+    enabled: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
+
+    const activeRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .take(2);
+
+    if (activeRestaurants.length === 0) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+    if (activeRestaurants.length > 1) {
+      throw Errors.MULTIPLE_ACTIVE_RESTAURANTS(activeRestaurants.length);
+    }
+
+    const restaurant = activeRestaurants[0];
+
+    const settings = await ctx.db
+      .query("settings")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", restaurant._id))
+      .unique();
+
+    if (!settings) {
+      throw Errors.SETTINGS_NOT_FOUND();
+    }
+
+    await ctx.db.patch(settings._id, {
+      funnelAnalyticsEnabled: args.enabled,
+    });
+
+    return { ok: true };
   },
 });
 

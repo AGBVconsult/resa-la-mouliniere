@@ -67,12 +67,12 @@ export const record = mutation({
     // Validate eventName against whitelist
     if (!ALLOWED_EVENT_NAMES.has(args.eventName)) return;
 
-    // Per-session rate limit
-    const sessionCount = await ctx.db
+    // Per-session rate limit (read capped at MAX to avoid unbounded scan)
+    const sessionEvents = await ctx.db
       .query("funnelEvents")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
-      .collect();
-    if (sessionCount.length >= MAX_EVENTS_PER_SESSION) return;
+      .take(MAX_EVENTS_PER_SESSION);
+    if (sessionEvents.length >= MAX_EVENTS_PER_SESSION) return;
 
     const now = Date.now();
 
