@@ -321,6 +321,7 @@ export const _create = internalMutation({
     options: v.optional(v.array(v.string())),
     source: v.union(v.literal("online"), v.literal("admin"), v.literal("phone"), v.literal("walkin")),
     referralSource: v.optional(v.string()),
+    sessionId: v.optional(v.string()),
     manageTokenExpireBeforeSlotMs: v.number(),
     timezone: v.string(),
     appUrl: v.string(),
@@ -444,6 +445,7 @@ export const _create = internalMutation({
       status,
       source: args.source,
       referralSource: args.referralSource,
+      sessionId: args.sessionId,
       tableIds: [],
       version: 1,
       createdAt: now,
@@ -773,6 +775,7 @@ export const create = action({
     payload: v.object(payloadSchema),
     turnstileToken: v.string(),
     idemKey: v.string(),
+    sessionId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<ReservationCreateResult> => {
     const { payload, turnstileToken, idemKey } = args;
@@ -880,6 +883,7 @@ export const create = action({
         options: payload.options,
         source: "online",
         referralSource: payload.referralSource,
+        sessionId: args.sessionId,
         manageTokenExpireBeforeSlotMs: settings.manageTokenExpireBeforeSlotMs,
         timezone: settings.timezone,
         appUrl: settings.appUrl,

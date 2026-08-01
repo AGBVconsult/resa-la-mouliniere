@@ -118,4 +118,12 @@ crons.daily(
   { daysAhead: 180 }
 );
 
+// Purge expired funnel analytics events daily at 04:30 UTC
+crons.cron(
+  "funnel-events-cleanup",
+  "30 4 * * *",
+  internalAny.funnelEvents.cleanup,
+  {}
+);
+
 export default crons;

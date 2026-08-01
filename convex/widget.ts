@@ -4,7 +4,7 @@ import { Errors } from "./lib/errors";
 
 export function buildSettingsPublic(args: {
   restaurant: { _id: string; timezone: string };
-  settings: { publicWidgetEnabled: boolean; turnstileSiteKey: string; maxPartySizeWidget: number };
+  settings: { publicWidgetEnabled: boolean; turnstileSiteKey: string; maxPartySizeWidget: number; funnelAnalyticsEnabled?: boolean };
 }) {
   return {
     restaurantId: args.restaurant._id,
@@ -12,6 +12,7 @@ export function buildSettingsPublic(args: {
     turnstileSiteKey: args.settings.turnstileSiteKey,
     maxPartySizeWidget: args.settings.maxPartySizeWidget,
     timezone: args.restaurant.timezone,
+    funnelAnalyticsEnabled: args.settings.funnelAnalyticsEnabled ?? false,
   };
 }
 

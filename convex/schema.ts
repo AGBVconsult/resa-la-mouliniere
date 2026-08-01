@@ -100,6 +100,8 @@ export default defineSchema({
       dinnerThreshold: v.string(), // HH:MM - slots >= this time require previous slot fill (e.g. "19:00")
       minFillPercent: v.number(), // 0-100 - minimum fill % of previous slot to show next (e.g. 20)
     })),
+    // Kill-switch for funnel analytics (toggle without redeploy)
+    funnelAnalyticsEnabled: v.optional(v.boolean()),
   }).index("by_restaurantId", ["restaurantId"]),
 
   slots: defineTable({
@@ -171,6 +173,7 @@ export default defineSchema({
     status: reservationStatus,
     source: reservationSource,
     referralSource: v.optional(v.string()), // Marketing ref (e.g., "gmb_reserve" from ?ref=gmb_reserve)
+    sessionId: v.optional(v.string()), // Widget session ID for funnel analytics
 
     tableIds: v.array(v.id("tables")),
     primaryTableId: v.optional(v.id("tables")), // Table cliquée lors de l'assignation (affichée dans le listing)
@@ -188,7 +191,8 @@ export default defineSchema({
   })
     .index("by_restaurant_slotKey", ["restaurantId", "slotKey"])
     .index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"])
-    .index("by_restaurant_status", ["restaurantId", "status"]),
+    .index("by_restaurant_status", ["restaurantId", "status"])
+    .index("by_sessionId", ["sessionId"]),
 
   // Track all status changes for analytics (punctuality, CRM, etc.)
   reservationEvents: defineTable({
@@ -663,6 +667,24 @@ export default defineSchema({
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_restaurant_date", ["restaurantId", "dateKey"])
+    .index("by_expiresAt", ["expiresAt"]),
+
+  // Funnel analytics events — fire-and-forget, append-only
+  funnelEvents: defineTable({
+    restaurantId: v.id("restaurants"),
+    sessionId: v.string(),
+    ts: v.number(),
+    eventName: v.string(),
+    step: v.optional(v.string()),
+    device: v.optional(v.string()),
+    language: v.optional(v.string()),
+    referralSource: v.optional(v.string()),
+    isReturning: v.optional(v.boolean()),
+    props: v.optional(v.any()),
+    expiresAt: v.number(),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_restaurant_event", ["restaurantId", "eventName", "ts"])
     .index("by_expiresAt", ["expiresAt"]),
 
   // Messages entre le restaurant et les clients (style iMessage)
