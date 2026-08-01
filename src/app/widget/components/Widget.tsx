@@ -402,6 +402,7 @@ export default function Widget() {
                   data={data}
                   partySize={partySize}
                   settings={settings}
+                  sessionId={sessionId}
                   onSuccess={(res: ReservationResult) => {
                     setResult(res);
                     // Supprimer le brouillon

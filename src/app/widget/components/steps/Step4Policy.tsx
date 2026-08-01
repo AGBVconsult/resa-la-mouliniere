@@ -18,6 +18,7 @@ interface Step4PolicyProps {
   data: BookingState;
   partySize: number;
   settings: { turnstileSiteKey: string };
+  sessionId: string;
   onSuccess: (result: ReservationResult) => void;
   setLoading: (loading: boolean) => void;
   requestPrimaryToken: number;
@@ -33,6 +34,7 @@ export function Step4Policy({
   data,
   partySize,
   settings,
+  sessionId,
   onSuccess,
   setLoading,
   requestPrimaryToken,
@@ -109,6 +111,7 @@ export function Step4Policy({
         payload,
         turnstileToken: turnstileToken!,
         idemKey: idemKeyRef.current,
+        sessionId,
       });
 
       if (result.kind === "reservation") {
@@ -165,6 +168,7 @@ export function Step4Policy({
     data.timeKey,
     lang,
     onSuccess,
+    sessionId,
     setLoading,
     turnstileToken,
   ]);

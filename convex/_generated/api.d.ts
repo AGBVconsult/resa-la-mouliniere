@@ -20,6 +20,7 @@ import type * as email from "../email.js";
 import type * as emails from "../emails.js";
 import type * as floor from "../floor.js";
 import type * as floorplan from "../floorplan.js";
+import type * as funnelEvents from "../funnelEvents.js";
 import type * as groupRequests from "../groupRequests.js";
 import type * as http from "../http.js";
 import type * as idempotency from "../idempotency.js";
@@ -74,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   emails: typeof emails;
   floor: typeof floor;
   floorplan: typeof floorplan;
+  funnelEvents: typeof funnelEvents;
   groupRequests: typeof groupRequests;
   http: typeof http;
   idempotency: typeof idempotency;
