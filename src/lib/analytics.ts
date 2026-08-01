@@ -1,7 +1,30 @@
 /**
  * Analytics module for booking widget funnel tracking
  * 13 P0 events for complete funnel visibility
+ *
+ * Double-write: GA4/GTM (existing) + Convex funnelEvents (new).
+ * The Convex write uses a dedicated ConvexHttpClient (isolated transport).
+ * The entire trackEvent body is wrapped in try/catch: analytics must never
+ * crash the booking flow.
  */
+
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../convex/_generated/api";
+import { getSessionContext } from "./session-context";
+
+// Dedicated HTTP client for analytics (isolated from the reactive websocket)
+let _analyticsClient: ConvexHttpClient | null = null;
+function getAnalyticsClient(): ConvexHttpClient | null {
+  if (_analyticsClient) return _analyticsClient;
+  try {
+    const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+    if (!url) return null;
+    _analyticsClient = new ConvexHttpClient(url);
+    return _analyticsClient;
+  } catch {
+    return null;
+  }
+}
 
 // Types for event parameters
 interface BaseEventParams {
@@ -131,32 +154,56 @@ function isDataLayerAvailable(): boolean {
 }
 
 /**
- * Core tracking function - sends to GA4 via gtag or GTM dataLayer
+ * Core tracking function - sends to GA4 via gtag or GTM dataLayer + Convex funnelEvents
  */
 export function trackEvent(eventName: string, params?: AnalyticsEventParams, language?: string): void {
-  // Add widget version and language to all events
-  const enrichedParams = {
-    ...params,
-    widget_version: '1.0.0',
-    language: language || 'fr',
-  };
+  try {
+    // Add widget version and language to all events
+    const enrichedParams = {
+      ...params,
+      widget_version: '1.0.0',
+      language: language || 'fr',
+    };
 
-  // Debug logging in development
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[Analytics] ${eventName}`, enrichedParams);
-  }
+    // Debug logging in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Analytics] ${eventName}`, enrichedParams);
+    }
 
-  // Send to GA4 via gtag
-  if (isGtagAvailable()) {
-    window.gtag('event', eventName, enrichedParams);
-  }
+    // Send to GA4 via gtag
+    if (isGtagAvailable()) {
+      window.gtag('event', eventName, enrichedParams);
+    }
 
-  // Send to GTM dataLayer
-  if (isDataLayerAvailable()) {
-    window.dataLayer.push({
-      event: eventName,
-      ...enrichedParams,
-    });
+    // Send to GTM dataLayer
+    if (isDataLayerAvailable()) {
+      window.dataLayer.push({
+        event: eventName,
+        ...enrichedParams,
+      });
+    }
+
+    // Double-write to Convex funnelEvents (fire-and-forget, isolated transport)
+    const ctx = getSessionContext();
+    if (ctx) {
+      const client = getAnalyticsClient();
+      if (client) {
+        // Strip PII-free props for storage (never email/phone/name)
+        const { widget_version, language: _lang, ...safeProps } = enrichedParams;
+        client.mutation(api.funnelEvents.record, {
+          sessionId: ctx.sessionId,
+          eventName,
+          step: (params as Record<string, unknown>)?.step_name as string | undefined,
+          device: ctx.device,
+          language: ctx.language,
+          referralSource: ctx.referralSource,
+          isReturning: ctx.isReturning,
+          props: Object.keys(safeProps).length > 0 ? safeProps : undefined,
+        }).catch(() => {}); // Swallow errors — analytics must never fail
+      }
+    }
+  } catch {
+    // Analytics must never crash the booking flow
   }
 }
 

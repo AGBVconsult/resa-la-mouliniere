@@ -27,6 +27,7 @@ import { initialBookingState } from "@/components/booking/types";
 import { formatDateShort, generateUUID } from "@/lib/utils";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import { trackStepView, trackGuestsSelected, trackPolicyViewed } from "@/lib/analytics";
+import { initSessionContext, updateSessionLanguage } from "@/lib/session-context";
 
 type Step = 1 | "1b" | 2 | 3 | 4 | 5 | 6;
 
@@ -69,6 +70,20 @@ export default function Widget() {
     backDisabled: boolean;
     primaryLabel: string;
   } | null>(null);
+
+  // Initialize session context for funnel analytics (once at mount)
+  useEffect(() => {
+    initSessionContext({
+      sessionId,
+      language: lang,
+      referralSource: searchParams.get("ref"),
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep language in sync with session context
+  useEffect(() => {
+    updateSessionLanguage(lang);
+  }, [lang]);
 
   const settings = useQuery(api.widget.getSettings, { lang });
   const activeClosure = useQuery(api.specialPeriods.getActiveClosure, {});

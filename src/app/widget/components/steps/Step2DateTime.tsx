@@ -9,7 +9,7 @@ import { MonthCalendar } from "../calendar/MonthCalendar";
 import { MiniCalendarStrip } from "../calendar/MiniCalendarStrip";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language, BookingState, Service } from "@/components/booking/types";
-import { trackDateSelected, trackTimeSlotSelected, trackNoSlotsAvailable } from "@/lib/analytics";
+import { trackDateSelected, trackTimeSlotSelected, trackNoSlotsAvailable, trackEvent } from "@/lib/analytics";
 
 interface Step2DateTimeProps {
   lang: Language;
@@ -111,21 +111,41 @@ export function Step2DateTime({
     ) || [];
   }, [dayData, partySize]);
 
-  // Track no slots available (only once per date)
-  const trackedNoSlotsRef = useRef<string | null>(null);
+  // Track availability_rendered + no_slots_available (once per date)
+  const trackedAvailabilityRef = useRef<string | null>(null);
   useEffect(() => {
     if (
       data.dateKey &&
       isCalendarCollapsed &&
       dayData &&
-      lunchSlots.length === 0 &&
-      dinnerSlots.length === 0 &&
-      trackedNoSlotsRef.current !== data.dateKey
+      trackedAvailabilityRef.current !== data.dateKey
     ) {
-      trackNoSlotsAvailable(data.dateKey, partySize, lang);
-      trackedNoSlotsRef.current = data.dateKey;
+      const slotsFree = lunchSlots.length + dinnerSlots.length;
+      const totalLunchSlots = dayData?.lunch?.filter((s: { isOpen: boolean }) => s.isOpen).length ?? 0;
+      const totalDinnerSlots = dayData?.dinner?.filter((s: { isOpen: boolean }) => s.isOpen).length ?? 0;
+      const slotsOffered = totalLunchSlots + totalDinnerSlots;
+      const slotsFull = slotsOffered - slotsFree;
+      const isFullyBooked = slotsFree === 0;
+
+      trackEvent('availability_rendered', {
+        step_name: 'step2_datetime',
+        step_number: 2,
+        date: data.dateKey,
+        total_guests: partySize,
+        slots_free: slotsFree,
+        slots_offered: slotsOffered,
+        slots_full: slotsFull,
+        is_fully_booked: isFullyBooked,
+      } as Record<string, unknown>, lang);
+
+      // Keep existing no_slots_available event for backward compatibility
+      if (isFullyBooked) {
+        trackNoSlotsAvailable(data.dateKey, partySize, lang);
+      }
+
+      trackedAvailabilityRef.current = data.dateKey;
     }
-  }, [data.dateKey, isCalendarCollapsed, dayData, lunchSlots.length, dinnerSlots.length, partySize]);
+  }, [data.dateKey, isCalendarCollapsed, dayData, lunchSlots.length, dinnerSlots.length, partySize, lang]);
 
   return (
     <div 
