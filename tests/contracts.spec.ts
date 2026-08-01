@@ -52,6 +52,7 @@ describe("admin.getSettings output shape", () => {
       resendFromName: "La Moulinière",
       manageTokenExpireBeforeSlotMs: 123,
       rateLimit: { windowMs: 60000, maxRequests: 12 },
+      funnelAnalyticsEnabled: false,
     };
     expect(() => SettingsAdminSchema.parse(ok)).not.toThrow();
     expect(() => SettingsAdminSchema.parse({ ...ok, turnstileSecretKey: "x" } as any)).toThrow();
@@ -70,6 +71,7 @@ describe("admin.getSettings output shape", () => {
         resendFromName: "La Moulinière",
         manageTokenExpireBeforeSlotMs: 123,
         rateLimit: { windowMs: 60000, maxRequests: 12 },
+        funnelAnalyticsEnabled: false,
         turnstileSecretKey: "x",
       })
     ).toThrow();
