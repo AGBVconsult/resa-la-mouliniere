@@ -82,11 +82,13 @@ Définition de `dayKey` :
 `ReservationStatus` =
 - `"pending"`
 - `"confirmed"`
+- `"cardPlaced"`
 - `"seated"`
 - `"completed"`
 - `"noshow"`
 - `"cancelled"`
 - `"refused"`
+- `"incident"`
 
 ### 3.2 Transitions autorisées (machine d’états)
 
@@ -271,7 +273,7 @@ Champs :
 - `lastName: string`
 - `email: string`
 - `phone: string`
-- `language: "fr" | "nl" | "en" | "de" | "it"`
+- `language: "fr" | "nl" | "en" | "de" | "it" | "es" | "be"`
 
 - `status: ReservationStatus`
 - `source: "online" | "admin" | "phone" | "walkin"` (**DEFAULT** `"online"` pour widget)
@@ -551,7 +553,7 @@ Conventions :
   - `{ reservation: ReservationAdmin, token: { token: string, expiresAt: number } }`
 - `Table` : `{ _id: Id<"tables">, name: string, zone: "dining"|"terrace", capacity: number, gridX: number, gridY: number, isActive: boolean }`
 - `TableWithState` : `{ table: Table, assignedReservationId: Id<"reservations"> | null }`
-- `SettingsPublic` : `{ restaurantId: Id<"restaurants">, publicWidgetEnabled: boolean, turnstileSiteKey: string, maxPartySizeWidget: number, timezone: string }`
+- `SettingsPublic` : `{ restaurantId: Id<"restaurants">, publicWidgetEnabled: boolean, turnstileSiteKey: string, maxPartySizeWidget: number, timezone: string, funnelAnalyticsEnabled: boolean }`
 - `SettingsAdmin` : `SettingsPublic & { resendFromEmail: string, resendFromName: string, manageTokenExpireBeforeSlotMs: number, rateLimit: { windowMs: number, maxRequests: number } }`
 
 ### 6.2 Queries

@@ -12,6 +12,33 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
 import { getSessionContext } from "./session-context";
 
+// Derive step from eventName for consistent funnelEvents.step population
+const EVENT_TO_STEP: Record<string, string> = {
+  booking_step_view: '', // uses step_name from params
+  booking_guests_selected: 'step1_guests',
+  booking_baby_seating_selected: 'step1b_baby',
+  booking_date_selected: 'step2_datetime',
+  booking_time_slot_selected: 'step2_datetime',
+  booking_no_slots_available: 'step2_datetime',
+  availability_rendered: 'step2_datetime',
+  booking_contact_form_error: 'step3_contact',
+  booking_policy_viewed: 'step4_practical',
+  booking_submitted: 'step5_confirm',
+  booking_error: 'step5_confirm',
+  booking_completed: 'step6_confirmation',
+};
+
+// Client-side kill-switch gate — mirrors settings.funnelAnalyticsEnabled
+let _funnelAnalyticsEnabled = false;
+
+/**
+ * Set by Widget.tsx when settings load. Controls whether Convex double-write fires.
+ * When false: zero network requests to Convex for analytics.
+ */
+export function setFunnelAnalyticsEnabled(enabled: boolean): void {
+  _funnelAnalyticsEnabled = enabled;
+}
+
 // Dedicated HTTP client for analytics (isolated from the reactive websocket)
 let _analyticsClient: ConvexHttpClient | null = null;
 function getAnalyticsClient(): ConvexHttpClient | null {
@@ -184,6 +211,8 @@ export function trackEvent(eventName: string, params?: AnalyticsEventParams, lan
     }
 
     // Double-write to Convex funnelEvents (fire-and-forget, isolated transport)
+    // Client-side gate: skip entirely if kill-switch is off
+    if (!_funnelAnalyticsEnabled) return;
     const ctx = getSessionContext();
     if (ctx) {
       const client = getAnalyticsClient();
@@ -193,7 +222,7 @@ export function trackEvent(eventName: string, params?: AnalyticsEventParams, lan
         client.mutation(api.funnelEvents.record, {
           sessionId: ctx.sessionId,
           eventName,
-          step: (params as Record<string, unknown>)?.step_name as string | undefined,
+          step: EVENT_TO_STEP[eventName] || (params as Record<string, unknown>)?.step_name as string | undefined,
           device: ctx.device,
           language: ctx.language,
           referralSource: ctx.referralSource,

@@ -54,7 +54,21 @@ export const ExpectedActions = [
   "groupRequests.create",
   "reservations.cancelByToken",
   "email.processQueue",
-  "email.sendJob"
+  "email.sendJob",
+  "specialPeriods.list",
+  "specialPeriods.get",
+  "specialPeriods.previewImpact",
+  "specialPeriods.create",
+  "specialPeriods.update",
+  "specialPeriods.remove",
+  "weeklyTemplates.list",
+  "weeklyTemplates.get",
+  "weeklyTemplates.upsert",
+  "weeklyTemplates.addSlot",
+  "weeklyTemplates.updateSlot",
+  "weeklyTemplates.removeSlot",
+  "weeklyTemplates.toggleDay",
+  "weeklyTemplates.seedDefaults"
 ] as const;
 export type ExpectedActionName = (typeof ExpectedActions)[number];
 
@@ -77,16 +91,16 @@ export function computePartySize(adults: number, childrenCount: number, babyCoun
   return adults + childrenCount + babyCount;
 }
 
+export function computeEffectiveOpen(isOpen: boolean, capacity: number): boolean {
+  return isOpen === true && capacity > 0;
+}
+
 /**
  * Nombre de sièges nécessaires à table (bébés exclus — chaise haute / poussette).
  * Utilisé uniquement pour l'assignation de tables, PAS pour la capacité créneau.
  */
 export function computeSeatingSize(adults: number, childrenCount: number): number {
   return adults + childrenCount;
-}
-
-export function computeEffectiveOpen(isOpen: boolean, capacity: number): boolean {
-  return isOpen === true && capacity > 0;
 }
 
 import { z } from "zod";
@@ -117,6 +131,7 @@ export const SettingsPublicSchema = z.object({
   turnstileSiteKey: z.string(),
   maxPartySizeWidget: z.number(),
   timezone: z.string(),
+  funnelAnalyticsEnabled: z.boolean(),
 }).strict();
 
 export const SettingsAdminSchema = SettingsPublicSchema.extend({

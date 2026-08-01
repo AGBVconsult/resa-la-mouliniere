@@ -26,7 +26,7 @@ import type { Language, BookingState, ReservationResult } from "@/components/boo
 import { initialBookingState } from "@/components/booking/types";
 import { formatDateShort, generateUUID } from "@/lib/utils";
 import { useTranslation } from "@/components/booking/i18n/translations";
-import { trackStepView, trackGuestsSelected, trackPolicyViewed } from "@/lib/analytics";
+import { trackStepView, trackGuestsSelected, trackPolicyViewed, setFunnelAnalyticsEnabled } from "@/lib/analytics";
 import { initSessionContext, updateSessionLanguage } from "@/lib/session-context";
 
 type Step = 1 | "1b" | 2 | 3 | 4 | 5 | 6;
@@ -91,6 +91,13 @@ export default function Widget() {
   const deleteDraft = useMutation(api.bookingDrafts.deleteDraft);
   const [showClosureModal, setShowClosureModal] = useState(true);
   const { t } = useTranslation(lang);
+
+  // Sync kill-switch from server settings to client-side analytics gate
+  useEffect(() => {
+    if (settings) {
+      setFunnelAnalyticsEnabled(settings.funnelAnalyticsEnabled);
+    }
+  }, [settings]);
 
   // Widget désactivé
   if (settings && !settings.publicWidgetEnabled) {

@@ -12,6 +12,25 @@ import { v } from "convex/values";
 // 18 months retention
 const RETENTION_MS = 18 * 30 * 24 * 60 * 60 * 1000;
 
+// Max events per session (abuse protection on public endpoint)
+const MAX_EVENTS_PER_SESSION = 200;
+
+// Whitelist of accepted event names
+const ALLOWED_EVENT_NAMES = new Set([
+  "booking_step_view",
+  "booking_guests_selected",
+  "booking_baby_seating_selected",
+  "booking_date_selected",
+  "booking_time_slot_selected",
+  "booking_no_slots_available",
+  "booking_contact_form_error",
+  "booking_policy_viewed",
+  "booking_submitted",
+  "booking_error",
+  "booking_completed",
+  "availability_rendered",
+]);
+
 /**
  * Record a single funnel event.
  * Resolves the active restaurant automatically (same pattern as bookingDrafts.save).
@@ -44,6 +63,16 @@ export const record = mutation({
       .unique();
 
     if (!settings?.funnelAnalyticsEnabled) return;
+
+    // Validate eventName against whitelist
+    if (!ALLOWED_EVENT_NAMES.has(args.eventName)) return;
+
+    // Per-session rate limit
+    const sessionCount = await ctx.db
+      .query("funnelEvents")
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
+      .collect();
+    if (sessionCount.length >= MAX_EVENTS_PER_SESSION) return;
 
     const now = Date.now();
 
