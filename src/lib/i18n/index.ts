@@ -18,6 +18,7 @@ const locales: Record<Language, NestedObject> = {
   de,
   it,
   es,
+  be: fr,
 };
 
 export const DEFAULT_LANGUAGE: Language = "nl";
