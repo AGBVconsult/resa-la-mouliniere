@@ -188,6 +188,7 @@ export default defineSchema({
     completedAt: v.union(v.null(), v.number()),
     noshowAt: v.union(v.null(), v.number()),
     markedNoshowAt: v.optional(v.union(v.null(), v.number())),
+    autoReleasedAt: v.optional(v.union(v.null(), v.number())),
   })
     .index("by_restaurant_slotKey", ["restaurantId", "slotKey"])
     .index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"])

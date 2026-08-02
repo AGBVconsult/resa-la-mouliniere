@@ -4,10 +4,13 @@
  * Contract §7:
  * - dailyFinalize: Mark confirmed reservations as noshow, seated as completed
  * - cleanup: Remove expired tokens and idempotency keys
+ * - autoReleaseExpiredTables: Release tables after 90 min
  */
 
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { shouldAutoRelease } from "./lib/autoRelease";
+import { computeSlotStartAt } from "./lib/tokens";
 
 /**
  * Compute yesterday's dateKey in the given timezone.
@@ -182,5 +185,162 @@ export const cleanup = internalMutation({
     console.log("cleanup completed", { tokensDeleted, idempotencyDeleted });
 
     return { tokensDeleted, idempotencyDeleted };
+  },
+});
+
+/**
+ * Compute today's dateKey in the given timezone.
+ */
+function computeTodayDateKey(now: number, timezone: string): string {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return formatter.format(new Date(now));
+}
+
+/**
+ * Auto-release expired tables.
+ * Runs every 5 minutes via cron.
+ * 
+ * Two branches:
+ * B1: seated reservations where now - seatedAt >= 90 min → completed
+ * B2: confirmed/cardPlaced reservations with table where now - slotStartAt >= 90 min → completed
+ * 
+ * Does NOT mark as noshow — that remains a manual human decision.
+ */
+export const autoReleaseExpiredTables = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+
+    // Get active restaurant
+    const restaurant = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .first();
+
+    if (!restaurant) {
+      console.log("autoReleaseExpiredTables: no active restaurant");
+      return { released: 0 };
+    }
+
+    const timezone = restaurant.timezone || "Europe/Brussels";
+    const todayDateKey = computeTodayDateKey(now, timezone);
+    const yesterdayDateKey = computeYesterdayDateKey(now, timezone);
+
+    let released = 0;
+
+    // Process seated reservations (B1)
+    const seatedReservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_status", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("status", "seated")
+      )
+      .collect();
+
+    // Filter to today and yesterday only
+    const seatedFiltered = seatedReservations.filter(
+      (r) => r.dateKey === todayDateKey || r.dateKey === yesterdayDateKey
+    );
+
+    for (const reservation of seatedFiltered) {
+      const slotStartAt = computeSlotStartAt(reservation.dateKey, reservation.timeKey, timezone);
+      const result = shouldAutoRelease({
+        status: reservation.status,
+        seatedAt: reservation.seatedAt,
+        slotStartAt,
+        now,
+        hasTable: reservation.tableIds.length > 0,
+      });
+
+      if (result.shouldRelease) {
+        await ctx.db.patch(reservation._id, {
+          status: "completed",
+          completedAt: now,
+          autoReleasedAt: now,
+          updatedAt: now,
+          version: reservation.version + 1,
+        });
+
+        await ctx.db.insert("reservationEvents", {
+          reservationId: reservation._id,
+          restaurantId: restaurant._id,
+          eventType: "status_change",
+          fromStatus: reservation.status,
+          toStatus: "completed",
+          performedBy: "system",
+          actualTime: now,
+          metadata: { reason: result.reason },
+          createdAt: now,
+        });
+
+        released++;
+      }
+    }
+
+    // Process confirmed and cardPlaced reservations with tables (B2)
+    const confirmedReservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_status", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("status", "confirmed")
+      )
+      .collect();
+
+    const cardPlacedReservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_status", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("status", "cardPlaced")
+      )
+      .collect();
+
+    const b2Reservations = [...confirmedReservations, ...cardPlacedReservations].filter(
+      (r) =>
+        (r.dateKey === todayDateKey || r.dateKey === yesterdayDateKey) &&
+        r.tableIds.length > 0
+    );
+
+    for (const reservation of b2Reservations) {
+      const slotStartAt = computeSlotStartAt(reservation.dateKey, reservation.timeKey, timezone);
+      const result = shouldAutoRelease({
+        status: reservation.status,
+        seatedAt: reservation.seatedAt,
+        slotStartAt,
+        now,
+        hasTable: reservation.tableIds.length > 0,
+      });
+
+      if (result.shouldRelease) {
+        await ctx.db.patch(reservation._id, {
+          status: "completed",
+          completedAt: now,
+          autoReleasedAt: now,
+          updatedAt: now,
+          version: reservation.version + 1,
+        });
+
+        await ctx.db.insert("reservationEvents", {
+          reservationId: reservation._id,
+          restaurantId: restaurant._id,
+          eventType: "status_change",
+          fromStatus: reservation.status,
+          toStatus: "completed",
+          performedBy: "system",
+          actualTime: now,
+          metadata: { reason: result.reason },
+          createdAt: now,
+        });
+
+        released++;
+      }
+    }
+
+    if (released > 0) {
+      console.log("autoReleaseExpiredTables: released", { released, todayDateKey, yesterdayDateKey });
+    }
+
+    return { released };
   },
 });

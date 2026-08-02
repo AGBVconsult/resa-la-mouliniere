@@ -56,6 +56,7 @@ interface ServiceFloorPlanProps {
   onTableClick?: (reservationId: Id<"reservations"> | null) => void;
   hideHeader?: boolean;
   hideCapacity?: boolean;
+  nameDisplay?: "firstName" | "lastName";
 }
 
 type TableStatus = "seated" | "reserved" | "free" | "blocked";
@@ -66,6 +67,18 @@ const STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: str
   seated: { bg: "bg-[#91BDA0]", border: "border-transparent", text: "text-black" }, // Vert sauge pour seated
   blocked: { bg: "bg-gray-400", border: "border-transparent", text: "text-gray-700" },
 };
+
+// Derived accent colors for the 2nd half of a split table when both reservations share the same status
+const SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
+  reserved: { bg: "bg-[#CFC7F0]", text: "text-purple-900" }, // Lavande
+  seated: { bg: "bg-[#A9C9B4]", text: "text-black" }, // Vert-de-gris
+};
+
+function getReservationStatusAsTableStatus(resStatus: string): TableStatus {
+  if (resStatus === "seated") return "seated";
+  if (["pending", "confirmed", "cardPlaced"].includes(resStatus)) return "reserved";
+  return "free";
+}
 
 // État pour le mode édition de table
 interface EditingTableState {
@@ -88,6 +101,7 @@ export function ServiceFloorPlan({
   onTableClick,
   hideHeader = false,
   hideCapacity = false,
+  nameDisplay = "lastName",
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
@@ -275,11 +289,12 @@ export function ServiceFloorPlan({
   };
 
   // Handle table click - toggle manual selection or highlight reservation
+  // reservationId: the specific reservation clicked (for split tables, it's the half)
   const handleTableClick = async (tableId: string, status: TableStatus, reservationId?: Id<"reservations"> | null, table?: typeof filteredTables[0]) => {
     // Mode édition actif : sélectionner les tables cibles ou échanger
     if (editingTable) {
-      if (tableId === editingTable.tableId) {
-        // Clic sur la même table = désélectionner
+      // Clic sur la même réservation = désélectionner
+      if (reservationId && reservationId === editingTable.reservationId) {
         setEditingTable(null);
         setPendingTableIds([]);
         return;
@@ -290,13 +305,14 @@ export function ServiceFloorPlan({
         return;
       }
       
-      if (status === "seated") {
-        toast.error("Cette table est occupée (client assis)");
+      // Si la table cible a une réservation et est pleine (2/2), échanger
+      if (table?.reservation && table.reservationCount >= 2) {
+        await handleSwapReservations(table);
         return;
       }
       
-      // Si la table cible a une réservation, échanger les affectations
-      if (table?.reservation) {
+      // Si la table cible a une réservation mais a de la place, permettre swap si on clique sur la moitié occupée
+      if (reservationId && table?.reservation && reservationId !== editingTable.reservationId) {
         await handleSwapReservations(table);
         return;
       }
@@ -308,18 +324,21 @@ export function ServiceFloorPlan({
     
     // Si pas de réservation sélectionnée pour assignation
     if (!selectedReservationId) {
-      // Si la table a une réservation, activer le mode édition
-      if (reservationId && table?.reservation) {
-        setEditingTable({
-          tableId,
-          reservationId,
-          reservationVersion: table.reservation.version,
-          reservationName: table.reservation.lastName,
-          partySize: table.reservation.partySize,
-          babyCount: table.reservation.babyCount ?? 0,
-        });
-        onTableClick?.(reservationId);
-        return;
+      // Si on a cliqué sur une moitié avec une réservation, activer le mode édition
+      if (reservationId) {
+        const resa = table?.reservations?.find((r: any) => r.id === reservationId) ?? table?.reservation;
+        if (resa) {
+          setEditingTable({
+            tableId,
+            reservationId,
+            reservationVersion: resa.version,
+            reservationName: nameDisplay === "firstName" ? (resa.firstName?.trim() || resa.lastName) : resa.lastName,
+            partySize: resa.partySize,
+            babyCount: resa.babyCount ?? 0,
+          });
+          onTableClick?.(reservationId);
+          return;
+        }
       }
       // Sinon notifier le parent
       onTableClick?.(reservationId ?? null);
@@ -331,13 +350,9 @@ export function ServiceFloorPlan({
       return;
     }
 
-    if (status === "seated") {
-      toast.error("Cette table est occupée (client assis)");
-      return;
-    }
-
-    if (status === "reserved" || table?.reservation) {
-      toast.error("Cette table est déjà réservée");
+    // Allow assignment if table has room (< 2 reservations)
+    if (table && table.reservationCount >= 2) {
+      toast.error("Cette table est pleine (2/2)");
       return;
     }
 
@@ -381,31 +396,52 @@ export function ServiceFloorPlan({
   const renderTables = () => (
     <>
       {filteredTables.map((table) => {
-        const isEditing = editingTable?.tableId === table.tableId;
+        const isEditingThisTable = editingTable?.tableId === table.tableId;
         const isPending = pendingTableIds.includes(table.tableId);
         const statusColors = STATUS_COLORS[table.status as TableStatus];
         const width = (table.width ?? 1) * TABLE_SIZE - 4;
         const height = (table.height ?? 1) * TABLE_SIZE - 4;
+        const reservations = (table as any).reservations as Array<{
+          id: Id<"reservations">;
+          firstName: string;
+          lastName: string;
+          partySize: number;
+          babyCount: number;
+          timeKey: string;
+          status: string;
+          version: number;
+        }> | undefined;
+        const isSplit = reservations && reservations.length === 2;
+        const isVerticalSplit = height > width;
+
+        // For split tables, determine which half is being edited
+        const editingHalfIndex = isSplit && isEditingThisTable
+          ? reservations.findIndex((r) => r.id === editingTable?.reservationId)
+          : -1;
 
         return (
           <div
             key={table.tableId}
             className={cn(
-              "absolute flex flex-col items-center justify-center transition-all duration-150",
+              "absolute transition-all duration-150 overflow-hidden",
               table.shape === "round" ? "rounded-full" : "rounded-lg",
-              isEditing
-                ? "bg-amber-400 ring-2 ring-amber-500 ring-offset-1"
-                : isPending
-                  ? "bg-blue-200 ring-2 ring-blue-500 ring-offset-1"
-                  : statusColors.bg,
+              !isSplit && (
+                isEditingThisTable
+                  ? "bg-amber-400 ring-2 ring-amber-500 ring-offset-1"
+                  : isPending
+                    ? "bg-blue-200 ring-2 ring-blue-500 ring-offset-1"
+                    : statusColors.bg
+              ),
+              isSplit && isPending && "ring-2 ring-blue-500 ring-offset-1",
+              isSplit && isEditingThisTable && "ring-2 ring-amber-500 ring-offset-1",
               statusColors.border,
               table.status === "blocked" && "opacity-50",
-              // Mode édition actif : toutes les tables sauf blocked/seated sont cliquables
-              editingTable && table.status !== "blocked" && table.status !== "seated" && "cursor-pointer hover:scale-[1.02] hover:shadow-md",
-              // Mode assignation normal
+              // Mode édition actif : tables non blocked cliquables
+              editingTable && table.status !== "blocked" && "cursor-pointer hover:scale-[1.02] hover:shadow-md",
+              // Mode assignation normal : tables avec de la place cliquables
               !editingTable && selectedReservationId &&
                 table.status !== "blocked" &&
-                table.status !== "seated" &&
+                table.reservationCount < 2 &&
                 "cursor-pointer hover:scale-[1.02] hover:shadow-md",
               // Table avec réservation cliquable pour édition
               !editingTable && !selectedReservationId && table.reservation && "cursor-pointer hover:scale-[1.02] hover:shadow-md",
@@ -417,38 +453,100 @@ export function ServiceFloorPlan({
               width,
               height,
             }}
-            onClick={() => handleTableClick(table.tableId, table.status as TableStatus, table.reservation?.id, table)}
+            onClick={!isSplit ? () => handleTableClick(table.tableId, table.status as TableStatus, table.reservation?.id, table) : undefined}
           >
-            {/* Bouton X pour supprimer l'affectation en mode édition */}
-            {isEditing && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleUnassign();
-                }}
-                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-md z-10"
-              >
-                <X className="w-3 h-3 text-white" />
-              </button>
-            )}
-            {table.reservation ? (
-              <>
-                <span className={cn("text-[10px] font-bold leading-tight", isEditing ? "text-amber-900" : statusColors.text)}>
-                  {table.reservation.timeKey}
-                </span>
-                <span className={cn("text-[9px] leading-tight truncate max-w-full px-0.5", isEditing ? "text-amber-900" : statusColors.text)}>
-                  {table.reservation.lastName}
-                </span>
-              </>
+            {/* === SPLIT TABLE (2 reservations) === */}
+            {isSplit ? (
+              <div className={cn("flex w-full h-full", isVerticalSplit ? "flex-col" : "flex-row")}>
+                {reservations.map((resa, idx) => {
+                  const resaTableStatus = getReservationStatusAsTableStatus(resa.status);
+                  const isThisHalfEditing = editingHalfIndex === idx;
+                  // Use derived color for 2nd half if both have same status
+                  const sameStatus = reservations[0].status === reservations[1].status;
+                  let halfBg: string;
+                  let halfText: string;
+                  if (isThisHalfEditing) {
+                    halfBg = "bg-amber-400";
+                    halfText = "text-amber-900";
+                  } else if (idx === 1 && sameStatus && SPLIT_ACCENTS[resaTableStatus]) {
+                    halfBg = SPLIT_ACCENTS[resaTableStatus].bg;
+                    halfText = SPLIT_ACCENTS[resaTableStatus].text;
+                  } else {
+                    halfBg = STATUS_COLORS[resaTableStatus].bg;
+                    halfText = STATUS_COLORS[resaTableStatus].text;
+                  }
+                  const displayName = nameDisplay === "firstName" ? (resa.firstName?.trim() || resa.lastName) : resa.lastName;
+
+                  return (
+                    <div
+                      key={resa.id}
+                      className={cn(
+                        "flex flex-col items-center justify-center flex-1 relative cursor-pointer",
+                        halfBg,
+                        idx === 0 && (isVerticalSplit ? "border-b" : "border-r"),
+                        "border-white/80"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTableClick(table.tableId, table.status as TableStatus, resa.id, table);
+                      }}
+                    >
+                      {isThisHalfEditing && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUnassign();
+                          }}
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-md z-10"
+                        >
+                          <X className="w-2.5 h-2.5 text-white" />
+                        </button>
+                      )}
+                      <span className={cn("text-[8px] font-bold leading-tight", halfText)}>
+                        {resa.timeKey}
+                      </span>
+                      <span className={cn("text-[7px] leading-tight truncate max-w-full px-0.5", halfText)}>
+                        {displayName}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
+              /* === SINGLE or EMPTY TABLE === */
               <>
-                <span className={cn("text-xs font-semibold", statusColors.text)}>
-                  {table.name}
-                </span>
-                {!hideCapacity && (
-                  <span className={cn("text-[10px] flex items-center gap-0.5", statusColors.text, "opacity-75")}>
-                    {table.capacity} <Users className="w-2.5 h-2.5" />
-                  </span>
+                {/* Bouton X pour supprimer l'affectation en mode édition */}
+                {isEditingThisTable && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleUnassign();
+                    }}
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-md z-10"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                )}
+                {table.reservation ? (
+                  <div className="flex flex-col items-center justify-center w-full h-full">
+                    <span className={cn("text-[10px] font-bold leading-tight", isEditingThisTable ? "text-amber-900" : statusColors.text)}>
+                      {table.reservation.timeKey}
+                    </span>
+                    <span className={cn("text-[9px] leading-tight truncate max-w-full px-0.5", isEditingThisTable ? "text-amber-900" : statusColors.text)}>
+                      {nameDisplay === "firstName" ? (table.reservation.firstName?.trim() || table.reservation.lastName) : table.reservation.lastName}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center w-full h-full">
+                    <span className={cn("text-xs font-semibold", statusColors.text)}>
+                      {table.name}
+                    </span>
+                    {!hideCapacity && (
+                      <span className={cn("text-[10px] flex items-center gap-0.5", statusColors.text, "opacity-75")}>
+                        {table.capacity} <Users className="w-2.5 h-2.5" />
+                      </span>
+                    )}
+                  </div>
                 )}
               </>
             )}

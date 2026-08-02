@@ -802,6 +802,9 @@ export const updateReservation = mutation({
         patch.refusedAt = now;
       } else if (status === "seated") {
         patch.seatedAt = now;
+        patch.autoReleasedAt = null; // Reset auto-release on reopen
+      } else if (status === "confirmed") {
+        patch.autoReleasedAt = null; // Reset auto-release on restore
       } else if (status === "completed") {
         patch.completedAt = now;
       } else if (status === "noshow") {

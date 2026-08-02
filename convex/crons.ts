@@ -59,6 +59,14 @@ crons.interval(
   {}
 );
 
+// Auto-release expired tables every 5 minutes (90 min threshold)
+crons.interval(
+  "auto-release-tables",
+  { minutes: 5 },
+  internal.jobs.autoReleaseExpiredTables,
+  {}
+);
+
 // Daily finalize at 03:00 - mark confirmed as noshow, seated as completed
 crons.cron(
   "daily-finalize",

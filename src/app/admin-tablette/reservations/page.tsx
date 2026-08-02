@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { format, parseISO, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -214,6 +214,7 @@ export default function TabletReservationsPage() {
   const [showFloorPlan, setShowFloorPlan] = useState(true);
   const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
   const [highlightedReservationId, setHighlightedReservationId] = useState<Id<"reservations"> | null>(null);
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -223,6 +224,20 @@ export default function TabletReservationsPage() {
   const [selectedClientModal, setSelectedClientModal] = useState<{ clientId: Id<"clients">; reservationId: Id<"reservations"> } | null>(null);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
+
+  // Scroll to highlighted reservation row
+  useEffect(() => {
+    if (!highlightedReservationId) return;
+    const el = rowRefs.current[highlightedReservationId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightedReservationId]);
+
+  // Reset highlight on date or service change
+  useEffect(() => {
+    setHighlightedReservationId(null);
+  }, [dateKey, selectedService]);
 
   // Ensure slots are synced from weekly templates for the selected date
   const ensureSlots = useMutation(api.weeklyTemplates.ensureSlotsForDate);
@@ -593,14 +608,14 @@ export default function TabletReservationsPage() {
     };
 
     return (
-      <div key={res._id} className="flex flex-col">
+      <div key={res._id} className="flex flex-col" ref={(el) => { rowRefs.current[res._id] = el; }}>
         <div
           onClick={handleRowClick}
           className={cn(
             "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-1.5",
             isExpanded && "bg-gray-50",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
-            isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
+            isHighlighted && !isSelectedForAssignment && "bg-amber-100 ring-2 ring-inset ring-amber-500 border-l-4 border-l-amber-500 shadow-sm animate-highlight-pulse",
             isUnassigned && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
           )}
         >
@@ -1093,6 +1108,7 @@ export default function TabletReservationsPage() {
               onTableClick={setHighlightedReservationId}
               hideHeader
               hideCapacity
+              nameDisplay="firstName"
             />
           </div>
         )}

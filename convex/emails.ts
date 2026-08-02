@@ -601,6 +601,12 @@ export const enqueueReviewEmails = internalMutation({
     const excludedStatuses = ["no-show", "cancelled", "refused", "incident"];
 
     for (const reservation of reservations) {
+      // Skip auto-released reservations where client never arrived (B2)
+      if ((reservation as any).autoReleasedAt && !reservation.seatedAt) {
+        skippedIncident++;
+        continue;
+      }
+
       // Check if reservation ever had an excluded status (via reservationEvents)
       const excludedEvent = await ctx.db
         .query("reservationEvents")

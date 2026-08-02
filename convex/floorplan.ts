@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id, Doc } from "./_generated/dataModel";
 import { Errors } from "./lib/errors";
 import { internal } from "./_generated/api";
+import { MAX_RESERVATIONS_PER_TABLE } from "./lib/tableAssignment";
 
 
 /**
@@ -111,6 +112,12 @@ export const getTableStates = query({
         .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
       const currentResa = seatedResa ?? planningResas[0];
 
+      // Build all reservations array (seated first, then by timeKey)
+      const allSorted = [
+        ...assignedReservations.filter((r) => r.status === "seated"),
+        ...assignedReservations.filter((r) => r.status !== "seated").sort((a, b) => a.timeKey.localeCompare(b.timeKey)),
+      ];
+
       return {
         tableId: table._id,
         name: table.name,
@@ -123,7 +130,7 @@ export const getTableStates = query({
         shape: (table.shape ?? "square") as "square" | "round",
         isActive: table.isActive,
         status,
-        // Current reservation info (if any)
+        // Current reservation info (backward-compatible, first reservation)
         reservation: currentResa
           ? {
               id: currentResa._id,
@@ -136,7 +143,17 @@ export const getTableStates = query({
               version: currentResa.version,
             }
           : null,
-        // All reservations assigned to this table for this service
+        // All reservations assigned to this table (for split display)
+        reservations: allSorted.map((r) => ({
+          id: r._id,
+          firstName: r.firstName,
+          lastName: r.lastName,
+          partySize: r.partySize,
+          babyCount: r.babyCount,
+          timeKey: r.timeKey,
+          status: r.status,
+          version: r.version,
+        })),
         reservationCount: assignedReservations.length,
       };
     });
@@ -231,20 +248,15 @@ export const assign = mutation({
         ACTIVE_STATUSES.includes(r.status as typeof ACTIVE_STATUSES[number])
     );
 
-    // Check each table for conflicts
+    // Check each table for conflicts (allow up to MAX_RESERVATIONS_PER_TABLE)
     for (const tableId of tableIds) {
       const table = tables.find((t) => t?._id === tableId);
       const conflictingResas = otherActiveReservations.filter((r) =>
         r.tableIds.includes(tableId)
       );
 
-      for (const conflict of conflictingResas) {
-        // If conflict is seated, special message
-        if (conflict.status === "seated") {
-          throw Errors.TABLE_OCCUPIED(table?.name ?? "Unknown", `${conflict.firstName} ${conflict.lastName}`);
-        }
-        // Otherwise, table is already reserved
-        throw Errors.TABLE_OCCUPIED(table?.name ?? "Unknown", `${conflict.firstName} ${conflict.lastName}`);
+      if (conflictingResas.length >= MAX_RESERVATIONS_PER_TABLE) {
+        throw Errors.TABLE_FULL(table?.name ?? "Unknown", MAX_RESERVATIONS_PER_TABLE);
       }
     }
 
@@ -420,17 +432,10 @@ export const checkAssignment = query({
         r.tableIds.includes(tableId)
       );
 
-      if (conflictingResas.length > 0) {
-        const conflict = conflictingResas[0];
-        if (conflict.status === "seated") {
-          return {
-            valid: false,
-            error: `TABLE_OCCUPIED_SEATED|${table?.name}|${conflict.firstName} ${conflict.lastName}`,
-          };
-        }
+      if (conflictingResas.length >= MAX_RESERVATIONS_PER_TABLE) {
         return {
           valid: false,
-          error: `TABLE_CONFLICT|${table?.name}|${conflict.firstName} ${conflict.lastName}|${conflict.timeKey}`,
+          error: `TABLE_FULL|${table?.name}|${MAX_RESERVATIONS_PER_TABLE}`,
         };
       }
     }
