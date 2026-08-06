@@ -596,11 +596,19 @@ export const enqueueReviewEmails = internalMutation({
     let enqueued = 0;
     let alreadyExists = 0;
     let skippedIncident = 0;
+    let skippedAutoReleased = 0;
 
     // Statuses to exclude from review emails
     const excludedStatuses = ["no-show", "cancelled", "refused", "incident"];
 
     for (const reservation of reservations) {
+      // Skip auto-released reservations where the client never arrived (B2):
+      // no meal took place, so no review request.
+      if (reservation.autoReleasedAt && !reservation.seatedAt) {
+        skippedAutoReleased++;
+        continue;
+      }
+
       // Check if reservation ever had an excluded status (via reservationEvents)
       const excludedEvent = await ctx.db
         .query("reservationEvents")
@@ -671,6 +679,7 @@ export const enqueueReviewEmails = internalMutation({
       enqueued,
       alreadyExists,
       skippedIncident,
+      skippedAutoReleased,
     });
 
     return {
@@ -678,6 +687,7 @@ export const enqueueReviewEmails = internalMutation({
       enqueued,
       alreadyExists,
       skippedIncident,
+      skippedAutoReleased,
       dateKey: yesterdayDateKey,
     };
   },

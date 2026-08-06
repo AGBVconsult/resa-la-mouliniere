@@ -18,7 +18,7 @@
         style={{ paddingLeft: '4vw', paddingRight: '4vw', paddingTop: '1vh', paddingBottom: 'calc(1vh + env(safe-area-inset-bottom, 0px))', textAlign: 'center' }}
       >
         <p style={{ fontSize: '1.3vh', color: '#94a3b8' }}>
-          Visserskaai 17, Oostende • Powered by AGBV Consult
+          Visserskaai 14, Oostende • Powered by AGBV Consult
         </p>
       </div>
     </div>

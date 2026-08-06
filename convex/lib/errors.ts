@@ -90,6 +90,9 @@ export const Errors = {
   TABLE_OCCUPIED: (tableName: string, guestName: string) =>
     appError("TABLE_CONFLICT", "error.tableOccupied", { tableName, guestName }),
 
+  TABLE_FULL: (tableName: string, max: number) =>
+    appError("TABLE_CONFLICT", "error.tableFull", { tableName, max }),
+
   INSUFFICIENT_TABLE_CAPACITY: (totalCapacity: number, partySize: number) =>
     appError("INSUFFICIENT_CAPACITY", "error.insufficientTableCapacity", { totalCapacity, partySize }),
 

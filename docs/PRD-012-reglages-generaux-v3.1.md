@@ -85,7 +85,7 @@ Cela garantit que `pendingThreshold` reste privé (jamais exposé au client).
 │  │ 🏠 Restaurant                                            │   │
 │  ├─────────────────────────────────────────────────────────┤   │
 │  │ Nom            │ La Moulinière                          │   │
-│  │ Adresse        │ Visserskaai 17, 8400 Oostende          │   │
+│  │ Adresse        │ Visserskaai 14, 8400 Oostende          │   │
 │  │ Téléphone      │ (non renseigné)                        │   │
 │  │ Email          │ info@lamouliniere.be                   │   │
 │  │ Fuseau horaire │ Europe/Brussels                        │   │
@@ -174,7 +174,7 @@ Cela garantit que `pendingThreshold` reste privé (jamais exposé au client).
 | Paramètre | Type | Défaut | Validation |
 |-----------|------|--------|------------|
 | `restaurantName` | string | "La Moulinière" | Min 2, max 100 caractères |
-| `address` | string | "Visserskaai 17, 8400 Oostende" | Min 5, max 200 caractères |
+| `address` | string | "Visserskaai 14, 8400 Oostende" | Min 5, max 200 caractères |
 | `phone` | string | "" | Format international (espaces autorisés) ou vide |
 | `email` | string | "info@lamouliniere.be" | Format email valide |
 | `timezone` | string | "Europe/Brussels" | Timezone IANA valide |
@@ -461,7 +461,7 @@ export const DEFAULT_SETTINGS = {
 
   // Restaurant
   restaurantName: "La Moulinière",
-  address: "Visserskaai 17, 8400 Oostende",
+  address: "Visserskaai 14, 8400 Oostende",
   phone: "",
   email: "info@lamouliniere.be",
   timezone: "Europe/Brussels",

@@ -125,6 +125,15 @@
 .animate-checkmark { animation: checkmark 0.4s ease-out 0.2s forwards; }
 .animate-slide-up-in { animation: slide-up-in 0.3s ease-out; }
 .animate-spin { animation: spin 1s linear infinite; }
+.animate-highlight-pulse { animation: highlight-pulse 2s ease-out; }
+
+/* Animate outline, not box-shadow: Tailwind ring and shadow utilities are
+   box-shadow based and would be overridden by this animation. */
+@keyframes highlight-pulse {
+  0% { outline: 0 solid rgba(245, 158, 11, 0.5); outline-offset: 0; }
+  30% { outline: 4px solid rgba(245, 158, 11, 0); outline-offset: 3px; }
+  100% { outline: 0 solid rgba(245, 158, 11, 0); outline-offset: 0; }
+}
 
 /* ==========================================================================
    Safari/iPad CSS Fallbacks for Tailwind v4 compatibility

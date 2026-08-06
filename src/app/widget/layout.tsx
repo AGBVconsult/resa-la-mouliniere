@@ -3,7 +3,7 @@ import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Réserver une table - La Moulinière Ostende",
-  description: "Réservez votre table à La Moulinière, restaurant de moules à Ostende depuis 2011. Plus de 40 préparations de moules fraîches de Zélande. Visserskaai 17, face au port de pêche.",
+  description: "Réservez votre table à La Moulinière, restaurant de moules à Ostende depuis 2011. Plus de 40 préparations de moules fraîches de Zélande. Visserskaai 14, face au port de pêche.",
   keywords: ["restaurant", "réservation", "La Moulinière", "Ostende", "moules", "Zélande", "fruits de mer", "Visserskaai"],
   robots: { index: true, follow: true },
   openGraph: {
@@ -33,7 +33,7 @@ export default function WidgetLayout({
     description: "Restaurant de moules à Ostende depuis 2011. Plus de 40 préparations de moules fraîches de Zélande, réalisées à la minute par le Chef Benjamin.",
     address: {
       "@type": "PostalAddress",
-      streetAddress: "Visserskaai 17",
+      streetAddress: "Visserskaai 14",
       addressLocality: "Ostende",
       postalCode: "8400",
       addressCountry: "BE",

@@ -340,7 +340,11 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
 
     let outcome: LedgerOutcome | null = null;
 
-    if (status === "completed") {
+    // Exclude auto-released reservations where client never arrived (B2)
+    // These should not count as a visit in the CRM
+    const isAutoReleasedNotArrived = !!r.autoReleasedAt && !r.seatedAt;
+
+    if (status === "completed" && !isAutoReleasedNotArrived) {
       outcome = r.markedNoshowAt ? "completed_rehabilitated" : "completed";
     } else if (status === "noshow") {
       outcome = "noshow";
@@ -496,10 +500,11 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
 
     // avgMealDurationMinutes: average (completedAt - seatedAt) in minutes
     // Ignore aberrant durations (< 15 min or > 480 min / 8 hours)
+    // Exclude auto-released reservations (B1) to avoid biasing isSlowClient with fixed 90 min values
     let totalDuration = 0;
     let durationCount = 0;
     for (const r of completedReservations) {
-      if (r.seatedAt && r.completedAt) {
+      if (r.seatedAt && r.completedAt && !r.autoReleasedAt) {
         const durationMinutes = (r.completedAt - r.seatedAt) / 60000;
         if (durationMinutes >= 15 && durationMinutes <= 480) {
           totalDuration += durationMinutes;

@@ -15,7 +15,8 @@ Ce fichier est la **source de vérité unique**. Toute implémentation doit suiv
 - Token manage : renommage `manageTokenExpireBeforeSlotMs` et formule unique `expiresAt = slotStartAt - manageTokenExpireBeforeSlotMs`.
 - Tokens : 1 doc `reservationTokens` par `(reservationId,type)` ; rotation par update du doc.
 - Slots : un slot est **effectivement ouvert** si `isOpen=true` ET `capacity>0` ; le DTO `Slot.isOpen` reflète `effectiveOpen`.
-- Jobs : `dailyFinalize` => `confirmed->noshow` et `seated->completed`.
+- Jobs : `dailyFinalize` => `seated->completed` uniquement. **Aucun `noshow` n'est jamais écrit automatiquement** : c'est une décision humaine.
+- Jobs : `autoReleaseExpiredTables` (toutes les 5 min) libère les tables à H+90.
 - Rate-limit : best-effort par IP, fallback fingerprint.
 - Admin : ajout `reservations.adminCancel` + enqueue emails (validated/refused/cancelled).
 - Staff : règles de masquage déterministes email/téléphone.
@@ -100,7 +101,8 @@ Les seules transitions valides sont :
 - `confirmed` -> `seated`
 - `confirmed` -> `cancelled`
 - `seated` -> `completed`
-- `confirmed` -> `noshow` (**uniquement via job dailyFinalize**, voir section 7)
+- `cardPlaced` -> `completed` (**libération automatique à H+90**, voir section 7)
+- `confirmed` -> `noshow` (**saisie manuelle uniquement** — aucun job n'écrit de `noshow`)
 
 Transitions interdites (non exhaustif, donc **toutes** celles non listées ci-dessus sont interdites) :
 
@@ -781,10 +783,23 @@ Mutations :
 - `*/1 * * * *` : `email.processQueue({ now })`
   - Objectif : envoyer + retry (backoff DEFAULT).
 
-- `0 3 * * *` : `jobs.dailyFinalize({ dateKey: string, now: number })` (**DEFAULT** : dateKey = “hier” en timezone restaurant)
+- `0 3 * * *` : `jobs.dailyFinalize()` (dateKey = “hier” en timezone restaurant)
   - Objectif :
-    - si `status="confirmed"` et slot passé : `status -> noshow`, `noshowAt=now`, `_version+1`.
-    - si `status="seated"` et slot passé : **DEFAULT** `status -> completed`, `completedAt=now`, `_version+1`.
+    - si `status="seated"` et slot passé : `status -> completed`, `completedAt=now`, `_version+1`. Filet de sécurité de clôture, pas un jugement sur le client.
+  - Les réservations `confirmed` sont **délibérément laissées intactes** : le `noshow` est une décision humaine, jamais automatique. Une ligne `confirmed` passée ne retient aucune table (libérées à H+90) : elle n'affecte ni le plan de salle ni les capacités, et constitue le signal qu'il reste une décision à prendre.
+  - **Dépendance temporelle** : le CRM fige une journée à 04:00 et ne retraite jamais une date en `success`. Un `noshow` saisi après cette heure serait donc perdu pour `totalNoShows` et le score. `markClientNeedsRebuild` (`convex/admin.ts`) borne pour cela sa fenêtre à `dateKey <= hier`, ce qui lève le drapeau `needsRebuild` du client et permet le recalcul depuis sa fiche.
+  - **Point ouvert** : aucun consommateur automatique du drapeau `needsRebuild` n'existe ; le rattrapage est aujourd'hui manuel (bouton de reconstruction sur la fiche client).
+
+- `*/5 * * * *` : `jobs.autoReleaseExpiredTables()`
+  - Objectif : libérer une table affectée après **90 min**, sans jamais écrire de `noshow`.
+  - Deux branches :
+    - **B1** `status="seated"` et `now - seatedAt >= 90 min` : `status -> completed`, `completedAt=now`, `autoReleasedAt=now`, `_version+1`.
+    - **B2** `status in ("confirmed","cardPlaced")` **avec** `tableIds` non vide et `now - slotStartAt >= 90 min` : idem (client jamais arrivé).
+  - Portée de lecture : uniquement `dateKey ∈ {aujourd'hui, hier}` × `service ∈ {lunch, dinner}`, via `by_restaurant_date_service` (4 requêtes bornées) — l'index `by_restaurant_status` lirait les ~180 jours de réservations futures à chaque tick.
+  - Neutralisation des effets de bord :
+    - B2 est exclue du grand livre CRM (pas de visite comptée) et des e-mails d'avis.
+    - B1 et B2 sont exclues du calcul `avgMealDurationMinutes` (durée forcée à 90 min, non représentative), dans `crm.ts` **et** dans `clients.rebuildStats`.
+    - `autoReleasedAt` est remis à `null` sur transition manuelle vers `seated` ou `confirmed` (réouverture).
 
 - `0 4 * * *` : `jobs.cleanup({ now: number })`
   - Objectif : purge :
@@ -889,11 +904,11 @@ Invariants routes :
 7. Idempotence obligatoire sur `reservations.create`, `reservations.cancelByToken` et `groupRequests.create` via `idempotencyKeys`.
 8. `effectiveOpen` est la règle unique d’ouverture slot : `isOpen=true` ET `capacity>0`; le DTO `Slot.isOpen` reflète `effectiveOpen`.
 9. Contrainte capacité slot : somme `pending|confirmed|seated` <= `slots.capacity`.
-10. Contrainte tables : aucune table assignée à 2 réservations sur le même `slotKey`.
+10. Contrainte tables : au plus **2** réservations actives (`pending|confirmed|cardPlaced|seated`) par table pour un couple `(dateKey, service)` — constante `MAX_RESERVATIONS_PER_TABLE`. Plafond appliqué de façon identique à tous les points d'entrée : `floorplan.assign`, `floorplan.checkAssignment`, `admin.updateReservation`, `tables.assignToReservation`. Dépassement => `TABLE_FULL`.
 11. Concurrence : toutes les mutations qui modifient une réservation utilisent `expectedVersion` et incrémentent `_version` (inclut `_cancel` et `adminCancel`).
 12. Sécurité/PII :
     - `turnstileSecretKey` n’est jamais renvoyé par une Query ; mise à jour via `admin.updateSecrets` (owner-only).
     - rate-limit best-effort suit la clé `rateLimitKey` définie (IP sinon fingerprint).
-    - `dailyFinalize` applique `confirmed->noshow` et `seated->completed`.
+    - `dailyFinalize` applique `seated->completed` uniquement ; aucun `noshow` n'est écrit automatiquement.
     - staff voit email/phone masqués selon les règles déterministes.
     - `SLOT_TAKEN.meta.reason` est renseigné à `"closed"` quand `effectiveOpen=false`.

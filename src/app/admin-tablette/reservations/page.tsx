@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { format, parseISO, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -214,6 +214,7 @@ export default function TabletReservationsPage() {
   const [showFloorPlan, setShowFloorPlan] = useState(true);
   const [selectedForAssignment, setSelectedForAssignment] = useState<Reservation | null>(null);
   const [highlightedReservationId, setHighlightedReservationId] = useState<Id<"reservations"> | null>(null);
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -490,6 +491,27 @@ export default function TabletReservationsPage() {
   const currentCapacity = selectedService === "total" ? (lunchCapacity + dinnerCapacity) : selectedService === "lunch" ? lunchCapacity : dinnerCapacity;
   const currentReservationsCount = selectedService === "total" ? (lunchReservationsCount + dinnerReservationsCount) : selectedService === "lunch" ? lunchReservationsCount : dinnerReservationsCount;
 
+  // The highlight is *derived*, not reset on every dateKey/service change: it only
+  // applies while the target reservation is part of the displayed service. This lets
+  // TabletNotificationBell change date + service and set the highlight in one gesture,
+  // and it self-clears when the user navigates elsewhere.
+  const effectiveHighlightedId = useMemo(() => {
+    if (!highlightedReservationId) return null;
+    const isDisplayed = (currentReservations as Reservation[] | undefined)?.some(
+      (r) => r._id === highlightedReservationId
+    );
+    return isDisplayed ? highlightedReservationId : null;
+  }, [highlightedReservationId, currentReservations]);
+
+  // Scroll the highlighted row into view once it is rendered
+  useEffect(() => {
+    if (!effectiveHighlightedId) return;
+    rowRefs.current[effectiveHighlightedId]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [effectiveHighlightedId]);
+
   const renderReservationsList = (reservations: Reservation[], service: "lunch" | "dinner") => {
     const allReservations = reservations?.slice().sort((a, b) => a.timeKey.localeCompare(b.timeKey)) || [];
     
@@ -581,7 +603,7 @@ export default function TabletReservationsPage() {
     const isCompact = false; // Always show full info
     const isSelectedForAssignment = selectedForAssignment?._id === res._id;
     const isUnassigned = !res.primaryTableId && res.tableIds.length === 0;
-    const isHighlighted = highlightedReservationId === res._id;
+    const isHighlighted = effectiveHighlightedId === res._id;
 
     const handleRowClick = () => {
       // Ouvrir le ClientModal au clic sur une réservation
@@ -593,14 +615,14 @@ export default function TabletReservationsPage() {
     };
 
     return (
-      <div key={res._id} className="flex flex-col">
+      <div key={res._id} className="flex flex-col" ref={(el) => { rowRefs.current[res._id] = el; }}>
         <div
           onClick={handleRowClick}
           className={cn(
             "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-1.5",
             isExpanded && "bg-gray-50",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
-            isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
+            isHighlighted && !isSelectedForAssignment && "bg-amber-100 ring-2 ring-inset ring-amber-500 border-l-4 border-l-amber-500 shadow-sm animate-highlight-pulse",
             isUnassigned && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
           )}
         >
@@ -1093,6 +1115,7 @@ export default function TabletReservationsPage() {
               onTableClick={setHighlightedReservationId}
               hideHeader
               hideCapacity
+              nameDisplay="firstName"
             />
           </div>
         )}

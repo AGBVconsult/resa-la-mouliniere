@@ -11,6 +11,7 @@ import { makeSlotKey, computePartySize, computeEffectiveOpen } from "../spec/con
 import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./lib/tokens";
 import { capitalizeName, formatPhoneNumber } from "./lib/formatters";
 import { getTodayDateKey } from "./lib/dateUtils";
+import { MAX_RESERVATIONS_PER_TABLE } from "./lib/tableAssignment";
 
 const CRM_SCORE_VERSION = "v1";
 
@@ -162,7 +163,13 @@ async function markClientNeedsRebuild(ctx: any, reservation: any, reason: string
   const timezone = restaurant?.timezone ?? "Europe/Brussels";
   const yesterday = computeYesterdayDateKey(Date.now(), timezone);
 
-  if (reservation.dateKey < yesterday) {
+  // `<=` and not `<`: the CRM finalises a day at 04:00 and never reprocesses a
+  // date already marked `success` (crm.ts:238). Since no-show is now entered by
+  // hand — typically the next morning, after finalisation — a strict `<` would
+  // silently drop those entries from totalNoShows and from the client score.
+  // Trade-off: an entry made between midnight and 04:00 raises the flag for
+  // nothing, which is harmless as the rebuild is idempotent.
+  if (reservation.dateKey <= yesterday) {
     const client = await ctx.db.get(reservation.clientId);
     if (client && !client.needsRebuild) {
       await ctx.db.patch(reservation.clientId, {
@@ -802,6 +809,9 @@ export const updateReservation = mutation({
         patch.refusedAt = now;
       } else if (status === "seated") {
         patch.seatedAt = now;
+        patch.autoReleasedAt = null; // Reset auto-release on reopen
+      } else if (status === "confirmed") {
+        patch.autoReleasedAt = null; // Reset auto-release on restore
       } else if (status === "completed") {
         patch.completedAt = now;
       } else if (status === "noshow") {
@@ -813,17 +823,24 @@ export const updateReservation = mutation({
     // Table assignment
     if (tableIds !== undefined) {
       // Check for table conflicts
+      // Same list as ASSIGNABLE_STATUSES in convex/floorplan.ts
       const currentStatus = status ?? reservation.status;
-      if (!["pending", "confirmed", "seated"].includes(currentStatus)) {
+      if (!["pending", "confirmed", "cardPlaced", "seated"].includes(currentStatus)) {
         throw Errors.INVALID_INPUT("tableIds", "Cannot assign tables to reservation in this status");
       }
 
-      // Check if any table is already assigned to another reservation on same slotKey
+      // Count occupants over (dateKey, service) — NOT slotKey. The cap is per
+      // service and has no time constraint: scoping to slotKey would let a table
+      // exceed MAX_RESERVATIONS_PER_TABLE across different time slots.
+      // `cardPlaced` must be included, otherwise such an occupant is invisible here.
       if (tableIds.length > 0) {
         const conflictingReservations = await ctx.db
           .query("reservations")
-          .withIndex("by_restaurant_slotKey", (q) =>
-            q.eq("restaurantId", reservation.restaurantId).eq("slotKey", reservation.slotKey)
+          .withIndex("by_restaurant_date_service", (q) =>
+            q
+              .eq("restaurantId", reservation.restaurantId)
+              .eq("dateKey", reservation.dateKey)
+              .eq("service", reservation.service)
           )
           .filter((q) =>
             q.and(
@@ -831,20 +848,26 @@ export const updateReservation = mutation({
               q.or(
                 q.eq(q.field("status"), "pending"),
                 q.eq(q.field("status"), "confirmed"),
+                q.eq(q.field("status"), "cardPlaced"),
                 q.eq(q.field("status"), "seated")
               )
             )
           )
           .collect();
 
-        for (const other of conflictingReservations) {
-          const conflictingTableIds = tableIds.filter((tid) => other.tableIds.includes(tid));
-          if (conflictingTableIds.length > 0) {
-            throw Errors.TABLE_CONFLICT(
-              reservation.slotKey,
-              conflictingTableIds.map((id) => id.toString())
-            );
-          }
+        // Double assignment is allowed up to MAX_RESERVATIONS_PER_TABLE,
+        // consistent with convex/floorplan.ts assign/checkAssignment.
+        const fullTableIds = tableIds.filter(
+          (tid) =>
+            conflictingReservations.filter((other) => other.tableIds.includes(tid)).length >=
+            MAX_RESERVATIONS_PER_TABLE
+        );
+
+        if (fullTableIds.length > 0) {
+          throw Errors.TABLE_CONFLICT(
+            reservation.slotKey,
+            fullTableIds.map((id) => id.toString())
+          );
         }
       }
 

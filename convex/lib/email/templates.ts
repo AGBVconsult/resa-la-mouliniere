@@ -187,7 +187,7 @@ const translations: Record<ContentLocale, Translations> = {
     "footer.signature.review": "Au plaisir de vous accueillir à nouveau,",
     "payment.title": "Bon à savoir pour le règlement :",
     "payment.text": "Nous n'avons pas de terminal bancaire. Pour un règlement simple et rapide, nous utilisons Payconiq (comptes belges), vous pouvez aussi payer en espèces.",
-    "address": "Visserskaai 17, 8400 Oostende",
+    "address": "Visserskaai 14, 8400 Oostende",
     "reason": "Raison",
   },
   nl: {
@@ -248,7 +248,7 @@ const translations: Record<ContentLocale, Translations> = {
     "footer.signature.review": "We hopen u snel weer te mogen verwelkomen,",
     "payment.title": "Goed om te weten voor de betaling:",
     "payment.text": "We hebben geen betaalterminal. Voor een snelle en eenvoudige betaling gebruiken we Payconiq (Belgische rekeningen), u kunt ook contant betalen.",
-    "address": "Visserskaai 17, 8400 Oostende",
+    "address": "Visserskaai 14, 8400 Oostende",
     "reason": "Reden",
   },
   en: {
@@ -309,7 +309,7 @@ const translations: Record<ContentLocale, Translations> = {
     "footer.signature.review": "We hope to welcome you again soon,",
     "payment.title": "Good to know for payment:",
     "payment.text": "We don't have a card terminal. For quick and easy payment, we use Payconiq (Belgian accounts), you can also pay in cash.",
-    "address": "Visserskaai 17, 8400 Oostende",
+    "address": "Visserskaai 14, 8400 Oostende",
     "reason": "Reason",
   },
   de: {
@@ -370,7 +370,7 @@ const translations: Record<ContentLocale, Translations> = {
     "footer.signature.review": "Wir hoffen, Sie bald wieder begrüßen zu dürfen,",
     "payment.title": "Gut zu wissen für die Zahlung:",
     "payment.text": "Wir haben kein Kartenterminal. Für eine schnelle und einfache Zahlung nutzen wir Payconiq (belgische Konten), Sie können auch bar bezahlen.",
-    "address": "Visserskaai 17, 8400 Oostende",
+    "address": "Visserskaai 14, 8400 Oostende",
     "reason": "Grund",
   },
   it: {
@@ -431,7 +431,7 @@ const translations: Record<ContentLocale, Translations> = {
     "footer.signature.review": "Speriamo di accoglierti di nuovo presto,",
     "payment.title": "Buono a sapersi per il pagamento:",
     "payment.text": "Non abbiamo un terminale per carte. Per un pagamento rapido e semplice, utilizziamo Payconiq (conti belgi), puoi anche pagare in contanti.",
-    "address": "Visserskaai 17, 8400 Oostende",
+    "address": "Visserskaai 14, 8400 Oostende",
     "reason": "Motivo",
   },
   es: {
@@ -492,7 +492,7 @@ const translations: Record<ContentLocale, Translations> = {
     "footer.signature.review": "Esperamos poder recibirle de nuevo pronto,",
     "payment.title": "Bueno saberlo para el pago:",
     "payment.text": "No tenemos terminal de tarjetas. Para un pago rápido y sencillo, utilizamos Payconiq (cuentas belgas), también puede pagar en efectivo.",
-    "address": "Visserskaai 17, 8400 Oostende",
+    "address": "Visserskaai 14, 8400 Oostende",
     "reason": "Motivo",
   },
 };
