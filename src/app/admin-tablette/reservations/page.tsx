@@ -225,20 +225,6 @@ export default function TabletReservationsPage() {
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
-  // Scroll to highlighted reservation row
-  useEffect(() => {
-    if (!highlightedReservationId) return;
-    const el = rowRefs.current[highlightedReservationId];
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [highlightedReservationId]);
-
-  // Reset highlight on date or service change
-  useEffect(() => {
-    setHighlightedReservationId(null);
-  }, [dateKey, selectedService]);
-
   // Ensure slots are synced from weekly templates for the selected date
   const ensureSlots = useMutation(api.weeklyTemplates.ensureSlotsForDate);
   useEffect(() => {
@@ -505,6 +491,27 @@ export default function TabletReservationsPage() {
   const currentCapacity = selectedService === "total" ? (lunchCapacity + dinnerCapacity) : selectedService === "lunch" ? lunchCapacity : dinnerCapacity;
   const currentReservationsCount = selectedService === "total" ? (lunchReservationsCount + dinnerReservationsCount) : selectedService === "lunch" ? lunchReservationsCount : dinnerReservationsCount;
 
+  // The highlight is *derived*, not reset on every dateKey/service change: it only
+  // applies while the target reservation is part of the displayed service. This lets
+  // TabletNotificationBell change date + service and set the highlight in one gesture,
+  // and it self-clears when the user navigates elsewhere.
+  const effectiveHighlightedId = useMemo(() => {
+    if (!highlightedReservationId) return null;
+    const isDisplayed = (currentReservations as Reservation[] | undefined)?.some(
+      (r) => r._id === highlightedReservationId
+    );
+    return isDisplayed ? highlightedReservationId : null;
+  }, [highlightedReservationId, currentReservations]);
+
+  // Scroll the highlighted row into view once it is rendered
+  useEffect(() => {
+    if (!effectiveHighlightedId) return;
+    rowRefs.current[effectiveHighlightedId]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [effectiveHighlightedId]);
+
   const renderReservationsList = (reservations: Reservation[], service: "lunch" | "dinner") => {
     const allReservations = reservations?.slice().sort((a, b) => a.timeKey.localeCompare(b.timeKey)) || [];
     
@@ -596,7 +603,7 @@ export default function TabletReservationsPage() {
     const isCompact = false; // Always show full info
     const isSelectedForAssignment = selectedForAssignment?._id === res._id;
     const isUnassigned = !res.primaryTableId && res.tableIds.length === 0;
-    const isHighlighted = highlightedReservationId === res._id;
+    const isHighlighted = effectiveHighlightedId === res._id;
 
     const handleRowClick = () => {
       // Ouvrir le ClientModal au clic sur une réservation

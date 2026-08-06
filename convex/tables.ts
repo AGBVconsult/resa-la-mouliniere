@@ -8,6 +8,7 @@ import { mutation, query } from "./_generated/server";
 import { requireRole } from "./lib/rbac";
 import { Errors } from "./lib/errors";
 import { getTodayDateKey } from "./lib/dateUtils";
+import { MAX_RESERVATIONS_PER_TABLE } from "./lib/tableAssignment";
 import type { Id } from "./_generated/dataModel";
 
 // Constants
@@ -605,17 +606,16 @@ export const assignToReservation = mutation({
       (r) => r._id !== reservationId && activeStatuses.includes(r.status)
     );
 
+    // Double assignment is allowed up to MAX_RESERVATIONS_PER_TABLE,
+    // consistent with convex/floorplan.ts assign/checkAssignment.
     for (const tableId of tableIds) {
-      const table = await ctx.db.get(tableId);
-      const conflict = activeReservations.find((r) =>
+      const occupants = activeReservations.filter((r) =>
         r.tableIds.some((id) => id === tableId)
       );
 
-      if (conflict) {
-        throw Errors.INVALID_INPUT(
-          "tableIds",
-          `Table ${table?.name} déjà assignée à ${conflict.lastName}`
-        );
+      if (occupants.length >= MAX_RESERVATIONS_PER_TABLE) {
+        const table = await ctx.db.get(tableId);
+        throw Errors.TABLE_FULL(table?.name ?? "Unknown", MAX_RESERVATIONS_PER_TABLE);
       }
     }
 

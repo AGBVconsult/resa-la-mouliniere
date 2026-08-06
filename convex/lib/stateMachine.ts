@@ -9,7 +9,7 @@
  * - confirmed -> cancelled (adminCancel, cancelByToken)
  * - confirmed -> seated (checkIn)
  * - seated -> completed (checkOut)
- * - confirmed -> noshow (dailyFinalize, if slot passed)
+ * - confirmed -> noshow (manual only — never written by a job)
  * - seated -> completed (dailyFinalize, if slot passed)
  */
 

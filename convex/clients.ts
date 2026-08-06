@@ -573,11 +573,13 @@ export const rebuildStats = mutation({
       ? Math.round((totalPartySize / completedReservations.length) * 10) / 10
       : undefined;
 
-    // Calculate average meal duration (completedAt - seatedAt)
+    // Calculate average meal duration (completedAt - seatedAt).
+    // Auto-released reservations are excluded: their duration is the fixed 90-min
+    // threshold, not an observed meal length, and would bias isSlowClient.
     let totalDuration = 0;
     let durationCount = 0;
     for (const r of completedReservations) {
-      if (r.seatedAt && r.completedAt) {
+      if (r.seatedAt && r.completedAt && !r.autoReleasedAt) {
         const durationMs = r.completedAt - r.seatedAt;
         if (durationMs > 0 && durationMs < 8 * 60 * 60 * 1000) { // Max 8 hours
           totalDuration += durationMs;

@@ -342,7 +342,7 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
 
     // Exclude auto-released reservations where client never arrived (B2)
     // These should not count as a visit in the CRM
-    const isAutoReleasedNotArrived = !!(r as any).autoReleasedAt && !r.seatedAt;
+    const isAutoReleasedNotArrived = !!r.autoReleasedAt && !r.seatedAt;
 
     if (status === "completed" && !isAutoReleasedNotArrived) {
       outcome = r.markedNoshowAt ? "completed_rehabilitated" : "completed";
@@ -504,7 +504,7 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
     let totalDuration = 0;
     let durationCount = 0;
     for (const r of completedReservations) {
-      if (r.seatedAt && r.completedAt && !(r as any).autoReleasedAt) {
+      if (r.seatedAt && r.completedAt && !r.autoReleasedAt) {
         const durationMinutes = (r.completedAt - r.seatedAt) / 60000;
         if (durationMinutes >= 15 && durationMinutes <= 480) {
           totalDuration += durationMinutes;

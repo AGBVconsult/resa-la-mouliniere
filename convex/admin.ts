@@ -11,6 +11,7 @@ import { makeSlotKey, computePartySize, computeEffectiveOpen } from "../spec/con
 import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./lib/tokens";
 import { capitalizeName, formatPhoneNumber } from "./lib/formatters";
 import { getTodayDateKey } from "./lib/dateUtils";
+import { MAX_RESERVATIONS_PER_TABLE } from "./lib/tableAssignment";
 
 const CRM_SCORE_VERSION = "v1";
 
@@ -162,7 +163,13 @@ async function markClientNeedsRebuild(ctx: any, reservation: any, reason: string
   const timezone = restaurant?.timezone ?? "Europe/Brussels";
   const yesterday = computeYesterdayDateKey(Date.now(), timezone);
 
-  if (reservation.dateKey < yesterday) {
+  // `<=` and not `<`: the CRM finalises a day at 04:00 and never reprocesses a
+  // date already marked `success` (crm.ts:238). Since no-show is now entered by
+  // hand — typically the next morning, after finalisation — a strict `<` would
+  // silently drop those entries from totalNoShows and from the client score.
+  // Trade-off: an entry made between midnight and 04:00 raises the flag for
+  // nothing, which is harmless as the rebuild is idempotent.
+  if (reservation.dateKey <= yesterday) {
     const client = await ctx.db.get(reservation.clientId);
     if (client && !client.needsRebuild) {
       await ctx.db.patch(reservation.clientId, {
@@ -840,14 +847,19 @@ export const updateReservation = mutation({
           )
           .collect();
 
-        for (const other of conflictingReservations) {
-          const conflictingTableIds = tableIds.filter((tid) => other.tableIds.includes(tid));
-          if (conflictingTableIds.length > 0) {
-            throw Errors.TABLE_CONFLICT(
-              reservation.slotKey,
-              conflictingTableIds.map((id) => id.toString())
-            );
-          }
+        // Double assignment is allowed up to MAX_RESERVATIONS_PER_TABLE,
+        // consistent with convex/floorplan.ts assign/checkAssignment.
+        const fullTableIds = tableIds.filter(
+          (tid) =>
+            conflictingReservations.filter((other) => other.tableIds.includes(tid)).length >=
+            MAX_RESERVATIONS_PER_TABLE
+        );
+
+        if (fullTableIds.length > 0) {
+          throw Errors.TABLE_CONFLICT(
+            reservation.slotKey,
+            fullTableIds.map((id) => id.toString())
+          );
         }
       }
 

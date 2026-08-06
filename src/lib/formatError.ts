@@ -49,6 +49,8 @@ const ERROR_MESSAGES: Record<string, string | ((meta?: Record<string, unknown>) 
   "error.tableBlocked": (meta) => `La table ${meta?.tableName || ""} est désactivée`,
   "error.tableOccupied": (meta) =>
     `La table ${meta?.tableName || ""} est occupée par ${meta?.guestName || "un client"}`,
+  "error.tableFull": (meta) =>
+    `La table ${meta?.tableName || ""} est pleine (${meta?.max || 2}/${meta?.max || 2})`,
   "error.insufficientTableCapacity": (meta) =>
     `Capacité insuffisante : ${meta?.totalCapacity || 0} places pour ${meta?.partySize || "?"} personnes`,
 

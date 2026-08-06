@@ -304,20 +304,22 @@ export function ServiceFloorPlan({
         toast.error("Cette table est désactivée");
         return;
       }
-      
-      // Si la table cible a une réservation et est pleine (2/2), échanger
-      if (table?.reservation && table.reservationCount >= 2) {
+
+      // Garde-fou : ne pas échanger un client déjà installé sans avertissement
+      const targetSeated = table?.reservations?.some((r) => r.status === "seated") ?? false;
+      if (targetSeated) {
+        toast.error("Cette table est occupée (client assis)");
+        return;
+      }
+
+      // Table pleine (2/2) : le seul geste possible est l'échange
+      if (table && table.reservationCount >= 2) {
         await handleSwapReservations(table);
         return;
       }
-      
-      // Si la table cible a une réservation mais a de la place, permettre swap si on clique sur la moitié occupée
-      if (reservationId && table?.reservation && reservationId !== editingTable.reservationId) {
-        await handleSwapReservations(table);
-        return;
-      }
-      
-      // Sinon ajouter/retirer la table de la sélection de destination
+
+      // Table à moitié occupée (1/2) ou libre : ajouter à la sélection de destination,
+      // ce qui permet de créer un 2/2 depuis le flux de déplacement aussi.
       togglePendingTable(tableId);
       return;
     }
@@ -326,7 +328,7 @@ export function ServiceFloorPlan({
     if (!selectedReservationId) {
       // Si on a cliqué sur une moitié avec une réservation, activer le mode édition
       if (reservationId) {
-        const resa = table?.reservations?.find((r: any) => r.id === reservationId) ?? table?.reservation;
+        const resa = table?.reservations?.find((r) => r.id === reservationId) ?? table?.reservation;
         if (resa) {
           setEditingTable({
             tableId,
@@ -350,7 +352,13 @@ export function ServiceFloorPlan({
       return;
     }
 
-    // Allow assignment if table has room (< 2 reservations)
+    // Garde-fou : un client déjà installé ne partage pas sa table
+    if (status === "seated") {
+      toast.error("Cette table est occupée (client assis)");
+      return;
+    }
+
+    // Double assignation autorisée tant que la table n'est pas pleine
     if (table && table.reservationCount >= 2) {
       toast.error("Cette table est pleine (2/2)");
       return;
@@ -401,17 +409,8 @@ export function ServiceFloorPlan({
         const statusColors = STATUS_COLORS[table.status as TableStatus];
         const width = (table.width ?? 1) * TABLE_SIZE - 4;
         const height = (table.height ?? 1) * TABLE_SIZE - 4;
-        const reservations = (table as any).reservations as Array<{
-          id: Id<"reservations">;
-          firstName: string;
-          lastName: string;
-          partySize: number;
-          babyCount: number;
-          timeKey: string;
-          status: string;
-          version: number;
-        }> | undefined;
-        const isSplit = reservations && reservations.length === 2;
+        const reservations = table.reservations;
+        const isSplit = reservations !== undefined && reservations.length === 2;
         const isVerticalSplit = height > width;
 
         // For split tables, determine which half is being edited
@@ -436,11 +435,12 @@ export function ServiceFloorPlan({
               isSplit && isEditingThisTable && "ring-2 ring-amber-500 ring-offset-1",
               statusColors.border,
               table.status === "blocked" && "opacity-50",
-              // Mode édition actif : tables non blocked cliquables
-              editingTable && table.status !== "blocked" && "cursor-pointer hover:scale-[1.02] hover:shadow-md",
+              // Mode édition actif : tables ni désactivées ni occupées sont cliquables
+              editingTable && table.status !== "blocked" && table.status !== "seated" && "cursor-pointer hover:scale-[1.02] hover:shadow-md",
               // Mode assignation normal : tables avec de la place cliquables
               !editingTable && selectedReservationId &&
                 table.status !== "blocked" &&
+                table.status !== "seated" &&
                 table.reservationCount < 2 &&
                 "cursor-pointer hover:scale-[1.02] hover:shadow-md",
               // Table avec réservation cliquable pour édition
