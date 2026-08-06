@@ -823,17 +823,24 @@ export const updateReservation = mutation({
     // Table assignment
     if (tableIds !== undefined) {
       // Check for table conflicts
+      // Same list as ASSIGNABLE_STATUSES in convex/floorplan.ts
       const currentStatus = status ?? reservation.status;
-      if (!["pending", "confirmed", "seated"].includes(currentStatus)) {
+      if (!["pending", "confirmed", "cardPlaced", "seated"].includes(currentStatus)) {
         throw Errors.INVALID_INPUT("tableIds", "Cannot assign tables to reservation in this status");
       }
 
-      // Check if any table is already assigned to another reservation on same slotKey
+      // Count occupants over (dateKey, service) — NOT slotKey. The cap is per
+      // service and has no time constraint: scoping to slotKey would let a table
+      // exceed MAX_RESERVATIONS_PER_TABLE across different time slots.
+      // `cardPlaced` must be included, otherwise such an occupant is invisible here.
       if (tableIds.length > 0) {
         const conflictingReservations = await ctx.db
           .query("reservations")
-          .withIndex("by_restaurant_slotKey", (q) =>
-            q.eq("restaurantId", reservation.restaurantId).eq("slotKey", reservation.slotKey)
+          .withIndex("by_restaurant_date_service", (q) =>
+            q
+              .eq("restaurantId", reservation.restaurantId)
+              .eq("dateKey", reservation.dateKey)
+              .eq("service", reservation.service)
           )
           .filter((q) =>
             q.and(
@@ -841,6 +848,7 @@ export const updateReservation = mutation({
               q.or(
                 q.eq(q.field("status"), "pending"),
                 q.eq(q.field("status"), "confirmed"),
+                q.eq(q.field("status"), "cardPlaced"),
                 q.eq(q.field("status"), "seated")
               )
             )

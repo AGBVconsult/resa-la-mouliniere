@@ -305,15 +305,17 @@ export function ServiceFloorPlan({
         return;
       }
 
-      // Garde-fou : ne pas échanger un client déjà installé sans avertissement
-      const targetSeated = table?.reservations?.some((r) => r.status === "seated") ?? false;
-      if (targetSeated) {
-        toast.error("Cette table est occupée (client assis)");
-        return;
-      }
-
       // Table pleine (2/2) : le seul geste possible est l'échange
       if (table && table.reservationCount >= 2) {
+        // Garde-fou limité au swap : un échange déplacerait un client déjà installé
+        // sans avertissement. Ce test ne doit PAS gouverner l'ajout ci-dessous :
+        // computeTableStatus passe toute la table en `seated` dès qu'un seul
+        // occupant est assis, ce qui interdirait la 2e tournée ou un walk-in.
+        const targetSeated = table.reservations?.some((r) => r.status === "seated") ?? false;
+        if (targetSeated) {
+          toast.error("Cette table est occupée (client assis)");
+          return;
+        }
         await handleSwapReservations(table);
         return;
       }
@@ -352,13 +354,10 @@ export function ServiceFloorPlan({
       return;
     }
 
-    // Garde-fou : un client déjà installé ne partage pas sa table
-    if (status === "seated") {
-      toast.error("Cette table est occupée (client assis)");
-      return;
-    }
-
-    // Double assignation autorisée tant que la table n'est pas pleine
+    // Double assignation autorisée tant que la table n'est pas pleine.
+    // Volontairement aucun test sur `seated` : le plafond de 2 est sans contrainte
+    // horaire, et un client installé depuis midi ne doit pas empêcher d'affecter la
+    // 2e tournée sur la même table.
     if (table && table.reservationCount >= 2) {
       toast.error("Cette table est pleine (2/2)");
       return;
@@ -435,12 +434,11 @@ export function ServiceFloorPlan({
               isSplit && isEditingThisTable && "ring-2 ring-amber-500 ring-offset-1",
               statusColors.border,
               table.status === "blocked" && "opacity-50",
-              // Mode édition actif : tables ni désactivées ni occupées sont cliquables
-              editingTable && table.status !== "blocked" && table.status !== "seated" && "cursor-pointer hover:scale-[1.02] hover:shadow-md",
+              // Mode édition actif : toute table non désactivée est cliquable
+              editingTable && table.status !== "blocked" && "cursor-pointer hover:scale-[1.02] hover:shadow-md",
               // Mode assignation normal : tables avec de la place cliquables
               !editingTable && selectedReservationId &&
                 table.status !== "blocked" &&
-                table.status !== "seated" &&
                 table.reservationCount < 2 &&
                 "cursor-pointer hover:scale-[1.02] hover:shadow-md",
               // Table avec réservation cliquable pour édition
