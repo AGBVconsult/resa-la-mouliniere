@@ -199,7 +199,7 @@ Fournir un widget de réservation en ligne intégrable via iframe, permettant au
 • Logo + indicateur d'étape (5 cercles)
 • Sélecteur de langue (FR/NL/EN/DE/IT)
 • Récap progressif : s'enrichit à chaque étape validée
-• Footer : "Visserskaai 17 - Oostende • Powered by AGBV Consult"
+• Footer : "Visserskaai 14 - Oostende • Powered by AGBV Consult"
 ```
 
 ### 3.2 Étape 1 : Convives

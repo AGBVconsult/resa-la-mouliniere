@@ -120,7 +120,7 @@ Allisson & Benjamin
 | `{guests}` | Nombre de convives | 6 personnes |
 | `{date}` | Date de la réservation | Samedi 31 Janvier |
 | `{time}` | Heure de la réservation | 12:30 |
-| `{address}` | Adresse du restaurant | Visserskaai 17, 8400 Oostende |
+| `{address}` | Adresse du restaurant | Visserskaai 14, 8400 Oostende |
 
 ---
 

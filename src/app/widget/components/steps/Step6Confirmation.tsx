@@ -97,7 +97,7 @@ DTSTART:${formatICSDate(startDate)}
 DTEND:${formatICSDate(endDate)}
 SUMMARY:Réservation La Moulinière
 DESCRIPTION:${partySize} ${partySize > 1 ? t.persons : t.person} - ${serviceLabel}
-LOCATION:Visserskaai 17, Oostende
+LOCATION:Visserskaai 14, Oostende
 END:VEVENT
 END:VCALENDAR`;
 

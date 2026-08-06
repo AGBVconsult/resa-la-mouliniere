@@ -674,7 +674,7 @@ DTSTART:${formatICS(startLocal)}
 DTEND:${formatICS(endLocal)}
 SUMMARY:Réservation La Moulinière - ${partySize} convives
 DESCRIPTION:Réservation pour ${partySize} personnes\\nContact: ${firstName} ${lastName}
-LOCATION:La Moulinière, Visserskaai 17, 8400 Oostende, Belgique
+LOCATION:La Moulinière, Visserskaai 14, 8400 Oostende, Belgique
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR`;
