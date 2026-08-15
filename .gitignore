@@ -42,6 +42,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# convex snapshot exports
+/exports/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
