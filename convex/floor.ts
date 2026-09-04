@@ -4,10 +4,10 @@
  * 
  * Ces exports sont conservés pour la compatibilité API mais lèvent une erreur.
  */
-import { query, mutation } from "./_generated/server";
+import { internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-export const getTables = query({
+export const getTables = internalQuery({
   args: {
     dateKey: v.string(),
     service: v.union(v.literal("lunch"), v.literal("dinner")),
@@ -18,14 +18,14 @@ export const getTables = query({
   },
 });
 
-export const assignTables = mutation({
+export const assignTables = internalMutation({
   args: { reservationId: v.string(), tableIds: v.array(v.string()), expectedVersion: v.number() },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.floorplan.assign à la place");
   },
 });
 
-export const upsertTable = mutation({
+export const upsertTable = internalMutation({
   args: {
     tableId: v.optional(v.string()),
     restaurantId: v.string(),

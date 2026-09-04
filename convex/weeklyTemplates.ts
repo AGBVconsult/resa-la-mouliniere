@@ -157,7 +157,7 @@ export const get = query({
  * Upsert a weekly template.
  * §6.6
  */
-export const upsert = mutation({
+export const upsert = internalMutation({
   args: {
     dayOfWeek: v.number(),
     service: v.union(v.literal("lunch"), v.literal("dinner")),
@@ -171,7 +171,6 @@ export const upsert = mutation({
     })),
   },
   handler: async (ctx, args) => {
-    await requireRole(ctx, "admin");
 
     // Get user identity
     const identity = await ctx.auth.getUserIdentity();
@@ -701,10 +700,9 @@ export const toggleDay = mutation({
  * Seed default templates (14 = 7 days × 2 services).
  * §6.6
  */
-export const seedDefaults = mutation({
+export const seedDefaults = internalMutation({
   args: {},
   handler: async (ctx) => {
-    await requireRole(ctx, "admin");
 
     const identity = await ctx.auth.getUserIdentity();
     const updatedBy = identity?.subject ?? "unknown";

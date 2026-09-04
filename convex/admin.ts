@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
@@ -232,7 +232,7 @@ export const getSettings = query({
   },
 });
 
-export const updateSettings = mutation({
+export const updateSettings = internalMutation({
   args: { patch: v.any() },
   handler: async () => {
     return { ok: true } as any;
@@ -338,14 +338,13 @@ export const updateProgressiveFilling = mutation({
 const ALLOWED_SECRET_KEYS = ["turnstileSecretKey", "turnstileSiteKey", "appUrl"] as const;
 type SecretKey = (typeof ALLOWED_SECRET_KEYS)[number];
 
-export const updateSecrets = mutation({
+export const updateSecrets = internalMutation({
   args: {
     turnstileSecretKey: v.optional(v.string()),
     turnstileSiteKey: v.optional(v.string()),
     appUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireRole(ctx, "owner");
 
     const activeRestaurants = await ctx.db
       .query("restaurants")

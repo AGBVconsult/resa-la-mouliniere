@@ -8,8 +8,8 @@ import { mutation, query } from "./_generated/server";
 import { requireRole } from "./lib/rbac";
 import { Errors } from "./lib/errors";
 import { getTodayDateKey } from "./lib/dateUtils";
-import { MAX_RESERVATIONS_PER_TABLE } from "./lib/tableAssignment";
-import type { Id } from "./_generated/dataModel";
+
+
 
 // Constants
 const TABLE_GRID_SPAN = 3; // Cellules par table
@@ -122,62 +122,6 @@ export const stats = query({
   },
 });
 
-/**
- * Get table states for a specific service (which tables are assigned)
- */
-export const getTableStates = query({
-  args: {
-    dateKey: v.string(),
-    service: v.union(v.literal("lunch"), v.literal("dinner")),
-  },
-  handler: async (ctx, { dateKey, service }) => {
-    await requireRole(ctx, "admin");
-
-    const restaurant = await ctx.db
-      .query("restaurants")
-      .withIndex("by_isActive", (q) => q.eq("isActive", true))
-      .first();
-
-    if (!restaurant) {
-      return { tables: [], assignedTableIds: [] };
-    }
-
-    // Get all tables
-    const tables = await ctx.db
-      .query("tables")
-      .withIndex("by_restaurant_isActive", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("isActive", true)
-      )
-      .collect();
-
-    // Get reservations for this service
-    const reservations = await ctx.db
-      .query("reservations")
-      .withIndex("by_restaurant_date_service", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("dateKey", dateKey).eq("service", service)
-      )
-      .collect();
-
-    // Filter active reservations
-    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"];
-    const activeReservations = reservations.filter((r) =>
-      activeStatuses.includes(r.status)
-    );
-
-    // Collect all assigned table IDs
-    const assignedTableIds = new Set<string>();
-    for (const r of activeReservations) {
-      for (const tableId of r.tableIds) {
-        assignedTableIds.add(tableId);
-      }
-    }
-
-    return {
-      tables,
-      assignedTableIds: Array.from(assignedTableIds),
-    };
-  },
-});
 
 // ═══════════════════════════════════════════════════════════════
 // MUTATIONS
@@ -560,88 +504,6 @@ export const deactivateTerrace = mutation({
     console.log("Terrace deactivated", { count });
 
     return { count };
-  },
-});
-
-/**
- * Assign tables to a reservation
- */
-export const assignToReservation = mutation({
-  args: {
-    reservationId: v.id("reservations"),
-    tableIds: v.array(v.id("tables")),
-  },
-  handler: async (ctx, { reservationId, tableIds }) => {
-    await requireRole(ctx, "admin");
-
-    const reservation = await ctx.db.get(reservationId);
-    if (!reservation) {
-      throw Errors.NOT_FOUND("reservations", reservationId);
-    }
-
-    // Check all tables exist and are active
-    for (const tableId of tableIds) {
-      const table = await ctx.db.get(tableId);
-      if (!table) {
-        throw Errors.NOT_FOUND("tables", tableId);
-      }
-      if (!table.isActive) {
-        throw Errors.INVALID_INPUT("tableIds", `Table ${table.name} est désactivée`);
-      }
-    }
-
-    // Check for conflicts (tables already assigned to another reservation in same service)
-    const serviceReservations = await ctx.db
-      .query("reservations")
-      .withIndex("by_restaurant_date_service", (q) =>
-        q
-          .eq("restaurantId", reservation.restaurantId)
-          .eq("dateKey", reservation.dateKey)
-          .eq("service", reservation.service)
-      )
-      .collect();
-
-    const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated"];
-    const activeReservations = serviceReservations.filter(
-      (r) => r._id !== reservationId && activeStatuses.includes(r.status)
-    );
-
-    // Double assignment is allowed up to MAX_RESERVATIONS_PER_TABLE,
-    // consistent with convex/floorplan.ts assign/checkAssignment.
-    for (const tableId of tableIds) {
-      const occupants = activeReservations.filter((r) =>
-        r.tableIds.some((id) => id === tableId)
-      );
-
-      if (occupants.length >= MAX_RESERVATIONS_PER_TABLE) {
-        const table = await ctx.db.get(tableId);
-        throw Errors.TABLE_FULL(table?.name ?? "Unknown", MAX_RESERVATIONS_PER_TABLE);
-      }
-    }
-
-    // Update reservation
-    await ctx.db.patch(reservationId, {
-      tableIds,
-      updatedAt: Date.now(),
-      version: reservation.version + 1,
-    });
-
-    // Get table names for logging
-    const tableNames = await Promise.all(
-      tableIds.map(async (id) => {
-        const t = await ctx.db.get(id);
-        return t?.name ?? "?";
-      })
-    );
-
-    console.log("Tables assigned", {
-      reservationId,
-      tableIds,
-      tableNames,
-      partySize: reservation.partySize,
-    });
-
-    return { ok: true, tableNames };
   },
 });
 

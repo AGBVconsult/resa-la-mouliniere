@@ -259,7 +259,7 @@ export const getByToken = query({
 /**
  * @deprecated Utilisez api.admin.listReservations à la place
  */
-export const listByService = query({
+export const listByService = internalQuery({
   args: { dateKey: v.string(), service: v.union(v.literal("lunch"), v.literal("dinner")) },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.admin.listReservations à la place");
@@ -269,7 +269,7 @@ export const listByService = query({
 /**
  * @deprecated Utilisez api.admin.listReservations avec filtre status à la place
  */
-export const listPending = query({
+export const listPending = internalQuery({
   args: { dateKey: v.optional(v.string()) },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.admin.listReservations avec filtre status");
@@ -279,7 +279,7 @@ export const listPending = query({
 /**
  * @deprecated Utilisez api.admin.getReservation à la place
  */
-export const getAdmin = query({
+export const getAdmin = internalQuery({
   args: { reservationId: v.string() },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.admin.getReservation à la place");
@@ -289,7 +289,7 @@ export const getAdmin = query({
 /**
  * @deprecated Utilisez api.admin.getReservation à la place
  */
-export const getStaff = query({
+export const getStaff = internalQuery({
   args: { reservationId: v.string() },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.admin.getReservation à la place");
@@ -673,7 +673,7 @@ export const _markTokenUsed = internalMutation({
 /**
  * @deprecated Utilisez api.admin.updateReservation avec status: "confirmed" à la place
  */
-export const adminConfirm = mutation({
+export const adminConfirm = internalMutation({
   args: { reservationId: v.string(), expectedVersion: v.number() },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.admin.updateReservation avec status: 'confirmed'");
@@ -683,7 +683,7 @@ export const adminConfirm = mutation({
 /**
  * @deprecated Utilisez api.admin.updateReservation avec status: "refused" à la place
  */
-export const adminRefuse = mutation({
+export const adminRefuse = internalMutation({
   args: { reservationId: v.string(), reasonKey: v.string(), expectedVersion: v.number() },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.admin.updateReservation avec status: 'refused'");
@@ -693,7 +693,7 @@ export const adminRefuse = mutation({
 /**
  * @deprecated Utilisez api.admin.updateReservation avec status: "cancelled" à la place
  */
-export const adminCancel = mutation({
+export const adminCancel = internalMutation({
   args: { reservationId: v.string(), expectedVersion: v.number(), now: v.number() },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.admin.updateReservation avec status: 'cancelled'");
@@ -703,7 +703,7 @@ export const adminCancel = mutation({
 /**
  * @deprecated Utilisez api.admin.updateReservation avec status: "seated" à la place
  */
-export const checkIn = mutation({
+export const checkIn = internalMutation({
   args: { reservationId: v.string(), expectedVersion: v.number() },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.admin.updateReservation avec status: 'seated'");
@@ -713,7 +713,7 @@ export const checkIn = mutation({
 /**
  * @deprecated Utilisez api.admin.updateReservation avec status: "completed" à la place
  */
-export const checkOut = mutation({
+export const checkOut = internalMutation({
   args: { reservationId: v.string(), expectedVersion: v.number() },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.admin.updateReservation avec status: 'completed'");

@@ -83,14 +83,12 @@ function generateDateRange(startDate: string, endDate: string): string[] {
 // Génère des slots pour une plage de dates.
 // ═══════════════════════════════════════════════════════════════
 
-export const seedRange = mutation({
+export const seedRange = internalMutation({
   args: {
     dateStart: v.string(),
     dateEnd: v.string(),
   },
   handler: async (ctx, { dateStart, dateEnd }) => {
-    // RBAC: owner uniquement
-    await requireRole(ctx, "owner");
 
     // Validate date formats
     if (!DATE_KEY_REGEX.test(dateStart)) {
@@ -388,15 +386,13 @@ export const listByDateService = query({
 // ⚠️ Tooling MVP — Non contracté dans CONTRACTS.md
 // ═══════════════════════════════════════════════════════════════
 
-export const closeRange = mutation({
+export const closeRange = internalMutation({
   args: {
     dateStart: v.string(),
     dateEnd: v.string(),
     service: v.optional(v.union(v.literal("lunch"), v.literal("dinner"))),
   },
   handler: async (ctx, { dateStart, dateEnd, service }) => {
-    // RBAC: owner uniquement
-    await requireRole(ctx, "owner");
 
     // Validate date formats
     if (!DATE_KEY_REGEX.test(dateStart)) {
@@ -476,15 +472,13 @@ export const closeRange = mutation({
 // ⚠️ Tooling MVP — Non contracté dans CONTRACTS.md
 // ═══════════════════════════════════════════════════════════════
 
-export const openRange = mutation({
+export const openRange = internalMutation({
   args: {
     dateStart: v.string(),
     dateEnd: v.string(),
     service: v.optional(v.union(v.literal("lunch"), v.literal("dinner"))),
   },
   handler: async (ctx, { dateStart, dateEnd, service }) => {
-    // RBAC: owner uniquement
-    await requireRole(ctx, "owner");
 
     // Validate date formats
     if (!DATE_KEY_REGEX.test(dateStart)) {

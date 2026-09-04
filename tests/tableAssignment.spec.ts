@@ -20,12 +20,20 @@ function read(file: string): string {
   return readFileSync(join(CONVEX_DIR, file), "utf-8");
 }
 
-/** Every mutation that may write reservations.tableIds. */
-const ENTRY_POINTS = ["floorplan.ts", "admin.ts", "tables.ts"];
+/**
+ * Every mutation that may write reservations.tableIds.
+ * tables.assignToReservation was a third, divergent copy (no optimistic lock,
+ * no event, no assignment log) and has been removed: the guard below keeps it out.
+ */
+const ENTRY_POINTS = ["floorplan.ts", "admin.ts"];
 
 describe("MAX_RESERVATIONS_PER_TABLE", () => {
   it("is 2 (double assignment)", () => {
     expect(MAX_RESERVATIONS_PER_TABLE).toBe(2);
+  });
+
+  it("tables.ts no longer carries a parallel assignment entry point", () => {
+    expect(read("tables.ts")).not.toMatch(/export const (assignToReservation|getTableStates)\b/);
   });
 
   it.each(ENTRY_POINTS)("%s imports the shared constant", (file) => {
@@ -70,7 +78,7 @@ describe("cap is scoped per (dateKey, service)", () => {
 
   it.each(ENTRY_POINTS)("%s counts cardPlaced as an active occupant", (file) => {
     const block = sourceFeedingTheCap(file);
-    // Either inline (admin.ts, tables.ts) or via the shared ACTIVE_STATUSES
+    // Either inline (admin.ts) or via the shared ACTIVE_STATUSES
     // constant (floorplan.ts) — both are valid, an omission is not.
     const coversCardPlaced =
       block.includes("cardPlaced") || block.includes("ACTIVE_STATUSES");

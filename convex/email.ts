@@ -4,17 +4,17 @@
  * 
  * Ces exports sont conservés pour la compatibilité API mais lèvent une erreur.
  */
-import { action } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 
-export const processQueue = action({
+export const processQueue = internalAction({
   args: { now: v.number() },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.emails.processQueue à la place");
   },
 });
 
-export const sendJob = action({
+export const sendJob = internalAction({
   args: { jobId: v.string() },
   handler: async () => {
     throw new Error("DEPRECATED: Utilisez api.emails.sendJob à la place");
