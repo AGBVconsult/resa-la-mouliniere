@@ -2,11 +2,11 @@
  * Script pour convertir un fichier CSV en JSON pour la mutation clients:importFromCSV.
  * 
  * Usage:
- *   npx ts-node scripts/csv-to-json.ts <fichier.csv> [output.json]
+ *   npx tsx scripts/csv-to-json.ts <fichier.csv> [output.json]
  * 
  * Format CSV attendu (séparateur: virgule ou point-virgule):
  *   Prénom,Nom,Code,Téléphone,email,Réservations
- *   Heidi,Duchateau,32,486769844,duchateau.heidi@gmail.com,47
+ *   Jean,Dupont,32,470123456,jean.dupont@example.com,3
  * 
  * Le script génère un fichier JSON prêt à être utilisé dans le dashboard Convex.
  */
@@ -110,11 +110,11 @@ function main() {
   const args = process.argv.slice(2);
   
   if (args.length === 0) {
-    console.log("Usage: npx ts-node scripts/csv-to-json.ts <fichier.csv> [output.json]");
+    console.log("Usage: npx tsx scripts/csv-to-json.ts <fichier.csv> [output.json]");
     console.log("");
     console.log("Format CSV attendu:");
     console.log("  Prénom,Nom,Code,Téléphone,email,Réservations");
-    console.log("  Heidi,Duchateau,32,486769844,duchateau.heidi@gmail.com,47");
+    console.log("  Jean,Dupont,32,470123456,jean.dupont@example.com,3");
     process.exit(1);
   }
 

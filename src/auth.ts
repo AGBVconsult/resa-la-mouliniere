@@ -15,14 +15,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = credentials?.email as string | undefined
         const password = credentials?.password as string | undefined
         
-        console.log("[AUTH] Tentative de connexion:", { 
-          emailReçu: email, 
-          emailAttendu: validEmail,
-          passwordMatch: password === validPassword 
-        })
-        
         if (email === validEmail && password === validPassword) {
-          console.log("[AUTH] Connexion réussie")
           return { 
             id: "1", 
             email: validEmail ?? "", 
@@ -30,7 +23,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             role: "owner" 
           }
         }
-        console.log("[AUTH] Échec de connexion")
+        // Échec : ne journaliser ni l'identifiant saisi ni l'identifiant attendu.
+        console.warn("[AUTH] login_failed")
         return null
       }
     })

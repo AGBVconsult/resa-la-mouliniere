@@ -2,6 +2,10 @@
   "name": "la-mouliniere",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -41,8 +45,8 @@
     "jose": "^6.2.11",
     "libphonenumber-js": "^1.12.35",
     "lucide-react": "^0.562.0",
-    "next": "16.1.0",
-    "next-auth": "^5.0.0-beta.30",
+    "next": "16.3.4",
+    "next-auth": "^5.0.0-beta.32",
     "react": "19.2.3",
     "react-day-picker": "^9.13.0",
     "react-dom": "19.2.3",
@@ -55,7 +59,7 @@
   },
   "devDependencies": {
     "@edge-runtime/vm": "5.0.0",
-    "@next/bundle-analyzer": "^16.1.6",
+    "@next/bundle-analyzer": "^16.3.4",
     "@playwright/test": "^1.57.0",
     "@testing-library/react": "^16.3.1",
     "@types/node": "^20",
@@ -65,7 +69,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "convex-test": "0.0.56",
     "eslint": "^9",
-    "eslint-config-next": "16.1.0",
+    "eslint-config-next": "16.3.4",
     "playwright": "^1.57.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",

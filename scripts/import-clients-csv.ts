@@ -2,11 +2,11 @@
  * Script pour importer des clients depuis un fichier CSV.
  * 
  * Usage:
- *   npx ts-node scripts/import-clients-csv.ts <chemin-vers-fichier.csv>
+ *   npx tsx scripts/import-clients-csv.ts <chemin-vers-fichier.csv>
  * 
  * Format CSV attendu (séparateur: virgule ou point-virgule):
  *   Prénom,Nom,Code,Téléphone,email,Réservations
- *   Heidi,Duchateau,32,486769844,duchateau.heidi@gmail.com,47
+ *   Jean,Dupont,32,470123456,jean.dupont@example.com,3
  * 
  * Le script:
  * 1. Parse le CSV
@@ -19,7 +19,11 @@ import { api } from "../convex/_generated/api";
 import * as fs from "fs";
 import * as path from "path";
 
-const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || "https://accomplished-lemur-852.convex.cloud";
+// Aucune URL par défaut : le déploiement cible doit être explicite.
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
+// clients.importFromCSV exige une identité admin : jeton obtenu depuis /api/auth/convex-token
+// (session admin ouverte dans le navigateur), voir docs/ops/AUTH_CONVEX.md.
+const CONVEX_ADMIN_TOKEN = process.env.CONVEX_ADMIN_TOKEN;
 const BATCH_SIZE = 100;
 
 interface CsvRow {
@@ -124,11 +128,11 @@ async function main() {
   const args = process.argv.slice(2);
   
   if (args.length === 0) {
-    console.log("Usage: npx ts-node scripts/import-clients-csv.ts <fichier.csv>");
+    console.log("Usage: npx tsx scripts/import-clients-csv.ts <fichier.csv>");
     console.log("");
     console.log("Format CSV attendu:");
     console.log("  Prénom,Nom,Code,Téléphone,email,Réservations");
-    console.log("  Heidi,Duchateau,32,486769844,duchateau.heidi@gmail.com,47");
+    console.log("  Jean,Dupont,32,470123456,jean.dupont@example.com,3");
     process.exit(1);
   }
 
@@ -151,8 +155,17 @@ async function main() {
     process.exit(0);
   }
 
+  if (!CONVEX_URL) {
+    console.error("NEXT_PUBLIC_CONVEX_URL manquant : indiquer explicitement le déploiement cible.");
+    process.exit(1);
+  }
+  if (!CONVEX_ADMIN_TOKEN) {
+    console.error("CONVEX_ADMIN_TOKEN manquant : clients.importFromCSV exige une identité admin (voir docs/ops/AUTH_CONVEX.md).");
+    process.exit(1);
+  }
   console.log(`\nConnexion à Convex: ${CONVEX_URL}`);
   const client = new ConvexHttpClient(CONVEX_URL);
+  client.setAuth(CONVEX_ADMIN_TOKEN);
 
   // Note: Pour l'authentification admin, vous devez être connecté
   // Le script utilise les credentials de l'environnement
