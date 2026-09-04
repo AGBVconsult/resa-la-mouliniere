@@ -2,15 +2,10 @@
  * Settings queries (internal and public).
  */
 
-import { internalMutation } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { Errors } from "./lib/errors";
+import { resolveSecrets } from "./lib/secrets";
 
-/**
- * Internal mutation to get settings including secrets.
- * ONLY to be used from action().
- * Returns minimal data needed for reservation creation.
- * Note: Using internalMutation (not internalQuery) to comply with secret leak policy.
- */
 /**
  * Enable Pushover notifications (one-time setup).
  */
@@ -36,7 +31,12 @@ export const enablePushover = internalMutation({
   },
 });
 
-export const getSecretsInternal = internalMutation({
+/**
+ * Paramètres incluant les secrets, pour les actions uniquement (jamais renvoyés au client).
+ * Les secrets viennent des variables d'environnement Convex ; la base sert de repli
+ * (voir lib/secrets.ts).
+ */
+export const getSecretsInternal = internalQuery({
   args: {},
   handler: async (ctx) => {
     const activeRestaurants = await ctx.db
@@ -62,21 +62,29 @@ export const getSecretsInternal = internalMutation({
       return null;
     }
 
+    const secrets = resolveSecrets(settings, process.env);
+    if (secrets.fromDatabase.length > 0) {
+      // Diagnostic sans valeur : indique les variables d'environnement encore à définir.
+      console.warn("[settings] secrets lus depuis la base (à migrer en variables d'environnement)", {
+        fields: secrets.fromDatabase,
+      });
+    }
+
     return {
       restaurantId: restaurant._id,
       timezone: restaurant.timezone,
-      appUrl: settings.appUrl ?? "",
-      turnstileSecretKey: settings.turnstileSecretKey,
+      appUrl: secrets.appUrl,
+      turnstileSecretKey: secrets.turnstileSecretKey,
       manageTokenExpireBeforeSlotMs: settings.manageTokenExpireBeforeSlotMs,
       rateLimit: settings.rateLimit,
       // Email settings (from SettingsAdmin in contract)
-      resendApiKey: settings.resendApiKey,
+      resendApiKey: secrets.resendApiKey,
       resendFromEmail: settings.resendFromEmail,
       resendFromName: settings.resendFromName,
       adminNotificationEmail: settings.adminNotificationEmail,
       // Pushover push notifications
-      pushoverUserKey: settings.pushoverUserKey,
-      pushoverApiToken: settings.pushoverApiToken,
+      pushoverUserKey: secrets.pushoverUserKey,
+      pushoverApiToken: secrets.pushoverApiToken,
       pushoverEnabled: settings.pushoverEnabled,
     };
   },

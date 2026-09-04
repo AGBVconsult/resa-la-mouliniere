@@ -257,7 +257,7 @@ export const processQueue = internalAction({
   handler: async (ctx, { now: nowArg, limit = 10 }): Promise<{ processedCount: number }> => {
     const now = nowArg ?? Date.now();
     // Get settings (including resend API key) via internal mutation
-    const settings = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+    const settings = await ctx.runQuery(internal.settings.getSecretsInternal, {});
     
     if (!settings) {
       console.log("Email processQueue: no settings found");
@@ -341,7 +341,7 @@ export const sendJob = internalAction({
       return { ok: true }; // Already sent
     }
 
-    const settings = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+    const settings = await ctx.runQuery(internal.settings.getSecretsInternal, {});
     if (!settings) {
       throw Errors.SETTINGS_NOT_FOUND();
     }

@@ -87,7 +87,7 @@ export const create = action({
 
     // 5. Récupérer settings pour Turnstile secret
     const settings: { restaurantId: string; turnstileSecretKey: string } | null = 
-      await ctx.runMutation(internal.settings.getSecretsInternal, {});
+      await ctx.runQuery(internal.settings.getSecretsInternal, {});
     if (!settings) {
       throw Errors.SETTINGS_NOT_FOUND();
     }

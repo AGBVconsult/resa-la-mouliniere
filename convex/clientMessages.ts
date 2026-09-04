@@ -66,7 +66,7 @@ export const send = action({
     const now = Date.now();
 
     // Get settings
-    const settings = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+    const settings = await ctx.runQuery(internal.settings.getSecretsInternal, {});
     if (!settings || !settings.resendApiKey) {
       throw new Error("Email settings not configured");
     }

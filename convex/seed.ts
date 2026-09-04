@@ -2,6 +2,21 @@ import { internalMutation, type MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 
+/**
+ * Garde-fou : les fonctions de seed modifient ou remplacent des données
+ * (réservations de test, secrets, créneaux). Elles ne s'exécutent que si le
+ * déploiement Convex porte ALLOW_SEED=true. Ne jamais définir cette variable
+ * sur le déploiement de production.
+ */
+function assertSeedAllowed(): void {
+  if (process.env.ALLOW_SEED !== "true") {
+    throw new Error(
+      "Seed désactivé sur ce déploiement : définir ALLOW_SEED=true dans les variables d'environnement Convex (jamais en production)."
+    );
+  }
+}
+
+
 type SeedRestaurantResult = { skipped: boolean; id: Id<"restaurants">; name: string };
 type SeedSettingsResult = { skipped: boolean; id: Id<"settings"> };
 type SeedTablesResult = { skipped: boolean; count: number };
@@ -183,6 +198,8 @@ async function seedTablesImpl(ctx: MutationCtx, restaurantId: Id<"restaurants">)
 export const seedSettings = internalMutation({
   args: {},
   handler: async (ctx) => {
+    assertSeedAllowed();
+
     const restaurant = await seedRestaurantImpl(ctx);
     return await seedSettingsImpl(ctx, restaurant.id, restaurant.name);
   },
@@ -191,6 +208,8 @@ export const seedSettings = internalMutation({
 export const seedTables = internalMutation({
   args: {},
   handler: async (ctx) => {
+    assertSeedAllowed();
+
     const restaurant = await seedRestaurantImpl(ctx);
     return await seedTablesImpl(ctx, restaurant.id);
   },
@@ -199,6 +218,8 @@ export const seedTables = internalMutation({
 export const seedAll = internalMutation({
   args: {},
   handler: async (ctx) => {
+    assertSeedAllowed();
+
     const restaurant = await seedRestaurantImpl(ctx);
     const settings = await seedSettingsImpl(ctx, restaurant.id, restaurant.name);
     const tables = await seedTablesImpl(ctx, restaurant.id);
@@ -214,6 +235,8 @@ export const seedAll = internalMutation({
 export const migrateAddResendApiKey = internalMutation({
   args: {},
   handler: async (ctx) => {
+    assertSeedAllowed();
+
     const allSettings = await ctx.db.query("settings").collect();
     let migrated = 0;
 
@@ -242,6 +265,8 @@ export const setResendApiKey = internalMutation({
     apiKey: v.string(),
   },
   handler: async (ctx, { apiKey }) => {
+    assertSeedAllowed();
+
     const activeRestaurants = await ctx.db
       .query("restaurants")
       .withIndex("by_isActive", (q) => q.eq("isActive", true))
@@ -278,6 +303,8 @@ export const setResendApiKey = internalMutation({
 export const updateSecrets = internalMutation({
   args: {},
   handler: async (ctx) => {
+    assertSeedAllowed();
+
     const activeRestaurants = await ctx.db
       .query("restaurants")
       .withIndex("by_isActive", (q) => q.eq("isActive", true))
@@ -328,6 +355,8 @@ export const updateSecrets = internalMutation({
 export const seedWeeklyTemplates = internalMutation({
   args: {},
   handler: async (ctx) => {
+    assertSeedAllowed();
+
     const activeRestaurants = await ctx.db
       .query("restaurants")
       .withIndex("by_isActive", (q) => q.eq("isActive", true))
@@ -429,6 +458,8 @@ export const generateSlots = internalMutation({
     daysAhead: v.optional(v.number()),
   },
   handler: async (ctx, { daysAhead = 60 }) => {
+    assertSeedAllowed();
+
     const activeRestaurants = await ctx.db
       .query("restaurants")
       .withIndex("by_isActive", (q) => q.eq("isActive", true))
@@ -546,6 +577,8 @@ export const seedTestReservations = internalMutation({
     count: v.optional(v.number()),
   },
   handler: async (ctx, { dateKey, count = 10 }) => {
+    assertSeedAllowed();
+
     const activeRestaurants = await ctx.db
       .query("restaurants")
       .withIndex("by_isActive", (q) => q.eq("isActive", true))
@@ -631,6 +664,8 @@ export const seedTestReservations = internalMutation({
 export const seedWeekReservations = internalMutation({
   args: {},
   handler: async (ctx) => {
+    assertSeedAllowed();
+
     const activeRestaurants = await ctx.db
       .query("restaurants")
       .withIndex("by_isActive", (q) => q.eq("isActive", true))
@@ -895,6 +930,8 @@ export const testEmail = internalMutation({
     type: v.optional(v.string()),
   },
   handler: async (ctx, { to, type = "reservation.confirmed" }) => {
+    assertSeedAllowed();
+
     const activeRestaurants = await ctx.db
       .query("restaurants")
       .withIndex("by_isActive", (q) => q.eq("isActive", true))

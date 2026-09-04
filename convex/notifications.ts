@@ -23,7 +23,7 @@ export const sendAdminPushNotification = internalAction({
   },
   handler: async (ctx, args) => {
     // 1. Get settings with Pushover credentials
-    const settings = await ctx.runMutation(internal.settings.getSecretsInternal);
+    const settings = await ctx.runQuery(internal.settings.getSecretsInternal);
     
     if (!settings?.pushoverEnabled || !settings.pushoverUserKey || !settings.pushoverApiToken) {
       console.log("[Pushover] Disabled or not configured");

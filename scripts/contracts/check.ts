@@ -19,6 +19,12 @@ export function isAllowedTurnstileUsage(filePathRelative: string, fileContent: s
     return { allowed: true, reason: "schema definition" };
   }
 
+  if (filePathRelative === "convex/lib/secrets.ts") {
+    // Module de résolution des secrets (variables d'environnement > base), consommé
+    // uniquement par settings.getSecretsInternal (internalQuery réservée aux actions).
+    return { allowed: true, reason: "secret resolution helper" };
+  }
+
   if (filePathRelative.startsWith("src/")) {
     return { allowed: false, reason: "forbidden in client src/**" };
   }

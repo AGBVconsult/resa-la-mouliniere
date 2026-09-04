@@ -820,7 +820,7 @@ export const create = action({
       }
 
       // Load settings (including secrets) via internal mutation
-      const settings: SettingsInternal = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+      const settings: SettingsInternal = await ctx.runQuery(internal.settings.getSecretsInternal, {});
 
       if (!settings) {
         throw Errors.SETTINGS_NOT_FOUND();
@@ -1210,7 +1210,7 @@ export const updateByToken = action({
     }
 
     // Load settings for timezone and appUrl
-    const settings = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+    const settings = await ctx.runQuery(internal.settings.getSecretsInternal, {});
     if (!settings) {
       throw Errors.SETTINGS_NOT_FOUND();
     }
@@ -1330,7 +1330,7 @@ export const cancelByToken = action({
 
     // Enqueue cancellation email
     // Need to get restaurant settings for email
-    const settings = await ctx.runMutation(internal.settings.getSecretsInternal, {});
+    const settings = await ctx.runQuery(internal.settings.getSecretsInternal, {});
     if (settings) {
       await ctx.runMutation(internal.emails.enqueue, {
         restaurantId: settings.restaurantId,
