@@ -15,6 +15,7 @@ Résolution : `convex/lib/secrets.ts` (`resolveSecrets`, testé dans `tests/secr
 | `PUSHOVER_USER_KEY` | Notifications push | `settings.pushoverUserKey` |
 | `PUSHOVER_API_TOKEN` | Notifications push | `settings.pushoverApiToken` |
 | `APP_URL` | Origine publique pour les liens des e-mails (sans slash final) | `settings.appUrl` |
+| `RESEND_WEBHOOK_SECRET` | Secret de signature (`whsec_…`) du webhook inbound Resend ; sans lui, `/inbound-email` répond 503 | — |
 | `CONVEX_AUTH_ISSUER` | Émetteur des JWT admin (voir `AUTH_CONVEX.md`) | — |
 | `CONVEX_AUTH_ENFORCEMENT` | `off` = coupe-circuit RBAC (jamais en production) | — |
 | `ALLOW_SEED` | `true` autorise les fonctions `seed.*` (jamais en production) | — |

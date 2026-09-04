@@ -138,19 +138,27 @@ export const _findClientByEmail = internalQuery({
   args: { email: v.string() },
   handler: async (ctx, { email }) => {
     const normalizedEmail = email.toLowerCase().trim();
+    if (!normalizedEmail) return null;
 
-    // Search through clients — check email and emails array
-    const allClients = await ctx.db.query("clients").collect();
-    for (const client of allClients) {
-      if (client.email?.toLowerCase().trim() === normalizedEmail) {
+    // 1. Adresse principale : index exact (lecture bornée)
+    const byPrimary = await ctx.db
+      .query("clients")
+      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
+      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .first();
+    if (byPrimary) return { _id: byPrimary._id };
+
+    // 2. Adresses secondaires (tableau `emails`, non indexable) : candidats via
+    //    l'index de recherche plein texte, puis correspondance exacte. Remplace
+    //    l'ancien parcours intégral de la table à chaque webhook.
+    const candidates = await ctx.db
+      .query("clients")
+      .withSearchIndex("search_client", (q) => q.search("searchText", normalizedEmail))
+      .take(20);
+    for (const client of candidates) {
+      if (client.deletedAt) continue;
+      if (client.emails?.some((e) => e.toLowerCase().trim() === normalizedEmail)) {
         return { _id: client._id };
-      }
-      if (client.emails) {
-        for (const e of client.emails) {
-          if (e.toLowerCase().trim() === normalizedEmail) {
-            return { _id: client._id };
-          }
-        }
       }
     }
     return null;
