@@ -76,6 +76,7 @@ export const getSecretsInternal = internalQuery({
       appUrl: secrets.appUrl,
       turnstileSecretKey: secrets.turnstileSecretKey,
       manageTokenExpireBeforeSlotMs: settings.manageTokenExpireBeforeSlotMs,
+      maxPartySizeWidget: settings.maxPartySizeWidget,
       rateLimit: settings.rateLimit,
       // Email settings (from SettingsAdmin in contract)
       resendApiKey: secrets.resendApiKey,

@@ -1,6 +1,7 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireRole } from "./lib/rbac";
+import { assertPartyCounts, assertTextLimits } from "./lib/validation";
 
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours
 
@@ -31,6 +32,13 @@ export const save = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+
+    // Bornes serveur (endpoint public sans captcha)
+    assertPartyCounts({ adults: args.adults, childrenCount: args.childrenCount, babyCount: args.babyCount }, { minAdults: 0 });
+    assertTextLimits({ firstName: args.firstName, lastName: args.lastName, email: args.email, phone: args.phone, note: args.note });
+    if (args.sessionId.length > 64) {
+      throw new Error("sessionId trop long");
+    }
 
     // Find active restaurant
     const restaurant = await ctx.db

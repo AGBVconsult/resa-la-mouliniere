@@ -25,6 +25,7 @@ import type * as groupRequests from "../groupRequests.js";
 import type * as http from "../http.js";
 import type * as idempotency from "../idempotency.js";
 import type * as jobs from "../jobs.js";
+import type * as migrations from "../migrations.js";
 import type * as lib_adjacency from "../lib/adjacency.js";
 import type * as lib_autoRelease from "../lib/autoRelease.js";
 import type * as lib_dateUtils from "../lib/dateUtils.js";
@@ -82,6 +83,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   idempotency: typeof idempotency;
   jobs: typeof jobs;
+  migrations: typeof migrations;
   "lib/adjacency": typeof lib_adjacency;
   "lib/autoRelease": typeof lib_autoRelease;
   "lib/dateUtils": typeof lib_dateUtils;

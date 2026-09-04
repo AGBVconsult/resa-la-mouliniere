@@ -7,11 +7,13 @@ import { requireRole } from "./lib/rbac";
 import { Errors } from "./lib/errors";
 import { isValidStatusTransition } from "./lib/stateMachine";
 import type { ReservationStatus, Language } from "../spec/contracts.generated";
-import { makeSlotKey, computePartySize, computeEffectiveOpen } from "../spec/contracts.generated";
+import { makeSlotKey } from "../spec/contracts.generated";
 import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./lib/tokens";
 import { capitalizeName, formatPhoneNumber } from "./lib/formatters";
 import { getTodayDateKey } from "./lib/dateUtils";
 import { MAX_RESERVATIONS_PER_TABLE } from "./lib/tableAssignment";
+import { assertSlotCanHost } from "./lib/availability";
+import { assertPartyCounts, assertTextLimits, assertOptions, assertDateKey, assertTimeKey } from "./lib/validation";
 
 const CRM_SCORE_VERSION = "v1";
 
@@ -1030,6 +1032,8 @@ export const updateReservationFull = mutation({
     email: v.optional(v.string()),
     note: v.optional(v.string()),
     options: v.optional(v.array(v.string())),
+    /** Ignore capacité et maxGroupSize du créneau cible (décision explicite de l'exploitant). */
+    force: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, "admin");
@@ -1043,52 +1047,181 @@ export const updateReservationFull = mutation({
       throw Errors.VERSION_CONFLICT(args.expectedVersion, reservation.version);
     }
 
+    // ── Validation des entrées ──────────────────────────────────────────
+    const adults = args.adults ?? reservation.adults;
+    const childrenCount = args.childrenCount ?? reservation.childrenCount;
+    const babyCount = args.babyCount ?? reservation.babyCount;
+    const partySize = assertPartyCounts({ adults, childrenCount, babyCount });
+
+    assertTextLimits({
+      firstName: args.firstName,
+      lastName: args.lastName,
+      email: args.email,
+      phone: args.phone,
+      note: args.note,
+    });
+    assertOptions(args.options);
+
+    const dateKey = args.dateKey ?? reservation.dateKey;
+    const timeKey = args.timeKey ?? reservation.timeKey;
+    assertDateKey(dateKey);
+    assertTimeKey(timeKey);
+
+    // Service : explicite, sinon conservé ; si l'heure change sans service
+    // explicite (formulaire de la fiche client), il est déduit du créneau existant.
+    let service = args.service ?? reservation.service;
+    if (args.service === undefined && (dateKey !== reservation.dateKey || timeKey !== reservation.timeKey)) {
+      const daySlots = await ctx.db
+        .query("slots")
+        .withIndex("by_restaurant_date_service", (q) =>
+          q.eq("restaurantId", reservation.restaurantId).eq("dateKey", dateKey)
+        )
+        .collect();
+      const match = daySlots.find((slot) => slot.timeKey === timeKey);
+      if (!match) {
+        throw Errors.SLOT_NOT_FOUND(`${dateKey}#?#${timeKey}`);
+      }
+      service = match.service;
+    }
+
+    // Clé de créneau : TOUJOURS via makeSlotKey (l'ancienne implémentation
+    // écrivait `date:service:heure`, invisible pour les calculs de capacité).
+    const slotKey = makeSlotKey({ dateKey, service, timeKey });
+    const slotChanged = slotKey !== reservation.slotKey;
+    const sizeChanged = partySize !== reservation.partySize;
+
+    // ── Contrôle du créneau cible (même règle que la création) ──────────
+    if (slotChanged || sizeChanged) {
+      await assertSlotCanHost(
+        ctx,
+        {
+          restaurantId: reservation.restaurantId,
+          slotKey,
+          partySize,
+          excludeReservationId: reservation._id,
+          force: args.force === true,
+        },
+        Errors
+      );
+    }
+
+    // ── Identité et contact ─────────────────────────────────────────────
+    const firstName = args.firstName !== undefined ? capitalizeName(args.firstName.trim()) : reservation.firstName;
+    const lastName = args.lastName !== undefined ? capitalizeName(args.lastName.trim()) : reservation.lastName;
+    const rawPhone = args.phone !== undefined ? args.phone.trim() : reservation.phone;
+    const phone = hasUsablePhone(rawPhone) ? formatPhoneNumber(rawPhone) : rawPhone;
+    const email = args.email !== undefined ? args.email.trim() : reservation.email;
+
+    let clientId = reservation.clientId;
+    const phoneChanged = phone !== reservation.phone;
+    if (phoneChanged) {
+      clientId = hasUsablePhone(phone)
+        ? await getOrCreateClientIdFromReservation(ctx, {
+            firstName,
+            lastName,
+            email,
+            phone,
+            language: reservation.language as Language,
+            source: reservation.source,
+          })
+        : undefined;
+    }
+
     const now = Date.now();
+    const newVersion = reservation.version + 1;
+
     const patch: Record<string, unknown> = {
+      dateKey,
+      service,
+      timeKey,
+      slotKey,
+      adults,
+      childrenCount,
+      babyCount,
+      partySize,
+      firstName,
+      lastName,
+      phone,
+      email,
+      clientId,
       updatedAt: now,
-      version: reservation.version + 1,
+      version: newVersion,
     };
-
-    // Update fields if provided
-    if (args.dateKey !== undefined) patch.dateKey = args.dateKey;
-    if (args.service !== undefined) patch.service = args.service;
-    if (args.timeKey !== undefined) patch.timeKey = args.timeKey;
-    if (args.firstName !== undefined) patch.firstName = args.firstName;
-    if (args.lastName !== undefined) patch.lastName = args.lastName;
-    if (args.phone !== undefined) patch.phone = args.phone;
-    if (args.email !== undefined) patch.email = args.email;
-    if (args.note !== undefined) patch.note = args.note;
+    if (args.note !== undefined) patch.note = args.note.trim() || undefined;
     if (args.options !== undefined) patch.options = args.options;
-
-    // Update party size if any count changed
-    if (args.adults !== undefined || args.childrenCount !== undefined || args.babyCount !== undefined) {
-      const adults = args.adults ?? reservation.adults;
-      const childrenCount = args.childrenCount ?? reservation.childrenCount;
-      const babyCount = args.babyCount ?? reservation.babyCount;
-      
-      patch.adults = adults;
-      patch.childrenCount = childrenCount;
-      patch.babyCount = babyCount;
-      patch.partySize = adults + childrenCount;
-    }
-
-    // Update slotKey if date/service/time changed
-    if (args.dateKey !== undefined || args.service !== undefined || args.timeKey !== undefined) {
-      const dateKey = args.dateKey ?? reservation.dateKey;
-      const service = args.service ?? reservation.service;
-      const timeKey = args.timeKey ?? reservation.timeKey;
-      patch.slotKey = `${dateKey}:${service}:${timeKey}`;
-    }
 
     await ctx.db.patch(args.reservationId, patch);
 
-    // Log without PII
-    const updatedFields = Object.keys(patch).filter((k) => k !== "updatedAt" && k !== "version");
-    console.log("Reservation fully updated", { reservationId: args.reservationId, updatedFields, newVersion: patch.version });
+    // ── Journal ─────────────────────────────────────────────────────────
+    const changedFields = Object.keys(patch).filter(
+      (k) => !["updatedAt", "version"].includes(k) && (patch as Record<string, unknown>)[k] !== (reservation as Record<string, unknown>)[k]
+    );
+    await ctx.db.insert("reservationEvents", {
+      reservationId: args.reservationId,
+      restaurantId: reservation.restaurantId,
+      eventType: "updated",
+      fromStatus: reservation.status,
+      toStatus: reservation.status,
+      scheduledTime: timeKey,
+      actualTime: now,
+      performedBy: (await ctx.auth.getUserIdentity())?.subject ?? "admin",
+      metadata: { changedFields, previousSlotKey: reservation.slotKey, forced: args.force === true },
+      createdAt: now,
+    });
+
+    // ── E-mail « réservation modifiée » si le créneau change ────────────
+    if (slotChanged && email) {
+      const settings = await ctx.db
+        .query("settings")
+        .withIndex("by_restaurantId", (q) => q.eq("restaurantId", reservation.restaurantId))
+        .unique();
+      const tokenDoc = await ctx.db
+        .query("reservationTokens")
+        .withIndex("by_reservation_type", (q) => q.eq("reservationId", args.reservationId).eq("type", "manage"))
+        .unique();
+      const manageToken = tokenDoc?.token ?? "";
+      const appUrl = settings?.appUrl ?? "";
+
+      if (settings) {
+        await ctx.scheduler.runAfter(0, internal.emails.enqueue, {
+          restaurantId: reservation.restaurantId,
+          type: "reservation.modified",
+          to: email,
+          subjectKey: "email.reservation.modified.subject",
+          templateKey: "reservation.modified",
+          templateData: {
+            firstName,
+            lastName,
+            dateKey,
+            timeKey,
+            service,
+            partySize,
+            adults,
+            childrenCount,
+            babyCount,
+            language: reservation.language,
+            manageUrl: manageToken ? `${appUrl}/reservation/${manageToken}` : "",
+            editUrl: manageToken ? `${appUrl}/reservation/${manageToken}/edit` : "",
+            cancelUrl: manageToken ? `${appUrl}/reservation/${manageToken}/cancel` : "",
+            note: (patch.note as string | undefined) ?? reservation.note ?? "",
+            options: (patch.options as string[] | undefined) ?? reservation.options ?? [],
+          },
+          dedupeKey: `email:reservation.modified:${args.reservationId}:${newVersion}`,
+        });
+      }
+    }
+
+    console.log("Reservation fully updated", {
+      reservationId: args.reservationId,
+      changedFields,
+      slotChanged,
+      newVersion,
+    });
 
     return {
       reservationId: args.reservationId,
-      newVersion: patch.version as number,
+      newVersion,
+      slotKey,
     };
   },
 });
@@ -1263,44 +1396,19 @@ export const createReservation = mutation({
       timeKey: args.timeKey,
     });
 
-    // Load slot
-    const slot = await ctx.db
-      .query("slots")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
-      )
-      .unique();
+    // Validation des entrées
+    const partySize = assertPartyCounts({
+      adults: args.adults,
+      childrenCount: args.childrenCount,
+      babyCount: args.babyCount,
+    });
+    assertTextLimits({ firstName: args.firstName, lastName: args.lastName, email: args.email, phone: args.phone, note: args.note });
+    assertOptions(args.options);
+    assertDateKey(args.dateKey);
+    assertTimeKey(args.timeKey);
 
-    if (!slot) {
-      throw Errors.SLOT_NOT_FOUND(slotKey);
-    }
-
-    // Check effectiveOpen
-    const effectiveOpen = computeEffectiveOpen(slot.isOpen, slot.capacity);
-    if (!effectiveOpen) {
-      throw Errors.SLOT_TAKEN(slotKey, "closed");
-    }
-
-    // Compute partySize
-    const partySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
-
-    // Calculate used capacity
-    const existingReservations = await ctx.db
-      .query("reservations")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
-      )
-      .collect();
-
-    const usedCapacity = existingReservations
-      .filter((r) => r.status === "pending" || r.status === "confirmed" || r.status === "seated")
-      .reduce((sum, r) => sum + r.partySize, 0);
-
-    const remainingCapacity = slot.capacity - usedCapacity;
-
-    if (partySize > remainingCapacity) {
-      throw Errors.INSUFFICIENT_CAPACITY(slotKey, partySize, remainingCapacity);
-    }
+    // Créneau effectif (overrides manuels/période appliqués), même règle que le widget
+    await assertSlotCanHost(ctx, { restaurantId: restaurant._id, slotKey, partySize }, Errors);
 
     const now = Date.now();
 
@@ -1488,16 +1596,11 @@ export const importReservation = mutation({
       timeKey: args.timeKey,
     });
 
-    // Load slot - for import we don't require it to exist
-    const slot = await ctx.db
-      .query("slots")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
-      )
-      .unique();
-
     // For import, we don't check capacity or slot existence - just create the reservation
-    const partySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
+    const partySize = assertPartyCounts({ adults: args.adults, childrenCount: args.childrenCount, babyCount: args.babyCount });
+    assertTextLimits({ firstName: args.firstName, lastName: args.lastName, email: args.email, phone: args.phone, note: args.note });
+    assertDateKey(args.dateKey);
+    assertTimeKey(args.timeKey);
     const now = Date.now();
 
     // Use placeholder email/phone if not provided
@@ -1654,7 +1757,11 @@ export const createReservationQuick = mutation({
     // NON-BLOQUANT : on ne vérifie ni l'existence du créneau, ni la capacité,
     // ni l'état d'ouverture. C'est le comportement voulu pour la saisie rapide.
 
-    const partySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
+    const partySize = assertPartyCounts({ adults: args.adults, childrenCount: args.childrenCount, babyCount: args.babyCount });
+    assertTextLimits({ firstName: args.firstName, lastName: args.lastName, email: args.email, phone: args.phone, note: args.note });
+    assertOptions(args.options);
+    assertDateKey(args.dateKey);
+    assertTimeKey(args.timeKey);
     const now = Date.now();
 
     const email = args.email?.trim() ?? "";

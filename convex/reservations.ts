@@ -6,7 +6,6 @@ import { Errors } from "./lib/errors";
 import {
   makeSlotKey,
   computePartySize,
-  computeEffectiveOpen,
   type Service,
   type Language,
   type ReservationStatus,
@@ -15,6 +14,8 @@ import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./l
 import { verifyTurnstile } from "./lib/turnstile";
 import { computeRequestHash } from "./lib/idempotency";
 import { capitalizeName, formatPhoneNumber } from "./lib/formatters";
+import { assertSlotCanHost } from "./lib/availability";
+import { assertPartyCounts, assertTextLimits, assertOptions, assertDateKey, assertTimeKey, MIN_GROUP_SIZE } from "./lib/validation";
 
 const CRM_SCORE_VERSION = "v1";
 
@@ -334,75 +335,15 @@ export const _create = internalMutation({
       timeKey: args.timeKey,
     });
 
-    // Load slot via index (use .first() to avoid crash on duplicate slots from sync bugs)
-    const rawSlot = await ctx.db
-      .query("slots")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", args.restaurantId).eq("slotKey", slotKey)
-      )
-      .first();
+    // Validation défensive (les actions publiques valident déjà en amont)
+    const partySize = assertPartyCounts({
+      adults: args.adults,
+      childrenCount: args.childrenCount,
+      babyCount: args.babyCount,
+    });
 
-    if (!rawSlot) {
-      throw Errors.SLOT_NOT_FOUND(slotKey);
-    }
-
-    // Apply slotOverrides (manual > period) — same logic as availability:getDay
-    const overrides = await ctx.db
-      .query("slotOverrides")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", args.restaurantId).eq("slotKey", slotKey)
-      )
-      .collect();
-
-    // Period first (lower priority), then manual (higher priority)
-    let effectiveIsOpen = rawSlot.isOpen;
-    let effectiveCapacity = rawSlot.capacity;
-    let effectiveMaxGroupSize = rawSlot.maxGroupSize;
-
-    const periodOverride = overrides.find((o) => o.origin === "period");
-    if (periodOverride?.patch) {
-      if (periodOverride.patch.isOpen !== undefined) effectiveIsOpen = periodOverride.patch.isOpen;
-      if (periodOverride.patch.capacity !== undefined) effectiveCapacity = periodOverride.patch.capacity;
-      if (periodOverride.patch.maxGroupSize !== undefined) effectiveMaxGroupSize = periodOverride.patch.maxGroupSize;
-    }
-    const manualOverride = overrides.find((o) => o.origin === "manual");
-    if (manualOverride?.patch) {
-      if (manualOverride.patch.isOpen !== undefined) effectiveIsOpen = manualOverride.patch.isOpen;
-      if (manualOverride.patch.capacity !== undefined) effectiveCapacity = manualOverride.patch.capacity;
-      if (manualOverride.patch.maxGroupSize !== undefined) effectiveMaxGroupSize = manualOverride.patch.maxGroupSize;
-    }
-
-    // Check effectiveOpen (with overrides applied)
-    const effectiveOpen = computeEffectiveOpen(effectiveIsOpen, effectiveCapacity);
-    if (!effectiveOpen) {
-      throw Errors.SLOT_TAKEN(slotKey, "closed");
-    }
-
-    // Compute partySize
-    const partySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
-
-    // Check maxGroupSize
-    if (effectiveMaxGroupSize !== null && partySize > effectiveMaxGroupSize) {
-      throw Errors.SLOT_TAKEN(slotKey, "taken");
-    }
-
-    // Calculate used capacity (pending | confirmed | seated)
-    const existingReservations = await ctx.db
-      .query("reservations")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", args.restaurantId).eq("slotKey", slotKey)
-      )
-      .collect();
-
-    const usedCapacity = existingReservations
-      .filter((r) => r.status === "pending" || r.status === "confirmed" || r.status === "cardPlaced" || r.status === "seated")
-      .reduce((sum, r) => sum + r.partySize, 0);
-
-    const remainingCapacity = effectiveCapacity - usedCapacity;
-
-    if (partySize > remainingCapacity) {
-      throw Errors.INSUFFICIENT_CAPACITY(slotKey, partySize, remainingCapacity);
-    }
+    // Créneau effectif (overrides manuel > période) et capacité — implémentation unique
+    await assertSlotCanHost(ctx, { restaurantId: args.restaurantId, slotKey, partySize }, Errors);
 
     // Determine initial status based on partySize
     const status: ReservationStatus = partySize <= 4 ? "confirmed" : "pending";
@@ -759,6 +700,7 @@ type SettingsInternal = {
   appUrl: string;
   turnstileSecretKey: string;
   manageTokenExpireBeforeSlotMs: number;
+  maxPartySizeWidget: number;
   rateLimit: { windowMs: number; maxRequests: number };
   adminNotificationEmail?: string;
 } | null;
@@ -791,13 +733,25 @@ export const create = action({
         throw Errors.INVALID_INPUT("timeKey", "Format HH:MM requis");
       }
 
-      // Validate adults >= 1
-      if (payload.adults < 1) {
-        throw Errors.INVALID_INPUT("adults", "Doit être >= 1");
+      // Validation serveur : entiers >= 0, bornes, formats (les validateurs Convex ne le font pas)
+      assertDateKey(payload.dateKey);
+      assertTimeKey(payload.timeKey);
+      const partySize = assertPartyCounts({
+        adults: payload.adults,
+        childrenCount: payload.childrenCount,
+        babyCount: payload.babyCount,
+      });
+      assertTextLimits({
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        email: payload.email,
+        phone: payload.phone,
+        note: payload.note,
+      });
+      assertOptions(payload.options);
+      if (!payload.firstName.trim() || !payload.lastName.trim() || !payload.email.trim() || !payload.phone.trim()) {
+        throw Errors.INVALID_INPUT("contact", "Prénom, nom, e-mail et téléphone sont requis");
       }
-
-      // Compute partySize for routing
-      const partySize = computePartySize(payload.adults, payload.childrenCount, payload.babyCount);
 
       // Compute request hash for idempotency
       const requestHash = computeRequestHash({
@@ -835,8 +789,13 @@ export const create = action({
         });
       }
 
-      // Route to groupRequest if partySize >= 16
-      if (partySize >= 16) {
+      // Taille maximale réservable en ligne (au-delà : demande de groupe)
+      if (partySize < MIN_GROUP_SIZE && partySize > settings.maxPartySizeWidget) {
+        throw Errors.INVALID_INPUT("partySize", `Doit être <= ${settings.maxPartySizeWidget}`);
+      }
+
+      // Route to groupRequest if partySize >= MIN_GROUP_SIZE
+      if (partySize >= MIN_GROUP_SIZE) {
         const groupRequestId: Id<"groupRequests"> = await ctx.runMutation(internal.groupRequests._insert, {
           restaurantId: settings.restaurantId,
           partySize,
@@ -974,78 +933,17 @@ export const _update = internalMutation({
       timeKey: args.timeKey,
     });
 
-    // Load new slot
-    const newSlot = await ctx.db
-      .query("slots")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", reservation.restaurantId).eq("slotKey", newSlotKey)
-      )
-      .unique();
+    const newPartySize = assertPartyCounts({
+      adults: args.adults,
+      childrenCount: args.childrenCount,
+      babyCount: args.babyCount,
+    });
 
-    if (!newSlot) {
-      throw Errors.SLOT_NOT_FOUND(newSlotKey);
-    }
-
-    // Load overrides (same pattern as _create)
-    const overrides = await ctx.db
-      .query("slotOverrides")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", reservation.restaurantId).eq("slotKey", newSlotKey)
-      )
-      .collect();
-
-    // Apply overrides: period first (lower priority), then manual (higher priority)
-    let effectiveIsOpen = newSlot.isOpen;
-    let effectiveCapacity = newSlot.capacity;
-    let effectiveMaxGroupSize = newSlot.maxGroupSize;
-
-    const periodOverride = overrides.find((o) => o.origin === "period");
-    if (periodOverride?.patch) {
-      if (periodOverride.patch.isOpen !== undefined) effectiveIsOpen = periodOverride.patch.isOpen;
-      if (periodOverride.patch.capacity !== undefined) effectiveCapacity = periodOverride.patch.capacity;
-      if (periodOverride.patch.maxGroupSize !== undefined) effectiveMaxGroupSize = periodOverride.patch.maxGroupSize;
-    }
-    const manualOverride = overrides.find((o) => o.origin === "manual");
-    if (manualOverride?.patch) {
-      if (manualOverride.patch.isOpen !== undefined) effectiveIsOpen = manualOverride.patch.isOpen;
-      if (manualOverride.patch.capacity !== undefined) effectiveCapacity = manualOverride.patch.capacity;
-      if (manualOverride.patch.maxGroupSize !== undefined) effectiveMaxGroupSize = manualOverride.patch.maxGroupSize;
-    }
-
-    // Check effectiveOpen (with overrides applied)
-    const effectiveOpen = computeEffectiveOpen(effectiveIsOpen, effectiveCapacity);
-    if (!effectiveOpen) {
-      throw Errors.SLOT_TAKEN(newSlotKey, "closed");
-    }
-
-    // Compute new partySize
-    const newPartySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
-
-    // Check maxGroupSize
-    if (effectiveMaxGroupSize !== null && newPartySize > effectiveMaxGroupSize) {
-      throw Errors.SLOT_TAKEN(newSlotKey, "taken");
-    }
-
-    // Calculate used capacity (excluding current reservation)
-    const existingReservations = await ctx.db
-      .query("reservations")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", reservation.restaurantId).eq("slotKey", newSlotKey)
-      )
-      .collect();
-
-    const usedCapacity = existingReservations
-      .filter((r) =>
-        r._id !== args.reservationId &&
-        (r.status === "pending" || r.status === "confirmed" || r.status === "cardPlaced" || r.status === "seated")
-      )
-      .reduce((sum, r) => sum + r.partySize, 0);
-
-    const remainingCapacity = effectiveCapacity - usedCapacity;
-
-    if (newPartySize > remainingCapacity) {
-      throw Errors.INSUFFICIENT_CAPACITY(newSlotKey, newPartySize, remainingCapacity);
-    }
+    await assertSlotCanHost(
+      ctx,
+      { restaurantId: reservation.restaurantId, slotKey: newSlotKey, partySize: newPartySize, excludeReservationId: args.reservationId },
+      Errors
+    );
 
     // Determine new status based on partySize (same logic as create)
     const newStatus: ReservationStatus = newPartySize <= 4 ? "confirmed" : "pending";
@@ -1161,10 +1059,14 @@ export const updateByToken = action({
       throw Errors.INVALID_INPUT("timeKey", "Format HH:MM requis");
     }
 
-    // Validate adults >= 1
-    if (updateData.adults < 1) {
-      throw Errors.INVALID_INPUT("adults", "Doit être >= 1");
-    }
+    assertDateKey(updateData.dateKey);
+    assertTimeKey(updateData.timeKey);
+    assertPartyCounts({
+      adults: updateData.adults,
+      childrenCount: updateData.childrenCount,
+      babyCount: updateData.babyCount,
+    });
+    assertTextLimits({ note: updateData.note });
 
     // Compute request hash for idempotency
     const requestHash = computeRequestHash({ token, ...updateData });

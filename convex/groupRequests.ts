@@ -4,13 +4,13 @@ import { internal } from "./_generated/api";
 import { Errors } from "./lib/errors";
 import { computeRequestHash } from "./lib/idempotency";
 import { requireRole } from "./lib/rbac";
+import { assertTextLimits, assertDateKey, MAX_PARTY_SIZE_ABSOLUTE } from "./lib/validation";
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTES (CONTRACTS.md §5.7)
 // ═══════════════════════════════════════════════════════════════
 
 const MIN_GROUP_SIZE = 16;
-const DATE_KEY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
 // ═══════════════════════════════════════════════════════════════
@@ -62,10 +62,19 @@ export const create = action({
       throw Errors.INVALID_INPUT("partySize", "Must be >= 16");
     }
 
-    // 2. Validation format preferredDateKey
-    if (!DATE_KEY_REGEX.test(payload.preferredDateKey)) {
-      throw Errors.INVALID_INPUT("preferredDateKey", "Invalid format, expected YYYY-MM-DD");
+    if (!Number.isInteger(payload.partySize) || payload.partySize > MAX_PARTY_SIZE_ABSOLUTE) {
+      throw Errors.INVALID_INPUT("partySize", `Doit être un entier <= ${MAX_PARTY_SIZE_ABSOLUTE}`);
     }
+
+    // 2. Validation format preferredDateKey
+    assertDateKey(payload.preferredDateKey, "preferredDateKey");
+    assertTextLimits({
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      email: payload.email,
+      phone: payload.phone,
+      message: payload.message,
+    });
 
     // 3. Compute request hash for idempotency
     const requestHash = computeRequestHash(payload as Record<string, unknown>);
