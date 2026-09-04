@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { AdminProviders } from "@/components/providers/AdminProviders";
 import { MobileLayoutClient } from "./components/MobileLayoutClient";
 
 export const metadata = {
@@ -33,5 +34,9 @@ export default async function AdminMobileLayout({
     redirect("/admin/login");
   }
 
-  return <MobileLayoutClient>{children}</MobileLayoutClient>;
+  return (
+    <AdminProviders session={session}>
+      <MobileLayoutClient>{children}</MobileLayoutClient>
+    </AdminProviders>
+  );
 }

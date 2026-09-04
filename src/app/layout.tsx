@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Lato } from "next/font/google";
-import { SessionProvider } from "@/components/providers/SessionProvider";
 import { ConvexClientProvider } from "@/components/providers/ConvexClientProvider";
 import "./globals.css";
 
@@ -33,9 +32,7 @@ export default function RootLayout({
         className={`${lato.variable} antialiased font-sans`}
         suppressHydrationWarning
       >
-        <SessionProvider>
-          <ConvexClientProvider>{children}</ConvexClientProvider>
-        </SessionProvider>
+        <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>
   );

@@ -4,6 +4,7 @@ import type { Id, Doc } from "./_generated/dataModel";
 import { Errors } from "./lib/errors";
 import { internal } from "./_generated/api";
 import { MAX_RESERVATIONS_PER_TABLE } from "./lib/tableAssignment";
+import { requireRole } from "./lib/rbac";
 
 
 /**
@@ -61,6 +62,8 @@ export const getTableStates = query({
     service: v.union(v.literal("lunch"), v.literal("dinner")),
   },
   handler: async (ctx, { dateKey, service }) => {
+    await requireRole(ctx, "admin");
+
     // 1. Get active restaurant
     const restaurant = await ctx.db
       .query("restaurants")
@@ -200,6 +203,8 @@ export const assign = mutation({
     expectedVersion: v.number(),
   },
   handler: async (ctx, { reservationId, tableIds, primaryTableId, expectedVersion }) => {
+    await requireRole(ctx, "admin");
+
     // 1. Load reservation
     const reservation = await ctx.db.get(reservationId);
     if (!reservation) {
@@ -319,6 +324,8 @@ export const unassign = mutation({
     expectedVersion: v.number(),
   },
   handler: async (ctx, { reservationId, expectedVersion }) => {
+    await requireRole(ctx, "admin");
+
     // 1. Load reservation
     const reservation = await ctx.db.get(reservationId);
     if (!reservation) {
@@ -384,6 +391,8 @@ export const checkAssignment = query({
     tableIds: v.array(v.id("tables")),
   },
   handler: async (ctx, { reservationId, tableIds }) => {
+    await requireRole(ctx, "admin");
+
     // Load reservation
     const reservation = await ctx.db.get(reservationId);
     if (!reservation) {
@@ -463,6 +472,8 @@ export const swap = mutation({
     }),
   },
   handler: async (ctx, { reservationA, reservationB }) => {
+    await requireRole(ctx, "admin");
+
     // 1. Load both reservations
     const resaA = await ctx.db.get(reservationA.id);
     const resaB = await ctx.db.get(reservationB.id);

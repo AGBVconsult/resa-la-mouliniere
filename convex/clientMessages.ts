@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { sendEmail } from "./lib/email/resend";
+import { requireRole } from "./lib/rbac";
 
 /**
  * List messages for a client (ordered by createdAt asc for chat display).
@@ -12,6 +13,8 @@ export const list = query({
     clientId: v.id("clients"),
   },
   handler: async (ctx, { clientId }) => {
+    await requireRole(ctx, "admin");
+
     const messages = await ctx.db
       .query("clientMessages")
       .withIndex("by_client", (q) => q.eq("clientId", clientId))
@@ -58,6 +61,8 @@ export const send = action({
     body: v.string(),
   },
   handler: async (ctx, { clientId, body }) => {
+    await requireRole(ctx, "admin");
+
     const now = Date.now();
 
     // Get settings

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { AdminProviders } from "@/components/providers/AdminProviders";
 import { AdminLayoutClient } from "@/components/admin/AdminLayoutClient";
 
 export const metadata = {
@@ -34,8 +35,8 @@ export default async function AdminLayout({
   }
 
   return (
-    <AdminLayoutClient>
-      {children}
-    </AdminLayoutClient>
+    <AdminProviders session={session}>
+      <AdminLayoutClient>{children}</AdminLayoutClient>
+    </AdminProviders>
   );
 }

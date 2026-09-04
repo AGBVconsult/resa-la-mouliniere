@@ -1,5 +1,6 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireRole } from "./lib/rbac";
 
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours
 
@@ -126,6 +127,8 @@ export const list = query({
     dateKey: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
+
     const restaurant = await ctx.db
       .query("restaurants")
       .withIndex("by_isActive", (q) => q.eq("isActive", true))
