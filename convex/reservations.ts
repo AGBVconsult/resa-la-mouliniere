@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { Errors } from "./lib/errors";
+import { canCancel } from "./lib/stateMachine";
 import {
   makeSlotKey,
   computePartySize,
@@ -208,14 +209,8 @@ function buildReservationAdmin(doc: {
   };
 }
 
-/**
- * Check if a reservation status allows cancellation.
- * Pure helper, testable.
- */
-export function canCancel(status: string): boolean {
-  // Seul statut non-annulable : déjà annulé
-  return status !== "cancelled";
-}
+// Règle d'annulation par le client : convex/lib/stateMachine.ts (contrat §3.2, §6.4).
+export { canCancel };
 
 export const getByToken = query({
   args: { token: v.string() },

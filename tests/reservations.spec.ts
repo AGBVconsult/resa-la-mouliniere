@@ -170,34 +170,17 @@ describe("capacity check logic", () => {
   });
 });
 
-describe("canCancel", () => {
-  test("returns true for pending", () => {
-    expect(canCancel("pending")).toBe(true);
+describe("canCancel (annulation par le client, contrat §6.4)", () => {
+  test.each(["pending", "confirmed", "cardPlaced"])("%s est annulable", (status) => {
+    expect(canCancel(status)).toBe(true);
   });
 
-  test("returns true for confirmed", () => {
-    expect(canCancel("confirmed")).toBe(true);
-  });
-
-  test("returns false for seated", () => {
-    expect(canCancel("seated")).toBe(false);
-  });
-
-  test("returns false for completed", () => {
-    expect(canCancel("completed")).toBe(false);
-  });
-
-  test("returns false for cancelled", () => {
-    expect(canCancel("cancelled")).toBe(false);
-  });
-
-  test("returns false for noshow", () => {
-    expect(canCancel("noshow")).toBe(false);
-  });
-
-  test("returns false for refused", () => {
-    expect(canCancel("refused")).toBe(false);
-  });
+  test.each(["seated", "completed", "cancelled", "noshow", "refused", "incident", "bogus"])(
+    "%s n'est pas annulable par le client",
+    (status) => {
+      expect(canCancel(status)).toBe(false);
+    }
+  );
 });
 
 describe("computeRequestHash (deep canonicalization)", () => {

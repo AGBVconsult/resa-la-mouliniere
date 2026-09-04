@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { canCancel as isCancellable } from "../../../../convex/lib/stateMachine";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 
 import { Button } from "@/components/ui/button";
@@ -111,7 +112,7 @@ export default function ReservationPage({ params }: PageProps) {
   };
 
   const res = reservation.reservation;
-  const canCancel = res.status !== "cancelled";
+  const canCancel = isCancellable(res.status);
 
   return (
     <div className="container mx-auto max-w-lg p-4">

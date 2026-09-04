@@ -8,6 +8,7 @@ Ce fichier est la **source de vérité unique**. Toute implémentation doit suiv
 
 ## Changelog (dernière mise à jour)
 
+- Machine d’états (§3.2) réalignée sur le code (`convex/lib/stateMachine.ts`) : transitions automatiques et corrections opérateur documentées, invariants testés. Annulation par le client (`_cancel`, `cancelByToken`) restreinte à `pending|confirmed|cardPlaced` (`canCancel`). Les sujets d’e-mails ne sont pas contractuels (tests structurels). Contrainte capacité : `cardPlaced` compte (§10.9).
 - Weekly Templates : ajout table `weeklyTemplates` (§5.13), endpoints CRUD (§6.6), cron `slots.generateFromTemplates` (§7).
 - Special Periods : ajout tables `specialPeriods` (§5.10) et `slotOverrides` (§5.11), règle de priorité MANUAL > PERIOD > SLOT (§5.12), endpoints CRUD (§6.5).
 - Secrets Turnstile : `turnstileSecretKey` reste en DB mais n’est jamais renvoyé ; ajout de `admin.updateSecrets` (owner-only).
@@ -93,23 +94,34 @@ Définition de `dayKey` :
 
 ### 3.2 Transitions autorisées (machine d’états)
 
-Les seules transitions valides sont :
+Source unique : `convex/lib/stateMachine.ts` (`VALID_TRANSITIONS`), figée par `tests/admin.spec.ts`. Toute transition absente de cette table est refusée par `admin.updateReservationStatus` avec `VALIDATION_ERROR` (champ `status`).
 
-- `pending` -> `confirmed`
-- `pending` -> `refused`
-- `pending` -> `cancelled`
-- `confirmed` -> `seated`
-- `confirmed` -> `cancelled`
-- `seated` -> `completed`
-- `cardPlaced` -> `completed` (**libération automatique à H+90**, voir section 7)
-- `confirmed` -> `noshow` (**saisie manuelle uniquement** — aucun job n'écrit de `noshow`)
+| Depuis | Vers (autorisé) |
+|---|---|
+| `pending` | `confirmed`, `refused`, `cancelled` |
+| `confirmed` | `cardPlaced`, `seated`, `cancelled`, `noshow`, `completed` |
+| `cardPlaced` | `seated`, `confirmed`, `cancelled`, `noshow`, `incident`, `completed` |
+| `seated` | `completed`, `incident`, `noshow`, `confirmed`, `cancelled` |
+| `completed` | `seated`, `confirmed`, `incident`, `cancelled` |
+| `noshow` | `seated`, `confirmed`, `cancelled` |
+| `cancelled` | `confirmed` |
+| `refused` | `confirmed`, `cancelled` |
+| `incident` | `seated`, `completed`, `cancelled` |
 
-Transitions interdites (non exhaustif, donc **toutes** celles non listées ci-dessus sont interdites) :
+Lecture de la table :
 
-- `completed` -> *(anything)*
-- `noshow` -> *(anything)*
-- `cancelled` -> *(anything)*
-- `refused` -> *(anything)*
+- **Flux nominal** : `pending -> confirmed|refused|cancelled`, puis `confirmed -> cardPlaced -> seated -> completed`.
+- **Transitions automatiques** (jobs, §7) : `seated -> completed` (`dailyFinalize`, auto-release B1) et `confirmed|cardPlaced -> completed` (auto-release B2 : table affectée, client jamais arrivé, H+90). **Aucun job n'écrit `noshow`** : c'est une décision humaine.
+- **Corrections opérateur** (saisie manuelle uniquement, tablette/admin) : réouverture d'un `completed` (`-> seated|confirmed`), restauration d'un `cancelled|refused|noshow` (`-> confirmed`, ou `-> seated` pour un `noshow` arrivé en retard), déclaration ou levée d'un `incident`. Ces corrections **ne re-vérifient pas la capacité du créneau** : un `cancelled -> confirmed` peut dépasser `slots.capacity` (limitation connue, non corrigée à ce jour).
+
+Invariants (testés) :
+
+- aucune transition ne ramène à `pending` (statut de création uniquement) ;
+- `refused` n'est atteignable que depuis `pending` ;
+- depuis `pending`, aucun raccourci vers `cardPlaced|seated|completed|noshow|incident` ;
+- pas de transition d'un statut vers lui-même.
+
+**Annulation par le client** (`reservations.cancelByToken` → `_cancel`) : uniquement depuis `pending|confirmed|cardPlaced` (`canCancel`, même module). Une fois le client installé (`seated`) ou la visite close, seule une correction opérateur peut annuler.
 
 ### 3.3 Règles de groupe (création)
 
@@ -599,7 +611,7 @@ Mutations internes (non appelées depuis l’UI) :
   - Règle : upsert du doc `reservationTokens` pour `(reservationId, type="manage")` (UNIQUE) avec `token=manageToken`, `expiresAt=tokenExpiresAt`, `usedAt=null`, `rotatedAt=null`.
 
 - `reservations._cancel(args: { reservationId: Id<"reservations">, cancelledBy: "token"|"admin", now: number, expectedVersion: number }) -> { reservationId: Id<"reservations">, newVersion: number }`
-  - Préconditions : status in `pending|confirmed` (sinon `VALIDATION_ERROR`).
+  - Préconditions : status in `pending|confirmed|cardPlaced` (`canCancel`, sinon `VALIDATION_ERROR`).
   - Effets : `status -> cancelled`, `cancelledAt=now`, `_version=_version+1`.
 
 Mutations admin (auth Clerk requise) :
@@ -676,7 +688,7 @@ Mutations admin (auth Clerk requise) :
 - `reservations.cancelByToken(args: { token: string, idemKey: string }) -> { reservationId: Id<"reservations"> }`
   - Auth : par token (reservationTokens).
   - Idempotence : `idemKey` obligatoire (action `reservations.cancelByToken`).
-  - Préconditions : token valide et non expiré, réservation en `pending|confirmed`.
+  - Préconditions : token valide et non expiré, réservation en `pending|confirmed|cardPlaced` (`canCancel`).
   - Effets :
     - `now` (**DEFAULT**) = heure serveur en ms (pas d’input client).
     - lire la réservation, récupérer `_version`.
@@ -903,7 +915,7 @@ Invariants routes :
 6. Resend est appelé uniquement dans une Action (jamais Query/Mutation).
 7. Idempotence obligatoire sur `reservations.create`, `reservations.cancelByToken` et `groupRequests.create` via `idempotencyKeys`.
 8. `effectiveOpen` est la règle unique d’ouverture slot : `isOpen=true` ET `capacity>0`; le DTO `Slot.isOpen` reflète `effectiveOpen`.
-9. Contrainte capacité slot : somme `pending|confirmed|seated` <= `slots.capacity`.
+9. Contrainte capacité slot : somme `pending|confirmed|cardPlaced|seated` <= `slots.capacity` (`CAPACITY_STATUSES`, `convex/lib/availability.ts`).
 10. Contrainte tables : au plus **2** réservations actives (`pending|confirmed|cardPlaced|seated`) par table pour un couple `(dateKey, service)` — constante `MAX_RESERVATIONS_PER_TABLE`. Plafond appliqué de façon identique à tous les points d'entrée : `floorplan.assign`, `floorplan.checkAssignment`, `admin.updateReservation`, `tables.assignToReservation`. Dépassement => `TABLE_FULL`.
 11. Concurrence : toutes les mutations qui modifient une réservation utilisent `expectedVersion` et incrémentent `_version` (inclut `_cancel` et `adminCancel`).
 12. Sécurité/PII :

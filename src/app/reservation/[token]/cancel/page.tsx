@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useAction } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
+import { canCancel as isCancellable } from "../../../../../convex/lib/stateMachine";
 import { useTranslation } from "@/components/booking/i18n/translations";
 import type { Language } from "@/components/booking/types";
 import { formatDateShort, generateUUID } from "@/lib/utils";
@@ -124,7 +125,7 @@ export default function CancelReservationPage({ params }: PageProps) {
   }
 
   const res = reservation.reservation;
-  const canCancel = res.status !== "cancelled";
+  const canCancel = isCancellable(res.status);
   const dateKey = res.dateKey;
   const timeKey = res.timeKey;
 
