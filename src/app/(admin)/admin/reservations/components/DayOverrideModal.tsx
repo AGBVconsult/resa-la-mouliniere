@@ -11,19 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { mergeSlotStates, type SlotState } from "@/lib/utils/slot-day-settings";
+
+type DaySlotState = SlotState<Id<"slots">>;
 
 interface DayOverrideModalProps {
   dateKey: string;
   onClose: () => void;
-}
-
-interface SlotState {
-  _id: Id<"slots">;
-  timeKey: string;
-  isOpen: boolean;
-  capacity: number;
-  originalIsOpen: boolean;
-  originalCapacity: number;
 }
 
 export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
@@ -32,7 +26,6 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
   const addSlot = useMutation(api.slots.addSlot);
   const ensureSlots = useMutation(api.weeklyTemplates.ensureSlotsForDate);
   const hasSynced = useRef(false);
-  const hasInitialized = useRef(false);
 
   // Sync slots from weekly templates on mount
   useEffect(() => {
@@ -44,38 +37,20 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
     }
   }, [dateKey, ensureSlots]);
 
-  const [lunchSlots, setLunchSlots] = useState<SlotState[]>([]);
-  const [dinnerSlots, setDinnerSlots] = useState<SlotState[]>([]);
+  const [lunchSlots, setLunchSlots] = useState<DaySlotState[]>([]);
+  const [dinnerSlots, setDinnerSlots] = useState<DaySlotState[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isAddingSlot, setIsAddingSlot] = useState<"lunch" | "dinner" | null>(null);
   const [newSlotTime, setNewSlotTime] = useState("");
   const [newSlotCapacity, setNewSlotCapacity] = useState(50);
 
-  // Initialize local state from query — only on first load
+  // Resynchronise l'état local à chaque mise à jour du serveur, en conservant
+  // les modifications locales non enregistrées. Indispensable pour qu'un créneau
+  // ajouté via (+) apparaisse tout de suite dans la liste.
   useEffect(() => {
-    if (slotsData && !hasInitialized.current) {
-      hasInitialized.current = true;
-      setLunchSlots(
-        slotsData.lunch.map((s) => ({
-          _id: s._id,
-          timeKey: s.timeKey,
-          isOpen: s.isOpen,
-          capacity: s.capacity,
-          originalIsOpen: s.isOpen,
-          originalCapacity: s.capacity,
-        }))
-      );
-      setDinnerSlots(
-        slotsData.dinner.map((s) => ({
-          _id: s._id,
-          timeKey: s.timeKey,
-          isOpen: s.isOpen,
-          capacity: s.capacity,
-          originalIsOpen: s.isOpen,
-          originalCapacity: s.capacity,
-        }))
-      );
-    }
+    if (!slotsData) return;
+    setLunchSlots((prev) => mergeSlotStates(slotsData.lunch, prev));
+    setDinnerSlots((prev) => mergeSlotStates(slotsData.dinner, prev));
   }, [slotsData]);
 
   // Computed states
@@ -295,7 +270,7 @@ interface ServiceCardProps {
   service: "lunch" | "dinner";
   isOpen: boolean;
   onToggle: (open: boolean) => void;
-  slots: SlotState[];
+  slots: DaySlotState[];
   onSlotToggle: (id: Id<"slots">, open: boolean) => void;
   onCapacityChange: (id: Id<"slots">, capacity: number) => void;
   isAddingSlot: boolean;

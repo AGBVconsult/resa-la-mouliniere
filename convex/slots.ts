@@ -969,6 +969,8 @@ export const addSlot = mutation({
     }
 
     const now = Date.now();
+    const effectiveCapacity = capacity ?? DEFAULT_CAPACITY;
+
     const slotId = await ctx.db.insert("slots", {
       restaurantId: restaurant._id,
       dateKey,
@@ -976,13 +978,45 @@ export const addSlot = mutation({
       timeKey,
       slotKey,
       isOpen: true,
-      capacity: capacity ?? DEFAULT_CAPACITY,
+      capacity: effectiveCapacity,
       maxGroupSize: DEFAULT_MAX_GROUP_SIZE,
       largeTableAllowed: false,
       updatedAt: now,
     });
 
-    console.log("Slot added", { slotKey, capacity: capacity ?? DEFAULT_CAPACITY });
+    // Un créneau ajouté à la main n'existe pas dans le weeklyTemplate du jour.
+    // Sans slotOverride "manual", les resynchronisations template
+    // (weeklyTemplates.ensureSlotsForDate, syncSlotsFromTemplate) le referment
+    // ou le suppriment dès la prochaine ouverture d'une page admin/tablette.
+    // L'override manual le protège (ces routines sautent les slotKeys overridés)
+    // et porte l'état effectif du créneau (priorité MANUAL > PERIOD).
+    const overridePatch = { isOpen: true, capacity: effectiveCapacity };
+
+    const existingManual = await ctx.db
+      .query("slotOverrides")
+      .withIndex("by_restaurant_slotKey", (q) =>
+        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
+      )
+      .filter((q) => q.eq(q.field("origin"), "manual"))
+      .first();
+
+    if (existingManual) {
+      await ctx.db.patch(existingManual._id, {
+        patch: { ...existingManual.patch, ...overridePatch },
+        updatedAt: now,
+      });
+    } else {
+      await ctx.db.insert("slotOverrides", {
+        restaurantId: restaurant._id,
+        slotKey,
+        origin: "manual",
+        patch: overridePatch,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    console.log("Slot added (protégé par slotOverride manual)", { slotKey, capacity: effectiveCapacity });
 
     return { slotId, slotKey };
   },
