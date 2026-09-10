@@ -127,7 +127,7 @@ La mutation `weeklyTemplates.ensureSlotsForDate` est appelee automatiquement qua
 | Mutation | Auth | Description |
 |----------|------|-------------|
 | `slots.seedRange` | owner | Generer slots pour une plage (valeurs par defaut) |
-| `slots.addSlot` | admin | Ajouter un creneau ponctuel |
+| `slots.addSlot` | admin | Ajouter un creneau ponctuel (+ slotOverride manual de protection) |
 | `slots.updateSlot` | admin | Modifier un creneau (ecrit dans slotOverrides) |
 | `slots.batchUpdateSlots` | admin | Modifier plusieurs creneaux en batch |
 | `slots.toggleServiceSlots` | admin | Basculer tous les slots d'un service |
@@ -143,6 +143,12 @@ C'est un choix architectural important :
 - Permet de distinguer les modifications manuelles des valeurs de base
 - Preserve la capacite de regenerer depuis les templates sans perdre les overrides manuels
 - Necessite que toute lecture de slot applique les overrides
+
+`slots.addSlot` cree lui aussi un `slotOverride` manual (`{ isOpen: true, capacity }`)
+en plus de la ligne `slots`. Sans cet override, un creneau ajoute a la main n'existe
+dans aucun `weeklyTemplate` : les resynchronisations template
+(`ensureSlotsForDate`, `syncSlotsFromTemplate`) le refermeraient ou le supprimeraient
+des la prochaine ouverture d'une page admin/tablette.
 
 ### 4.3 Valeurs par defaut (seedRange)
 
