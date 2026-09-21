@@ -127,6 +127,13 @@ export function Step2DateTime({
       const slotsFull = slotsOffered - slotsFree;
       const isFullyBooked = slotsFree === 0;
 
+      // Quels créneaux sont libres, pas seulement combien.
+      // Permet de distinguer le mur mou (des créneaux libres, mais pas à l'heure voulue)
+      // du simple doute. Tri lexicographique = tri chronologique sur "HH:MM".
+      const freeTimes = [...lunchSlots, ...dinnerSlots]
+        .map((s: { timeKey: string }) => s.timeKey)
+        .sort();
+
       trackEvent('availability_rendered', {
         step_name: 'step2_datetime',
         step_number: 2,
@@ -136,6 +143,9 @@ export function Step2DateTime({
         slots_offered: slotsOffered,
         slots_full: slotsFull,
         is_fully_booked: isFullyBooked,
+        free_times: freeTimes,
+        earliest_free: freeTimes[0],
+        latest_free: freeTimes[freeTimes.length - 1],
       } as Record<string, unknown>, lang);
 
       // Keep existing no_slots_available event for backward compatibility

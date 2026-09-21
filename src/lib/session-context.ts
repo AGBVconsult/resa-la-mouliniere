@@ -58,6 +58,29 @@ function detectIsReturning(): boolean | undefined {
 }
 
 /**
+ * Résout le canal d'acquisition depuis l'URL du widget.
+ *
+ * Ordre : ?ref= (fiche Google, liens taggés) puis ?utm_source=.
+ *
+ * On n'utilise volontairement PAS document.referrer : le widget est servi avec
+ * `frame-ancestors *` et vit donc en iframe cross-origin, où document.referrer
+ * renvoie la page parente (lamouliniere.be) et non la source réelle. Le mapper
+ * produirait "direct" pour tout le trafic embarqué — une donnée fausse en silence.
+ * La seule source fiable est un paramètre posé sur l'URL de l'iframe par la page
+ * parente, qui elle voit le vrai referrer.
+ */
+function detectReferralSource(explicit: string | null): string | undefined {
+  if (explicit) return explicit;
+  try {
+    if (typeof window === "undefined") return undefined;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("utm_source") || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Initialize the session context. Must be called once at widget mount.
  * Events emitted before this call are omitted (no orphan events).
  */
@@ -68,7 +91,7 @@ export function initSessionContext(opts: {
 }): void {
   _sessionId = opts.sessionId;
   _language = opts.language;
-  _referralSource = opts.referralSource || undefined;
+  _referralSource = detectReferralSource(opts.referralSource);
   _device = detectDevice();
   _isReturning = detectIsReturning();
   _initialized = true;

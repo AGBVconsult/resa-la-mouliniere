@@ -28,6 +28,32 @@ const EVENT_TO_STEP: Record<string, string> = {
   booking_completed: 'step6_confirmation',
 };
 
+// booking_step_view porte son étape dans params.step_name, avec un vocabulaire
+// ("guests", "date_time") différent de celui d'EVENT_TO_STEP ("step1_guests",
+// "step2_datetime"). Sans normalisation, une même étape apparaît sous deux noms
+// et tout regroupement par `step` scinde le funnel en double. On canonicalise ici
+// pour funnelEvents uniquement — les paramètres envoyés à GA4 restent inchangés.
+const STEP_NAME_TO_CANONICAL: Record<string, string> = {
+  guests: 'step1_guests',
+  baby_seating: 'step1b_baby',
+  date_time: 'step2_datetime',
+  contact: 'step3_contact',
+  practical_info: 'step4_practical',
+  summary_confirm: 'step5_confirm',
+  confirmation: 'step6_confirmation',
+};
+
+/**
+ * Étape canonique d'un événement, pour la colonne `step` de funnelEvents.
+ */
+function resolveStep(eventName: string, params?: AnalyticsEventParams): string | undefined {
+  const mapped = EVENT_TO_STEP[eventName];
+  if (mapped) return mapped;
+  const stepName = (params as Record<string, unknown> | undefined)?.step_name as string | undefined;
+  if (!stepName) return undefined;
+  return STEP_NAME_TO_CANONICAL[stepName] ?? stepName;
+}
+
 // Client-side kill-switch gate — mirrors settings.funnelAnalyticsEnabled
 // Three states: 'pending' (settings not yet loaded), 'enabled', 'disabled'
 let _funnelAnalyticsState: 'pending' | 'enabled' | 'disabled' = 'pending';
@@ -262,7 +288,7 @@ function _sendToConvex(eventName: string, params?: AnalyticsEventParams, languag
     client.mutation(api.funnelEvents.record, {
       sessionId: ctx.sessionId,
       eventName,
-      step: EVENT_TO_STEP[eventName] || (params as Record<string, unknown>)?.step_name as string | undefined,
+      step: resolveStep(eventName, params),
       device: ctx.device,
       language: ctx.language,
       referralSource: ctx.referralSource,
