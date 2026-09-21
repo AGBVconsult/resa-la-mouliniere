@@ -46,6 +46,7 @@ import type * as lib_stateMachine from "../lib/stateMachine.js";
 import type * as lib_tableAssignment from "../lib/tableAssignment.js";
 import type * as lib_tokens from "../lib/tokens.js";
 import type * as lib_turnstile from "../lib/turnstile.js";
+import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
 import type * as planning from "../planning.js";
 import type * as reservations from "../reservations.js";
@@ -103,6 +104,7 @@ declare const fullApi: ApiFromModules<{
   "lib/tableAssignment": typeof lib_tableAssignment;
   "lib/tokens": typeof lib_tokens;
   "lib/turnstile": typeof lib_turnstile;
+  migrations: typeof migrations;
   notifications: typeof notifications;
   planning: typeof planning;
   reservations: typeof reservations;

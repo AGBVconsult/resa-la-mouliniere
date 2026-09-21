@@ -6,7 +6,7 @@
  * 
  * Format CSV attendu (séparateur: virgule ou point-virgule):
  *   Prénom,Nom,Code,Téléphone,email,Réservations
- *   Heidi,Duchateau,32,486769844,duchateau.heidi@gmail.com,47
+ *   Jean,Dupont,32,470000000,jean.dupont@example.com,3
  * 
  * Le script génère un fichier JSON prêt à être utilisé dans le dashboard Convex.
  */
@@ -114,7 +114,7 @@ function main() {
     console.log("");
     console.log("Format CSV attendu:");
     console.log("  Prénom,Nom,Code,Téléphone,email,Réservations");
-    console.log("  Heidi,Duchateau,32,486769844,duchateau.heidi@gmail.com,47");
+    console.log("  Jean,Dupont,32,470000000,jean.dupont@example.com,3");
     process.exit(1);
   }
 

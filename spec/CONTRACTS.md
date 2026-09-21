@@ -35,7 +35,7 @@ Ce fichier est la **source de vérité unique**. Toute implémentation doit suiv
 ## 1) Décisions verrouillées
 
 - **Next.js 15 App Router uniquement** : routes sous `/app/**`, pas de Pages Router.
-- **Auth Admin = Clerk** : RBAC par rôles (`owner|admin|staff`) via claims ; pas de mot de passe stocké dans l’app.
+- **Auth Admin = NextAuth (credentials) + pont JWT vers Convex** (mise à jour 2026-09-21, remplace Clerk) : la session NextAuth sert à obtenir un JWT RS256 signé par l'app (`/api/convex/token`, clé publique sur `/api/convex/jwks`) que Convex vérifie via `convex/auth.config.ts` (provider `customJwt`). RBAC par rôles (`owner|admin|staff`) lus dans la claim `role` de l'identité vérifiée (`convex/lib/rbac.ts:requireRole`) ; toute fonction admin/staff appelle `requireRole`. Le mot de passe admin est stocké hashé (PBKDF2) en variable d'environnement. Voir `docs/SECURITE-SPRINT0.md`.
 - **Turnstile et Resend uniquement via Convex Actions** (jamais depuis Query/Mutation).
 - **MVP mono-restaurant** : une seule entité “restaurant” active ; **toutes** les tables portent `restaurantId`.
 - **UI multilingue** : tout message visible côté client/admin = `messageKey` (jamais de texte brut en base ni dans les erreurs).
@@ -863,7 +863,7 @@ Domaines et permissions :
 Secrets :
 - `turnstileSecretKey` n’est jamais renvoyé par `admin.getSettings`, `widget.getSettings`, ni aucune autre Query.
 
-Invariant : toute route `/admin/**` exige session Clerk valide.
+Invariant : toute route `/admin/**`, `/admin-tablette/**`, `/admin-mobile/**` exige une session NextAuth valide (middleware + layouts), et toute fonction Convex non publique exige une identité vérifiée via `requireRole`.
 
 ---
 

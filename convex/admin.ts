@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, type MutationCtx } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
@@ -143,6 +143,72 @@ async function getOrCreateClientIdFromReservation(
   return clientId;
 }
 
+/** Statuts qui consomment de la capacité et occupent des tables. */
+const ACTIVE_RESERVATION_STATUSES: readonly string[] = ["pending", "confirmed", "cardPlaced", "seated"];
+
+type EffectiveSlot = {
+  slotId: Id<"slots">;
+  isOpen: boolean;
+  capacity: number;
+  maxGroupSize: number | null;
+};
+
+/**
+ * Charge un créneau et applique les overrides (period puis manual, le dernier
+ * gagne) — même règle que `availability.getDay` et `reservations._create`.
+ * Retourne `null` si le créneau n'existe pas.
+ */
+async function loadEffectiveSlot(
+  ctx: MutationCtx,
+  restaurantId: Id<"restaurants">,
+  slotKey: string
+): Promise<EffectiveSlot | null> {
+  // `.first()` : des doublons de slots ont existé suite à des bugs de synchronisation.
+  const slot = await ctx.db
+    .query("slots")
+    .withIndex("by_restaurant_slotKey", (q) => q.eq("restaurantId", restaurantId).eq("slotKey", slotKey))
+    .first();
+  if (!slot) return null;
+
+  const overrides = await ctx.db
+    .query("slotOverrides")
+    .withIndex("by_restaurant_slotKey", (q) => q.eq("restaurantId", restaurantId).eq("slotKey", slotKey))
+    .collect();
+
+  let isOpen = slot.isOpen;
+  let capacity = slot.capacity;
+  let maxGroupSize = slot.maxGroupSize;
+  for (const origin of ["period", "manual"] as const) {
+    const override = overrides.find((o) => o.origin === origin);
+    if (!override?.patch) continue;
+    if (override.patch.isOpen !== undefined) isOpen = override.patch.isOpen;
+    if (override.patch.capacity !== undefined) capacity = override.patch.capacity;
+    if (override.patch.maxGroupSize !== undefined) maxGroupSize = override.patch.maxGroupSize;
+  }
+
+  return { slotId: slot._id, isOpen, capacity, maxGroupSize };
+}
+
+/**
+ * Somme des couverts actifs sur un créneau, en excluant éventuellement une
+ * réservation (celle en cours de modification).
+ */
+async function computeUsedCapacity(
+  ctx: MutationCtx,
+  restaurantId: Id<"restaurants">,
+  slotKey: string,
+  excludeReservationId?: Id<"reservations">
+): Promise<number> {
+  const reservations = await ctx.db
+    .query("reservations")
+    .withIndex("by_restaurant_slotKey", (q) => q.eq("restaurantId", restaurantId).eq("slotKey", slotKey))
+    .collect();
+
+  return reservations
+    .filter((r) => r._id !== excludeReservationId && ACTIVE_RESERVATION_STATUSES.includes(r.status))
+    .reduce((sum, r) => sum + r.partySize, 0);
+}
+
 function computeYesterdayDateKey(now: number, timezone: string): string {
   const date = new Date(now);
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -232,10 +298,19 @@ export const getSettings = query({
   },
 });
 
+/**
+ * Contract §6.3 `admin.updateSettings` — not implemented yet.
+ * Previously a public stub returning `{ ok: true }` without persisting anything.
+ * Now guarded and explicit so no caller can believe a save succeeded.
+ */
 export const updateSettings = mutation({
   args: { patch: v.any() },
-  handler: async () => {
-    return { ok: true } as any;
+  handler: async (ctx) => {
+    await requireRole(ctx, "owner");
+    throw Errors.INVALID_INPUT(
+      "patch",
+      "updateSettings n'est pas implémenté : utilisez updateFunnelAnalytics, updateProgressiveFilling ou updateSecrets"
+    );
   },
 });
 
@@ -1044,44 +1119,136 @@ export const updateReservationFull = mutation({
       throw Errors.VERSION_CONFLICT(args.expectedVersion, reservation.version);
     }
 
+    // --- Resolve target values (args override current document) ---
+    const dateKey = args.dateKey ?? reservation.dateKey;
+    const service = args.service ?? reservation.service;
+    const timeKey = args.timeKey ?? reservation.timeKey;
+    const adults = args.adults ?? reservation.adults;
+    const childrenCount = args.childrenCount ?? reservation.childrenCount;
+    const babyCount = args.babyCount ?? reservation.babyCount;
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+      throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
+    }
+    if (!/^\d{2}:\d{2}$/.test(timeKey)) {
+      throw Errors.INVALID_INPUT("timeKey", "Format HH:MM requis");
+    }
+    if (!Number.isInteger(adults) || adults < 1) {
+      throw Errors.INVALID_INPUT("adults", "Doit être un entier >= 1");
+    }
+    if (!Number.isInteger(childrenCount) || childrenCount < 0) {
+      throw Errors.INVALID_INPUT("childrenCount", "Doit être un entier >= 0");
+    }
+    if (!Number.isInteger(babyCount) || babyCount < 0) {
+      throw Errors.INVALID_INPUT("babyCount", "Doit être un entier >= 0");
+    }
+
+    // Invariants §2.2 / §5.5 : slotKey = `${dateKey}#${service}#${timeKey}`,
+    // partySize = adults + children + babies (computed server-side, never trusted).
+    const slotKey = makeSlotKey({ dateKey, service, timeKey });
+    const partySize = computePartySize(adults, childrenCount, babyCount);
+
+    const slotChanged = slotKey !== reservation.slotKey;
+    const serviceChanged = dateKey !== reservation.dateKey || service !== reservation.service;
+    const sizeChanged = partySize !== reservation.partySize;
+    const isActive = ACTIVE_RESERVATION_STATUSES.includes(reservation.status);
+
+    // Capacity invariant (§10.9) is re-checked only when the reservation is
+    // active and its slot or size changes; editing a name or a note never blocks.
+    if (isActive && (slotChanged || sizeChanged)) {
+      const effectiveSlot = await loadEffectiveSlot(ctx, reservation.restaurantId, slotKey);
+      if (!effectiveSlot) {
+        throw Errors.SLOT_NOT_FOUND(slotKey);
+      }
+      if (!computeEffectiveOpen(effectiveSlot.isOpen, effectiveSlot.capacity)) {
+        throw Errors.SLOT_TAKEN(slotKey, "closed");
+      }
+      const usedCapacity = await computeUsedCapacity(
+        ctx,
+        reservation.restaurantId,
+        slotKey,
+        args.reservationId
+      );
+      const remainingCapacity = effectiveSlot.capacity - usedCapacity;
+      if (partySize > remainingCapacity) {
+        throw Errors.INSUFFICIENT_CAPACITY(slotKey, partySize, remainingCapacity);
+      }
+    }
+
     const now = Date.now();
     const patch: Record<string, unknown> = {
       updatedAt: now,
       version: reservation.version + 1,
+      dateKey,
+      service,
+      timeKey,
+      slotKey,
+      adults,
+      childrenCount,
+      babyCount,
+      partySize,
     };
 
-    // Update fields if provided
-    if (args.dateKey !== undefined) patch.dateKey = args.dateKey;
-    if (args.service !== undefined) patch.service = args.service;
-    if (args.timeKey !== undefined) patch.timeKey = args.timeKey;
-    if (args.firstName !== undefined) patch.firstName = args.firstName;
-    if (args.lastName !== undefined) patch.lastName = args.lastName;
-    if (args.phone !== undefined) patch.phone = args.phone;
-    if (args.email !== undefined) patch.email = args.email;
+    // Contact fields: same normalisation as at creation.
+    if (args.firstName !== undefined) patch.firstName = capitalizeName(args.firstName.trim());
+    if (args.lastName !== undefined) patch.lastName = capitalizeName(args.lastName.trim());
+    if (args.email !== undefined) patch.email = args.email.trim();
     if (args.note !== undefined) patch.note = args.note;
     if (args.options !== undefined) patch.options = args.options;
 
-    // Update party size if any count changed
-    if (args.adults !== undefined || args.childrenCount !== undefined || args.babyCount !== undefined) {
-      const adults = args.adults ?? reservation.adults;
-      const childrenCount = args.childrenCount ?? reservation.childrenCount;
-      const babyCount = args.babyCount ?? reservation.babyCount;
-      
-      patch.adults = adults;
-      patch.childrenCount = childrenCount;
-      patch.babyCount = babyCount;
-      patch.partySize = adults + childrenCount;
+    let phoneChanged = false;
+    if (args.phone !== undefined) {
+      const trimmed = args.phone.trim();
+      const formattedPhone = trimmed ? formatPhoneNumber(trimmed) : "";
+      if (formattedPhone !== reservation.phone) {
+        patch.phone = formattedPhone;
+        phoneChanged = true;
+      }
     }
 
-    // Update slotKey if date/service/time changed
-    if (args.dateKey !== undefined || args.service !== undefined || args.timeKey !== undefined) {
-      const dateKey = args.dateKey ?? reservation.dateKey;
-      const service = args.service ?? reservation.service;
-      const timeKey = args.timeKey ?? reservation.timeKey;
-      patch.slotKey = `${dateKey}:${service}:${timeKey}`;
+    // Tables belong to a (dateKey, service) couple: moving the reservation to
+    // another day or service must release them (§10.10). A time change within
+    // the same service keeps the assignment.
+    if (serviceChanged && reservation.tableIds.length > 0) {
+      patch.tableIds = [];
+      patch.primaryTableId = undefined;
+    }
+
+    // Keep the CRM link consistent with the (possibly new) phone number.
+    const nextPhone = (patch.phone as string | undefined) ?? reservation.phone;
+    if ((phoneChanged || !reservation.clientId) && hasUsablePhone(nextPhone)) {
+      const clientId = await getOrCreateClientIdFromReservation(ctx, {
+        firstName: (patch.firstName as string | undefined) ?? reservation.firstName,
+        lastName: (patch.lastName as string | undefined) ?? reservation.lastName,
+        email: (patch.email as string | undefined) ?? reservation.email,
+        phone: nextPhone,
+        language: reservation.language as Language,
+        source: reservation.source,
+      });
+      if (clientId && clientId !== reservation.clientId) {
+        patch.clientId = clientId;
+      }
     }
 
     await ctx.db.patch(args.reservationId, patch);
+
+    await ctx.db.insert("reservationEvents", {
+      reservationId: args.reservationId,
+      restaurantId: reservation.restaurantId,
+      eventType: "updated",
+      fromStatus: reservation.status,
+      toStatus: reservation.status,
+      scheduledTime: timeKey,
+      actualTime: now,
+      performedBy: (await ctx.auth.getUserIdentity())?.subject ?? "admin",
+      metadata: {
+        slotChanged,
+        previousSlotKey: slotChanged ? reservation.slotKey : undefined,
+        sizeChanged,
+        tablesReleased: serviceChanged && reservation.tableIds.length > 0,
+      },
+      createdAt: now,
+    });
 
     // Log without PII
     const updatedFields = Object.keys(patch).filter((k) => k !== "updatedAt" && k !== "version");
@@ -1264,13 +1431,8 @@ export const createReservation = mutation({
       timeKey: args.timeKey,
     });
 
-    // Load slot
-    const slot = await ctx.db
-      .query("slots")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
-      )
-      .unique();
+    // Load slot with overrides applied (manual > period > slot), same rule as the widget
+    const slot = await loadEffectiveSlot(ctx, restaurant._id, slotKey);
 
     if (!slot) {
       throw Errors.SLOT_NOT_FOUND(slotKey);
@@ -1285,17 +1447,8 @@ export const createReservation = mutation({
     // Compute partySize
     const partySize = computePartySize(args.adults, args.childrenCount, args.babyCount);
 
-    // Calculate used capacity
-    const existingReservations = await ctx.db
-      .query("reservations")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("slotKey", slotKey)
-      )
-      .collect();
-
-    const usedCapacity = existingReservations
-      .filter((r) => r.status === "pending" || r.status === "confirmed" || r.status === "seated")
-      .reduce((sum, r) => sum + r.partySize, 0);
+    // Calculate used capacity (pending | confirmed | cardPlaced | seated)
+    const usedCapacity = await computeUsedCapacity(ctx, restaurant._id, slotKey);
 
     const remainingCapacity = slot.capacity - usedCapacity;
 

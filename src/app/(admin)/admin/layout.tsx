@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { AdminLayoutClient } from "@/components/admin/AdminLayoutClient";
+import { ConvexAuthGate } from "@/components/providers/ConvexAuthGate";
 
 export const metadata = {
   title: "Admin - La Moulinière",
@@ -34,8 +35,10 @@ export default async function AdminLayout({
   }
 
   return (
-    <AdminLayoutClient>
-      {children}
-    </AdminLayoutClient>
+    <ConvexAuthGate>
+      <AdminLayoutClient>
+        {children}
+      </AdminLayoutClient>
+    </ConvexAuthGate>
   );
 }

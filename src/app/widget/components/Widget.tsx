@@ -99,17 +99,6 @@ export default function Widget() {
     }
   }, [settings]);
 
-  // Widget désactivé
-  if (settings && !settings.publicWidgetEnabled) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="text-center p-8">
-          <p className="text-slate-600">Les réservations en ligne sont temporairement désactivées.</p>
-        </div>
-      </div>
-    );
-  }
-
   const partySize = data.adults + data.childrenCount + data.babyCount;
 
   const step1CanContinue = useMemo(() => {
@@ -333,8 +322,21 @@ export default function Widget() {
     t.practical_info_noted,
   ]);
 
+  // Widget désactivé — placé après tous les hooks (Rules of Hooks). Un retour
+  // anticipé plus haut faisait planter React ("Rendered fewer hooks than
+  // expected") dès que `publicWidgetEnabled` passait à false pendant une session.
+  if (settings && !settings.publicWidgetEnabled) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="text-center p-8">
+          <p className="text-slate-600">Les réservations en ligne sont temporairement désactivées.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div 
+    <div
       className="h-[100dvh] md:h-auto md:min-h-screen md:bg-slate-100 md:flex md:items-center md:justify-center md:p-4"
     >
       <div

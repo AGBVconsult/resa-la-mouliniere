@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { MobileLayoutClient } from "./components/MobileLayoutClient";
+import { ConvexAuthGate } from "@/components/providers/ConvexAuthGate";
 
 export const metadata = {
   title: "Admin Mobile - La Moulinière",
@@ -33,5 +34,9 @@ export default async function AdminMobileLayout({
     redirect("/admin/login");
   }
 
-  return <MobileLayoutClient>{children}</MobileLayoutClient>;
+  return (
+    <ConvexAuthGate>
+      <MobileLayoutClient>{children}</MobileLayoutClient>
+    </ConvexAuthGate>
+  );
 }

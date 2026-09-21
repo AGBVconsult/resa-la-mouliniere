@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -32,9 +30,14 @@ export async function GET() {
   // Check required environment variables
   const requiredEnvVars = [
     "NEXT_PUBLIC_CONVEX_URL",
-    "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+    "AUTH_SECRET",
+    "AUTH_EMAIL",
+    "CONVEX_JWT_PRIVATE_KEY",
   ];
   const missingEnvVars = requiredEnvVars.filter((v) => !process.env[v]);
+  if (!process.env.AUTH_PASSWORD_HASH && !process.env.AUTH_PASSWORD) {
+    missingEnvVars.push("AUTH_PASSWORD_HASH");
+  }
   if (missingEnvVars.length > 0) {
     health.checks.environment = {
       status: "error",
@@ -43,8 +46,13 @@ export async function GET() {
     health.status = "degraded";
   }
 
-  // Check Convex connectivity
+  // Check Convex connectivity (client built lazily so a missing URL is reported, not a crash)
   try {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+    if (!convexUrl) {
+      throw new Error("NEXT_PUBLIC_CONVEX_URL is not set");
+    }
+    const convex = new ConvexHttpClient(convexUrl);
     const convexStart = Date.now();
     // Simple query to check Convex is responding
     await convex.query(api.widget.getSettings, { lang: "fr" });

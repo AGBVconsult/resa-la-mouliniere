@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { TabletLayoutClient } from "./components/TabletLayoutClient";
+import { ConvexAuthGate } from "@/components/providers/ConvexAuthGate";
 
 export const metadata = {
   title: "Admin Tablette - La Moulinière",
@@ -33,5 +34,9 @@ export default async function AdminTabletLayout({
     redirect("/admin/login");
   }
 
-  return <TabletLayoutClient>{children}</TabletLayoutClient>;
+  return (
+    <ConvexAuthGate>
+      <TabletLayoutClient>{children}</TabletLayoutClient>
+    </ConvexAuthGate>
+  );
 }

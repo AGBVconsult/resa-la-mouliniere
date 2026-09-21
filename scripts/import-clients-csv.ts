@@ -6,8 +6,8 @@
  * 
  * Format CSV attendu (séparateur: virgule ou point-virgule):
  *   Prénom,Nom,Code,Téléphone,email,Réservations
- *   Heidi,Duchateau,32,486769844,duchateau.heidi@gmail.com,47
- * 
+ *   Jean,Dupont,32,470000000,jean.dupont@example.com,3
+ *
  * Le script:
  * 1. Parse le CSV
  * 2. Convertit en format JSON pour la mutation
@@ -19,7 +19,16 @@ import { api } from "../convex/_generated/api";
 import * as fs from "fs";
 import * as path from "path";
 
-const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || "https://accomplished-lemur-852.convex.cloud";
+// L'URL du déploiement n'est jamais codée en dur : elle vient de l'environnement
+// (NEXT_PUBLIC_CONVEX_URL dans .env.local ou exportée dans le shell).
+function requireConvexUrl(): string {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) {
+    console.error("NEXT_PUBLIC_CONVEX_URL manquante : définissez-la avant de lancer l'import.");
+    process.exit(1);
+  }
+  return url;
+}
 const BATCH_SIZE = 100;
 
 interface CsvRow {
@@ -128,7 +137,7 @@ async function main() {
     console.log("");
     console.log("Format CSV attendu:");
     console.log("  Prénom,Nom,Code,Téléphone,email,Réservations");
-    console.log("  Heidi,Duchateau,32,486769844,duchateau.heidi@gmail.com,47");
+    console.log("  Jean,Dupont,32,470000000,jean.dupont@example.com,3");
     process.exit(1);
   }
 
@@ -151,8 +160,15 @@ async function main() {
     process.exit(0);
   }
 
-  console.log(`\nConnexion à Convex: ${CONVEX_URL}`);
-  const client = new ConvexHttpClient(CONVEX_URL);
+  const convexUrl = requireConvexUrl();
+  console.log(`\nConnexion à Convex: ${convexUrl}`);
+  const client = new ConvexHttpClient(convexUrl);
+
+  // `clients.importFromCSV` requires an admin identity: sign a Convex token with
+  // the same key as the web app (CONVEX_JWT_PRIVATE_KEY + CONVEX_AUTH_ISSUER).
+  const { signConvexToken } = await import("../src/lib/convex-jwt");
+  const { token } = await signConvexToken({ sub: "cli-import", role: "owner" });
+  client.setAuth(token);
 
   // Note: Pour l'authentification admin, vous devez être connecté
   // Le script utilise les credentials de l'environnement
