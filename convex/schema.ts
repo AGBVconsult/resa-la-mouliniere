@@ -718,4 +718,73 @@ export default defineSchema({
     createdBy: v.optional(v.string()),
   })
     .index("by_name", ["name"]),
+
+  // PRD-013: Typologie restante par créneau (Slot Capacity Shape)
+  // Contrainte opérationnelle optionnelle, désactivée par défaut, saisie manuellement
+  // par l'humain. Ne dépend jamais du plan de salle physique.
+  slotCapacityShapes: defineTable({
+    restaurantId: v.id("restaurants"),
+
+    dateKey: v.string(),
+    service,
+    timeKey: v.string(),
+    slotKey: v.string(),
+
+    enabled: v.boolean(),
+
+    buckets: v.array(
+      v.object({
+        maxPartySize: v.number(),
+        quantity: v.number(),
+      })
+    ),
+
+    configRevision: v.number(),
+    runtimeVersion: v.number(),
+
+    needsReview: v.boolean(),
+
+    configuredAt: v.number(),
+    configuredBy: v.optional(v.string()),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_restaurant_slotKey", ["restaurantId", "slotKey"])
+    .index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"])
+    .index("by_restaurant_date", ["restaurantId", "dateKey"]),
+
+  // PRD-013: Ledger d'allocation des buckets de typologie.
+  // Permet de séparer les réservations déjà présentes avant une (re)configuration
+  // (configRevision) et de restaurer les buckets en cas d'annulation/refus.
+  slotCapacityShapeAllocations: defineTable({
+    restaurantId: v.id("restaurants"),
+
+    shapeId: v.id("slotCapacityShapes"),
+    slotKey: v.string(),
+
+    configRevision: v.number(),
+
+    reservationId: v.id("reservations"),
+
+    partySize: v.number(),
+
+    bucketMaxPartySize: v.optional(v.number()),
+
+    status: v.union(
+      v.literal("allocated"),
+      v.literal("released"),
+      v.literal("bypassed")
+    ),
+
+    source: v.union(v.literal("online"), v.literal("admin")),
+
+    bypassReason: v.optional(v.string()),
+
+    allocatedAt: v.number(),
+    releasedAt: v.optional(v.number()),
+  })
+    .index("by_reservation", ["reservationId"])
+    .index("by_shape_revision", ["shapeId", "configRevision"])
+    .index("by_restaurant_slotKey", ["restaurantId", "slotKey"]),
 });

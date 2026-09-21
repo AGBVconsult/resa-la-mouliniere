@@ -5,6 +5,8 @@ import { computeEffectiveOpen } from "../spec/contracts.generated";
 import { Errors } from "./lib/errors";
 import { requireRole } from "./lib/rbac";
 import { getTodayDateKey, getCurrentTimeKey } from "./lib/dateUtils";
+import { canAcceptParty, type CapacityShapeAllocationLike, type CapacityShapeLike } from "./lib/capacityShape";
+import { getShapesForDate, getShapesForDateRange, getAllocationsForShape, markCapacityShapeNeedsReview } from "./slotCapacityShapes";
 
 type SlotRow = Pick<Doc<"slots">, "slotKey" | "dateKey" | "service" | "timeKey" | "isOpen" | "capacity" | "maxGroupSize">;
 type ReservationRow = Pick<Doc<"reservations">, "slotKey" | "status" | "partySize">;
@@ -49,6 +51,27 @@ export function toSlotDto(args: { slot: SlotRow; remainingCapacity: number }): S
     remainingCapacity: args.remainingCapacity,
     maxGroupSize: args.slot.maxGroupSize,
   };
+}
+
+/**
+ * PRD-013 §22 — Filtre les slots dont la typologie restante (Slot Capacity
+ * Shape) est active et fiable (`enforced`) et qui n'ont aucun bucket
+ * compatible avec `partySize`. Ne modifie JAMAIS le DTO exposé (les buckets
+ * restent une donnée interne — §43) : ne fait que retirer le slot du
+ * résultat public.
+ */
+export function filterSlotsByCapacityShape<T extends { slotKey: string }>(
+  slots: T[],
+  shapesBySlotKey: Map<string, CapacityShapeLike>,
+  allocationsBySlotKey: Map<string, CapacityShapeAllocationLike[]>,
+  partySize: number
+): T[] {
+  return slots.filter((slot) => {
+    const shape = shapesBySlotKey.get(slot.slotKey);
+    if (!shape) return true;
+    const allocations = allocationsBySlotKey.get(slot.slotKey) ?? [];
+    return canAcceptParty({ shape, allocations, partySize });
+  });
 }
 
 /**
@@ -239,6 +262,34 @@ export const getDay = query({
       .filter((slot) => !isToday || slot.timeKey > currentTimeKey)
       .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
 
+    // PRD-013 §21-22 — Typologie restante (Slot Capacity Shape). Batch-load
+    // (jamais une query par slot) puis filtre. Shapes absentes/désactivées/
+    // needsReview => comportement classique inchangé (non-régression).
+    const shapesForDate = await getShapesForDate(ctx, restaurant._id, dateKey);
+    if (shapesForDate.size > 0) {
+      const shapesBySlotKey = new Map<string, CapacityShapeLike>();
+      const allocationsBySlotKey = new Map<string, CapacityShapeAllocationLike[]>();
+      for (const [slotKeyForShape, shape] of shapesForDate) {
+        shapesBySlotKey.set(slotKeyForShape, {
+          enabled: shape.enabled,
+          needsReview: shape.needsReview,
+          buckets: shape.buckets,
+          configRevision: shape.configRevision,
+        });
+        const allocations = await getAllocationsForShape(ctx, shape._id);
+        allocationsBySlotKey.set(
+          slotKeyForShape,
+          allocations.map((a) => ({
+            status: a.status,
+            configRevision: a.configRevision,
+            bucketMaxPartySize: a.bucketMaxPartySize ?? null,
+          }))
+        );
+      }
+      lunch = filterSlotsByCapacityShape(lunch, shapesBySlotKey, allocationsBySlotKey, partySize);
+      dinner = filterSlotsByCapacityShape(dinner, shapesBySlotKey, allocationsBySlotKey, partySize);
+    }
+
     // Apply progressive filling if enabled
     const pf = settings?.progressiveFilling;
     if (pf?.enabled) {
@@ -387,6 +438,35 @@ export const getMonth = query({
       }
     }
 
+    // PRD-013 §32 — Typologie restante : chargée en batch pour toute la plage
+    // du mois (jamais une query par slot/jour). Les shapes sont exceptionnelles,
+    // donc le coût par-shape reste négligeable.
+    const shapesForRange = await getShapesForDateRange(ctx, restaurant._id, startDate, endDate);
+    const shapeAllocationsBySlotKey = new Map<string, CapacityShapeAllocationLike[]>();
+    if (shapesForRange.size > 0) {
+      for (const [slotKeyForShape, shape] of shapesForRange) {
+        const allocations = await getAllocationsForShape(ctx, shape._id);
+        shapeAllocationsBySlotKey.set(
+          slotKeyForShape,
+          allocations.map((a) => ({
+            status: a.status,
+            configRevision: a.configRevision,
+            bucketMaxPartySize: a.bucketMaxPartySize ?? null,
+          }))
+        );
+      }
+    }
+    const shapeCompatible = (slotKey: string): boolean => {
+      const shape = shapesForRange.get(slotKey);
+      if (!shape) return true;
+      const allocations = shapeAllocationsBySlotKey.get(slotKey) ?? [];
+      return canAcceptParty({
+        shape: { enabled: shape.enabled, needsReview: shape.needsReview, buckets: shape.buckets, configRevision: shape.configRevision },
+        allocations,
+        partySize,
+      });
+    };
+
     // 6. Construire le résultat DayState[]
     const result: Array<{
       dateKey: string;
@@ -398,23 +478,25 @@ export const getMonth = query({
       const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       const daySlots = slotsByDateService.get(dateKey) || { lunch: [], dinner: [] };
 
-      // Vérifier si au moins un slot lunch a de la capacité pour partySize ET respecte maxGroupSize
+      // Vérifier si au moins un slot lunch a de la capacité pour partySize ET respecte maxGroupSize ET la typologie
       const lunchOpen = daySlots.lunch.some((slot) => {
         const occupation = occupationBySlotKey.get(slot.slotKey) || 0;
         const remaining = slot.capacity - occupation;
         if (remaining < partySize) return false;
         // Vérifier maxGroupSize (null = pas de limite)
         if (slot.maxGroupSize !== null && partySize > slot.maxGroupSize) return false;
+        if (!shapeCompatible(slot.slotKey)) return false;
         return true;
       });
 
-      // Vérifier si au moins un slot dinner a de la capacité pour partySize ET respecte maxGroupSize
+      // Vérifier si au moins un slot dinner a de la capacité pour partySize ET respecte maxGroupSize ET la typologie
       const dinnerOpen = daySlots.dinner.some((slot) => {
         const occupation = occupationBySlotKey.get(slot.slotKey) || 0;
         const remaining = slot.capacity - occupation;
         if (remaining < partySize) return false;
         // Vérifier maxGroupSize (null = pas de limite)
         if (slot.maxGroupSize !== null && partySize > slot.maxGroupSize) return false;
+        if (!shapeCompatible(slot.slotKey)) return false;
         return true;
       });
 
@@ -513,6 +595,11 @@ export const adminOverrideSlot = mutation({
         createdAt: now,
         updatedAt: now,
       });
+    }
+
+    // PRD-013 §31 — override manuel de capacité => typologie à revoir.
+    if (overridePatch.capacity !== undefined) {
+      await markCapacityShapeNeedsReview(ctx, { restaurantId, slotKey, now });
     }
 
     return { slotKey };

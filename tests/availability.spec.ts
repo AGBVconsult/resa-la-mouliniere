@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
 
 import { computeEffectiveOpen } from "../spec/contracts.generated";
-import { computeRemainingCapacityBySlotKey, toSlotDto } from "../convex/availability";
+import { computeRemainingCapacityBySlotKey, toSlotDto, filterSlotsByCapacityShape } from "../convex/availability";
+import type { CapacityShapeAllocationLike, CapacityShapeLike } from "../convex/lib/capacityShape";
 
 describe("computeEffectiveOpen (generated)", () => {
   test("returns true only when isOpen=true and capacity>0", () => {
@@ -53,6 +54,50 @@ describe("toSlotDto", () => {
       remainingCapacity: 7,
       maxGroupSize: 4,
     });
+  });
+});
+
+describe("filterSlotsByCapacityShape (PRD-013 — non-régression §57)", () => {
+  const slots = [
+    { slotKey: "d1#dinner#18:30", remainingCapacity: 8 },
+    { slotKey: "d1#dinner#18:45", remainingCapacity: 8 },
+  ];
+
+  test("no shape configured for a slot -> always allowed (historical behavior)", () => {
+    const result = filterSlotsByCapacityShape(slots, new Map(), new Map(), 6);
+    expect(result).toEqual(slots);
+  });
+
+  test("shape disabled -> historical behavior (visible even for partySize 6)", () => {
+    const shapes = new Map<string, CapacityShapeLike>([
+      ["d1#dinner#18:30", { enabled: false, needsReview: false, buckets: [{ maxPartySize: 4, quantity: 1 }, { maxPartySize: 2, quantity: 2 }], configRevision: 1 }],
+    ]);
+    const result = filterSlotsByCapacityShape(slots, shapes, new Map(), 6);
+    expect(result.map((s) => s.slotKey)).toEqual(["d1#dinner#18:30", "d1#dinner#18:45"]);
+  });
+
+  test("shape enabled 1x4+2x2 -> partySize 2/3/4 visible, 5/6 hidden", () => {
+    const shapes = new Map<string, CapacityShapeLike>([
+      ["d1#dinner#18:30", { enabled: true, needsReview: false, buckets: [{ maxPartySize: 4, quantity: 1 }, { maxPartySize: 2, quantity: 2 }], configRevision: 1 }],
+    ]);
+    const allocations = new Map<string, CapacityShapeAllocationLike[]>();
+
+    expect(filterSlotsByCapacityShape(slots, shapes, allocations, 2).map((s) => s.slotKey)).toContain("d1#dinner#18:30");
+    expect(filterSlotsByCapacityShape(slots, shapes, allocations, 3).map((s) => s.slotKey)).toContain("d1#dinner#18:30");
+    expect(filterSlotsByCapacityShape(slots, shapes, allocations, 4).map((s) => s.slotKey)).toContain("d1#dinner#18:30");
+    expect(filterSlotsByCapacityShape(slots, shapes, allocations, 5).map((s) => s.slotKey)).not.toContain("d1#dinner#18:30");
+    expect(filterSlotsByCapacityShape(slots, shapes, allocations, 6).map((s) => s.slotKey)).not.toContain("d1#dinner#18:30");
+
+    // The other slot without a shape stays visible regardless of partySize.
+    expect(filterSlotsByCapacityShape(slots, shapes, allocations, 6).map((s) => s.slotKey)).toContain("d1#dinner#18:45");
+  });
+
+  test("needsReview true -> falls back to historical behavior (public enforcement suspended)", () => {
+    const shapes = new Map<string, CapacityShapeLike>([
+      ["d1#dinner#18:30", { enabled: true, needsReview: true, buckets: [{ maxPartySize: 4, quantity: 1 }], configRevision: 1 }],
+    ]);
+    const result = filterSlotsByCapacityShape(slots, shapes, new Map(), 6);
+    expect(result.map((s) => s.slotKey)).toContain("d1#dinner#18:30");
   });
 });
 

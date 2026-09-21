@@ -8,6 +8,13 @@ import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Errors } from "./lib/errors";
 import { requireRole } from "./lib/rbac";
+import { computeRemainingCapacityBySlotKey } from "./availability";
+import {
+  getShapesForDate,
+  getAllocationsForShape,
+  buildShapeSummary,
+  markCapacityShapeNeedsReview,
+} from "./slotCapacityShapes";
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTES
@@ -628,14 +635,43 @@ export const listByDate = query({
       };
     });
 
+    // Batch-load active reservations for the date to compute remainingCapacity
+    // (PRD-013 §42 — le calcul doit être fait serveur, jamais recalculé client).
+    const reservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_restaurant_date_service", (q) => q.eq("restaurantId", restaurant._id).eq("dateKey", dateKey))
+      .collect();
+    const remainingBySlotKey = computeRemainingCapacityBySlotKey({
+      slots: effectiveSlots,
+      reservations,
+    });
+
+    // Batch-load capacity shapes for the date — never one query per slot
+    // (PRD-013 §21). Shapes are exceptional, so per-shape allocation lookups
+    // stay proportional to the (small) number of configured shapes.
+    const shapesBySlotKey = await getShapesForDate(ctx, restaurant._id, dateKey);
+    const capacityShapeBySlotKey = new Map<string, ReturnType<typeof buildShapeSummary>>();
+    for (const [slotKeyForShape, shape] of shapesBySlotKey) {
+      const allocations = await getAllocationsForShape(ctx, shape._id);
+      const remainingCapacity = remainingBySlotKey.get(slotKeyForShape) ?? 0;
+      capacityShapeBySlotKey.set(slotKeyForShape, buildShapeSummary(shape, remainingCapacity, allocations));
+    }
+
+    const toDto = (s: (typeof effectiveSlots)[number]) => ({
+      ...s,
+      effectiveOpen: computeEffectiveOpen(s.isOpen, s.capacity),
+      remainingCapacity: remainingBySlotKey.get(s.slotKey) ?? s.capacity,
+      capacityShape: capacityShapeBySlotKey.get(s.slotKey) ?? null,
+    });
+
     const lunch = effectiveSlots
       .filter((s) => s.service === "lunch")
-      .map((s) => ({ ...s, effectiveOpen: computeEffectiveOpen(s.isOpen, s.capacity) }))
+      .map(toDto)
       .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
 
     const dinner = effectiveSlots
       .filter((s) => s.service === "dinner")
-      .map((s) => ({ ...s, effectiveOpen: computeEffectiveOpen(s.isOpen, s.capacity) }))
+      .map(toDto)
       .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
 
     return { lunch, dinner };
@@ -705,6 +741,13 @@ export const updateSlot = mutation({
       });
     }
 
+    // PRD-013 §31 — un override manuel de capacité rend une typologie active
+    // potentiellement obsolète : on ne la recalcule jamais automatiquement,
+    // on la marque "à revoir".
+    if (overridePatch.capacity !== undefined) {
+      await markCapacityShapeNeedsReview(ctx, { restaurantId: slot.restaurantId, slotKey: slot.slotKey, now });
+    }
+
     return { ok: true };
   },
 });
@@ -771,6 +814,11 @@ export const batchUpdateSlots = mutation({
           createdAt: now,
           updatedAt: now,
         });
+      }
+
+      // PRD-013 §31 — override manuel de capacité => typologie à revoir.
+      if (overridePatch.capacity !== undefined) {
+        await markCapacityShapeNeedsReview(ctx, { restaurantId: slot.restaurantId, slotKey: slot.slotKey, now });
       }
 
       updatedCount++;

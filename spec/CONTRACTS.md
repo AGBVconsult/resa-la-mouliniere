@@ -912,3 +912,32 @@ Invariants routes :
     - `dailyFinalize` applique `seated->completed` uniquement ; aucun `noshow` n'est écrit automatiquement.
     - staff voit email/phone masqués selon les règles déterministes.
     - `SLOT_TAKEN.meta.reason` est renseigné à `"closed"` quand `effectiveOpen=false`.
+
+---
+
+## 11) PRD-013 — Typologie restante par créneau (Slot Capacity Shape)
+
+Contrainte opérationnelle **optionnelle**, **désactivée par défaut** sur tous les slots,
+saisie manuellement par l'humain. Ne dépend jamais du plan de salle physique
+(`tableIds`, adjacence, Shadow Learning) — voir `convex/lib/capacityShape.ts`.
+
+- Tables : `slotCapacityShapes` (config par slot, `enabled`/`buckets`/`configRevision`/
+  `needsReview`) et `slotCapacityShapeAllocations` (ledger d'allocation par réservation).
+- Un `CapacityBucket` `{ maxPartySize, quantity }` signifie "il reste `quantity`
+  configuration(s) pouvant accueillir jusqu'à `maxPartySize` personnes" — jamais une
+  table physique, jamais combiné automatiquement avec un autre bucket.
+- Best-fit : toujours consommer le plus petit bucket compatible (`findBestFitBucket`).
+- `effectiveEnabled = enabled && !needsReview`. `needsReview=true` suspend
+  l'enforcement public (comportement classique de capacité) sans jamais recalculer
+  automatiquement la configuration.
+- Ordre des règles pour une réservation publique : `slot open` AND
+  `remainingCapacity >= partySize` AND `partySize <= maxGroupSize` AND
+  `capacityShapeAllows(partySize)`.
+- Une réservation admin n'est **jamais** bloquée par la typologie : si aucun bucket
+  compatible, l'allocation est enregistrée `status="bypassed"` et la shape passe
+  `needsReview=true`.
+- Vérification refaite transactionnellement dans `reservations._create`/`_update` et
+  `admin.createReservation`/`updateReservationFull` (jamais confiance uniquement en
+  `availability.getDay`/`getMonth`).
+- Détail des buckets **jamais** exposé au widget public (`SlotCapacityShapeSummary`
+  réservé aux endpoints `admin|owner`).

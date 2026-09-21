@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { mergeSlotStates, type SlotState } from "@/lib/utils/slot-day-settings";
+import { SlotCapacityShapeEditor, type CapacityShapeSummaryDto } from "@/components/admin/SlotCapacityShapeEditor";
 
 type DaySlotState = SlotState<Id<"slots">>;
 
@@ -206,6 +207,7 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
               isOpen={isLunchOpen}
               onToggle={(open) => handleServiceToggle("lunch", open)}
               slots={lunchSlots}
+              rawSlots={slotsData.lunch}
               onSlotToggle={(id, open) => handleSlotToggle("lunch", id, open)}
               onCapacityChange={(id, cap) => handleCapacityChange("lunch", id, cap)}
               isAddingSlot={isAddingSlot === "lunch"}
@@ -225,6 +227,7 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
               isOpen={isDinnerOpen}
               onToggle={(open) => handleServiceToggle("dinner", open)}
               slots={dinnerSlots}
+              rawSlots={slotsData.dinner}
               onSlotToggle={(id, open) => handleSlotToggle("dinner", id, open)}
               onCapacityChange={(id, cap) => handleCapacityChange("dinner", id, cap)}
               isAddingSlot={isAddingSlot === "dinner"}
@@ -265,12 +268,19 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
 }
 
 // Service Card Component
+interface RawSlot {
+  _id: Id<"slots">;
+  remainingCapacity: number;
+  capacityShape: CapacityShapeSummaryDto;
+}
+
 interface ServiceCardProps {
   title: string;
   service: "lunch" | "dinner";
   isOpen: boolean;
   onToggle: (open: boolean) => void;
   slots: DaySlotState[];
+  rawSlots: RawSlot[];
   onSlotToggle: (id: Id<"slots">, open: boolean) => void;
   onCapacityChange: (id: Id<"slots">, capacity: number) => void;
   isAddingSlot: boolean;
@@ -289,6 +299,7 @@ function ServiceCard({
   isOpen,
   onToggle,
   slots,
+  rawSlots,
   onSlotToggle,
   onCapacityChange,
   isAddingSlot,
@@ -300,6 +311,7 @@ function ServiceCard({
   onNewSlotCapacityChange,
   onConfirmAddSlot,
 }: ServiceCardProps) {
+  const rawSlotById = new Map(rawSlots.map((s) => [s._id, s]));
   return (
     <div className="border rounded-xl overflow-hidden">
       {/* Service Header */}
@@ -372,41 +384,55 @@ function ServiceCard({
             Aucun créneau configuré
           </p>
         ) : (
-          slots.map((slot) => (
-            <div
-              key={slot._id}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                slot.isOpen ? "bg-white border" : "bg-gray-100 border border-gray-200"
-              )}
-            >
-              {/* Time */}
-              <div className="flex items-center gap-1.5 text-gray-600 w-16">
-                <Clock className="h-4 w-4" />
-                <span className="font-mono text-sm">{slot.timeKey}</span>
-              </div>
+          slots.map((slot) => {
+            const rawSlot = rawSlotById.get(slot._id);
+            return (
+              <div
+                key={slot._id}
+                className={cn(
+                  "flex flex-col gap-1 px-3 py-2 rounded-lg transition-colors",
+                  slot.isOpen ? "bg-white border" : "bg-gray-100 border border-gray-200"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Time */}
+                  <div className="flex items-center gap-1.5 text-gray-600 w-16">
+                    <Clock className="h-4 w-4" />
+                    <span className="font-mono text-sm">{slot.timeKey}</span>
+                  </div>
 
-              {/* Capacity */}
-              <div className="flex items-center gap-1.5 flex-1">
-                <Users className="h-4 w-4 text-gray-400" />
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={slot.capacity}
-                  onChange={(e) => onCapacityChange(slot._id, parseInt(e.target.value) || 0)}
-                  className="w-16 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  disabled={!slot.isOpen}
-                />
-              </div>
+                  {/* Capacity */}
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <Users className="h-4 w-4 text-gray-400" />
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={slot.capacity}
+                      onChange={(e) => onCapacityChange(slot._id, parseInt(e.target.value) || 0)}
+                      className="w-16 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      disabled={!slot.isOpen}
+                    />
+                  </div>
 
-              {/* Toggle */}
-              <Switch
-                checked={slot.isOpen}
-                onCheckedChange={(open) => onSlotToggle(slot._id, open)}
-              />
-            </div>
-          ))
+                  {/* Toggle */}
+                  <Switch
+                    checked={slot.isOpen}
+                    onCheckedChange={(open) => onSlotToggle(slot._id, open)}
+                  />
+                </div>
+
+                {rawSlot && (
+                  <SlotCapacityShapeEditor
+                    slotId={slot._id}
+                    remainingCapacity={rawSlot.remainingCapacity}
+                    capacityShape={rawSlot.capacityShape}
+                    disabled={!slot.isOpen}
+                  />
+                )}
+              </div>
+            );
+          })
         )}
       </div>
     </div>

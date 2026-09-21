@@ -15,6 +15,11 @@ import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./l
 import { verifyTurnstile } from "./lib/turnstile";
 import { computeRequestHash } from "./lib/idempotency";
 import { capitalizeName, formatPhoneNumber } from "./lib/formatters";
+import {
+  evaluateCapacityShapeForSlot,
+  allocateCapacityShapeBucket,
+  releaseCapacityShapeAllocationForReservation,
+} from "./slotCapacityShapes";
 
 const CRM_SCORE_VERSION = "v1";
 
@@ -404,6 +409,18 @@ export const _create = internalMutation({
       throw Errors.INSUFFICIENT_CAPACITY(slotKey, partySize, remainingCapacity);
     }
 
+    // PRD-013 — Typologie restante (Slot Capacity Shape). Contrainte
+    // opérationnelle optionnelle en plus de remainingCapacity/maxGroupSize.
+    // Refait ici (jamais confiance uniquement en availability.getDay — §23).
+    const shapeEvaluation = await evaluateCapacityShapeForSlot(ctx, {
+      restaurantId: args.restaurantId,
+      slotKey,
+      partySize,
+    });
+    if (shapeEvaluation.enforced && !shapeEvaluation.allowed) {
+      throw Errors.SLOT_TAKEN(slotKey, "capacity_shape");
+    }
+
     // Determine initial status based on partySize
     const status: ReservationStatus = partySize <= 4 ? "confirmed" : "pending";
 
@@ -457,6 +474,20 @@ export const _create = internalMutation({
       noshowAt: null,
       markedNoshowAt: null,
     });
+
+    // PRD-013 §25 — Allocation atomique du bucket dans la même transaction
+    // que la création de la réservation.
+    if (shapeEvaluation.enforced && shapeEvaluation.selectedBucket !== null && shapeEvaluation.shape) {
+      await allocateCapacityShapeBucket(ctx, {
+        restaurantId: args.restaurantId,
+        shape: shapeEvaluation.shape,
+        reservationId,
+        partySize,
+        bucketMaxPartySize: shapeEvaluation.selectedBucket,
+        source: "online",
+        now,
+      });
+    }
 
     // Compute token expiry
     const slotStartAt = computeSlotStartAt(args.dateKey, args.timeKey, args.timezone);
@@ -611,6 +642,9 @@ export const _cancel = internalMutation({
       updatedAt: now,
       version: newVersion,
     });
+
+    // PRD-013 §27 — libère l'allocation de typologie (restitue le bucket).
+    await releaseCapacityShapeAllocationForReservation(ctx, { reservationId, now });
 
     // Log event for activity feed (only for client cancellations)
     if (cancelledBy === "token") {
@@ -1047,6 +1081,20 @@ export const _update = internalMutation({
       throw Errors.INSUFFICIENT_CAPACITY(newSlotKey, newPartySize, remainingCapacity);
     }
 
+    // PRD-013 §28 — Modification (créneau et/ou taille de groupe) : on libère
+    // l'ancienne allocation puis on réévalue la typologie du (nouveau) slot.
+    // Atomique : si le nouveau slot est incompatible, on throw avant tout
+    // commit — la libération n'est jamais persistée seule.
+    await releaseCapacityShapeAllocationForReservation(ctx, { reservationId: args.reservationId, now: args.now });
+    const shapeEvaluation = await evaluateCapacityShapeForSlot(ctx, {
+      restaurantId: reservation.restaurantId,
+      slotKey: newSlotKey,
+      partySize: newPartySize,
+    });
+    if (shapeEvaluation.enforced && !shapeEvaluation.allowed) {
+      throw Errors.SLOT_TAKEN(newSlotKey, "capacity_shape");
+    }
+
     // Determine new status based on partySize (same logic as create)
     const newStatus: ReservationStatus = newPartySize <= 4 ? "confirmed" : "pending";
 
@@ -1067,6 +1115,19 @@ export const _update = internalMutation({
       updatedAt: args.now,
       version: newVersion,
     });
+
+    // PRD-013 §25/§28 — Allocation atomique du (nouveau) bucket.
+    if (shapeEvaluation.enforced && shapeEvaluation.selectedBucket !== null && shapeEvaluation.shape) {
+      await allocateCapacityShapeBucket(ctx, {
+        restaurantId: reservation.restaurantId,
+        shape: shapeEvaluation.shape,
+        reservationId: args.reservationId,
+        partySize: newPartySize,
+        bucketMaxPartySize: shapeEvaluation.selectedBucket,
+        source: "online",
+        now: args.now,
+      });
+    }
 
     // Log without PII
     console.log("Reservation updated", {

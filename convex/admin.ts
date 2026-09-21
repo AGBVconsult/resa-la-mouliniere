@@ -12,6 +12,17 @@ import { generateSecureToken, computeTokenExpiry, computeSlotStartAt } from "./l
 import { capitalizeName, formatPhoneNumber } from "./lib/formatters";
 import { getTodayDateKey } from "./lib/dateUtils";
 import { MAX_RESERVATIONS_PER_TABLE } from "./lib/tableAssignment";
+import {
+  evaluateCapacityShapeForSlot,
+  allocateCapacityShapeBucket,
+  bypassCapacityShapeBucket,
+  releaseCapacityShapeAllocationForReservation,
+} from "./slotCapacityShapes";
+
+// Statuts qui libèrent la capacité d'un créneau (donc l'allocation de
+// typologie associée, si elle existe) — symétrique à
+// availability.computeRemainingCapacityBySlotKey.
+const CAPACITY_FREEING_STATUSES = new Set(["cancelled", "refused", "noshow", "completed"]);
 
 const CRM_SCORE_VERSION = "v1";
 
@@ -876,6 +887,13 @@ export const updateReservation = mutation({
 
     await ctx.db.patch(reservationId, patch);
 
+    // PRD-013 §27 — une transition vers un statut qui libère la capacité du
+    // créneau (symétrique à availability.computeRemainingCapacityBySlotKey)
+    // libère aussi l'allocation de typologie associée.
+    if (status && status !== reservation.status && CAPACITY_FREEING_STATUSES.has(status)) {
+      await releaseCapacityShapeAllocationForReservation(ctx, { reservationId, now });
+    }
+
     if (status && status !== reservation.status) {
       await markClientNeedsRebuild(ctx, reservation, "reservation_backdated_edit");
     }
@@ -1070,18 +1088,61 @@ export const updateReservationFull = mutation({
       patch.adults = adults;
       patch.childrenCount = childrenCount;
       patch.babyCount = babyCount;
-      patch.partySize = adults + childrenCount;
+      patch.partySize = computePartySize(adults, childrenCount, babyCount);
     }
 
-    // Update slotKey if date/service/time changed
-    if (args.dateKey !== undefined || args.service !== undefined || args.timeKey !== undefined) {
+    // Update slotKey if date/service/time changed (clé canonique
+    // ${dateKey}#${service}#${timeKey} — cf. reservations.ts/availability.ts).
+    const slotChanged = args.dateKey !== undefined || args.service !== undefined || args.timeKey !== undefined;
+    let newSlotKey = reservation.slotKey;
+    if (slotChanged) {
       const dateKey = args.dateKey ?? reservation.dateKey;
       const service = args.service ?? reservation.service;
       const timeKey = args.timeKey ?? reservation.timeKey;
-      patch.slotKey = `${dateKey}:${service}:${timeKey}`;
+      newSlotKey = makeSlotKey({ dateKey, service, timeKey });
+      patch.slotKey = newSlotKey;
+    }
+
+    const newPartySize = (patch.partySize as number | undefined) ?? reservation.partySize;
+    const partySizeChanged = patch.partySize !== undefined;
+
+    // PRD-013 §28/§29 — Si le créneau ou la taille de groupe change, on
+    // libère l'ancienne allocation puis on réévalue la typologie du nouveau
+    // slot. Jamais bloquant pour l'admin : bypass + needsReview si incompatible.
+    if (slotChanged || partySizeChanged) {
+      await releaseCapacityShapeAllocationForReservation(ctx, { reservationId: args.reservationId, now });
     }
 
     await ctx.db.patch(args.reservationId, patch);
+
+    if (slotChanged || partySizeChanged) {
+      const shapeEvaluation = await evaluateCapacityShapeForSlot(ctx, {
+        restaurantId: reservation.restaurantId,
+        slotKey: newSlotKey,
+        partySize: newPartySize,
+      });
+      if (shapeEvaluation.enforced && shapeEvaluation.shape) {
+        if (shapeEvaluation.selectedBucket !== null) {
+          await allocateCapacityShapeBucket(ctx, {
+            restaurantId: reservation.restaurantId,
+            shape: shapeEvaluation.shape,
+            reservationId: args.reservationId,
+            partySize: newPartySize,
+            bucketMaxPartySize: shapeEvaluation.selectedBucket,
+            source: "admin",
+            now,
+          });
+        } else {
+          await bypassCapacityShapeBucket(ctx, {
+            restaurantId: reservation.restaurantId,
+            shape: shapeEvaluation.shape,
+            reservationId: args.reservationId,
+            partySize: newPartySize,
+            now,
+          });
+        }
+      }
+    }
 
     // Log without PII
     const updatedFields = Object.keys(patch).filter((k) => k !== "updatedAt" && k !== "version");
@@ -1133,6 +1194,9 @@ export const cancelByClient = mutation({
       updatedAt: now,
       version: newVersion,
     });
+
+    // PRD-013 §27 — libère l'allocation de typologie (restitue le bucket).
+    await releaseCapacityShapeAllocationForReservation(ctx, { reservationId, now });
 
     // Get settings for email
     const settings = await ctx.db
@@ -1303,6 +1367,15 @@ export const createReservation = mutation({
       throw Errors.INSUFFICIENT_CAPACITY(slotKey, partySize, remainingCapacity);
     }
 
+    // PRD-013 §29 — La typologie ne bloque JAMAIS une décision admin. Si un
+    // bucket compatible existe, on le consomme normalement ; sinon on
+    // autorise la réservation et on marque la typologie "à revoir".
+    const shapeEvaluation = await evaluateCapacityShapeForSlot(ctx, {
+      restaurantId: restaurant._id,
+      slotKey,
+      partySize,
+    });
+
     const now = Date.now();
 
     // Format names and phone
@@ -1356,6 +1429,30 @@ export const createReservation = mutation({
       noshowAt: null,
       markedNoshowAt: null,
     });
+
+    // PRD-013 §25/§29 — Allocation atomique (ou bypass si aucun bucket
+    // compatible — la réservation admin reste toujours autorisée).
+    if (shapeEvaluation.enforced && shapeEvaluation.shape) {
+      if (shapeEvaluation.selectedBucket !== null) {
+        await allocateCapacityShapeBucket(ctx, {
+          restaurantId: restaurant._id,
+          shape: shapeEvaluation.shape,
+          reservationId,
+          partySize,
+          bucketMaxPartySize: shapeEvaluation.selectedBucket,
+          source: "admin",
+          now,
+        });
+      } else {
+        await bypassCapacityShapeBucket(ctx, {
+          restaurantId: restaurant._id,
+          shape: shapeEvaluation.shape,
+          reservationId,
+          partySize,
+          now,
+        });
+      }
+    }
 
     // Create manage token
     const manageToken = generateSecureToken();

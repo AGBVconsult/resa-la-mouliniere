@@ -48,7 +48,7 @@ export const Errors = {
   SLOT_NOT_FOUND: (slotKey: string) =>
     appError("NOT_FOUND", "error.slotNotFound", { slotKey }),
 
-  SLOT_TAKEN: (slotKey: string, reason: "closed" | "taken") =>
+  SLOT_TAKEN: (slotKey: string, reason: "closed" | "taken" | "capacity_shape") =>
     appError("SLOT_TAKEN", "error.slotTaken", { slotKey, reason }),
 
   INSUFFICIENT_CAPACITY: (slotKey: string, requested: number, available: number) =>
