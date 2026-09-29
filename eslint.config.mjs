@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Maquette statique de la refonte du site vitrine (hors application)
+    "design/**",
   ]),
 ]);
 
