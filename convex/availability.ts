@@ -4,6 +4,7 @@ import type { Doc } from "./_generated/dataModel";
 import { computeEffectiveOpen } from "../spec/contracts.generated";
 import { Errors } from "./lib/errors";
 import { requireRole } from "./lib/rbac";
+import { getSlotOverridesForDateRange } from "./lib/slotOverrides";
 import { getTodayDateKey, getCurrentTimeKey } from "./lib/dateUtils";
 import { canAcceptParty, type CapacityShapeAllocationLike, type CapacityShapeLike } from "./lib/capacityShape";
 import { getShapesForDate, getShapesForDateRange, getAllocationsForShape, markCapacityShapeNeedsReview } from "./slotCapacityShapes";
@@ -189,16 +190,8 @@ export const getDay = query({
     const allSlots = [...lunchSlots, ...dinnerSlots];
     const slotKeys = new Set(allSlots.map((s) => s.slotKey));
     
-    const [manualOverrides, periodOverrides] = await Promise.all([
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "manual"))
-        .collect(),
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "period"))
-        .collect(),
-    ]);
+    const { manual: manualOverrides, period: periodOverrides } =
+      await getSlotOverridesForDateRange(ctx, restaurant._id, dateKey, dateKey);
     
     // Filter to relevant slots and build map with priority: MANUAL > PERIOD
     const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number; maxGroupSize?: number | null; largeTableAllowed?: boolean }>();
@@ -345,13 +338,7 @@ export const getMonth = query({
     const slots = await ctx.db
       .query("slots")
       .withIndex("by_restaurant_date_service", (q) =>
-        q.eq("restaurantId", restaurant._id)
-      )
-      .filter((q) =>
-        q.and(
-          q.gte(q.field("dateKey"), startDate),
-          q.lte(q.field("dateKey"), endDate)
-        )
+        q.eq("restaurantId", restaurant._id).gte("dateKey", startDate).lte("dateKey", endDate)
       )
       .collect();
 
@@ -359,17 +346,13 @@ export const getMonth = query({
     const reservations = await ctx.db
       .query("reservations")
       .withIndex("by_restaurant_date_service", (q) =>
-        q.eq("restaurantId", restaurant._id)
+        q.eq("restaurantId", restaurant._id).gte("dateKey", startDate).lte("dateKey", endDate)
       )
       .filter((q) =>
-        q.and(
-          q.gte(q.field("dateKey"), startDate),
-          q.lte(q.field("dateKey"), endDate),
-          q.or(
-            q.eq(q.field("status"), "pending"),
-            q.eq(q.field("status"), "confirmed"),
-            q.eq(q.field("status"), "seated")
-          )
+        q.or(
+          q.eq(q.field("status"), "pending"),
+          q.eq(q.field("status"), "confirmed"),
+          q.eq(q.field("status"), "seated")
         )
       )
       .collect();
@@ -377,16 +360,8 @@ export const getMonth = query({
     // 3. Load overrides in batch (fix N+1 query)
     const slotKeys = new Set(slots.map((s) => s.slotKey));
     
-    const [manualOverrides, periodOverrides] = await Promise.all([
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "manual"))
-        .collect(),
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "period"))
-        .collect(),
-    ]);
+    const { manual: manualOverrides, period: periodOverrides } =
+      await getSlotOverridesForDateRange(ctx, restaurant._id, startDate, endDate);
     
     const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number; maxGroupSize?: number | null }>();
     

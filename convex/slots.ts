@@ -8,6 +8,7 @@ import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Errors } from "./lib/errors";
 import { requireRole } from "./lib/rbac";
+import { getSlotOverridesForDateRange } from "./lib/slotOverrides";
 import { computeRemainingCapacityBySlotKey } from "./availability";
 import {
   getShapesForDate,
@@ -347,16 +348,8 @@ export const listByDateService = query({
 
     // Fetch slotOverrides (same pattern as listByDate)
     const slotKeysSet = new Set(slots.map((s) => s.slotKey));
-    const [manualOverrides, periodOverrides] = await Promise.all([
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "manual"))
-        .collect(),
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "period"))
-        .collect(),
-    ]);
+    const { manual: manualOverrides, period: periodOverrides } =
+      await getSlotOverridesForDateRange(ctx, restaurant._id, dateKey, dateKey);
 
     // Build overrides map with priority: MANUAL > PERIOD
     const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number }>();
@@ -600,16 +593,8 @@ export const listByDate = query({
 
     // Fetch slotOverrides (manual and period) to apply closures/modifications
     const slotKeys = new Set(allSlots.map((s) => s.slotKey));
-    const [manualOverrides, periodOverrides] = await Promise.all([
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "manual"))
-        .collect(),
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "period"))
-        .collect(),
-    ]);
+    const { manual: manualOverrides, period: periodOverrides } =
+      await getSlotOverridesForDateRange(ctx, restaurant._id, dateKey, dateKey);
 
     // Build overrides map with priority: MANUAL > PERIOD
     const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number }>();
