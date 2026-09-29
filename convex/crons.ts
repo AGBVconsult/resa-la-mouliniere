@@ -34,6 +34,7 @@ crons.interval(
 
 // Enqueue review emails at 06:30 daily (J+1 review requests)
 // Excludes reservations with status: no-show, cancelled, refused, incident
+// and whole services suspended from the tablet (serviceReviewSuppressions)
 crons.cron(
   "enqueue-reviews",
   "30 6 * * *",
