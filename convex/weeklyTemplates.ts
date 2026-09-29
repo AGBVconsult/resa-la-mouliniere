@@ -7,6 +7,7 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { requireRole } from "./lib/rbac";
+import { getSlotOverridesForDateRange } from "./lib/slotOverrides";
 import { Errors } from "./lib/errors";
 import { makeSlotKey } from "../spec/contracts.generated";
 
@@ -1160,20 +1161,8 @@ export const ensureSlotsForDate = mutation({
       // Get overrides for this date to avoid overwriting manual/period overrides
       // NOTE: loaded BEFORE the template-closed check to protect overridden slots
       const slotKeys = new Set(existingSlots.map((s) => s.slotKey));
-      const [periodOverrides, manualOverrides] = await Promise.all([
-        ctx.db
-          .query("slotOverrides")
-          .withIndex("by_restaurant_origin", (q) =>
-            q.eq("restaurantId", restaurantId).eq("origin", "period")
-          )
-          .collect(),
-        ctx.db
-          .query("slotOverrides")
-          .withIndex("by_restaurant_origin", (q) =>
-            q.eq("restaurantId", restaurantId).eq("origin", "manual")
-          )
-          .collect(),
-      ]);
+      const { manual: manualOverrides, period: periodOverrides } =
+        await getSlotOverridesForDateRange(ctx, restaurantId, dateKey, dateKey);
 
       const overriddenSlotKeys = new Set([
         ...periodOverrides.filter((o) => slotKeys.has(o.slotKey)).map((o) => o.slotKey),

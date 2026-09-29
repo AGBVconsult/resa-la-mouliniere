@@ -5,6 +5,7 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireRole } from "./lib/rbac";
+import { getSlotOverridesForDateRange } from "./lib/slotOverrides";
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -52,39 +53,15 @@ export const getMonthEffective = query({
 
     // Fetch special periods (closures) that overlap with this month
     // This handles closures even when slots don't exist yet
-    const allSpecialPeriods = await ctx.db
+    // Index by_restaurant_dates: périodes qui commencent avant la fin du mois,
+    // puis filtre en mémoire sur celles qui finissent après le début du mois
+    const candidatePeriods = await ctx.db
       .query("specialPeriods")
-      .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
+      .withIndex("by_restaurant_dates", (q) =>
+        q.eq("restaurantId", restaurant._id).lte("startDate", endDate)
+      )
       .collect();
-
-    // DEBUG: Also fetch ALL periods to check if any are missing restaurantId
-    const allPeriodsGlobal = await ctx.db.query("specialPeriods").collect();
-    console.log("[planning] DEBUG - Restaurant ID:", restaurant._id);
-    console.log("[planning] DEBUG - All periods (global):", allPeriodsGlobal.map(p => ({
-      name: p.name,
-      restaurantId: p.restaurantId,
-      startDate: p.startDate,
-      endDate: p.endDate,
-      status: p.applyRules.status,
-    })));
-    console.log("[planning] DEBUG - Periods for this restaurant:", allSpecialPeriods.length);
-
-    // Filter periods that overlap with this month
-    const monthPeriods = allSpecialPeriods.filter(
-      (p) => p.startDate <= endDate && p.endDate >= startDate
-    );
-
-    // DEBUG: Log periods found
-    if (monthPeriods.length > 0) {
-      console.log("[planning] Found periods for month:", year, month, monthPeriods.map(p => ({
-        name: p.name,
-        startDate: p.startDate,
-        endDate: p.endDate,
-        status: p.applyRules.status,
-        services: p.applyRules.services,
-        activeDays: p.applyRules.activeDays,
-      })));
-    }
+    const monthPeriods = candidatePeriods.filter((p) => p.endDate >= startDate);
 
     // Helper to parse dateKey to Date (local time, not UTC)
     const parseDateKey = (dateKey: string): Date => {
@@ -136,31 +113,18 @@ export const getMonthEffective = query({
       }
     }
 
-    // Fetch all slots for the month
-    const allSlots = await ctx.db
+    // Fetch slots for the month only (range on index)
+    const monthSlots = await ctx.db
       .query("slots")
       .withIndex("by_restaurant_date_service", (q) =>
-        q.eq("restaurantId", restaurant._id)
+        q.eq("restaurantId", restaurant._id).gte("dateKey", startDate).lte("dateKey", endDate)
       )
       .collect();
 
-    // Filter slots in date range
-    const monthSlots = allSlots.filter(
-      (s) => s.dateKey >= startDate && s.dateKey <= endDate
-    );
-
     // Fetch slotOverrides (manual and period) to apply closures/modifications
     const slotKeys = new Set(monthSlots.map((s) => s.slotKey));
-    const [manualOverrides, periodOverrides] = await Promise.all([
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "manual"))
-        .collect(),
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurant._id).eq("origin", "period"))
-        .collect(),
-    ]);
+    const { manual: manualOverrides, period: periodOverrides } =
+      await getSlotOverridesForDateRange(ctx, restaurant._id, startDate, endDate);
 
     // Build overrides map with priority: MANUAL > PERIOD
     const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number }>();
@@ -186,22 +150,17 @@ export const getMonthEffective = query({
       };
     });
 
-    // Fetch all reservations for the month with active statuses
-    const allReservations = await ctx.db
+    // Fetch reservations for the month only (range on index)
+    const rangeReservations = await ctx.db
       .query("reservations")
       .withIndex("by_restaurant_date_service", (q) =>
-        q.eq("restaurantId", restaurant._id)
+        q.eq("restaurantId", restaurant._id).gte("dateKey", startDate).lte("dateKey", endDate)
       )
       .collect();
 
-    // Filter reservations in date range with active statuses
+    // Keep active statuses only
     const activeStatuses = ["pending", "confirmed", "cardPlaced", "seated", "completed"];
-    const monthReservations = allReservations.filter(
-      (r) =>
-        r.dateKey >= startDate &&
-        r.dateKey <= endDate &&
-        activeStatuses.includes(r.status)
-    );
+    const monthReservations = rangeReservations.filter((r) => activeStatuses.includes(r.status));
 
     // Build result by date
     const result: Record<string, DayEffective> = {};
