@@ -14,12 +14,15 @@ import { computeTodayDateKey, computeYesterdayDateKey } from "./email/ops";
 export const REVIEW_SUPPRESSION_YESTERDAY_CUTOFF = "06:30";
 
 function getLocalTimeKey(timezone: string, nowMs: number): string {
-  return new Intl.DateTimeFormat("en-GB", {
+  // Même format que dateUtils.getCurrentTimeKey (déjà utilisé en production).
+  // Certains moteurs rendent minuit "24:xx" avec hour12:false → normalisé.
+  const timeKey = new Intl.DateTimeFormat("en-GB", {
     timeZone: timezone,
     hour: "2-digit",
     minute: "2-digit",
-    hourCycle: "h23",
+    hour12: false,
   }).format(new Date(nowMs));
+  return timeKey.startsWith("24") ? `00${timeKey.slice(2)}` : timeKey;
 }
 
 export function isReviewSuppressionWindowOpen(

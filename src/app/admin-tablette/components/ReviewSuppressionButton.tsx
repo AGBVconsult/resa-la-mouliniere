@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Component, useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -16,11 +16,45 @@ interface ReviewSuppressionButtonProps {
 }
 
 /**
+ * Isole le bouton : une erreur de sa requête le masque au lieu de faire
+ * planter toute la page tablette (useQuery relance les erreurs serveur).
+ */
+class HideOnError extends Component<{ resetKey: string; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error("ReviewSuppressionButton failed", error);
+  }
+
+  componentDidUpdate(prevProps: { resetKey: string }) {
+    if (this.state.failed && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ failed: false });
+    }
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+/**
  * Bouton (bas gauche du plan de salle) pour suspendre / réactiver les
  * demandes d'avis de tout le service affiché. Masqué hors fenêtre autorisée
  * (services du jour, ou d'hier avant 06:30).
  */
-export function ReviewSuppressionButton({ dateKey, service }: ReviewSuppressionButtonProps) {
+export function ReviewSuppressionButton(props: ReviewSuppressionButtonProps) {
+  return (
+    <HideOnError resetKey={`${props.dateKey}:${props.service}`}>
+      <ReviewSuppressionButtonInner {...props} />
+    </HideOnError>
+  );
+}
+
+function ReviewSuppressionButtonInner({ dateKey, service }: ReviewSuppressionButtonProps) {
   const { toast } = useToast();
   const state = useQuery(api.reviewSuppressions.getForService, { dateKey, service });
   const setForService = useMutation(api.reviewSuppressions.setForService);
