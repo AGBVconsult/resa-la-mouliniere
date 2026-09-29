@@ -66,7 +66,7 @@ import { DaySettingsPopup } from "../components/DaySettingsPopup";
 import { ClientSearchPopup } from "../components/ClientSearchPopup";
 import { ClientModal } from "@/components/admin/ClientModal";
 import { TabletNotificationBell } from "../components/TabletNotificationBell";
-import { TabletCreateReservationPopup } from "../components/TabletCreateReservationPopup";
+import { TabletCreateReservationPopup, type ReservationPrefill } from "../components/TabletCreateReservationPopup";
 import { ReviewSuppressionButton } from "../components/ReviewSuppressionButton";
 
 interface Reservation {
@@ -223,6 +223,7 @@ export default function TabletReservationsPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [showCreatePopup, setShowCreatePopup] = useState(false);
+  const [createPrefill, setCreatePrefill] = useState<ReservationPrefill | undefined>(undefined);
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ReservationStatus>>({});
   const [selectedClientModal, setSelectedClientModal] = useState<{ clientId: Id<"clients">; reservationId: Id<"reservations"> } | null>(null);
 
@@ -1025,7 +1026,7 @@ export default function TabletReservationsPage() {
         {/* Search + Settings + Map - aligné à droite */}
         <div className="flex items-center gap-2 ml-auto">
           <button
-            onClick={() => setShowCreatePopup(true)}
+            onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
             className="w-[52px] h-[52px] bg-emerald-500 hover:bg-emerald-600 rounded-full shadow-sm flex items-center justify-center text-white transition-all active:scale-95"
           >
             <Plus size={22} strokeWidth={2.5} />
@@ -1175,6 +1176,11 @@ export default function TabletReservationsPage() {
             setShowClientSearch(false);
             setSelectedClientModal({ clientId, reservationId: "" as any });
           }}
+          onCreateReservation={(prefill) => {
+            setShowClientSearch(false);
+            setCreatePrefill(prefill);
+            setShowCreatePopup(true);
+          }}
         />
       )}
 
@@ -1183,6 +1189,7 @@ export default function TabletReservationsPage() {
         <TabletCreateReservationPopup
           defaultDateKey={dateKey}
           defaultService={selectedService === "dinner" ? "dinner" : "lunch"}
+          prefill={createPrefill}
           onClose={() => setShowCreatePopup(false)}
           onSuccess={() => setShowCreatePopup(false)}
         />

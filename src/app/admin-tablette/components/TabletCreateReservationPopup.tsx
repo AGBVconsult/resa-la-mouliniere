@@ -9,19 +9,28 @@ import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { SimpleDatePicker } from "./SimpleDatePicker";
 
+const LANGUAGES = [
+  { value: "be", label: "BE" }, { value: "nl", label: "NL" },
+  { value: "fr", label: "FR" }, { value: "en", label: "EN" },
+  { value: "de", label: "DE" }, { value: "it", label: "IT" },
+] as const;
+type LanguageValue = (typeof LANGUAGES)[number]["value"];
+
+export interface ReservationPrefill {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  email?: string;
+  language?: LanguageValue;
+}
+
 interface Props {
   defaultDateKey: string;
   defaultService: "lunch" | "dinner";
+  prefill?: ReservationPrefill;
   onClose: () => void;
   onSuccess?: () => void;
 }
-
-const LANGUAGES = [
-  { value: "fr", label: "FR" }, { value: "nl", label: "NL" },
-  { value: "en", label: "EN" }, { value: "de", label: "DE" },
-  { value: "it", label: "IT" }, { value: "be", label: "BE" },
-] as const;
-type LanguageValue = (typeof LANGUAGES)[number]["value"];
 
 const TIME_SLOTS_LUNCH = ["12:00","12:15","12:30","12:45","13:00","13:15","13:30","13:45","14:00"];
 const TIME_SLOTS_DINNER = ["18:00","18:30","19:00","19:30","20:00","20:30","21:00","21:30"];
@@ -33,7 +42,7 @@ const OPTIONS = [
   { id: "dogAccess", label: "Chien" },
 ];
 
-export function TabletCreateReservationPopup({ defaultDateKey, defaultService, onClose, onSuccess }: Props) {
+export function TabletCreateReservationPopup({ defaultDateKey, defaultService, prefill, onClose, onSuccess }: Props) {
   const { toast } = useToast();
   const createQuick = useMutation(api.admin.createReservationQuick);
 
@@ -44,11 +53,11 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, o
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [babies, setBabies] = useState(0);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [language, setLanguage] = useState<LanguageValue>("fr");
+  const [firstName, setFirstName] = useState(prefill?.firstName ?? "");
+  const [lastName, setLastName] = useState(prefill?.lastName ?? "");
+  const [email, setEmail] = useState(prefill?.email ?? "");
+  const [phone, setPhone] = useState(prefill?.phone ?? "");
+  const [language, setLanguage] = useState<LanguageValue>(prefill?.language ?? "be");
   const [note, setNote] = useState("");
   const [options, setOptions] = useState<string[]>([]);
   const [showCalendar, setShowCalendar] = useState(false);

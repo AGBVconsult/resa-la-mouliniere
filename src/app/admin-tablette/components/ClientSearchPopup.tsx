@@ -4,13 +4,15 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
-import { X, Search, Loader2, User, Phone, Star, Crown, AlertTriangle } from "lucide-react";
+import { X, Search, Loader2, User, Phone, Star, Crown, AlertTriangle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFlag } from "@/lib/getFlag";
+import type { ReservationPrefill } from "./TabletCreateReservationPopup";
 
 interface ClientSearchPopupProps {
   onClose: () => void;
   onSelectClient: (clientId: Id<"clients">) => void;
+  onCreateReservation?: (prefill: ReservationPrefill) => void;
 }
 
 const STATUS_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
@@ -27,7 +29,7 @@ const STATUS_LABELS: Record<string, string> = {
   bad_guest: "Indésirable",
 };
 
-export function ClientSearchPopup({ onClose, onSelectClient }: ClientSearchPopupProps) {
+export function ClientSearchPopup({ onClose, onSelectClient, onCreateReservation }: ClientSearchPopupProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedTerm, setDebouncedTerm] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -105,12 +107,15 @@ export function ClientSearchPopup({ onClose, onSelectClient }: ClientSearchPopup
                 const statusInfo = STATUS_ICONS[client.clientStatus ?? "new"];
                 const clientPhone = "phone" in client ? (client as any).phone : (client as any).primaryPhone;
                 const flag = client.preferredLanguage && clientPhone ? getFlag(clientPhone, client.preferredLanguage) : null;
+                // Le rôle staff reçoit un numéro masqué : on ne le reporte pas dans le formulaire
+                const fullPhone = "primaryPhone" in client ? client.primaryPhone : undefined;
+                const clientEmail = "primaryPhone" in client ? client.email ?? client.emails?.[0] : undefined;
 
                 return (
-                  <li key={client._id}>
+                  <li key={client._id} className="flex items-center hover:bg-slate-50 transition-colors">
                     <button
                       onClick={() => onSelectClient(client._id as Id<"clients">)}
-                      className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 active:bg-slate-100 transition-colors text-left"
+                      className="flex-1 min-w-0 flex items-center gap-3 pl-5 py-3 active:bg-slate-100 transition-colors text-left"
                     >
                       {/* Avatar avec statut */}
                       <div className={cn(
@@ -153,6 +158,22 @@ export function ClientSearchPopup({ onClose, onSelectClient }: ClientSearchPopup
                         </div>
                       </div>
                     </button>
+                    {onCreateReservation && (
+                      <button
+                        onClick={() => onCreateReservation({
+                          firstName: client.firstName ?? undefined,
+                          lastName: client.lastName ?? undefined,
+                          phone: fullPhone,
+                          email: clientEmail,
+                          // "es" n'existe pas dans la saisie rapide : on bascule sur l'anglais
+                          language: client.preferredLanguage === "es" ? "en" : client.preferredLanguage ?? undefined,
+                        })}
+                        aria-label="Nouvelle réservation pour ce client"
+                        className="mx-4 w-11 h-11 shrink-0 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-sm transition-all active:scale-95"
+                      >
+                        <Plus size={20} strokeWidth={2.5} />
+                      </button>
+                    )}
                   </li>
                 );
               })}
