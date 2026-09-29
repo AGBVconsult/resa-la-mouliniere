@@ -57,6 +57,8 @@ interface ServiceFloorPlanProps {
   hideHeader?: boolean;
   hideCapacity?: boolean;
   nameDisplay?: "firstName" | "lastName";
+  /** Fond sur lequel le plan est posé (tablette v2 = clair). Défaut : sombre. */
+  tone?: "dark" | "light";
 }
 
 type TableStatus = "seated" | "reserved" | "free" | "blocked";
@@ -102,6 +104,7 @@ export function ServiceFloorPlan({
   hideHeader = false,
   hideCapacity = false,
   nameDisplay = "lastName",
+  tone = "dark",
 }: ServiceFloorPlanProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
@@ -430,6 +433,9 @@ export function ServiceFloorPlan({
                     ? "bg-blue-200 ring-2 ring-blue-500 ring-offset-1"
                     : statusColors.bg
               ),
+              // Sur fond clair, les tables libres (blanches) ont besoin d'un contour
+              tone === "light" && !isSplit && !isEditingThisTable && !isPending && table.status === "free" &&
+                "ring-1 ring-inset ring-stone-300",
               isSplit && isPending && "ring-2 ring-blue-500 ring-offset-1",
               isSplit && isEditingThisTable && "ring-2 ring-amber-500 ring-offset-1",
               statusColors.border,
@@ -566,14 +572,19 @@ export function ServiceFloorPlan({
     return (
       <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center p-4">
         {/* Switch de zone — pilule, aligné à droite */}
-        <div className="absolute top-3 right-3 z-30 flex items-center gap-1 bg-white/90 backdrop-blur-md rounded-full p-1 shadow-lg border border-white/40">
+        <div className={cn(
+          "absolute top-3 right-3 z-30 flex items-center gap-1 rounded-full p-1",
+          tone === "light"
+            ? "bg-white shadow-[0_1px_2px_rgba(41,37,36,0.06),0_0_0_1px_rgba(41,37,36,0.08)]"
+            : "bg-white/90 backdrop-blur-md shadow-lg border border-white/40"
+        )}>
           <button
             type="button"
             onClick={() => setActiveZone("salle")}
             className={cn(
               "px-5 py-2 text-sm font-semibold rounded-full transition-all active:scale-95",
               activeZone === "salle"
-                ? "bg-slate-800 text-white shadow-sm"
+                ? (tone === "light" ? "bg-[#334156] text-white shadow-sm" : "bg-slate-800 text-white shadow-sm")
                 : "text-slate-500 hover:text-slate-800"
             )}
           >
@@ -585,7 +596,7 @@ export function ServiceFloorPlan({
             className={cn(
               "px-5 py-2 text-sm font-semibold rounded-full transition-all active:scale-95",
               activeZone === "terrasse"
-                ? "bg-slate-800 text-white shadow-sm"
+                ? (tone === "light" ? "bg-[#334156] text-white shadow-sm" : "bg-slate-800 text-white shadow-sm")
                 : "text-slate-500 hover:text-slate-800"
             )}
           >
