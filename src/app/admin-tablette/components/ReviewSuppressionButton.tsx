@@ -86,7 +86,7 @@ function ReviewSuppressionButtonInner({ dateKey, service }: ReviewSuppressionBut
         onClick={() => setConfirmOpen(true)}
         aria-label={suppressed ? "Avis suspendus — réactiver" : "Annuler les demandes d'avis du service"}
         className={cn(
-          "absolute bottom-3 left-3 z-30 flex items-center gap-2 rounded-full shadow-lg transition-all active:scale-95",
+          "absolute bottom-6 left-6 z-30 flex items-center gap-2 rounded-full shadow-lg transition-all active:scale-95",
           suppressed
             ? "bg-orange-500 text-white px-4 py-2.5 text-sm font-semibold"
             : "bg-white/70 text-slate-500 p-2.5 border border-white/40"
