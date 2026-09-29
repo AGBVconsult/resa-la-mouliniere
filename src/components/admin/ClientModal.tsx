@@ -227,7 +227,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
         reservationId: currentReservationId,
         expectedVersion: currentReservation.version,
         dateKey: formData.dateKey,
-        service: formData.service,
+        service: serviceForTime(formData.timeKey),
         timeKey: formData.timeKey,
         adults: formData.adults,
         childrenCount: formData.childrenCount,
@@ -783,8 +783,13 @@ interface ReservationEditFormProps {
 
 const TIME_SLOTS = [
   "11:30", "11:45", "12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30",
-  "18:30", "18:45", "19:00", "19:15", "19:30", "19:45", "20:00", "20:15", "20:30", "20:45", "21:00"
+  "18:00", "18:15", "18:30", "18:45", "19:00", "19:15", "19:30", "19:45", "20:00", "20:15", "20:30", "20:45", "21:00"
 ];
+
+// Le service découle de l'heure : avant 16:00 → midi, sinon → soir.
+function serviceForTime(timeKey: string): "lunch" | "dinner" {
+  return timeKey < "16:00" ? "lunch" : "dinner";
+}
 
 const AVAILABLE_OPTIONS = [
   { key: "wheelchair", label: "PMR", icon: Accessibility, activeColor: "bg-blue-500 text-white border-blue-500", hoverColor: "hover:border-blue-300 hover:text-blue-500" },
@@ -845,10 +850,16 @@ function ReservationEditForm({
           <label className="text-sm font-medium text-slate-700">Heure</label>
           <select
             value={formData.timeKey}
-            onChange={(e) => updateField("timeKey", e.target.value)}
+            onChange={(e) => {
+              const timeKey = e.target.value;
+              setFormData(prev => ({ ...prev, timeKey, service: serviceForTime(timeKey) }));
+            }}
             className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {TIME_SLOTS.map((time) => (
+            {(TIME_SLOTS.includes(formData.timeKey) || !formData.timeKey
+              ? TIME_SLOTS
+              : [...TIME_SLOTS, formData.timeKey].sort()
+            ).map((time) => (
               <option key={time} value={time}>{time}</option>
             ))}
           </select>
