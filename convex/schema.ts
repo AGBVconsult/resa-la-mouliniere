@@ -483,6 +483,17 @@ export default defineSchema({
     .index("by_dateKey", ["dateKey"])
     .index("by_status", ["status"]),
 
+  // Suspension des demandes d'avis pour tout un service (ex. livraison de
+  // moules de qualité inférieure). Présence du document = avis suspendus.
+  // Lu par emails.enqueueReviewEmails ; ne modifie aucun statut de réservation.
+  serviceReviewSuppressions: defineTable({
+    restaurantId: v.id("restaurants"),
+    dateKey: v.string(),
+    service,
+    createdBy: v.string(),
+    createdAt: v.number(),
+  }).index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"]),
+
   clientLedger: defineTable({
     dateKey: v.string(),
     clientId: v.id("clients"),

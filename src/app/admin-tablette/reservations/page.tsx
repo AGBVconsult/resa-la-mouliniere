@@ -67,6 +67,7 @@ import { ClientSearchPopup } from "../components/ClientSearchPopup";
 import { ClientModal } from "@/components/admin/ClientModal";
 import { TabletNotificationBell } from "../components/TabletNotificationBell";
 import { TabletCreateReservationPopup } from "../components/TabletCreateReservationPopup";
+import { ReviewSuppressionButton } from "../components/ReviewSuppressionButton";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -1116,6 +1117,10 @@ export default function TabletReservationsPage() {
               hideHeader
               hideCapacity
               nameDisplay="firstName"
+            />
+            <ReviewSuppressionButton
+              dateKey={dateKey}
+              service={selectedService as "lunch" | "dinner"}
             />
           </div>
         )}

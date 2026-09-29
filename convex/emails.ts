@@ -547,6 +547,9 @@ export const enqueueReminders = internalMutation({
  * - "cancelled": client cancelled
  * - "refused": reservation was refused
  * - "incident": client had issues
+ *
+ * Also skips whole services suspended from the tablet
+ * (serviceReviewSuppressions, e.g. poor mussel delivery).
  * 
  * Contract: reservation.review email type exists.
  * Dedupe via dedupeKey = "review:{reservationId}"
@@ -573,25 +576,38 @@ export const enqueueReviewEmails = internalMutation({
     const restaurant = activeRestaurants[0];
     const yesterdayDateKey = computeYesterdayDateKey(restaurant.timezone, now);
 
-    // Find completed reservations for yesterday
+    // Find completed reservations for yesterday, per service.
+    // Services whose review requests were suspended from the tablet
+    // (serviceReviewSuppressions) are skipped entirely.
     // Use by_restaurant_date_service index (can't filter by status in index, filter in memory)
-    const reservationsLunch = await ctx.db
-      .query("reservations")
-      .withIndex("by_restaurant_date_service", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("dateKey", yesterdayDateKey).eq("service", "lunch")
-      )
-      .filter((q) => q.eq(q.field("status"), "completed"))
-      .collect();
+    const reservations: Doc<"reservations">[] = [];
+    const suppressedServices: Array<"lunch" | "dinner"> = [];
+    let skippedServiceSuppressed = 0;
 
-    const reservationsDinner = await ctx.db
-      .query("reservations")
-      .withIndex("by_restaurant_date_service", (q) =>
-        q.eq("restaurantId", restaurant._id).eq("dateKey", yesterdayDateKey).eq("service", "dinner")
-      )
-      .filter((q) => q.eq(q.field("status"), "completed"))
-      .collect();
+    for (const service of ["lunch", "dinner"] as const) {
+      const serviceReservations = await ctx.db
+        .query("reservations")
+        .withIndex("by_restaurant_date_service", (q) =>
+          q.eq("restaurantId", restaurant._id).eq("dateKey", yesterdayDateKey).eq("service", service)
+        )
+        .filter((q) => q.eq(q.field("status"), "completed"))
+        .collect();
 
-    const reservations = [...reservationsLunch, ...reservationsDinner];
+      const suppression = await ctx.db
+        .query("serviceReviewSuppressions")
+        .withIndex("by_restaurant_date_service", (q) =>
+          q.eq("restaurantId", restaurant._id).eq("dateKey", yesterdayDateKey).eq("service", service)
+        )
+        .first();
+
+      if (suppression) {
+        suppressedServices.push(service);
+        skippedServiceSuppressed += serviceReservations.length;
+        continue;
+      }
+
+      reservations.push(...serviceReservations);
+    }
 
     let enqueued = 0;
     let alreadyExists = 0;
@@ -680,6 +696,8 @@ export const enqueueReviewEmails = internalMutation({
       alreadyExists,
       skippedIncident,
       skippedAutoReleased,
+      skippedServiceSuppressed,
+      suppressedServices,
     });
 
     return {
@@ -688,6 +706,7 @@ export const enqueueReviewEmails = internalMutation({
       alreadyExists,
       skippedIncident,
       skippedAutoReleased,
+      skippedServiceSuppressed,
       dateKey: yesterdayDateKey,
     };
   },
