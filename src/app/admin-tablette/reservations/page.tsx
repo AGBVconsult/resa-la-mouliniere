@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { format, parseISO, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -205,6 +205,8 @@ export default function TabletReservationsPage() {
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [openPopupId, setOpenPopupId] = useState<Id<"reservations"> | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const statusPopupRef = useRef<HTMLDivElement>(null);
+  const [statusPopupHeight, setStatusPopupHeight] = useState(0);
   const [selectedService, setSelectedService] = useState<"total" | "lunch" | "dinner">(() => {
     // Sélectionner automatiquement le service selon l'heure au chargement
     const now = new Date();
@@ -274,6 +276,13 @@ export default function TabletReservationsPage() {
     setExpandedId((prev) => (prev === id ? null : id));
     setOpenPopupId(null);
   };
+
+  // Mesure la hauteur réelle du popup de statut avant affichage pour le garder dans l'écran
+  useLayoutEffect(() => {
+    if (openPopupId && statusPopupRef.current) {
+      setStatusPopupHeight(statusPopupRef.current.offsetHeight);
+    }
+  }, [openPopupId]);
 
   const togglePopup = (e: React.MouseEvent, id: Id<"reservations">) => {
     e.stopPropagation();
@@ -789,10 +798,12 @@ export default function TabletReservationsPage() {
             <>
               <div className="fixed inset-0 z-[99999] bg-black/10" onClick={(e) => { e.stopPropagation(); setOpenPopupId(null); }} />
               <div 
-                className="fixed bg-white rounded-3xl shadow-2xl p-5 z-[100000] animate-in fade-in zoom-in-95 duration-200 w-[280px] max-h-[80vh] overflow-y-auto"
+                ref={statusPopupRef}
+                className="fixed bg-white rounded-3xl shadow-2xl p-5 z-[100000] animate-in fade-in zoom-in-95 duration-200 w-[280px] max-h-[calc(100vh-20px)] overflow-y-auto"
                 style={{
                   left: Math.min(Math.max(popupPosition.x - 280, 10), window.innerWidth - 300),
-                  top: Math.min(Math.max(popupPosition.y - 200, 60), window.innerHeight - 450),
+                  // Ne jamais dépasser le bas de l'écran : on remonte le popup selon sa hauteur réelle
+                  top: Math.max(10, Math.min(popupPosition.y - 200, window.innerHeight - statusPopupHeight - 10)),
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
