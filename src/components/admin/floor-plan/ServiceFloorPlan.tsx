@@ -16,8 +16,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 
+// `tight` (mode tablette) : bbox au plus près des tables, sans marge ni taille minimale,
+// pour que la mise à l'échelle exploite tout l'espace disponible.
 function computeGridLayout(
-  tables: Array<{ positionX: number; positionY: number; width?: number; height?: number; status: string }>
+  tables: Array<{ positionX: number; positionY: number; width?: number; height?: number; status: string }>,
+  tight = false
 ) {
   if (tables.length === 0) return { width: 400, height: 200, offsetX: 0, offsetY: 0 };
 
@@ -34,12 +37,14 @@ function computeGridLayout(
     if (t.positionY + h > maxY) maxY = t.positionY + h;
   }
 
-  const pad = 2;
+  const pad = tight ? 0 : 2;
+  const minWidth = tight ? 0 : 400;
+  const minHeight = tight ? 0 : 200;
   const originX = Math.max(minX - pad, 0);
   const originY = Math.max(minY - pad, 0);
   return {
-    width: Math.min(Math.max((maxX - originX + pad) * GRID_CELL_SIZE, 400), GRID_WIDTH),
-    height: Math.min(Math.max((maxY - originY + pad) * GRID_CELL_SIZE, 200), GRID_HEIGHT),
+    width: Math.min(Math.max((maxX - originX + pad) * GRID_CELL_SIZE, minWidth), GRID_WIDTH),
+    height: Math.min(Math.max((maxY - originY + pad) * GRID_CELL_SIZE, minHeight), GRID_HEIGHT),
     offsetX: originX * GRID_CELL_SIZE,
     offsetY: originY * GRID_CELL_SIZE,
   };
@@ -135,7 +140,7 @@ export function ServiceFloorPlan({
   }, [tableStates, activeZone]);
 
   // Bbox de la zone active (dimensions + offset du conteneur affiché)
-  const gridLayout = useMemo(() => computeGridLayout(filteredTables), [filteredTables]);
+  const gridLayout = useMemo(() => computeGridLayout(filteredTables, hideHeader), [filteredTables, hideHeader]);
 
   // Tables de la SALLE, indépendamment de la zone active → référence de taille
   const salleTables = useMemo(() => {
@@ -146,7 +151,7 @@ export function ServiceFloorPlan({
     });
   }, [tableStates]);
 
-  const referenceLayout = useMemo(() => computeGridLayout(salleTables), [salleTables]);
+  const referenceLayout = useMemo(() => computeGridLayout(salleTables, hideHeader), [salleTables, hideHeader]);
 
   // Tablet mode: observe container and compute scale to fill available space
   // Scale basé sur referenceLayout (Salle) pour taille de tables identique entre zones
@@ -155,7 +160,7 @@ export function ServiceFloorPlan({
     const el = tabletContainerRef.current;
     if (!el) return;
 
-    const PADDING = 32;
+    const PADDING = 16; // = p-2 du conteneur (8px de chaque côté)
     const compute = () => {
       const rect = el.getBoundingClientRect();
       const availableW = rect.width - PADDING;
@@ -577,7 +582,7 @@ export function ServiceFloorPlan({
 
   if (hideHeader) {
     return (
-      <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center p-4">
+      <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center p-2">
         {/* Switch de zone — pilule, aligné à droite */}
         <div className="absolute top-3 right-3 z-30 flex items-center gap-1 bg-white/90 backdrop-blur-md rounded-full p-1 shadow-lg border border-white/40">
           <button
