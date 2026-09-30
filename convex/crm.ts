@@ -323,10 +323,18 @@ async function finalizeClientsForDate(ctx: any, dateKey: string): Promise<void> 
 }
 
 async function processDateReservations(ctx: any, dateKey: string): Promise<{ reservations: number; clients: number }> {
-  const reservations = await ctx.db
-    .query("reservations")
-    .filter((q: any) => q.eq(q.field("dateKey"), dateKey))
-    .collect();
+  const restaurants = await ctx.db.query("restaurants").collect();
+  const reservations: any[] = [];
+  for (const restaurant of restaurants) {
+    reservations.push(
+      ...(await ctx.db
+        .query("reservations")
+        .withIndex("by_restaurant_date_service", (q: any) =>
+          q.eq("restaurantId", restaurant._id).eq("dateKey", dateKey)
+        )
+        .collect())
+    );
+  }
 
   let processedReservations = 0;
   const touchedClients = new Set<string>();
@@ -426,7 +434,7 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
     // Get all reservations for this client to calculate aggregations
     const allReservations = await ctx.db
       .query("reservations")
-      .filter((q: any) => q.eq(q.field("clientId"), clientId))
+      .withIndex("by_clientId", (q: any) => q.eq("clientId", clientId))
       .collect();
 
     // Start from existing client totals (preserve historical data)

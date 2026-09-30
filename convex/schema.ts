@@ -196,7 +196,8 @@ export default defineSchema({
     .index("by_restaurant_slotKey", ["restaurantId", "slotKey"])
     .index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"])
     .index("by_restaurant_status", ["restaurantId", "status"])
-    .index("by_sessionId", ["sessionId"]),
+    .index("by_sessionId", ["sessionId"])
+    .index("by_clientId", ["clientId"]),
 
   // Track all status changes for analytics (punctuality, CRM, etc.)
   reservationEvents: defineTable({
