@@ -35,6 +35,11 @@ interface CoverStepperProps {
   isModified?: boolean;
   /** Typographie du chiffre, alignée sur celle de l'heure du créneau. */
   valueClassName?: string;
+  /**
+   * Agrandit boutons et icônes à partir de `lg` (≥ 1024 px, iPad mini paysage)
+   * sans dépasser la zone tactile de 44 px de haut.
+   */
+  large?: boolean;
 }
 
 export function CoverStepper({
@@ -44,6 +49,7 @@ export function CoverStepper({
   disabled,
   isModified,
   valueClassName,
+  large,
 }: CoverStepperProps) {
 
   // Références à jour pour la répétition de l'appui long (évite les closures périmées).
@@ -122,18 +128,26 @@ export function CoverStepper({
       <button
         {...stepButtonProps(delta)}
         aria-label={delta < 0 ? "Retirer un couvert" : "Ajouter un couvert"}
-        className="group flex h-11 w-9 shrink-0 items-center justify-center touch-manipulation focus:outline-none"
+        className={cn(
+          "group flex h-11 w-9 shrink-0 items-center justify-center touch-manipulation focus:outline-none",
+          large && "lg:w-11"
+        )}
       >
         <span
           className={cn(
             "flex h-8 w-8 items-center justify-center rounded-full border bg-white transition-colors",
+            large && "lg:h-10 lg:w-10",
             "group-focus-visible:ring-2 group-focus-visible:ring-emerald-500",
             isDisabled
               ? "border-slate-100 text-slate-300"
               : "border-slate-200 text-slate-600 group-active:bg-slate-100"
           )}
         >
-          {delta < 0 ? <Minus size={14} /> : <Plus size={14} />}
+          {delta < 0 ? (
+            <Minus size={14} className={cn(large && "lg:h-[18px] lg:w-[18px]")} />
+          ) : (
+            <Plus size={14} className={cn(large && "lg:h-[18px] lg:w-[18px]")} />
+          )}
         </span>
       </button>
     );
@@ -148,6 +162,7 @@ export function CoverStepper({
       <span
         className={cn(
           "relative min-w-[2rem] text-center tabular-nums",
+          large && "lg:min-w-[2.5rem]",
           valueClassName,
           level === "full" && "text-red-600",
           level === "low" && "text-amber-600"

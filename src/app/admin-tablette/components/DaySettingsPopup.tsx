@@ -405,9 +405,9 @@ function ServiceSection({
                 )}
               >
                 <div className="flex items-start gap-2">
-                  <div className="flex h-11 items-center gap-1.5 text-slate-600 min-w-[60px]">
-                    <Clock size={14} />
-                    <span className="font-mono text-xs font-medium">{slot.timeKey}</span>
+                  <div className="flex h-11 items-center gap-1.5 text-slate-600 min-w-[60px] lg:min-w-[76px]">
+                    <Clock size={14} className="lg:h-[18px] lg:w-[18px]" />
+                    <span className="font-mono text-xs font-medium lg:text-base">{slot.timeKey}</span>
                   </div>
 
                   <div className="shrink-0">
@@ -419,7 +419,8 @@ function ServiceSection({
                       }
                       disabled={!slot.isOpen}
                       isModified={slot.capacity !== slot.originalCapacity}
-                      valueClassName="font-mono text-xs font-medium text-slate-600"
+                      valueClassName="font-mono text-xs font-medium text-slate-600 lg:text-base"
+                      large
                     />
                   </div>
 
@@ -432,6 +433,7 @@ function ServiceSection({
                           setOpenShapeSlotId((current) => (current === slot._id ? null : slot._id))
                         }
                         disabled={!slot.isOpen}
+                        large
                       />
                     )}
                   </div>
@@ -439,7 +441,7 @@ function ServiceSection({
                     <Switch
                       checked={slot.isOpen}
                       onCheckedChange={(open) => onSlotToggle(slot._id, open)}
-                      className="scale-75"
+                      className="scale-75 lg:scale-90"
                     />
                   </div>
                 </div>
@@ -450,6 +452,7 @@ function ServiceSection({
                     remainingCapacity={rawSlot.remainingCapacity}
                     capacityShape={rawSlot.capacityShape}
                     onClose={() => setOpenShapeSlotId(null)}
+                    large
                   />
                 )}
               </div>

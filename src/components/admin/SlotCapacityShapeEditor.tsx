@@ -44,6 +44,8 @@ interface SlotCapacityShapeButtonProps {
   onClick: () => void;
   /** true si le créneau est fermé — la typologie ne peut alors pas être activée. */
   disabled?: boolean;
+  /** Agrandit la roue à partir de `lg` (≥ 1024 px), zone tactile de 44 px inchangée. */
+  large?: boolean;
 }
 
 /**
@@ -57,6 +59,7 @@ export function SlotCapacityShapeButton({
   isOpen,
   onClick,
   disabled,
+  large,
 }: SlotCapacityShapeButtonProps) {
   const needsReview = capacityShape?.needsReview ?? false;
   const enabled = capacityShape?.enabled ?? false;
@@ -78,11 +81,15 @@ export function SlotCapacityShapeButton({
       aria-expanded={isOpen}
       aria-label={label}
       title={label}
-      className="group flex h-11 w-9 shrink-0 items-center justify-center touch-manipulation focus:outline-none disabled:cursor-not-allowed"
+      className={cn(
+        "group flex h-11 w-9 shrink-0 items-center justify-center touch-manipulation focus:outline-none disabled:cursor-not-allowed",
+        large && "lg:w-11"
+      )}
     >
       <span
         className={cn(
           "relative flex h-8 w-8 items-center justify-center rounded-full border transition-colors",
+          large && "lg:h-10 lg:w-10",
           "group-focus-visible:ring-2 group-focus-visible:ring-emerald-500",
           needsReview
             ? "border-amber-200 bg-amber-50 text-amber-600"
@@ -93,7 +100,7 @@ export function SlotCapacityShapeButton({
           isDisabled && "border-slate-100 text-slate-300"
         )}
       >
-        <Settings size={15} />
+        <Settings size={15} className={cn(large && "lg:h-[19px] lg:w-[19px]")} />
         {needsReview && (
           <AlertTriangle
             size={10}
@@ -111,6 +118,8 @@ interface SlotCapacityShapeEditorProps {
   capacityShape: CapacityShapeSummaryDto;
   /** Ferme l'éditeur (annulation ou après enregistrement). */
   onClose: () => void;
+  /** Agrandit boutons et textes à partir de `lg` (≥ 1024 px, iPad mini paysage). */
+  large?: boolean;
 }
 
 /**
@@ -123,6 +132,7 @@ export function SlotCapacityShapeEditor({
   remainingCapacity,
   capacityShape,
   onClose,
+  large,
 }: SlotCapacityShapeEditorProps) {
   const configure = useMutation(api.slotCapacityShapes.configure);
   const disableShape = useMutation(api.slotCapacityShapes.disable);
@@ -229,7 +239,7 @@ export function SlotCapacityShapeEditor({
   return (
     <div className="w-full mt-1 px-2.5 py-3 rounded-xl border border-emerald-200 bg-emerald-50/60 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-700">Tables restantes</span>
+        <span className={cn("text-xs font-semibold text-slate-700", large && "lg:text-sm")}>Tables restantes</span>
         <div className="flex items-center gap-2">
           <Switch checked={localEnabled} onCheckedChange={handleToggleEnabled} className="scale-75" />
           <button type="button" onClick={handleCancel} aria-label="Fermer" className="p-1 hover:bg-slate-200 rounded-lg transition-colors">
@@ -250,13 +260,18 @@ export function SlotCapacityShapeEditor({
 
       {localEnabled && (
         <>
-          <p className="text-[11px] text-slate-500">{remainingCapacity} couverts restants</p>
+          <p className={cn("text-[11px] text-slate-500", large && "lg:text-sm")}>{remainingCapacity} couverts restants</p>
 
           {/* Une colonne par taille de table, côte à côte (retour à la ligne si besoin). */}
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(4.25rem,1fr))] gap-x-2 gap-y-3">
+          <div
+            className={cn(
+              "grid grid-cols-[repeat(auto-fit,minmax(4.25rem,1fr))] gap-x-2 gap-y-3",
+              large && "lg:grid-cols-[repeat(auto-fit,minmax(6rem,1fr))]"
+            )}
+          >
             {displayBuckets.map((bucket) => (
               <div key={bucket.maxPartySize} className="flex flex-col items-center gap-1">
-                <span className="text-[11px] text-slate-600">{bucket.maxPartySize} pers.</span>
+                <span className={cn("text-[11px] text-slate-600", large && "lg:text-sm")}>{bucket.maxPartySize} pers.</span>
                 <div className="flex items-center">
                   <button
                     type="button"
@@ -265,23 +280,27 @@ export function SlotCapacityShapeEditor({
                     aria-label={`Retirer une table de ${bucket.maxPartySize}`}
                     className={cn(
                       "flex h-[26px] w-[26px] items-center justify-center rounded-full border bg-white transition-colors touch-manipulation",
+                      large && "lg:h-9 lg:w-9",
                       bucket.quantity <= 0
                         ? "border-slate-100 text-slate-300"
                         : "border-slate-200 text-slate-600 active:bg-slate-100"
                     )}
                   >
-                    <Minus size={12} />
+                    <Minus size={12} className={cn(large && "lg:h-4 lg:w-4")} />
                   </button>
-                  <span className="w-4 text-center text-sm font-semibold tabular-nums text-slate-900">
+                  <span className={cn("w-4 text-center text-sm font-semibold tabular-nums text-slate-900", large && "lg:w-7 lg:text-base")}>
                     {bucket.quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity + 1)}
                     aria-label={`Ajouter une table de ${bucket.maxPartySize}`}
-                    className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors active:bg-slate-100 touch-manipulation"
+                    className={cn(
+                      "flex h-[26px] w-[26px] items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors active:bg-slate-100 touch-manipulation",
+                      large && "lg:h-9 lg:w-9"
+                    )}
                   >
-                    <Plus size={12} />
+                    <Plus size={12} className={cn(large && "lg:h-4 lg:w-4")} />
                   </button>
                 </div>
               </div>
@@ -295,13 +314,13 @@ export function SlotCapacityShapeEditor({
               placeholder="Taille"
               value={addSizeInput}
               onChange={(e) => setAddSizeInput(e.target.value)}
-              className="w-20 px-2 py-1 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+              className={cn("w-20 px-2 py-1 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:outline-none", large && "lg:w-24 lg:py-1.5 lg:text-sm")}
             />
             <button
               type="button"
               onClick={handleAddSize}
               disabled={!addSizeInput}
-              className="text-xs text-emerald-600 hover:text-emerald-700 font-medium disabled:opacity-40"
+              className={cn("text-xs text-emerald-600 hover:text-emerald-700 font-medium disabled:opacity-40", large && "lg:text-sm")}
             >
               + Ajouter une taille
             </button>
@@ -310,6 +329,7 @@ export function SlotCapacityShapeEditor({
           <div
             className={cn(
               "text-xs font-medium",
+              large && "lg:text-sm",
               exceedsRemaining ? "text-red-600" : "text-slate-600"
             )}
           >
@@ -338,7 +358,7 @@ export function SlotCapacityShapeEditor({
           type="button"
           onClick={handleSave}
           disabled={isSaving || !canSave || (!hasChanges && !capacityShape?.needsReview)}
-          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+          className={cn("px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5", large && "lg:px-4 lg:py-2 lg:text-sm")}
         >
           {isSaving ? <Loader2 size={12} className="animate-spin" /> : "Enregistrer"}
         </button>
