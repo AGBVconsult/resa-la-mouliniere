@@ -63,10 +63,6 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
     setDinnerSlots((prev) => mergeSlotStates(slotsData.dinner, prev));
   }, [slotsData]);
 
-  const isDayOpen = useMemo(() => {
-    return [...lunchSlots, ...dinnerSlots].some((s) => s.isOpen);
-  }, [lunchSlots, dinnerSlots]);
-
   const isLunchOpen = useMemo(() => {
     return lunchSlots.some((s) => s.isOpen);
   }, [lunchSlots]);
@@ -81,11 +77,6 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
       (s) => s.isOpen !== s.originalIsOpen || s.capacity !== s.originalCapacity
     );
   }, [lunchSlots, dinnerSlots]);
-
-  const handleDayToggle = (open: boolean) => {
-    setLunchSlots((prev) => prev.map((s) => ({ ...s, isOpen: open })));
-    setDinnerSlots((prev) => prev.map((s) => ({ ...s, isOpen: open })));
-  };
 
   const handleServiceToggle = (service: "lunch" | "dinner", open: boolean) => {
     if (service === "lunch") {
@@ -196,17 +187,6 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Day Toggle */}
-          <div className="bg-slate-50 rounded-2xl p-5">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-slate-900">Jour complet</span>
-              <Switch
-                checked={isDayOpen}
-                onCheckedChange={handleDayToggle}
-              />
-            </div>
-          </div>
-
           {/* Services */}
           <div className="grid grid-cols-2 gap-4">
             <ServiceSection
