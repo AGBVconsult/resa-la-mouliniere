@@ -421,7 +421,7 @@ export function ServiceFloorPlan({
           <div
             key={table.tableId}
             className={cn(
-              "absolute transition-all duration-150 overflow-hidden",
+              "absolute transition-all duration-150",
               table.shape === "round" ? "rounded-full" : "rounded-lg",
               !isSplit && (
                 isEditingThisTable
@@ -455,7 +455,14 @@ export function ServiceFloorPlan({
           >
             {/* === SPLIT TABLE (2 reservations) === */}
             {isSplit ? (
-              <div className={cn("flex w-full h-full", isVerticalSplit ? "flex-col" : "flex-row")}>
+              <>
+              <div
+                className={cn(
+                  "flex w-full h-full overflow-hidden",
+                  table.shape === "round" ? "rounded-full" : "rounded-lg",
+                  isVerticalSplit ? "flex-col" : "flex-row"
+                )}
+              >
                 {reservations.map((resa, idx) => {
                   const resaTableStatus = getReservationStatusAsTableStatus(resa.status);
                   const isThisHalfEditing = editingHalfIndex === idx;
@@ -489,17 +496,6 @@ export function ServiceFloorPlan({
                         handleTableClick(table.tableId, table.status as TableStatus, resa.id, table);
                       }}
                     >
-                      {isThisHalfEditing && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUnassign();
-                          }}
-                          className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-md z-10"
-                        >
-                          <X className="w-2.5 h-2.5 text-white" />
-                        </button>
-                      )}
                       <span className={cn("text-[8px] font-bold leading-tight", halfText)}>
                         {resa.timeKey}
                       </span>
@@ -510,6 +506,23 @@ export function ServiceFloorPlan({
                   );
                 })}
               </div>
+              {/* Bouton X hors du conteneur clippé pour rester entièrement visible */}
+              {editingHalfIndex !== -1 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUnassign();
+                  }}
+                  className="absolute w-4 h-4 -translate-y-1/2 translate-x-1/2 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-md z-10"
+                  style={{
+                    top: isVerticalSplit && editingHalfIndex === 1 ? "50%" : 0,
+                    right: !isVerticalSplit && editingHalfIndex === 0 ? "50%" : 0,
+                  }}
+                >
+                  <X className="w-2.5 h-2.5 text-white" />
+                </button>
+              )}
+              </>
             ) : (
               /* === SINGLE or EMPTY TABLE === */
               <>
