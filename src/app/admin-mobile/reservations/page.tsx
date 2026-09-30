@@ -27,6 +27,7 @@ import { getFlag } from "@/lib/getFlag";
 import { SegmentedBar } from "../components/SegmentedBar";
 import { StatusPill } from "../components/StatusPill";
 import { ActionPopup } from "../components/ActionPopup";
+import { isCreatedDuringService } from "@/lib/utils/service-window";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -50,6 +51,7 @@ interface Reservation {
   primaryTableId?: Id<"tables">;
   version: number;
   totalVisits?: number;
+  createdAt?: number;
 }
 
 // Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
@@ -216,14 +218,19 @@ export default function MobileReservationsPage() {
 
   const renderReservationRow = (res: Reservation) => {
     const isExpanded = expandedId === res._id;
+    const slotTimeKeys = slotsData?.[res.service]?.map((s: { timeKey: string }) => s.timeKey);
+    const isAddedDuringService = isCreatedDuringService(res, slotTimeKeys);
 
     return (
       <div key={res._id} className="flex flex-col">
         <div
           onClick={() => toggleExpand(res._id)}
-          className={`group flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/30 transition-all cursor-pointer ${
-            isExpanded ? "bg-slate-50/50" : ""
+          className={`group flex items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${
+            isAddedDuringService
+              ? "bg-violet-50 hover:bg-violet-100/60 border-l-4 border-l-violet-300"
+              : isExpanded ? "bg-slate-50/50 hover:bg-slate-50/30" : "hover:bg-slate-50/30"
           }`}
+          title={isAddedDuringService ? "Réservation enregistrée pendant le service" : undefined}
         >
           <StatusPill status={res.status} />
 
