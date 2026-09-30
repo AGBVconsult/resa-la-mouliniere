@@ -410,6 +410,7 @@ function ServiceSection({
                       }
                       disabled={!slot.isOpen}
                       isModified={slot.capacity !== slot.originalCapacity}
+                      valueClassName="font-mono text-xs font-medium text-slate-600"
                     />
                   </div>
 

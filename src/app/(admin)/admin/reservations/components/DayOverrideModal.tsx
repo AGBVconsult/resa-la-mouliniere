@@ -421,6 +421,7 @@ function ServiceCard({
                       }
                       disabled={!slot.isOpen}
                       isModified={slot.capacity !== slot.originalCapacity}
+                      valueClassName="font-mono text-sm text-gray-600"
                     />
                   </div>
 
