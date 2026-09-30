@@ -4,7 +4,11 @@ import type { Doc } from "./_generated/dataModel";
 import { computeEffectiveOpen } from "../spec/contracts.generated";
 import { Errors } from "./lib/errors";
 import { requireRole } from "./lib/rbac";
-import { getSlotOverridesForDateRange } from "./lib/slotOverrides";
+import {
+  getSlotOverridesForDateRange,
+  resolveEffectiveCapacity,
+  isCapacityChange,
+} from "./lib/slotOverrides";
 import { getTodayDateKey, getCurrentTimeKey } from "./lib/dateUtils";
 import { canAcceptParty, type CapacityShapeAllocationLike, type CapacityShapeLike } from "./lib/capacityShape";
 import { getShapesForDate, getShapesForDateRange, getAllocationsForShape, markCapacityShapeNeedsReview } from "./slotCapacityShapes";
@@ -556,13 +560,14 @@ export const adminOverrideSlot = mutation({
     const now = Date.now();
 
     // Create/update slotOverride manual instead of patching slot directly
-    const existingOverride = await ctx.db
+    const slotOverrides = await ctx.db
       .query("slotOverrides")
       .withIndex("by_restaurant_slotKey", (q) =>
         q.eq("restaurantId", restaurantId).eq("slotKey", slotKey)
       )
-      .filter((q) => q.eq(q.field("origin"), "manual"))
-      .first();
+      .collect();
+    const existingOverride = slotOverrides.find((o) => o.origin === "manual") ?? null;
+    const previousCapacity = resolveEffectiveCapacity(existingSlot.capacity, slotOverrides);
 
     if (existingOverride) {
       await ctx.db.patch(existingOverride._id, {
@@ -581,7 +586,7 @@ export const adminOverrideSlot = mutation({
     }
 
     // PRD-013 §31 — override manuel de capacité => typologie à revoir.
-    if (overridePatch.capacity !== undefined) {
+    if (isCapacityChange(previousCapacity, overridePatch.capacity)) {
       await markCapacityShapeNeedsReview(ctx, { restaurantId, slotKey, now });
     }
 

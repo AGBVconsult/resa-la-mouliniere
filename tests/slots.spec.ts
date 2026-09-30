@@ -6,6 +6,7 @@ import {
   TIME_KEY_REGEX,
   DATE_KEY_REGEX,
 } from "../convex/slots";
+import { resolveEffectiveCapacity, isCapacityChange } from "../convex/lib/slotOverrides";
 
 describe("slots", () => {
   describe("buildSlotKey", () => {
@@ -154,5 +155,25 @@ describe("slots", () => {
       expect(validServices.includes("midi")).toBe(false);
       expect(validServices.includes("soir")).toBe(false);
     });
+  });
+});
+
+describe("PRD-013 §31 — typologie « à revoir » uniquement sur vrai changement de capacité", () => {
+  it("résout la capacité effective MANUAL > PERIOD > slot", () => {
+    expect(resolveEffectiveCapacity(16, [])).toBe(16);
+    expect(resolveEffectiveCapacity(16, [{ origin: "period", patch: { capacity: 12 } }])).toBe(12);
+    expect(
+      resolveEffectiveCapacity(16, [
+        { origin: "period", patch: { capacity: 12 } },
+        { origin: "manual", patch: { capacity: 20 } },
+      ])
+    ).toBe(20);
+    expect(resolveEffectiveCapacity(16, [{ origin: "manual", patch: {} }])).toBe(16);
+  });
+
+  it("ne considère pas une capacité réenvoyée à l'identique comme un changement", () => {
+    expect(isCapacityChange(16, 16)).toBe(false);
+    expect(isCapacityChange(16, undefined)).toBe(false);
+    expect(isCapacityChange(16, 18)).toBe(true);
   });
 });

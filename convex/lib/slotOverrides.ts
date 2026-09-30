@@ -32,3 +32,26 @@ export async function getSlotOverridesForDateRange(
     period: overrides.filter((o) => o.origin === "period"),
   };
 }
+
+/**
+ * Capacité effective d'un slot avant modification : MANUAL > PERIOD > slot.
+ */
+export function resolveEffectiveCapacity(
+  slotCapacity: number,
+  overrides: ReadonlyArray<{ origin: string; patch: { capacity?: number } }>
+): number {
+  const manual = overrides.find((o) => o.origin === "manual");
+  if (manual?.patch.capacity !== undefined) return manual.patch.capacity;
+  const period = overrides.find((o) => o.origin === "period");
+  if (period?.patch.capacity !== undefined) return period.patch.capacity;
+  return slotCapacity;
+}
+
+/**
+ * PRD-013 §31 — seule une modification RÉELLE de capacité rend la typologie
+ * « à revoir ». Réenvoyer la même capacité (ex. simple ouverture/fermeture du
+ * créneau) ne doit jamais suspendre la typologie côté widget.
+ */
+export function isCapacityChange(previousCapacity: number, nextCapacity: number | undefined): boolean {
+  return nextCapacity !== undefined && nextCapacity !== previousCapacity;
+}
