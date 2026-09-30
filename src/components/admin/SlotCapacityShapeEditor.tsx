@@ -18,7 +18,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Minus, Plus, X, AlertTriangle } from "lucide-react";
+import { Loader2, Minus, Plus, X, AlertTriangle, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type CapacityBucketDto = { maxPartySize: number; quantity: number };
@@ -47,10 +47,10 @@ interface SlotCapacityShapeButtonProps {
 }
 
 /**
- * Bouton affiché sur la ligne du créneau : active / ouvre la typologie.
- * - désactivée (§34) : bouton neutre « Typologie » ;
- * - active (§38) : résumé compact « 1×4 · 2×2 » ;
- * - à revoir (§39) : résumé en orange avec alerte.
+ * Roue crantée affichée sur la ligne du créneau : active / ouvre la typologie.
+ * - désactivée (§34) : icône grise ;
+ * - active (§38) : icône verte, résumé « 1×4 · 2×2 » en info-bulle ;
+ * - à revoir (§39) : icône orange avec pastille d'alerte.
  */
 export function SlotCapacityShapeButton({
   capacityShape,
@@ -63,6 +63,12 @@ export function SlotCapacityShapeButton({
   const isActive = enabled || needsReview;
   // Une typologie existante reste consultable même sur un créneau fermé.
   const isDisabled = disabled && !isActive;
+  const summary = isActive && capacityShape ? summarizeBuckets(capacityShape.buckets) : null;
+  const label = needsReview
+    ? `Typologie à revoir (${summary})`
+    : enabled
+      ? `Typologie active (${summary})`
+      : "Activer la typologie (tailles de table)";
 
   return (
     <button
@@ -70,27 +76,30 @@ export function SlotCapacityShapeButton({
       onClick={onClick}
       disabled={isDisabled}
       aria-expanded={isOpen}
-      title={
-        needsReview
-          ? "Typologie restante à revoir"
-          : enabled
-            ? "Modifier la typologie restante"
-            : "Activer la typologie restante (tailles de table)"
-      }
-      className={cn(
-        "flex h-8 min-w-0 max-w-[7.5rem] items-center gap-1 rounded-full border px-2.5 text-[11px] font-medium transition-colors touch-manipulation",
-        needsReview
-          ? "border-amber-200 bg-amber-50 text-amber-700"
-          : enabled
-            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-            : "border-slate-200 bg-white text-slate-500",
-        isOpen && "ring-2 ring-emerald-500/40",
-        isDisabled && "opacity-40 cursor-not-allowed"
-      )}
+      aria-label={label}
+      title={label}
+      className="group flex h-11 w-9 shrink-0 items-center justify-center touch-manipulation focus:outline-none disabled:cursor-not-allowed"
     >
-      {needsReview && <AlertTriangle size={12} className="shrink-0" />}
-      <span className="truncate">
-        {isActive && capacityShape ? summarizeBuckets(capacityShape.buckets) : "Typologie"}
+      <span
+        className={cn(
+          "relative flex h-8 w-8 items-center justify-center rounded-full border transition-colors",
+          "group-focus-visible:ring-2 group-focus-visible:ring-emerald-500",
+          needsReview
+            ? "border-amber-200 bg-amber-50 text-amber-600"
+            : enabled
+              ? "border-emerald-200 bg-emerald-50 text-emerald-600"
+              : "border-slate-200 bg-white text-slate-500",
+          isOpen && "ring-2 ring-emerald-500/40",
+          isDisabled && "border-slate-100 text-slate-300"
+        )}
+      >
+        <Settings size={15} />
+        {needsReview && (
+          <AlertTriangle
+            size={10}
+            className="absolute -right-1 -top-1 rounded-full bg-white text-amber-600"
+          />
+        )}
       </span>
     </button>
   );
