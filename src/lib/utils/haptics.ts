@@ -2,9 +2,10 @@
  * Haptic feedback utilities for touch devices
  */
 
-type HapticPattern = "grab" | "drop" | "error";
+type HapticPattern = "tick" | "grab" | "drop" | "error";
 
 const patterns: Record<HapticPattern, number | number[]> = {
+  tick: 10,
   grab: 50,
   drop: [30, 50],
   error: [100, 50, 100],
