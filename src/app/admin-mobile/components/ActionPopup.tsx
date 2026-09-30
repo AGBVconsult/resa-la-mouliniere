@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit2, CheckCircle2, Trash2 } from "lucide-react";
+import { Edit2, CheckCircle2, Trash2, AlertTriangle } from "lucide-react";
 import type { ReservationStatus } from "../../../../spec/contracts.generated";
 
 interface ActionPopupProps {
@@ -60,6 +60,16 @@ export function ActionPopup({ status, onAction, onClose }: ActionPopupProps) {
           nextStatus: "completed",
         });
         break;
+    }
+
+    // Un incident peut survenir à tout moment, quel que soit le statut
+    if (status !== "incident") {
+      actions.push({
+        label: "Incident",
+        icon: <AlertTriangle size={14} className="text-orange-500" />,
+        action: "status",
+        nextStatus: "incident",
+      });
     }
 
     return actions;

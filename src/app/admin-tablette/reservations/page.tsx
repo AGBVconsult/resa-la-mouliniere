@@ -430,10 +430,8 @@ export default function TabletReservationsPage() {
         break;
       case "cardPlaced":
         actions.push({ label: "Annuler", nextStatus: "cancelled", textColor: "text-red-600", hoverBg: "hover:bg-red-50" });
-        actions.push({ label: "Signaler Incident", nextStatus: "incident", textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
         break;
       case "seated":
-        actions.push({ label: "Signaler Incident", nextStatus: "incident", textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
         break;
       case "noshow":
         actions.push({ label: "Marquer Arrivé", nextStatus: "seated", textColor: "text-emerald-600", hoverBg: "hover:bg-emerald-50" });
@@ -451,6 +449,10 @@ export default function TabletReservationsPage() {
         actions.push({ label: "Terminer", nextStatus: "completed", textColor: "text-gray-600", hoverBg: "hover:bg-gray-50" });
         break;
     }
+    // Un incident peut survenir à tout moment, quel que soit le statut
+    if (status !== "incident") {
+      actions.push({ label: "Signaler Incident", nextStatus: "incident", textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" });
+    }
     return actions;
   };
 
@@ -462,6 +464,7 @@ export default function TabletReservationsPage() {
           { label: "confirmer", icon: <CheckCircle size={28} strokeWidth={1.5} />, action: "confirmed", iconColor: "text-emerald-500" },
           { label: "refuser", icon: <XCircle size={28} strokeWidth={1.5} />, action: "refused", iconColor: "text-red-500" },
           { label: "annuler client", icon: <UserX size={28} strokeWidth={1.5} />, action: "cancelled_by_client", iconColor: "text-orange-500" },
+          { label: "incident", icon: <AlertTriangle size={28} strokeWidth={1.5} />, action: "incident", iconColor: "text-orange-500" },
         ];
       case "confirmed":
         return [
@@ -469,6 +472,7 @@ export default function TabletReservationsPage() {
           { label: "no-show", icon: <Ghost size={28} strokeWidth={1.5} />, action: "noshow", iconColor: "text-amber-500" },
           { label: "annuler", icon: <Trash2 size={28} strokeWidth={1.5} />, action: "cancelled", iconColor: "text-red-500" },
           { label: "annuler client", icon: <UserX size={28} strokeWidth={1.5} />, action: "cancelled_by_client", iconColor: "text-orange-500" },
+          { label: "incident", icon: <AlertTriangle size={28} strokeWidth={1.5} />, action: "incident", iconColor: "text-orange-500" },
         ];
       case "seated":
         return [
@@ -481,8 +485,18 @@ export default function TabletReservationsPage() {
         return [
           { label: "installer", icon: <Armchair size={28} strokeWidth={1.5} />, action: "seated", iconColor: "text-blue-500" },
           { label: "rouvrir", icon: <RotateCcw size={28} strokeWidth={1.5} />, action: "confirmed", iconColor: "text-slate-500" },
+          { label: "incident", icon: <AlertTriangle size={28} strokeWidth={1.5} />, action: "incident", iconColor: "text-orange-500" },
+        ];
+      case "refused":
+        return [
+          { label: "incident", icon: <AlertTriangle size={28} strokeWidth={1.5} />, action: "incident", iconColor: "text-orange-500" },
         ];
       case "completed":
+        return [
+          { label: "rouvrir", icon: <RotateCcw size={28} strokeWidth={1.5} />, action: "seated", iconColor: "text-slate-500" },
+          { label: "terminer", icon: <Flag size={28} strokeWidth={1.5} />, action: "completed", iconColor: "text-emerald-500" },
+          { label: "incident", icon: <AlertTriangle size={28} strokeWidth={1.5} />, action: "incident", iconColor: "text-orange-500" },
+        ];
       case "incident":
         return [
           { label: "rouvrir", icon: <RotateCcw size={28} strokeWidth={1.5} />, action: "seated", iconColor: "text-slate-500" },
