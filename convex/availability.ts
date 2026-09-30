@@ -12,15 +12,23 @@ import { getShapesForDate, getShapesForDateRange, getAllocationsForShape, markCa
 type SlotRow = Pick<Doc<"slots">, "slotKey" | "dateKey" | "service" | "timeKey" | "isOpen" | "capacity" | "maxGroupSize">;
 type ReservationRow = Pick<Doc<"reservations">, "slotKey" | "status" | "partySize">;
 
+/**
+ * Couverts occupés par slotKey (réservations actives uniquement).
+ */
+export function computeReservedCoversBySlotKey(reservations: ReservationRow[]): Map<string, number> {
+  const used = new Map<string, number>();
+  for (const r of reservations) {
+    if (r.status !== "pending" && r.status !== "confirmed" && r.status !== "cardPlaced" && r.status !== "seated") continue;
+    used.set(r.slotKey, (used.get(r.slotKey) ?? 0) + r.partySize);
+  }
+  return used;
+}
+
 export function computeRemainingCapacityBySlotKey(args: {
   slots: SlotRow[];
   reservations: ReservationRow[];
 }): Map<string, number> {
-  const used = new Map<string, number>();
-  for (const r of args.reservations) {
-    if (r.status !== "pending" && r.status !== "confirmed" && r.status !== "cardPlaced" && r.status !== "seated") continue;
-    used.set(r.slotKey, (used.get(r.slotKey) ?? 0) + r.partySize);
-  }
+  const used = computeReservedCoversBySlotKey(args.reservations);
 
   const remaining = new Map<string, number>();
   for (const s of args.slots) {

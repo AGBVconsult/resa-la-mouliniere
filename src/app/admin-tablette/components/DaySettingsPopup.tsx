@@ -10,7 +10,12 @@ import { X, Loader2, Clock, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { mergeSlotStates, type SlotState } from "@/lib/utils/slot-day-settings";
+import {
+  mergeSlotStates,
+  toRemainingCovers,
+  capacityFromRemainingCovers,
+  type SlotState,
+} from "@/lib/utils/slot-day-settings";
 import { SlotCapacityShapeEditor, type CapacityShapeSummaryDto } from "@/components/admin/SlotCapacityShapeEditor";
 
 type DaySlotState = SlotState<Id<"slots">>;
@@ -266,6 +271,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
 interface RawSlot {
   _id: Id<"slots">;
   remainingCapacity: number;
+  reservedCovers: number;
   capacityShape: CapacityShapeSummaryDto;
 }
 
@@ -377,6 +383,9 @@ function ServiceSection({
         ) : (
           slots.map((slot) => {
             const rawSlot = rawSlotById.get(slot._id);
+            // Affiche les couverts encore disponibles (capacité - réservés) ;
+            // la saisie est reconvertie en capacité totale avant enregistrement.
+            const reservedCovers = rawSlot?.reservedCovers ?? 0;
             return (
               <div
                 key={slot._id}
@@ -397,8 +406,14 @@ function ServiceSection({
                       type="number"
                       min={0}
                       max={100}
-                      value={slot.capacity}
-                      onChange={(e) => onCapacityChange(slot._id, parseInt(e.target.value) || 0)}
+                      value={toRemainingCovers(slot.capacity, reservedCovers)}
+                      onChange={(e) =>
+                        onCapacityChange(
+                          slot._id,
+                          capacityFromRemainingCovers(parseInt(e.target.value) || 0, reservedCovers)
+                        )
+                      }
+                      title={`Couverts restants (${reservedCovers} réservé${reservedCovers > 1 ? "s" : ""} sur ${slot.capacity})`}
                       className="w-12 px-1.5 py-1 text-xs bg-white border border-slate-200 rounded focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                       disabled={!slot.isOpen}
                     />

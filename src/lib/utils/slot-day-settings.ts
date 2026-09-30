@@ -56,3 +56,18 @@ export function mergeSlotStates<TId extends string>(
     };
   });
 }
+
+/**
+ * Couverts encore disponibles affichés dans les modales de réglage d'un jour :
+ * capacité (éventuellement en cours d'édition) moins les couverts déjà réservés.
+ */
+export function toRemainingCovers(capacity: number, reservedCovers: number): number {
+  return Math.max(0, capacity - reservedCovers);
+}
+
+/**
+ * Convertit une saisie "couverts restants" en capacité totale à enregistrer.
+ */
+export function capacityFromRemainingCovers(remaining: number, reservedCovers: number): number {
+  return Math.max(0, remaining) + reservedCovers;
+}
