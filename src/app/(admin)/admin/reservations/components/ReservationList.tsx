@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { TimeChunk } from "./TimeChunk";
 import { ReservationRow, type Reservation } from "./ReservationRow";
+import { isCreatedDuringService } from "@/lib/utils/service-window";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
 import type { ReservationStatus } from "../../../../../../spec/contracts.generated";
 
@@ -43,6 +44,7 @@ export function ReservationList({
 }: ReservationListProps) {
   // Statuses that should NOT be counted (cancelled, no-show, refused)
   const EXCLUDED_STATUSES = new Set(["cancelled", "noshow", "refused"]);
+  const slotTimeKeys = useMemo(() => Object.keys(slotCapacities), [slotCapacities]);
 
   // Group reservations by timeKey
   const timeGroups = useMemo(() => {
@@ -122,6 +124,7 @@ export function ReservationList({
               isExpanded={expandedId === reservation._id}
               isSelectedForAssignment={selectedForAssignmentId === reservation._id}
               isHighlighted={highlightedReservationId === reservation._id}
+              isAddedDuringService={isCreatedDuringService(reservation, slotTimeKeys)}
               onToggleExpand={() => onToggleExpand(reservation._id)}
               onStatusChange={(status) => onStatusChange(reservation._id, status, reservation.version)}
               onEdit={() => onEdit(reservation)}

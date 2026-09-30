@@ -68,6 +68,7 @@ import { ClientModal } from "@/components/admin/ClientModal";
 import { TabletNotificationBell } from "../components/TabletNotificationBell";
 import { TabletCreateReservationPopup, type ReservationPrefill } from "../components/TabletCreateReservationPopup";
 import { ReviewSuppressionButton } from "../components/ReviewSuppressionButton";
+import { isCreatedDuringService } from "@/lib/utils/service-window";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -95,6 +96,7 @@ interface Reservation {
   hasClientNotes?: boolean;
   isLateClient?: boolean;
   isSlowClient?: boolean;
+  createdAt?: number;
 }
 
 // Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
@@ -239,6 +241,12 @@ export default function TabletReservationsPage() {
 
   const slotsData = useQuery(api.slots.listByDate, { dateKey });
   const tablesData = useQuery(api.tables.list, {});
+
+  // Horaires des créneaux par service (pour détecter les réservations prises pendant le service)
+  const serviceSlotTimeKeys = useMemo(() => ({
+    lunch: slotsData?.lunch.map((s: { timeKey: string }) => s.timeKey) ?? [],
+    dinner: slotsData?.dinner.map((s: { timeKey: string }) => s.timeKey) ?? [],
+  }), [slotsData]);
 
   const { results: lunchReservations, status: lunchStatus } = usePaginatedQuery(
     api.admin.listReservations,
@@ -629,6 +637,7 @@ export default function TabletReservationsPage() {
     const isSelectedForAssignment = selectedForAssignment?._id === res._id;
     const isUnassigned = !res.primaryTableId && res.tableIds.length === 0;
     const isHighlighted = effectiveHighlightedId === res._id;
+    const isAddedDuringService = isCreatedDuringService(res, serviceSlotTimeKeys[res.service]);
 
     const handleRowClick = () => {
       // Ouvrir le ClientModal au clic sur une réservation
@@ -648,8 +657,10 @@ export default function TabletReservationsPage() {
             isExpanded && "bg-gray-50",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
             isHighlighted && !isSelectedForAssignment && "bg-amber-100 ring-2 ring-inset ring-amber-500 border-l-4 border-l-amber-500 shadow-sm animate-highlight-pulse",
-            isUnassigned && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
+            isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-violet-50 hover:bg-violet-100/60 border-l-4 border-l-violet-300",
+            isUnassigned && !isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
           )}
+          title={isAddedDuringService ? "Réservation enregistrée pendant le service" : undefined}
         >
           {/* Column: 2 lignes */}
           <div className="flex flex-col gap-1 shrink-0 mr-4" style={{ width: isCompact ? "180px" : "300px" }}>

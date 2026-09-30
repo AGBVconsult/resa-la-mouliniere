@@ -386,6 +386,7 @@ export interface Reservation {
   primaryTableId?: Id<"tables">;
   version: number;
   totalVisits?: number;
+  createdAt?: number;
 }
 
 interface ReservationRowProps {
@@ -394,6 +395,7 @@ interface ReservationRowProps {
   isExpanded?: boolean;
   isSelectedForAssignment?: boolean;
   isHighlighted?: boolean;
+  isAddedDuringService?: boolean;
   onToggleExpand: () => void;
   onStatusChange: (status: ReservationStatus) => void;
   onEdit: () => void;
@@ -407,6 +409,7 @@ export function ReservationRow({
   isExpanded = false,
   isSelectedForAssignment = false,
   isHighlighted = false,
+  isAddedDuringService = false,
   onToggleExpand,
   onStatusChange,
   onEdit,
@@ -535,8 +538,10 @@ export function ReservationRow({
           "flex items-center px-3 py-2 hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 gap-3",
           isSelectedForAssignment && "bg-blue-50 border-blue-200",
           isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
-          isUnassignedCompact && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
+          isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-violet-50 hover:bg-violet-100/60 border-l-4 border-l-violet-300",
+          isUnassignedCompact && !isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
         )}
+        title={isAddedDuringService ? "Réservation enregistrée pendant le service" : undefined}
         onClick={() => onSelectForAssignment?.()}
       >
         {/* Status pill */}
@@ -599,8 +604,10 @@ export function ReservationRow({
           isExpanded && "bg-gray-50",
           isSelectedForAssignment && "bg-blue-50 border-blue-200",
           isHighlighted && !isSelectedForAssignment && "bg-cyan-50 border-l-4 border-l-cyan-500",
-          isUnassigned && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
+          isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-violet-50 hover:bg-violet-100/60 border-l-4 border-l-violet-300",
+          isUnassigned && !isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
         )}
+        title={isAddedDuringService ? "Réservation enregistrée pendant le service" : undefined}
         onClick={onToggleExpand}
       >
         {/* Status pill */}
