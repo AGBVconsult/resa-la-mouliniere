@@ -145,10 +145,12 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
       const allSlots = [...lunchSlots, ...dinnerSlots];
       const updates = allSlots
         .filter((s) => s.isOpen !== s.originalIsOpen || s.capacity !== s.originalCapacity)
+        // N'envoyer que ce qui a changé : réenvoyer la capacité inchangée
+        // ferait passer une typologie active « à revoir » (PRD-013 §31).
         .map((s) => ({
           slotId: s._id,
-          isOpen: s.isOpen,
-          capacity: s.capacity,
+          ...(s.isOpen !== s.originalIsOpen ? { isOpen: s.isOpen } : {}),
+          ...(s.capacity !== s.originalCapacity ? { capacity: s.capacity } : {}),
         }));
 
       if (updates.length > 0) {

@@ -8,7 +8,11 @@ import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Errors } from "./lib/errors";
 import { requireRole } from "./lib/rbac";
-import { getSlotOverridesForDateRange } from "./lib/slotOverrides";
+import {
+  getSlotOverridesForDateRange,
+  resolveEffectiveCapacity,
+  isCapacityChange,
+} from "./lib/slotOverrides";
 import { computeRemainingCapacityBySlotKey, computeReservedCoversBySlotKey } from "./availability";
 import {
   getShapesForDate,
@@ -703,13 +707,14 @@ export const updateSlot = mutation({
     }
 
     // Check if a manual override already exists for this slotKey
-    const existingManual = await ctx.db
+    const slotOverrides = await ctx.db
       .query("slotOverrides")
       .withIndex("by_restaurant_slotKey", (q) =>
         q.eq("restaurantId", slot.restaurantId).eq("slotKey", slot.slotKey)
       )
-      .filter((q) => q.eq(q.field("origin"), "manual"))
-      .first();
+      .collect();
+    const existingManual = slotOverrides.find((o) => o.origin === "manual") ?? null;
+    const previousCapacity = resolveEffectiveCapacity(slot.capacity, slotOverrides);
 
     if (existingManual) {
       const mergedPatch = { ...existingManual.patch, ...overridePatch };
@@ -731,7 +736,7 @@ export const updateSlot = mutation({
     // PRD-013 §31 — un override manuel de capacité rend une typologie active
     // potentiellement obsolète : on ne la recalcule jamais automatiquement,
     // on la marque "à revoir".
-    if (overridePatch.capacity !== undefined) {
+    if (isCapacityChange(previousCapacity, overridePatch.capacity)) {
       await markCapacityShapeNeedsReview(ctx, { restaurantId: slot.restaurantId, slotKey: slot.slotKey, now });
     }
 
@@ -776,13 +781,14 @@ export const batchUpdateSlots = mutation({
       if (Object.keys(overridePatch).length === 0) continue;
 
       // Check if a manual override already exists for this slotKey
-      const existingManual = await ctx.db
+      const slotOverrides = await ctx.db
         .query("slotOverrides")
         .withIndex("by_restaurant_slotKey", (q) =>
           q.eq("restaurantId", slot.restaurantId).eq("slotKey", slot.slotKey)
         )
-        .filter((q) => q.eq(q.field("origin"), "manual"))
-        .first();
+        .collect();
+      const existingManual = slotOverrides.find((o) => o.origin === "manual") ?? null;
+      const previousCapacity = resolveEffectiveCapacity(slot.capacity, slotOverrides);
 
       if (existingManual) {
         // Merge with existing manual override patch
@@ -804,7 +810,7 @@ export const batchUpdateSlots = mutation({
       }
 
       // PRD-013 §31 — override manuel de capacité => typologie à revoir.
-      if (overridePatch.capacity !== undefined) {
+      if (isCapacityChange(previousCapacity, overridePatch.capacity)) {
         await markCapacityShapeNeedsReview(ctx, { restaurantId: slot.restaurantId, slotKey: slot.slotKey, now });
       }
 
