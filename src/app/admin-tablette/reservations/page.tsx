@@ -100,6 +100,12 @@ interface Reservation {
   acknowledgedAt?: number;
 }
 
+// Liste des réservations = une grille commune à toutes les lignes (nom | message | table | statut),
+// comme un tableau : la colonne nom prend la largeur du nom le plus long, le message tout le reste.
+// Chaque niveau entre la liste et les cellules doit relayer les colonnes via SUBGRID.
+const LIST_GRID = "grid grid-cols-[max-content_minmax(0,1fr)_auto_auto]";
+const SUBGRID = "col-span-full grid grid-cols-subgrid";
+
 // Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
   if (visits === 0) return { classes: "bg-emerald-500 text-white", fontWeight: "font-semibold" }; // New (vert)
@@ -570,7 +576,7 @@ export default function TabletReservationsPage() {
     }
     
     return (
-      <>
+      <div className={LIST_GRID}>
         {sortedTimes.map((time) => {
           const groupReservations = timeGroups[time];
           const groupCovers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
@@ -578,9 +584,9 @@ export default function TabletReservationsPage() {
           const resaCount = groupReservations.length;
           
           return (
-            <div key={time}>
+            <div key={time} className={SUBGRID}>
               <div className={cn(
-                "flex items-center gap-4 bg-[#334156] text-white border-b border-slate-600",
+                "col-span-full flex items-center gap-4 bg-[#334156] text-white border-b border-slate-600",
                 showFloorPlan || selectedService === "total" ? "px-3 py-1.5" : "px-4 py-2"
               )}>
                 <div className="flex items-center gap-1.5 text-white">
@@ -593,7 +599,7 @@ export default function TabletReservationsPage() {
                 </div>
                 <span className="text-white/60 text-[10px]">• {resaCount} résa{resaCount > 1 ? "s" : ""}</span>
               </div>
-              <div className="divide-y divide-slate-50">
+              <div className={cn(SUBGRID, "divide-y divide-slate-50")}>
                 {groupReservations.map(renderReservationRow)}
               </div>
             </div>
@@ -601,9 +607,9 @@ export default function TabletReservationsPage() {
         })}
         
         {cancelledReservations.length > 0 && (
-          <div className="border-t-2 border-slate-200">
+          <div className={cn(SUBGRID, "border-t-2 border-slate-200")}>
             <div className={cn(
-              "flex items-center gap-4 bg-slate-100 border-b border-slate-200",
+              "col-span-full flex items-center gap-4 bg-slate-100 border-b border-slate-200",
               showFloorPlan || selectedService === "total" ? "px-3 py-1.5" : "px-4 py-2"
             )}>
               <div className="flex items-center gap-1.5 text-slate-500">
@@ -616,12 +622,12 @@ export default function TabletReservationsPage() {
                 • {cancelledReservations.length} résa{cancelledReservations.length > 1 ? "s" : ""}
               </span>
             </div>
-            <div className="divide-y divide-slate-50 opacity-60">
+            <div className={cn(SUBGRID, "divide-y divide-slate-50 opacity-60")}>
               {cancelledReservations.map(renderReservationRow)}
             </div>
           </div>
         )}
-      </>
+      </div>
     );
   };
 
@@ -651,11 +657,12 @@ export default function TabletReservationsPage() {
     };
 
     return (
-      <div key={res._id} className="flex flex-col" ref={(el) => { rowRefs.current[res._id] = el; }}>
+      <div key={res._id} className={SUBGRID} ref={(el) => { rowRefs.current[res._id] = el; }}>
         <div
           onClick={handleRowClick}
           className={cn(
-            "flex items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-1.5",
+            SUBGRID,
+            "items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-1.5",
             isExpanded && "bg-gray-50",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
             isHighlighted && !isSelectedForAssignment && "bg-amber-100 ring-2 ring-inset ring-amber-500 border-l-4 border-l-amber-500 shadow-sm animate-highlight-pulse",
@@ -664,8 +671,8 @@ export default function TabletReservationsPage() {
           )}
           title={isAddedDuringService ? "Réservation enregistrée pendant le service" : undefined}
         >
-          {/* Column: 2 lignes */}
-          <div className="flex flex-col gap-1 shrink-0 mr-4" style={{ width: isCompact ? "180px" : "300px" }}>
+          {/* Column: 2 lignes - largeur du nom le plus long (cf. LIST_GRID), au plus l'ancienne largeur fixe */}
+          <div className="flex flex-col gap-1 mr-4 max-w-[300px]">
             {/* Ligne 1: Prénom + Nom + Badge + Notes indicator */}
             {(() => {
               const visits = res.totalVisits ?? 0;
@@ -683,17 +690,20 @@ export default function TabletReservationsPage() {
                   )}>
                     {visits === 0 ? "NEW" : visits}
                   </span>
-                  <div className="flex items-center gap-1 ml-4">
-                    {res.hasClientNotes && (
-                      <Bookmark size={16} className="text-amber-500" strokeWidth={2} fill="currentColor" />
-                    )}
-                    {res.isLateClient && (
-                      <Timer size={18} className="text-orange-400" strokeWidth={2} />
-                    )}
-                    {res.isSlowClient && (
-                      <Coffee size={18} className="text-blue-400" strokeWidth={2} />
-                    )}
-                  </div>
+                  {/* Seulement s'il y a un indicateur : vide, sa marge élargirait la colonne pour rien */}
+                  {(res.hasClientNotes || res.isLateClient || res.isSlowClient) && (
+                    <div className="flex items-center gap-1 ml-4">
+                      {res.hasClientNotes && (
+                        <Bookmark size={16} className="text-amber-500" strokeWidth={2} fill="currentColor" />
+                      )}
+                      {res.isLateClient && (
+                        <Timer size={18} className="text-orange-400" strokeWidth={2} />
+                      )}
+                      {res.isSlowClient && (
+                        <Coffee size={18} className="text-blue-400" strokeWidth={2} />
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -720,8 +730,8 @@ export default function TabletReservationsPage() {
             </div>
           </div>
 
-          {/* Note preview - 3 lignes max */}
-          <span className={cn("flex-1 text-gray-500 line-clamp-3 mr-4", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
+          {/* Note preview - 3 lignes max, occupe tout l'espace restant (cf. LIST_GRID) */}
+          <span className={cn("text-gray-500 line-clamp-3 mr-4", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
 
           {/* Table - Full Height - clic active l'assignation */}
           <div 
@@ -930,7 +940,7 @@ export default function TabletReservationsPage() {
 
         {/* Expanded details */}
         {isExpanded && (
-          <div className="bg-gray-50/50 px-4 py-4 ml-8 border-b border-gray-100">
+          <div className="col-span-full bg-gray-50/50 px-4 py-4 ml-8 border-b border-gray-100">
             <div className="grid grid-cols-3 gap-6">
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Contact</p>
