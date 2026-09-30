@@ -835,18 +835,19 @@ function ReservationEditForm({
       {/* Formulaire */}
       <div className="grid grid-cols-2 gap-6">
         {/* Date */}
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0">
           <label className="text-sm font-medium text-slate-700">Date</label>
+          {/* appearance-none + hauteur fixe : Safari iOS/iPadOS impose sinon un style natif (fond gris, largeur min, texte centré) qui déborde de la colonne */}
           <input
             type="date"
             value={formData.dateKey}
             onChange={(e) => updateField("dateKey", e.target.value)}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="block w-full min-w-0 h-10 appearance-none bg-white text-left text-slate-900 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:m-0"
           />
         </div>
 
         {/* Heure */}
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0">
           <label className="text-sm font-medium text-slate-700">Heure</label>
           <select
             value={formData.timeKey}
@@ -854,7 +855,7 @@ function ReservationEditForm({
               const timeKey = e.target.value;
               setFormData(prev => ({ ...prev, timeKey, service: serviceForTime(timeKey) }));
             }}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="block w-full min-w-0 h-10 bg-white px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {(TIME_SLOTS.includes(formData.timeKey) || !formData.timeKey
               ? TIME_SLOTS
