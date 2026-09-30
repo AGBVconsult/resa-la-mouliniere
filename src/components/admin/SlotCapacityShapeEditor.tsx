@@ -146,7 +146,6 @@ export function SlotCapacityShapeEditor({
   const [localBuckets, setLocalBuckets] = useState<CapacityBucketDto[]>(
     capacityShape?.buckets ?? []
   );
-  const [addSizeInput, setAddSizeInput] = useState("");
 
   const displayBuckets = useMemo(() => {
     const sizes = new Set<number>(DEFAULT_BUCKET_SIZES);
@@ -182,15 +181,6 @@ export function SlotCapacityShapeEditor({
       }
       return [...prev, { maxPartySize, quantity: clamped }];
     });
-  };
-
-  const handleAddSize = () => {
-    const size = parseInt(addSizeInput, 10);
-    if (!size || size < 1) return;
-    if (!localBuckets.some((b) => b.maxPartySize === size)) {
-      setLocalBuckets((prev) => [...prev, { maxPartySize: size, quantity: 0 }]);
-    }
-    setAddSizeInput("");
   };
 
   const handleToggleEnabled = (next: boolean) => {
@@ -260,8 +250,6 @@ export function SlotCapacityShapeEditor({
 
       {localEnabled && (
         <>
-          <p className={cn("text-[11px] text-slate-500", large && "lg:text-sm")}>{remainingCapacity} couverts restants</p>
-
           {/* Une colonne par taille de table, côte à côte (retour à la ligne si besoin). */}
           <div
             className={cn(
@@ -307,38 +295,12 @@ export function SlotCapacityShapeEditor({
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min={1}
-              placeholder="Taille"
-              value={addSizeInput}
-              onChange={(e) => setAddSizeInput(e.target.value)}
-              className={cn("w-20 px-2 py-1 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:outline-none", large && "lg:w-24 lg:py-1.5 lg:text-sm")}
-            />
-            <button
-              type="button"
-              onClick={handleAddSize}
-              disabled={!addSizeInput}
-              className={cn("text-xs text-emerald-600 hover:text-emerald-700 font-medium disabled:opacity-40", large && "lg:text-sm")}
-            >
-              + Ajouter une taille
-            </button>
-          </div>
-
-          <div
-            className={cn(
-              "text-xs font-medium",
-              large && "lg:text-sm",
-              exceedsRemaining ? "text-red-600" : "text-slate-600"
-            )}
-          >
-            {configuredSeatCapacity} / {remainingCapacity} couverts typés
-            {!exceedsRemaining && configuredSeatCapacity < remainingCapacity && (
-              <span className="text-slate-400"> · {remainingCapacity - configuredSeatCapacity} non affectés</span>
-            )}
-            {exceedsRemaining && <span> — dépasse les couverts restants</span>}
-          </div>
+          {/* Seul cas bloquant : plus de places en tables que de couverts restants. */}
+          {exceedsRemaining && (
+            <p className={cn("text-xs font-medium text-red-600", large && "lg:text-sm")}>
+              {configuredSeatCapacity} places en tables pour {remainingCapacity} couverts restants : réduisez le nombre de tables.
+            </p>
+          )}
         </>
       )}
 
