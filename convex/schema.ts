@@ -189,6 +189,9 @@ export default defineSchema({
     noshowAt: v.union(v.null(), v.number()),
     markedNoshowAt: v.optional(v.union(v.null(), v.number())),
     autoReleasedAt: v.optional(v.union(v.null(), v.number())),
+    // Première action du staff sur la réservation (statut, table, édition) :
+    // vaut prise de connaissance, retire le surlignage "prise pendant le service".
+    acknowledgedAt: v.optional(v.number()),
   })
     .index("by_restaurant_slotKey", ["restaurantId", "slotKey"])
     .index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"])

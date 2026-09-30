@@ -5,6 +5,8 @@
  * Fenêtre de service = [premier créneau ; dernier créneau + SERVICE_TAIL_MINUTES]
  * dans le fuseau du restaurant. Si les créneaux ne sont pas connus, on se rabat
  * sur des horaires par défaut.
+ *
+ * Dès que le staff a agi sur la réservation (acknowledgedAt), elle n'est plus signalée.
  */
 
 export const RESTAURANT_TIMEZONE = "Europe/Brussels";
@@ -38,11 +40,16 @@ function getLocalDateAndMinutes(timestamp: number, timeZone: string) {
 }
 
 export function isCreatedDuringService(
-  reservation: { createdAt?: number; dateKey: string; service: "lunch" | "dinner" },
+  reservation: {
+    createdAt?: number;
+    acknowledgedAt?: number;
+    dateKey: string;
+    service: "lunch" | "dinner";
+  },
   slotTimeKeys?: string[],
   timeZone: string = RESTAURANT_TIMEZONE
 ): boolean {
-  if (!reservation.createdAt) return false;
+  if (!reservation.createdAt || reservation.acknowledgedAt) return false;
 
   const created = getLocalDateAndMinutes(reservation.createdAt, timeZone);
   if (created.dateKey !== reservation.dateKey) return false;

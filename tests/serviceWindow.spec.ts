@@ -54,3 +54,19 @@ describe("isCreatedDuringService", () => {
     ).toBe(false);
   });
 });
+
+describe("isCreatedDuringService — prise de connaissance", () => {
+  it("n'est plus signalée après une action du staff", () => {
+    expect(
+      isCreatedDuringService(
+        {
+          createdAt: at("2026-09-30T10:45:00Z"),
+          acknowledgedAt: at("2026-09-30T10:50:00Z"),
+          dateKey: "2026-09-30",
+          service: "lunch",
+        },
+        ["12:00", "13:30"]
+      )
+    ).toBe(false);
+  });
+});

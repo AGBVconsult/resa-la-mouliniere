@@ -97,6 +97,7 @@ interface Reservation {
   isLateClient?: boolean;
   isSlowClient?: boolean;
   createdAt?: number;
+  acknowledgedAt?: number;
 }
 
 // Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
@@ -637,7 +638,8 @@ export default function TabletReservationsPage() {
     const isSelectedForAssignment = selectedForAssignment?._id === res._id;
     const isUnassigned = !res.primaryTableId && res.tableIds.length === 0;
     const isHighlighted = effectiveHighlightedId === res._id;
-    const isAddedDuringService = isCreatedDuringService(res, serviceSlotTimeKeys[res.service]);
+    // Un changement de statut optimiste vaut déjà prise de connaissance
+    const isAddedDuringService = !optimisticStatuses[res._id] && isCreatedDuringService(res, serviceSlotTimeKeys[res.service]);
 
     const handleRowClick = () => {
       // Ouvrir le ClientModal au clic sur une réservation
