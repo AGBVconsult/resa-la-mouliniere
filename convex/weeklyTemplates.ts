@@ -805,17 +805,15 @@ export const syncSlotsWithTemplate = mutation({
     let created = 0;
     let deleted = 0;
 
-    // Get all future slots for this day of week and service
-    const allSlots = await ctx.db
+    // Get future slots only (range on index), then keep this dayOfWeek and service
+    const upcomingSlots = await ctx.db
       .query("slots")
       .withIndex("by_restaurant_date_service", (q) =>
-        q.eq("restaurantId", restaurantId)
+        q.eq("restaurantId", restaurantId).gte("dateKey", todayKey)
       )
       .collect();
 
-    // Filter to future slots matching this dayOfWeek and service
-    const futureSlots = allSlots.filter((slot) => {
-      if (slot.dateKey < todayKey) return false;
+    const futureSlots = upcomingSlots.filter((slot) => {
       if (slot.service !== service) return false;
       const slotDate = new Date(slot.dateKey);
       return getISOWeekday(slotDate) === dayOfWeek;
@@ -823,9 +821,12 @@ export const syncSlotsWithTemplate = mutation({
 
     // Get reservations for these slots to check if they can be modified
     const slotKeys = futureSlots.map((s) => s.slotKey);
+    // Only future reservations can sit on future slots
     const reservations = await ctx.db
       .query("reservations")
-      .withIndex("by_restaurant_status", (q) => q.eq("restaurantId", restaurantId))
+      .withIndex("by_restaurant_date_service", (q) =>
+        q.eq("restaurantId", restaurantId).gte("dateKey", todayKey)
+      )
       .collect();
 
     const activeReservationsBySlot = new Map<string, number>();
@@ -837,17 +838,14 @@ export const syncSlotsWithTemplate = mutation({
 
     // Fetch slotOverrides to check if slots have period or manual overrides
     const slotKeysSet = new Set(slotKeys);
-    const [periodOverrides, manualOverrides] = await Promise.all([
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurantId).eq("origin", "period"))
-        .collect(),
-      ctx.db
-        .query("slotOverrides")
-        .withIndex("by_restaurant_origin", (q) => q.eq("restaurantId", restaurantId).eq("origin", "manual"))
-        .collect(),
-    ]);
-    
+    // Overrides from today up to the last existing future slot (only those can match)
+    const lastSlotDateKey = futureSlots.reduce(
+      (max, slot) => (slot.dateKey > max ? slot.dateKey : max),
+      todayKey
+    );
+    const { manual: manualOverrides, period: periodOverrides } =
+      await getSlotOverridesForDateRange(ctx, restaurantId, todayKey, lastSlotDateKey);
+
     const overriddenSlotKeys = new Set<string>();
     for (const override of periodOverrides) {
       if (slotKeysSet.has(override.slotKey)) {
