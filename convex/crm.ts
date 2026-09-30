@@ -4,6 +4,15 @@ import { v } from "convex/values";
 const CRM_VERSION = "v2.2";
 const SCORE_VERSION = "v1";
 const LEASE_DURATION_MS = 15 * 60 * 1000;
+// Local hour at which the CRM finalization runs. Must be after jobs.dailyFinalize
+// (03:00 UTC = 04:00 or 05:00 Brussels), which turns "seated" reservations into
+// "completed": otherwise those visits are never counted.
+const CRM_FINALIZE_HOUR = 6;
+// Recent dates are re-scanned every night so that reservations whose status was
+// finalized after their date was processed (late checkout, status correction...)
+// still end up in the ledger. Processing is idempotent per reservation.
+const RECONCILE_DAYS = 14;
+const MAX_RECONCILE_RANGE_DAYS = 31;
 
 type LedgerOutcome =
   | "completed"
@@ -225,6 +234,11 @@ async function finalizeWithCatchUp(ctx: any, timezone: string): Promise<void> {
   for (const dateKey of missingDates) {
     await finalizeClientsForDate(ctx, dateKey);
   }
+
+  const reconcileFrom = addDaysDateKey(yesterdayDateKey, -(RECONCILE_DAYS - 1));
+  for (let dateKey = reconcileFrom; dateKey <= yesterdayDateKey; dateKey = addDaysDateKey(dateKey, 1)) {
+    await processDateReservations(ctx, dateKey);
+  }
 }
 
 async function finalizeClientsForDate(ctx: any, dateKey: string): Promise<void> {
@@ -316,6 +330,9 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
 
   let processedReservations = 0;
   const touchedClients = new Set<string>();
+  // Ledger entries created during this run, per client. Only these are added to
+  // the client's totals, so re-processing a date never double counts.
+  const newEntriesByClient = new Map<string, { reservationId: string; outcome: LedgerOutcome; createdAt: number }[]>();
 
   for (const r of reservations) {
     if (!r.phone) continue;
@@ -389,6 +406,9 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
     });
 
     touchedClients.add(clientId);
+    const clientEntries = newEntriesByClient.get(clientId) ?? [];
+    clientEntries.push({ reservationId: r._id, outcome, createdAt });
+    newEntriesByClient.set(clientId, clientEntries);
     processedReservations++;
   }
 
@@ -400,12 +420,8 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
       continue;
     }
 
-    // Get only the ledger entries created TODAY for this client (new entries from this run)
-    const todayLedger = await ctx.db
-      .query("clientLedger")
-      .withIndex("by_clientId", (q: any) => q.eq("clientId", clientId))
-      .filter((q: any) => q.eq(q.field("dateKey"), dateKey))
-      .collect();
+    // Only the ledger entries created by this run
+    const newLedger = newEntriesByClient.get(clientId) ?? [];
 
     // Get all reservations for this client to calculate aggregations
     const allReservations = await ctx.db
@@ -424,13 +440,9 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
       lastVisitAt: client.lastVisitAt as number | undefined,
     };
 
-    // Get today's reservations for lastVisitAt calculation (use completedAt, not createdAt)
-    const todayReservationIds = new Set(todayLedger.map((e: any) => e.reservationId));
-    const todayReservations = allReservations.filter((r: any) => todayReservationIds.has(r._id));
-
-    // Increment with today's new entries only
-    for (const e of todayLedger) {
-      const reservation = todayReservations.find((r: any) => r._id === e.reservationId);
+    // Increment with this run's new entries only
+    for (const e of newLedger) {
+      const reservation = allReservations.find((r: any) => r._id === e.reservationId);
       
       if (e.outcome === "completed" || e.outcome === "completed_rehabilitated") {
         totals.totalVisits++;
@@ -587,13 +599,34 @@ export const nightlyCheck = internalMutation({
     const timezone = restaurant.timezone ?? "Europe/Brussels";
 
     const brusselsHour = getHourInTimezone(new Date(now), timezone);
-    if (brusselsHour !== 4) {
-      return { skipped: true, reason: `Hour is ${brusselsHour}, not 4`, timezone };
+    if (brusselsHour !== CRM_FINALIZE_HOUR) {
+      return { skipped: true, reason: `Hour is ${brusselsHour}, not ${CRM_FINALIZE_HOUR}`, timezone };
     }
 
     await finalizeWithCatchUp(ctx, timezone);
 
     return { ok: true };
+  },
+});
+
+// One-off backfill: re-scan a date range and count the finalized reservations that
+// are missing from the ledger. Idempotent.
+// npx convex run crm:reconcileRange '{"fromDateKey":"2026-09-01","toDateKey":"2026-09-29"}'
+export const reconcileRange = internalMutation({
+  args: { fromDateKey: v.string(), toDateKey: v.string() },
+  handler: async (ctx, args) => {
+    let reservations = 0;
+    let clients = 0;
+    let days = 0;
+    for (let dateKey = args.fromDateKey; dateKey <= args.toDateKey; dateKey = addDaysDateKey(dateKey, 1)) {
+      if (++days > MAX_RECONCILE_RANGE_DAYS) {
+        throw new Error(`Range too large (max ${MAX_RECONCILE_RANGE_DAYS} days per call)`);
+      }
+      const stats = await processDateReservations(ctx, dateKey);
+      reservations += stats.reservations;
+      clients += stats.clients;
+    }
+    return { reservations, clients };
   },
 });
 
