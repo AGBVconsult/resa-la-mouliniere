@@ -65,10 +65,10 @@ export function SlotCapacityShapeButton({
   const isDisabled = disabled && !isActive;
   const summary = isActive && capacityShape ? summarizeBuckets(capacityShape.buckets) : null;
   const label = needsReview
-    ? `Typologie à revoir (${summary})`
+    ? `Tables restantes à revoir (${summary})`
     : enabled
-      ? `Typologie active (${summary})`
-      : "Activer la typologie (tailles de table)";
+      ? `Tables restantes (${summary})`
+      : "Définir les tables restantes";
 
   return (
     <button
@@ -227,9 +227,9 @@ export function SlotCapacityShapeEditor({
 
   // ── Mode édition ──────────────────────────────────────────────
   return (
-    <div className="w-full mt-1 p-3 rounded-xl border border-emerald-200 bg-emerald-50/60 space-y-3">
+    <div className="w-full mt-1 px-2.5 py-3 rounded-xl border border-emerald-200 bg-emerald-50/60 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-700">Typologie restante</span>
+        <span className="text-xs font-semibold text-slate-700">Tables restantes</span>
         <div className="flex items-center gap-2">
           <Switch checked={localEnabled} onCheckedChange={handleToggleEnabled} className="scale-75" />
           <button type="button" onClick={handleCancel} aria-label="Fermer" className="p-1 hover:bg-slate-200 rounded-lg transition-colors">
@@ -242,8 +242,8 @@ export function SlotCapacityShapeEditor({
         <div className="flex items-center gap-2 text-[11px] text-amber-700 bg-amber-100 rounded-lg px-2 py-1.5">
           <AlertTriangle size={12} className="shrink-0" />
           <span>
-            Typologie à revoir : une décision récente est incompatible avec cette configuration.
-            L&apos;application de la typologie côté widget public est suspendue.
+            Tables restantes à revoir : une décision récente est incompatible avec cette configuration.
+            Leur application côté widget public est suspendue.
           </span>
         </div>
       )}
@@ -252,25 +252,36 @@ export function SlotCapacityShapeEditor({
         <>
           <p className="text-[11px] text-slate-500">{remainingCapacity} couverts restants</p>
 
-          <div className="space-y-1.5">
+          {/* Une colonne par taille de table, côte à côte (retour à la ligne si besoin). */}
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(4.25rem,1fr))] gap-x-2 gap-y-3">
             {displayBuckets.map((bucket) => (
-              <div key={bucket.maxPartySize} className="flex items-center justify-between gap-2">
-                <span className="text-xs text-slate-600 w-16">{bucket.maxPartySize} pers.</span>
-                <div className="flex items-center gap-2">
+              <div key={bucket.maxPartySize} className="flex flex-col items-center gap-1">
+                <span className="text-[11px] text-slate-600">{bucket.maxPartySize} pers.</span>
+                <div className="flex items-center">
                   <button
                     type="button"
                     onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity - 1)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-100 active:scale-95 transition-transform"
+                    disabled={bucket.quantity <= 0}
+                    aria-label={`Retirer une table de ${bucket.maxPartySize}`}
+                    className={cn(
+                      "flex h-[26px] w-[26px] items-center justify-center rounded-full border bg-white transition-colors touch-manipulation",
+                      bucket.quantity <= 0
+                        ? "border-slate-100 text-slate-300"
+                        : "border-slate-200 text-slate-600 active:bg-slate-100"
+                    )}
                   >
-                    <Minus size={14} />
+                    <Minus size={12} />
                   </button>
-                  <span className="w-6 text-center text-sm font-semibold">{bucket.quantity}</span>
+                  <span className="w-4 text-center text-sm font-semibold tabular-nums text-slate-900">
+                    {bucket.quantity}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity + 1)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-100 active:scale-95 transition-transform"
+                    aria-label={`Ajouter une table de ${bucket.maxPartySize}`}
+                    className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors active:bg-slate-100 touch-manipulation"
                   >
-                    <Plus size={14} />
+                    <Plus size={12} />
                   </button>
                 </div>
               </div>
