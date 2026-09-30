@@ -181,7 +181,8 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-[200]" onClick={onClose} />
-      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[800px] md:max-h-[90vh] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
+      {/* Largeur adaptée à l'écran (iPad mini paysage ≈ 1133 px) : pleine largeur moins 24 px de marge, 1100 px max. */}
+      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[calc(100vw-3rem)] md:max-w-[1100px] md:max-h-[calc(100dvh-3rem)] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5">
           <h2 className="text-lg font-bold text-slate-900 capitalize">{formattedDate}</h2>
