@@ -36,3 +36,5 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
 Every merge to `main` triggers a Vercel deployment whose Build Command is `npx convex deploy --cmd 'npm run build'`. This pushes the Convex functions/schema to the `accomplished-lemur-852` production deployment before building the Next.js app, so the backend and frontend stay in sync. The `CONVEX_DEPLOY_KEY` environment variable (Production scope, Vercel project settings) is required for this step.
+
+If a merge to `main` does not show up as a Production deployment in Vercel (missed GitHub webhook), redeploy from the Vercel dashboard (Deployments → latest Production → ⋯ → Redeploy, or Create Deployment on `main`) or merge any new commit to `main`.
