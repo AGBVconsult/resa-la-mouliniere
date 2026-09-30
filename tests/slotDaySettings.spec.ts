@@ -3,6 +3,8 @@ import {
   mergeSlotStates,
   toRemainingCovers,
   capacityFromRemainingCovers,
+  clampRemainingCovers,
+  coverLevel,
   type SlotState,
 } from "../src/lib/utils/slot-day-settings";
 
@@ -97,5 +99,31 @@ describe("couverts restants", () => {
     expect(capacityFromRemainingCovers(20, 4)).toBe(24);
     expect(capacityFromRemainingCovers(0, 4)).toBe(4);
     expect(capacityFromRemainingCovers(-3, 4)).toBe(4);
+  });
+});
+
+describe("clampRemainingCovers", () => {
+  it("borne entre 0 et le maximum", () => {
+    expect(clampRemainingCovers(-1)).toBe(0);
+    expect(clampRemainingCovers(12)).toBe(12);
+    expect(clampRemainingCovers(250)).toBe(100);
+    expect(clampRemainingCovers(NaN)).toBe(0);
+  });
+});
+
+describe("coverLevel", () => {
+  it("full à 0 restant", () => {
+    expect(coverLevel(0, 16)).toBe("full");
+    expect(coverLevel(0, 0)).toBe("full");
+  });
+
+  it("low quand ≤ 25 % restant sur un créneau entamé", () => {
+    expect(coverLevel(4, 12)).toBe("low");
+    expect(coverLevel(2, 14)).toBe("low");
+  });
+
+  it("ok sinon", () => {
+    expect(coverLevel(12, 4)).toBe("ok");
+    expect(coverLevel(2, 0)).toBe("ok");
   });
 });

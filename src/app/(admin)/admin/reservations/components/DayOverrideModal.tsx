@@ -17,6 +17,7 @@ import {
   capacityFromRemainingCovers,
   type SlotState,
 } from "@/lib/utils/slot-day-settings";
+import { CoverStepper } from "@/components/admin/CoverStepper";
 import { SlotCapacityShapeEditor, type CapacityShapeSummaryDto } from "@/components/admin/SlotCapacityShapeEditor";
 
 type DaySlotState = SlotState<Id<"slots">>;
@@ -403,38 +404,33 @@ function ServiceCard({
                   slot.isOpen ? "bg-white border" : "bg-gray-100 border border-gray-200"
                 )}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   {/* Time */}
-                  <div className="flex items-center gap-1.5 text-gray-600 w-16">
+                  <div className="flex h-11 items-center gap-1.5 text-gray-600 w-16">
                     <Clock className="h-4 w-4" />
                     <span className="font-mono text-sm">{slot.timeKey}</span>
                   </div>
 
                   {/* Capacity */}
-                  <div className="flex items-center gap-1.5 flex-1">
-                    <Users className="h-4 w-4 text-gray-400" />
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
+                  <div className="flex-1 min-w-0">
+                    <CoverStepper
                       value={toRemainingCovers(slot.capacity, reservedCovers)}
-                      onChange={(e) =>
-                        onCapacityChange(
-                          slot._id,
-                          capacityFromRemainingCovers(parseInt(e.target.value) || 0, reservedCovers)
-                        )
+                      reservedCovers={reservedCovers}
+                      onChange={(remaining) =>
+                        onCapacityChange(slot._id, capacityFromRemainingCovers(remaining, reservedCovers))
                       }
-                      title={`Couverts restants (${reservedCovers} réservé${reservedCovers > 1 ? "s" : ""} sur ${slot.capacity})`}
-                      className="w-16 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                       disabled={!slot.isOpen}
+                      isModified={slot.capacity !== slot.originalCapacity}
                     />
                   </div>
 
                   {/* Toggle */}
-                  <Switch
-                    checked={slot.isOpen}
-                    onCheckedChange={(open) => onSlotToggle(slot._id, open)}
-                  />
+                  <div className="flex h-11 items-center">
+                    <Switch
+                      checked={slot.isOpen}
+                      onCheckedChange={(open) => onSlotToggle(slot._id, open)}
+                    />
+                  </div>
                 </div>
 
                 {rawSlot && (

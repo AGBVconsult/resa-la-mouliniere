@@ -71,3 +71,26 @@ export function toRemainingCovers(capacity: number, reservedCovers: number): num
 export function capacityFromRemainingCovers(remaining: number, reservedCovers: number): number {
   return Math.max(0, remaining) + reservedCovers;
 }
+
+/** Borne haute de saisie des couverts restants (identique à l'ancien champ texte). */
+export const MAX_REMAINING_COVERS = 100;
+
+export function clampRemainingCovers(value: number, max = MAX_REMAINING_COVERS): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(max, Math.max(0, Math.round(value)));
+}
+
+export type CoverLevel = "full" | "low" | "ok";
+
+/**
+ * Niveau de remplissage d'un créneau pour la couleur du stepper :
+ * - full : plus aucun couvert disponible ;
+ * - low  : créneau déjà entamé et ≤ 25 % de la capacité restante ;
+ * - ok   : sinon.
+ */
+export function coverLevel(remaining: number, reservedCovers: number): CoverLevel {
+  if (remaining <= 0) return "full";
+  const capacity = remaining + reservedCovers;
+  if (reservedCovers > 0 && remaining / capacity <= 0.25) return "low";
+  return "ok";
+}
