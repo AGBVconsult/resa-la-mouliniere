@@ -84,12 +84,13 @@ describe("isValidStatusTransition", () => {
 });
 
 describe("getValidTransitions", () => {
-  test("pending has 3 valid transitions", () => {
+  test("pending has 4 valid transitions", () => {
     const transitions = getValidTransitions("pending");
     expect(transitions).toContain("confirmed");
     expect(transitions).toContain("refused");
     expect(transitions).toContain("cancelled");
-    expect(transitions).toHaveLength(3);
+    expect(transitions).toContain("incident");
+    expect(transitions).toHaveLength(4);
   });
 
   test("confirmed has 3 valid transitions", () => {
