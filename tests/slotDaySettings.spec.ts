@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { mergeSlotStates, type SlotState } from "../src/lib/utils/slot-day-settings";
+import {
+  mergeSlotStates,
+  toRemainingCovers,
+  capacityFromRemainingCovers,
+  type SlotState,
+} from "../src/lib/utils/slot-day-settings";
 
 const server = (id: string, timeKey: string, isOpen: boolean, capacity: number) => ({
   _id: id,
@@ -74,5 +79,23 @@ describe("mergeSlotStates", () => {
       originalIsOpen: false,
       originalCapacity: 20,
     });
+  });
+});
+
+describe("couverts restants", () => {
+  it("affiche la capacité moins les couverts réservés", () => {
+    expect(toRemainingCovers(16, 4)).toBe(12);
+    expect(toRemainingCovers(16, 0)).toBe(16);
+  });
+
+  it("ne descend jamais sous zéro en cas de surréservation", () => {
+    expect(toRemainingCovers(8, 10)).toBe(0);
+  });
+
+  it("reconvertit la saisie en capacité totale", () => {
+    expect(capacityFromRemainingCovers(12, 4)).toBe(16);
+    expect(capacityFromRemainingCovers(20, 4)).toBe(24);
+    expect(capacityFromRemainingCovers(0, 4)).toBe(4);
+    expect(capacityFromRemainingCovers(-3, 4)).toBe(4);
   });
 });

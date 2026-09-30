@@ -11,7 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { mergeSlotStates, type SlotState } from "@/lib/utils/slot-day-settings";
+import {
+  mergeSlotStates,
+  toRemainingCovers,
+  capacityFromRemainingCovers,
+  type SlotState,
+} from "@/lib/utils/slot-day-settings";
 import { SlotCapacityShapeEditor, type CapacityShapeSummaryDto } from "@/components/admin/SlotCapacityShapeEditor";
 
 type DaySlotState = SlotState<Id<"slots">>;
@@ -271,6 +276,7 @@ export function DayOverrideModal({ dateKey, onClose }: DayOverrideModalProps) {
 interface RawSlot {
   _id: Id<"slots">;
   remainingCapacity: number;
+  reservedCovers: number;
   capacityShape: CapacityShapeSummaryDto;
 }
 
@@ -386,6 +392,9 @@ function ServiceCard({
         ) : (
           slots.map((slot) => {
             const rawSlot = rawSlotById.get(slot._id);
+            // Affiche les couverts encore disponibles (capacité - réservés) ;
+            // la saisie est reconvertie en capacité totale avant enregistrement.
+            const reservedCovers = rawSlot?.reservedCovers ?? 0;
             return (
               <div
                 key={slot._id}
@@ -408,8 +417,14 @@ function ServiceCard({
                       type="number"
                       min={0}
                       max={100}
-                      value={slot.capacity}
-                      onChange={(e) => onCapacityChange(slot._id, parseInt(e.target.value) || 0)}
+                      value={toRemainingCovers(slot.capacity, reservedCovers)}
+                      onChange={(e) =>
+                        onCapacityChange(
+                          slot._id,
+                          capacityFromRemainingCovers(parseInt(e.target.value) || 0, reservedCovers)
+                        )
+                      }
+                      title={`Couverts restants (${reservedCovers} réservé${reservedCovers > 1 ? "s" : ""} sur ${slot.capacity})`}
                       className="w-16 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                       disabled={!slot.isOpen}
                     />

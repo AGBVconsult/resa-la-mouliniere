@@ -9,7 +9,7 @@ import { v } from "convex/values";
 import { Errors } from "./lib/errors";
 import { requireRole } from "./lib/rbac";
 import { getSlotOverridesForDateRange } from "./lib/slotOverrides";
-import { computeRemainingCapacityBySlotKey } from "./availability";
+import { computeRemainingCapacityBySlotKey, computeReservedCoversBySlotKey } from "./availability";
 import {
   getShapesForDate,
   getAllocationsForShape,
@@ -630,6 +630,7 @@ export const listByDate = query({
       slots: effectiveSlots,
       reservations,
     });
+    const reservedBySlotKey = computeReservedCoversBySlotKey(reservations);
 
     // Batch-load capacity shapes for the date — never one query per slot
     // (PRD-013 §21). Shapes are exceptional, so per-shape allocation lookups
@@ -646,6 +647,7 @@ export const listByDate = query({
       ...s,
       effectiveOpen: computeEffectiveOpen(s.isOpen, s.capacity),
       remainingCapacity: remainingBySlotKey.get(s.slotKey) ?? s.capacity,
+      reservedCovers: reservedBySlotKey.get(s.slotKey) ?? 0,
       capacityShape: capacityShapeBySlotKey.get(s.slotKey) ?? null,
     });
 
