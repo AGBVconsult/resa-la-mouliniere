@@ -380,7 +380,7 @@ function ServiceSection({
               <div
                 key={slot._id}
                 className={cn(
-                  "flex flex-col gap-1 px-3 py-2 transition-colors",
+                  "flex flex-col gap-1 px-3 py-1 transition-colors",
                   slot.isOpen ? "bg-transparent" : "bg-slate-100/50"
                 )}
               >
