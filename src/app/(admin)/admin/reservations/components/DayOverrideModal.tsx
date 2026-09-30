@@ -18,7 +18,11 @@ import {
   type SlotState,
 } from "@/lib/utils/slot-day-settings";
 import { CoverStepper } from "@/components/admin/CoverStepper";
-import { SlotCapacityShapeEditor, type CapacityShapeSummaryDto } from "@/components/admin/SlotCapacityShapeEditor";
+import {
+  SlotCapacityShapeButton,
+  SlotCapacityShapeEditor,
+  type CapacityShapeSummaryDto,
+} from "@/components/admin/SlotCapacityShapeEditor";
 
 type DaySlotState = SlotState<Id<"slots">>;
 
@@ -319,6 +323,8 @@ function ServiceCard({
   onConfirmAddSlot,
 }: ServiceCardProps) {
   const rawSlotById = new Map(rawSlots.map((s) => [s._id, s]));
+  // Un seul éditeur de typologie ouvert à la fois par service.
+  const [openShapeSlotId, setOpenShapeSlotId] = useState<Id<"slots"> | null>(null);
   return (
     <div className="border rounded-xl overflow-hidden">
       {/* Service Header */}
@@ -404,7 +410,7 @@ function ServiceCard({
                   slot.isOpen ? "bg-white border" : "bg-gray-100 border border-gray-200"
                 )}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2">
                   {/* Time */}
                   <div className="flex h-11 items-center gap-1.5 text-gray-600 w-16">
                     <Clock className="h-4 w-4" />
@@ -412,7 +418,7 @@ function ServiceCard({
                   </div>
 
                   {/* Capacity */}
-                  <div className="flex-1 min-w-0">
+                  <div className="shrink-0">
                     <CoverStepper
                       value={toRemainingCovers(slot.capacity, reservedCovers)}
                       reservedCovers={reservedCovers}
@@ -426,6 +432,18 @@ function ServiceCard({
                   </div>
 
                   {/* Toggle */}
+                  <div className="flex h-11 flex-1 min-w-0 items-center justify-end">
+                    {rawSlot && (
+                      <SlotCapacityShapeButton
+                        capacityShape={rawSlot.capacityShape}
+                        isOpen={openShapeSlotId === slot._id}
+                        onClick={() =>
+                          setOpenShapeSlotId((current) => (current === slot._id ? null : slot._id))
+                        }
+                        disabled={!slot.isOpen}
+                      />
+                    )}
+                  </div>
                   <div className="flex h-11 items-center">
                     <Switch
                       checked={slot.isOpen}
@@ -434,12 +452,12 @@ function ServiceCard({
                   </div>
                 </div>
 
-                {rawSlot && (
+                {rawSlot && openShapeSlotId === slot._id && (
                   <SlotCapacityShapeEditor
                     slotId={slot._id}
                     remainingCapacity={rawSlot.remainingCapacity}
                     capacityShape={rawSlot.capacityShape}
-                    disabled={!slot.isOpen}
+                    onClose={() => setOpenShapeSlotId(null)}
                   />
                 )}
               </div>

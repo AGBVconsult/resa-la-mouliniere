@@ -6,7 +6,7 @@
  * Partagé entre la tablette (`admin-tablette/DaySettingsPopup`) et le desktop
  * (`admin/reservations/DayOverrideModal`).
  *
- * - boutons −/+ ronds (zone tactile de 44 px), pas de 1 ;
+ * - boutons −/+ ronds (zone tactile de 36×44 px), pas de 1 ;
  * - appui long = répétition accélérée.
  */
 
@@ -122,7 +122,7 @@ export function CoverStepper({
       <button
         {...stepButtonProps(delta)}
         aria-label={delta < 0 ? "Retirer un couvert" : "Ajouter un couvert"}
-        className="group flex h-11 w-11 shrink-0 items-center justify-center touch-manipulation focus:outline-none"
+        className="group flex h-11 w-9 shrink-0 items-center justify-center touch-manipulation focus:outline-none"
       >
         <span
           className={cn(
