@@ -442,6 +442,7 @@ function buildReservationAdmin(doc: {
   seatedAt: number | null;
   completedAt: number | null;
   noshowAt: number | null;
+  acknowledgedAt?: number;
 }, totalVisits: number = 0, clientId?: Id<"clients">, clientBehavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } = { hasNotes: false, isLate: false, isSlow: false }) {
   return {
     _id: doc._id,
@@ -474,6 +475,7 @@ function buildReservationAdmin(doc: {
     seatedAt: doc.seatedAt,
     completedAt: doc.completedAt,
     noshowAt: doc.noshowAt,
+    acknowledgedAt: doc.acknowledgedAt,
     totalVisits,
     hasClientNotes: clientBehavior.hasNotes,
     isLateClient: clientBehavior.isLate,
@@ -800,6 +802,7 @@ export const updateReservation = mutation({
     const patch: Record<string, unknown> = {
       updatedAt: now,
       version: reservation.version + 1,
+      acknowledgedAt: reservation.acknowledgedAt ?? now,
     };
 
     // Status transition
@@ -1066,6 +1069,7 @@ export const updateReservationFull = mutation({
     const patch: Record<string, unknown> = {
       updatedAt: now,
       version: reservation.version + 1,
+      acknowledgedAt: reservation.acknowledgedAt ?? now,
     };
 
     // Update fields if provided
@@ -1193,6 +1197,7 @@ export const cancelByClient = mutation({
       cancelledAt: now,
       updatedAt: now,
       version: newVersion,
+      acknowledgedAt: reservation.acknowledgedAt ?? now,
     });
 
     // PRD-013 §27 — libère l'allocation de typologie (restitue le bucket).

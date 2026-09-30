@@ -387,6 +387,7 @@ export interface Reservation {
   version: number;
   totalVisits?: number;
   createdAt?: number;
+  acknowledgedAt?: number;
 }
 
 interface ReservationRowProps {

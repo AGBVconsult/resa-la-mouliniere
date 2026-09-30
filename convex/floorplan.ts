@@ -269,6 +269,7 @@ export const assign = mutation({
       primaryTableId: primaryTableId ?? tableIds[0], // Fallback to first table if not specified
       version: newVersion,
       updatedAt: now,
+      acknowledgedAt: reservation.acknowledgedAt ?? now,
     });
 
     // 8. Log event
@@ -342,6 +343,7 @@ export const unassign = mutation({
       status: "confirmed",
       version: newVersion,
       updatedAt: now,
+      acknowledgedAt: reservation.acknowledgedAt ?? now,
     });
 
     // 4. Log event
@@ -499,6 +501,7 @@ export const swap = mutation({
       primaryTableId: primaryTableIdB ?? tableIdsB[0],
       version: newVersionA,
       updatedAt: now,
+      acknowledgedAt: resaA.acknowledgedAt ?? now,
     });
 
     await ctx.db.patch(reservationB.id, {
@@ -506,6 +509,7 @@ export const swap = mutation({
       primaryTableId: primaryTableIdA ?? tableIdsA[0],
       version: newVersionB,
       updatedAt: now,
+      acknowledgedAt: resaB.acknowledgedAt ?? now,
     });
 
     // 5. Log events

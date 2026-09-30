@@ -624,6 +624,7 @@ export const assignToReservation = mutation({
       tableIds,
       updatedAt: Date.now(),
       version: reservation.version + 1,
+      acknowledgedAt: reservation.acknowledgedAt ?? Date.now(),
     });
 
     // Get table names for logging

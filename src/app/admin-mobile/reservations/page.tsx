@@ -52,6 +52,7 @@ interface Reservation {
   version: number;
   totalVisits?: number;
   createdAt?: number;
+  acknowledgedAt?: number;
 }
 
 // Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
