@@ -13,7 +13,7 @@
  * garanti côté serveur par `convex/lib/capacityShape.ts`).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -37,38 +37,97 @@ export type CapacityShapeSummaryDto = {
 // valeurs, ce ne sont que des raccourcis UI.
 const DEFAULT_BUCKET_SIZES = [2, 4, 6, 8];
 
-interface SlotCapacityShapeEditorProps {
-  slotId: Id<"slots">;
-  remainingCapacity: number;
+interface SlotCapacityShapeButtonProps {
   capacityShape: CapacityShapeSummaryDto;
+  /** true si l'éditeur est ouvert sous la ligne du créneau. */
+  isOpen: boolean;
+  onClick: () => void;
   /** true si le créneau est fermé — la typologie ne peut alors pas être activée. */
   disabled?: boolean;
 }
 
+/**
+ * Bouton affiché sur la ligne du créneau : active / ouvre la typologie.
+ * - désactivée (§34) : bouton neutre « Typologie » ;
+ * - active (§38) : résumé compact « 1×4 · 2×2 » ;
+ * - à revoir (§39) : résumé en orange avec alerte.
+ */
+export function SlotCapacityShapeButton({
+  capacityShape,
+  isOpen,
+  onClick,
+  disabled,
+}: SlotCapacityShapeButtonProps) {
+  const needsReview = capacityShape?.needsReview ?? false;
+  const enabled = capacityShape?.enabled ?? false;
+  const isActive = enabled || needsReview;
+  // Une typologie existante reste consultable même sur un créneau fermé.
+  const isDisabled = disabled && !isActive;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isDisabled}
+      aria-expanded={isOpen}
+      title={
+        needsReview
+          ? "Typologie restante à revoir"
+          : enabled
+            ? "Modifier la typologie restante"
+            : "Activer la typologie restante (tailles de table)"
+      }
+      className={cn(
+        "flex h-8 min-w-0 max-w-[7.5rem] items-center gap-1 rounded-full border px-2.5 text-[11px] font-medium transition-colors touch-manipulation",
+        needsReview
+          ? "border-amber-200 bg-amber-50 text-amber-700"
+          : enabled
+            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            : "border-slate-200 bg-white text-slate-500",
+        isOpen && "ring-2 ring-emerald-500/40",
+        isDisabled && "opacity-40 cursor-not-allowed"
+      )}
+    >
+      {needsReview && <AlertTriangle size={12} className="shrink-0" />}
+      <span className="truncate">
+        {isActive && capacityShape ? summarizeBuckets(capacityShape.buckets) : "Typologie"}
+      </span>
+    </button>
+  );
+}
+
+interface SlotCapacityShapeEditorProps {
+  slotId: Id<"slots">;
+  remainingCapacity: number;
+  capacityShape: CapacityShapeSummaryDto;
+  /** Ferme l'éditeur (annulation ou après enregistrement). */
+  onClose: () => void;
+}
+
+/**
+ * Éditeur de typologie, affiché sous la ligne du créneau quand le bouton
+ * `SlotCapacityShapeButton` est activé. Monté à l'ouverture : l'état local
+ * part toujours de la dernière valeur serveur.
+ */
 export function SlotCapacityShapeEditor({
   slotId,
   remainingCapacity,
   capacityShape,
-  disabled,
+  onClose,
 }: SlotCapacityShapeEditorProps) {
   const configure = useMutation(api.slotCapacityShapes.configure);
   const disableShape = useMutation(api.slotCapacityShapes.disable);
 
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [localEnabled, setLocalEnabled] = useState(capacityShape?.enabled ?? false);
+  // Ouvrir l'éditeur depuis le bouton = activer la typologie (sauf typologie
+  // « à revoir » explicitement désactivée, qu'on laisse telle quelle).
+  const [localEnabled, setLocalEnabled] = useState(
+    capacityShape?.needsReview ? capacityShape.enabled : true
+  );
   const [localBuckets, setLocalBuckets] = useState<CapacityBucketDto[]>(
     capacityShape?.buckets ?? []
   );
   const [addSizeInput, setAddSizeInput] = useState("");
-
-  // Resync from server only when not actively editing (avoid clobbering
-  // in-progress edits on every reactive query update).
-  useEffect(() => {
-    if (isExpanded) return;
-    setLocalEnabled(capacityShape?.enabled ?? false);
-    setLocalBuckets(capacityShape?.buckets ?? []);
-  }, [capacityShape, isExpanded]);
 
   const displayBuckets = useMemo(() => {
     const sizes = new Set<number>(DEFAULT_BUCKET_SIZES);
@@ -117,7 +176,8 @@ export function SlotCapacityShapeEditor({
 
   const handleToggleEnabled = (next: boolean) => {
     setLocalEnabled(next);
-    setIsExpanded(next);
+    // Rien à désactiver côté serveur : on referme simplement.
+    if (!next && !capacityShape?.enabled && !capacityShape?.needsReview) onClose();
   };
 
   const handleSave = async () => {
@@ -132,7 +192,7 @@ export function SlotCapacityShapeEditor({
           buckets: localBuckets.filter((b) => b.quantity > 0 || b.maxPartySize),
         });
       }
-      setIsExpanded(false);
+      onClose();
     } catch (error) {
       console.error("Error saving capacity shape:", error);
     } finally {
@@ -141,15 +201,14 @@ export function SlotCapacityShapeEditor({
   };
 
   const handleCancel = () => {
-    setLocalEnabled(capacityShape?.enabled ?? false);
-    setLocalBuckets(capacityShape?.buckets ?? []);
-    setIsExpanded(false);
+    onClose();
   };
 
   const handleDisableFromReview = async () => {
     setIsSaving(true);
     try {
       await disableShape({ slotId });
+      onClose();
     } catch (error) {
       console.error("Error disabling capacity shape:", error);
     } finally {
@@ -157,58 +216,14 @@ export function SlotCapacityShapeEditor({
     }
   };
 
-  // §34 — Affichage compact quand désactivée : ne rien surcharger visuellement.
-  if (!isExpanded && !capacityShape?.needsReview && !capacityShape?.enabled) {
-    return (
-      <button
-        type="button"
-        onClick={() => !disabled && setIsExpanded(true)}
-        disabled={disabled}
-        className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-        title="Typologie restante"
-      >
-        Typologie
-      </button>
-    );
-  }
-
-  // §39 — État needsReview : visible mais l'enforcement public est suspendu.
-  if (!isExpanded && capacityShape?.needsReview) {
-    return (
-      <div className="flex items-center gap-1.5 shrink-0">
-        <button
-          type="button"
-          onClick={() => setIsExpanded(true)}
-          className="flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:text-amber-700"
-        >
-          <AlertTriangle size={12} />
-          À revoir · {summarizeBuckets(capacityShape.buckets)}
-        </button>
-      </div>
-    );
-  }
-
-  // §38 — Résumé compact quand active.
-  if (!isExpanded && capacityShape?.enabled) {
-    return (
-      <button
-        type="button"
-        onClick={() => setIsExpanded(true)}
-        className="text-[11px] font-medium text-emerald-600 hover:text-emerald-700 shrink-0"
-      >
-        {summarizeBuckets(capacityShape.buckets)}
-      </button>
-    );
-  }
-
   // ── Mode édition ──────────────────────────────────────────────
   return (
-    <div className="w-full mt-2 p-3 rounded-xl border border-emerald-200 bg-emerald-50/60 space-y-3">
+    <div className="w-full mt-1 p-3 rounded-xl border border-emerald-200 bg-emerald-50/60 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-slate-700">Typologie restante</span>
         <div className="flex items-center gap-2">
           <Switch checked={localEnabled} onCheckedChange={handleToggleEnabled} className="scale-75" />
-          <button onClick={handleCancel} className="p-1 hover:bg-slate-200 rounded-lg transition-colors">
+          <button type="button" onClick={handleCancel} aria-label="Fermer" className="p-1 hover:bg-slate-200 rounded-lg transition-colors">
             <X size={14} className="text-slate-500" />
           </button>
         </div>
