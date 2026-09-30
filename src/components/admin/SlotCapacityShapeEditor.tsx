@@ -272,7 +272,7 @@ export function SlotCapacityShapeEditor({
             {displayBuckets.map((bucket) => (
               <div key={bucket.maxPartySize} className="flex flex-col items-center gap-1">
                 <span className={cn("text-[11px] text-slate-600", large && "lg:text-sm")}>{bucket.maxPartySize} pers.</span>
-                <div className="flex items-center">
+                <div className={cn("flex items-center", large && "lg:gap-1.5")}>
                   <button
                     type="button"
                     onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity - 1)}
@@ -280,7 +280,7 @@ export function SlotCapacityShapeEditor({
                     aria-label={`Retirer une table de ${bucket.maxPartySize}`}
                     className={cn(
                       "flex h-[26px] w-[26px] items-center justify-center rounded-full border bg-white transition-colors touch-manipulation",
-                      large && "lg:h-9 lg:w-9",
+                      large && "lg:h-[30px] lg:w-[30px]",
                       bucket.quantity <= 0
                         ? "border-slate-100 text-slate-300"
                         : "border-slate-200 text-slate-600 active:bg-slate-100"
@@ -288,7 +288,7 @@ export function SlotCapacityShapeEditor({
                   >
                     <Minus size={12} className={cn(large && "lg:h-4 lg:w-4")} />
                   </button>
-                  <span className={cn("w-4 text-center text-sm font-semibold tabular-nums text-slate-900", large && "lg:w-7 lg:text-base")}>
+                  <span className={cn("w-4 text-center text-sm font-semibold tabular-nums text-slate-900", large && "lg:w-6 lg:text-base")}>
                     {bucket.quantity}
                   </span>
                   <button
@@ -297,7 +297,7 @@ export function SlotCapacityShapeEditor({
                     aria-label={`Ajouter une table de ${bucket.maxPartySize}`}
                     className={cn(
                       "flex h-[26px] w-[26px] items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors active:bg-slate-100 touch-manipulation",
-                      large && "lg:h-9 lg:w-9"
+                      large && "lg:h-[30px] lg:w-[30px]"
                     )}
                   >
                     <Plus size={12} className={cn(large && "lg:h-4 lg:w-4")} />
