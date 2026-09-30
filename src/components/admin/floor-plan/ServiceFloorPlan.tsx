@@ -160,11 +160,12 @@ export function ServiceFloorPlan({
     const el = tabletContainerRef.current;
     if (!el) return;
 
-    const PADDING = 16; // = p-2 du conteneur (8px de chaque côté)
     const compute = () => {
-      const rect = el.getBoundingClientRect();
-      const availableW = rect.width - PADDING;
-      const availableH = rect.height - PADDING;
+      // Espace réellement disponible = boîte de contenu (padding du conteneur déduit,
+      // dont la réserve en haut pour le switch Salle/Terrasse)
+      const cs = getComputedStyle(el);
+      const availableW = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const availableH = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
       if (availableW > 0 && availableH > 0 && referenceLayout.width > 0 && referenceLayout.height > 0) {
         const scaleX = availableW / referenceLayout.width;
         const scaleY = availableH / referenceLayout.height;
@@ -582,7 +583,7 @@ export function ServiceFloorPlan({
 
   if (hideHeader) {
     return (
-      <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center p-2">
+      <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center pt-16 pb-6 px-6">
         {/* Switch de zone — pilule, aligné à droite */}
         <div className="absolute top-3 right-3 z-30 flex items-center gap-1 bg-white/90 backdrop-blur-md rounded-full p-1 shadow-lg border border-white/40">
           <button
