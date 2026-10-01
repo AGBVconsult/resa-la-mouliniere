@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -80,6 +80,27 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
   );
 
   const hasChanges = changeCount > 0;
+
+  // Barre flottante : elle doit se superposer au contenu, pas le pousser.
+  // À son apparition, on fige la hauteur du modal puis on ajoute de la marge
+  // basse : la marge sert uniquement à pouvoir faire défiler les derniers
+  // créneaux au-dessus de la barre, sans agrandir le modal.
+  // (Style appliqué directement : globals.css force `p-6` en !important.)
+  const modalRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isLoaded = !!slotsData;
+  useLayoutEffect(() => {
+    const modal = modalRef.current;
+    const scroll = scrollRef.current;
+    if (!modal || !scroll) return;
+    if (hasChanges) {
+      modal.style.height = `${modal.offsetHeight}px`;
+      scroll.style.paddingBottom = "7rem";
+    } else {
+      modal.style.height = "";
+      scroll.style.paddingBottom = "1.5rem";
+    }
+  }, [hasChanges, isLoaded]);
 
   const handleServiceToggle = (service: "lunch" | "dinner", open: boolean) => {
     if (service === "lunch") {
@@ -176,7 +197,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
     <>
       <div className="fixed inset-0 bg-black/40 z-[200]" onClick={onClose} />
       {/* Largeur adaptée à l'écran (iPad mini paysage ≈ 1133 px) : pleine largeur moins 24 px de marge, 1100 px max. */}
-      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[calc(100vw-3rem)] md:max-w-[1100px] md:max-h-[calc(100dvh-3rem)] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
+      <div ref={modalRef} className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[calc(100vw-3rem)] md:max-w-[1100px] md:max-h-[calc(100dvh-3rem)] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5">
           <h2 className="text-lg font-bold text-slate-900 capitalize">{formattedDate}</h2>
@@ -189,12 +210,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
         </div>
 
         {/* Content */}
-        <div
-          className="flex-1 overflow-y-auto px-6 pt-6 space-y-6"
-          // Place réservée sous la liste pour la barre flottante (style inline :
-          // globals.css force `p-6` en !important).
-          style={{ paddingBottom: hasChanges ? "7rem" : "1.5rem" }}
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pt-6 space-y-6">
           {/* Services */}
           <div className="grid grid-cols-2 gap-4">
             <ServiceSection
