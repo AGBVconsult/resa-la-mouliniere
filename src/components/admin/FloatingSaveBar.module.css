@@ -7,9 +7,9 @@
 .bar {
   isolation: isolate;
   /* Matériau : verre clair, flou + saturation de ce qui passe dessous */
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.28) 100%);
-  -webkit-backdrop-filter: blur(14px) saturate(190%) brightness(1.05);
-  backdrop-filter: blur(14px) saturate(190%) brightness(1.05);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.36) 0%, rgba(255, 255, 255, 0.16) 100%);
+  -webkit-backdrop-filter: blur(10px) saturate(190%) brightness(1.05);
+  backdrop-filter: blur(10px) saturate(190%) brightness(1.05);
   border: 1px solid rgba(255, 255, 255, 0.75);
   box-shadow:
     0 16px 40px -12px rgba(15, 23, 42, 0.35),
