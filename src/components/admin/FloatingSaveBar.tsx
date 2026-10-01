@@ -3,6 +3,7 @@
 /**
  * Barre « Annuler / Enregistrer » flottante, centrée en bas d'un conteneur
  * positionné (modal). Visible uniquement quand il y a des modifications.
+ * Annuler ferme le modal sans enregistrer.
  */
 
 import { Loader2 } from "lucide-react";

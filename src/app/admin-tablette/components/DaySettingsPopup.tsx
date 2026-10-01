@@ -79,13 +79,6 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
     [lunchSlots, dinnerSlots]
   );
 
-  // Annuler = abandonner les modifications locales (la barre disparaît).
-  const handleDiscard = () => {
-    const reset = (s: DaySlotState) => ({ ...s, isOpen: s.originalIsOpen, capacity: s.originalCapacity });
-    setLunchSlots((prev) => prev.map(reset));
-    setDinnerSlots((prev) => prev.map(reset));
-  };
-
   const hasChanges = changeCount > 0;
 
   const handleServiceToggle = (service: "lunch" | "dinner", open: boolean) => {
@@ -249,7 +242,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
           visible={hasChanges}
           changeCount={changeCount}
           isSaving={isSaving}
-          onCancel={handleDiscard}
+          onCancel={onClose}
           onSave={handleSave}
         />
       </div>
