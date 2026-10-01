@@ -69,6 +69,8 @@ const CLIENT_STATUS_CONFIG: Record<string, { label: string; icon: typeof Star; c
 export function ClientModal({ clientId, currentReservationId, onClose }: ClientModalProps) {
   const [activeTab, setActiveTab] = useState<"reservation" | "history" | "messages">("reservation");
   const [newNote, setNewNote] = useState("");
+  const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<string | null>(null);
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
   const [noteType, setNoteType] = useState<"info" | "preference" | "incident" | "alert">("info");
   const [isSaving, setIsSaving] = useState(false);
   
@@ -103,6 +105,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   const client = useQuery(api.clients.get, { clientId });
   const addNote = useMutation(api.clients.addNote);
   const deleteNote = useMutation(api.clients.deleteNote);
+  const { toast } = useToast();
   const updateReservation = useMutation(api.admin.updateReservationFull);
   const updateClient = useMutation(api.clients.update);
 
@@ -157,10 +160,17 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   };
 
   const handleDeleteNote = async (noteId: string) => {
-    await deleteNote({ clientId, noteId });
+    setDeletingNoteId(noteId);
+    try {
+      await deleteNote({ clientId, noteId });
+      toast.success("Note supprimée");
+    } catch (error) {
+      toast.error(formatConvexError(error));
+    } finally {
+      setDeletingNoteId(null);
+      setConfirmDeleteNoteId(null);
+    }
   };
-
-  const { toast } = useToast();
 
   // Fonction pour démarrer l'édition des détails client
   const handleStartEditDetails = () => {
@@ -473,13 +483,37 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
                       note.type === "info" && "bg-slate-50 text-slate-700"
                     )}
                   >
-                    <p>{note.content}</p>
-                    <button
-                      onClick={() => handleDeleteNote(note.id)}
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 hover:bg-white/50 rounded transition-opacity"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <p className="pr-7 break-words">{note.content}</p>
+                    {confirmDeleteNoteId === note.id ? (
+                      <div className="flex items-center justify-end gap-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteNoteId(null)}
+                          disabled={deletingNoteId === note.id}
+                          className="px-2 py-1 text-xs rounded-lg bg-white/70 text-slate-600 hover:bg-white"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteNote(note.id)}
+                          disabled={deletingNoteId === note.id}
+                          className="px-2 py-1 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+                        >
+                          {deletingNoteId === note.id ? "Suppression..." : "Supprimer"}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteNoteId(note.id)}
+                        title="Supprimer la note"
+                        aria-label="Supprimer la note"
+                        className="absolute top-2 right-2 p-1 rounded text-current opacity-50 hover:opacity-100 hover:bg-white/60 transition-opacity"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 ))
               ) : null}
