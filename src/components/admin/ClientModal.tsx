@@ -71,6 +71,9 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   const [newNote, setNewNote] = useState("");
   const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<string | null>(null);
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editNoteContent, setEditNoteContent] = useState("");
+  const [isSavingNote, setIsSavingNote] = useState(false);
   const [noteType, setNoteType] = useState<"info" | "preference" | "incident" | "alert">("info");
   const [isSaving, setIsSaving] = useState(false);
   
@@ -105,6 +108,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   const client = useQuery(api.clients.get, { clientId });
   const addNote = useMutation(api.clients.addNote);
   const deleteNote = useMutation(api.clients.deleteNote);
+  const updateNote = useMutation(api.clients.updateNote);
   const { toast } = useToast();
   const updateReservation = useMutation(api.admin.updateReservationFull);
   const updateClient = useMutation(api.clients.update);
@@ -169,6 +173,31 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
     } finally {
       setDeletingNoteId(null);
       setConfirmDeleteNoteId(null);
+    }
+  };
+
+  const startEditNote = (noteId: string, content: string) => {
+    setConfirmDeleteNoteId(null);
+    setEditingNoteId(noteId);
+    setEditNoteContent(content);
+  };
+
+  const cancelEditNote = () => {
+    setEditingNoteId(null);
+    setEditNoteContent("");
+  };
+
+  const handleUpdateNote = async (noteId: string) => {
+    if (!editNoteContent.trim()) return;
+    setIsSavingNote(true);
+    try {
+      await updateNote({ clientId, noteId, content: editNoteContent.trim() });
+      toast.success("Note modifiée");
+      cancelEditNote();
+    } catch (error) {
+      toast.error(formatConvexError(error));
+    } finally {
+      setIsSavingNote(false);
     }
   };
 
@@ -483,36 +512,92 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
                       note.type === "info" && "bg-slate-50 text-slate-700"
                     )}
                   >
-                    <p className="pr-7 break-words">{note.content}</p>
-                    {confirmDeleteNoteId === note.id ? (
-                      <div className="flex items-center justify-end gap-2 mt-2">
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeleteNoteId(null)}
-                          disabled={deletingNoteId === note.id}
-                          className="px-2 py-1 text-xs rounded-lg bg-white/70 text-slate-600 hover:bg-white"
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteNote(note.id)}
-                          disabled={deletingNoteId === note.id}
-                          className="px-2 py-1 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
-                        >
-                          {deletingNoteId === note.id ? "Suppression..." : "Supprimer"}
-                        </button>
+                    {editingNoteId === note.id ? (
+                      <div className="space-y-2">
+                        <textarea
+                          value={editNoteContent}
+                          onChange={(e) => setEditNoteContent(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              handleUpdateNote(note.id);
+                            } else if (e.key === "Escape") {
+                              e.stopPropagation();
+                              cancelEditNote();
+                            }
+                          }}
+                          rows={2}
+                          maxLength={1000}
+                          autoFocus
+                          className="w-full px-3 py-2 text-sm bg-white/80 border border-white rounded-xl text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-slate-200"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={cancelEditNote}
+                            disabled={isSavingNote}
+                            className="px-3 py-1 text-xs font-medium rounded-full bg-white/70 text-slate-600 hover:bg-white disabled:opacity-50"
+                          >
+                            Annuler
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateNote(note.id)}
+                            disabled={isSavingNote || !editNoteContent.trim()}
+                            className="px-3 py-1 text-xs font-medium rounded-full bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
+                          >
+                            {isSavingNote ? "Enregistrement..." : "Enregistrer"}
+                          </button>
+                        </div>
                       </div>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDeleteNoteId(note.id)}
-                        title="Supprimer la note"
-                        aria-label="Supprimer la note"
-                        className="absolute top-2 right-2 p-1 rounded text-current opacity-50 hover:opacity-100 hover:bg-white/60 transition-opacity"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <>
+                        <p className="pr-14 break-words whitespace-pre-wrap">{note.content}</p>
+                        {confirmDeleteNoteId === note.id ? (
+                          <div className="flex items-center justify-end gap-2 mt-2">
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteNoteId(null)}
+                              disabled={deletingNoteId === note.id}
+                              className="px-3 py-1 text-xs font-medium rounded-full bg-white/70 text-slate-600 hover:bg-white disabled:opacity-50"
+                            >
+                              Annuler
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteNote(note.id)}
+                              disabled={deletingNoteId === note.id}
+                              className="px-3 py-1 text-xs font-medium rounded-full bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+                            >
+                              {deletingNoteId === note.id ? "Suppression..." : "Supprimer"}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="absolute top-2 right-2 flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => startEditNote(note.id, note.content)}
+                              title="Modifier la note"
+                              aria-label="Modifier la note"
+                              className="p-1.5 rounded-full text-current opacity-50 hover:opacity-100 hover:bg-white/60 transition-opacity"
+                            >
+                              <Pencil size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                cancelEditNote();
+                                setConfirmDeleteNoteId(note.id);
+                              }}
+                              title="Supprimer la note"
+                              aria-label="Supprimer la note"
+                              className="p-1.5 rounded-full text-current opacity-50 hover:opacity-100 hover:bg-white/60 transition-opacity"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ))
