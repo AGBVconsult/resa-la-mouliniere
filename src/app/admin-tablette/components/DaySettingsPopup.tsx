@@ -7,7 +7,6 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { X, Loader2, Clock, Users, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
@@ -17,6 +16,7 @@ import {
   type SlotState,
 } from "@/lib/utils/slot-day-settings";
 import { CoverStepper } from "@/components/admin/CoverStepper";
+import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 import {
   SlotCapacityShapeButton,
   SlotCapacityShapeEditor,
@@ -71,12 +71,22 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
     return dinnerSlots.some((s) => s.isOpen);
   }, [dinnerSlots]);
 
-  const hasChanges = useMemo(() => {
-    const allSlots = [...lunchSlots, ...dinnerSlots];
-    return allSlots.some(
-      (s) => s.isOpen !== s.originalIsOpen || s.capacity !== s.originalCapacity
-    );
-  }, [lunchSlots, dinnerSlots]);
+  const changeCount = useMemo(
+    () =>
+      [...lunchSlots, ...dinnerSlots].filter(
+        (s) => s.isOpen !== s.originalIsOpen || s.capacity !== s.originalCapacity
+      ).length,
+    [lunchSlots, dinnerSlots]
+  );
+
+  // Annuler = abandonner les modifications locales (la barre disparaît).
+  const handleDiscard = () => {
+    const reset = (s: DaySlotState) => ({ ...s, isOpen: s.originalIsOpen, capacity: s.originalCapacity });
+    setLunchSlots((prev) => prev.map(reset));
+    setDinnerSlots((prev) => prev.map(reset));
+  };
+
+  const hasChanges = changeCount > 0;
 
   const handleServiceToggle = (service: "lunch" | "dinner", open: boolean) => {
     if (service === "lunch") {
@@ -186,7 +196,12 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div
+          className="flex-1 overflow-y-auto px-6 pt-6 space-y-6"
+          // Place réservée sous la liste pour la barre flottante (style inline :
+          // globals.css force `p-6` en !important).
+          style={{ paddingBottom: hasChanges ? "7rem" : "1.5rem" }}
+        >
           {/* Services */}
           <div className="grid grid-cols-2 gap-4">
             <ServiceSection
@@ -229,28 +244,14 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex gap-3 px-6 py-5 bg-white">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="flex-1 py-3 rounded-xl"
-            disabled={isSaving}
-          >
-            Annuler
-          </Button>
-          <Button
-            onClick={handleSave}
-            className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white"
-            disabled={isSaving || !hasChanges}
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              "Enregistrer"
-            )}
-          </Button>
-        </div>
+        {/* Barre flottante : visible uniquement s'il y a des modifications */}
+        <FloatingSaveBar
+          visible={hasChanges}
+          changeCount={changeCount}
+          isSaving={isSaving}
+          onCancel={handleDiscard}
+          onSave={handleSave}
+        />
       </div>
     </>
   );
