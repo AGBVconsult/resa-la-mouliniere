@@ -783,6 +783,46 @@ export const addNote = mutation({
   },
 });
 
+export const updateNote = mutation({
+  args: {
+    clientId: v.id("clients"),
+    noteId: v.string(),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, "manager");
+
+    const client = await ctx.db.get(args.clientId);
+    if (!client) throw Errors.NOT_FOUND("clients", args.clientId);
+
+    const content = args.content.trim();
+    if (content.length === 0) {
+      throw Errors.INVALID_INPUT("content", "La note ne peut pas être vide");
+    }
+    if (content.length > 1000) {
+      throw Errors.INVALID_INPUT("content", "La note ne peut pas dépasser 1000 caractères");
+    }
+
+    const notes = client.notes ?? [];
+    if (!notes.some((n) => n.id === args.noteId)) {
+      throw Errors.NOT_FOUND("notes", args.noteId);
+    }
+
+    const now = Date.now();
+    const nextNotes = notes.map((n) => (n.id === args.noteId ? { ...n, content } : n));
+
+    await ctx.db.patch(args.clientId, {
+      notes: nextNotes,
+      notesUpdatedAt: now,
+      lastUpdatedAt: now,
+    });
+
+    await logCrmAction(ctx, "update_note", args.clientId, { noteId: args.noteId });
+
+    return { ok: true };
+  },
+});
+
 export const deleteNote = mutation({
   args: {
     clientId: v.id("clients"),
