@@ -301,7 +301,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[min(90vh,760px)] overflow-hidden flex"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[min(90vh,672px)] overflow-hidden flex"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sidebar gauche - Design épuré */}
