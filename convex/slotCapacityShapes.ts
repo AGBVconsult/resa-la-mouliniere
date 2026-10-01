@@ -265,7 +265,8 @@ export async function markCapacityShapeNeedsReview(
   args: { restaurantId: Id<"restaurants">; slotKey: string; now: number }
 ): Promise<void> {
   const shape = await getShapeForSlotKey(ctx, args.restaurantId, args.slotKey);
-  if (!shape || shape.needsReview) return;
+  // Une typologie désactivée n'est pas appliquée : rien à revoir.
+  if (!shape || !shape.enabled || shape.needsReview) return;
   await ctx.db.patch(shape._id, { needsReview: true, updatedAt: args.now });
   console.log("capacity_shape_needs_review", { slotKey: args.slotKey });
 }
@@ -330,10 +331,14 @@ export function buildShapeSummary(
     configRevision: shape.configRevision,
   });
 
+  // « À revoir » n'a de sens que pour une typologie active (données
+  // historiques : des typologies désactivées ont pu être marquées à tort).
+  const needsReview = shape.enabled && shape.needsReview;
+
   return {
     enabled: shape.enabled,
-    effectiveEnabled: shape.enabled && !shape.needsReview,
-    needsReview: shape.needsReview,
+    effectiveEnabled: shape.enabled && !needsReview,
+    needsReview,
     buckets: normalizeBuckets(shape.buckets),
     remainingBuckets,
     configuredSeatCapacity: computeConfiguredSeatCapacity(shape.buckets),
