@@ -473,12 +473,13 @@ export const disable = mutation({
     }
 
     const existing = await getShapeForSlotKey(ctx, slot.restaurantId, slot.slotKey);
-    if (!existing || !existing.enabled) {
+    if (!existing || (!existing.enabled && !existing.needsReview)) {
       return { ok: true };
     }
 
+    // Désactiver lève aussi l'état « à revoir » : il n'y a plus rien à revoir.
     const now = Date.now();
-    await ctx.db.patch(existing._id, { enabled: false, updatedAt: now });
+    await ctx.db.patch(existing._id, { enabled: false, needsReview: false, updatedAt: now });
 
     console.log("capacity_shape_disabled", { slotKey: slot.slotKey, configRevision: existing.configRevision });
 

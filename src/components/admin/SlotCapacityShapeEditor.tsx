@@ -143,8 +143,10 @@ export function SlotCapacityShapeEditor({
   const [localEnabled, setLocalEnabled] = useState(
     capacityShape?.needsReview ? capacityShape.enabled : true
   );
+  // Une typologie désactivée repart de zéro : on n'affiche jamais les anciens
+  // compteurs conservés en base.
   const [localBuckets, setLocalBuckets] = useState<CapacityBucketDto[]>(
-    capacityShape?.buckets ?? []
+    capacityShape?.enabled ? capacityShape.buckets : []
   );
 
   const displayBuckets = useMemo(() => {
@@ -185,6 +187,8 @@ export function SlotCapacityShapeEditor({
 
   const handleToggleEnabled = (next: boolean) => {
     setLocalEnabled(next);
+    // Désactiver remet les compteurs à zéro.
+    if (!next) setLocalBuckets([]);
     // Rien à désactiver côté serveur : on referme simplement.
     if (!next && !capacityShape?.enabled && !capacityShape?.needsReview) onClose();
   };
