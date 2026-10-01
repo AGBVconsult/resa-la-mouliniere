@@ -138,10 +138,10 @@ export function SlotCapacityShapeEditor({
   const disableShape = useMutation(api.slotCapacityShapes.disable);
 
   const [isSaving, setIsSaving] = useState(false);
-  // Ouvrir l'éditeur depuis le bouton = activer la typologie (sauf typologie
-  // « à revoir » explicitement désactivée, qu'on laisse telle quelle).
+  // Le switch reflète les compteurs : activé seulement s'il reste au moins une
+  // table. Il s'allume dès qu'on ajoute une table.
   const [localEnabled, setLocalEnabled] = useState(
-    capacityShape?.needsReview ? capacityShape.enabled : true
+    !!capacityShape?.enabled && capacityShape.buckets.some((b) => b.quantity > 0)
   );
   // Une typologie désactivée repart de zéro : on n'affiche jamais les anciens
   // compteurs conservés en base.
@@ -167,22 +167,26 @@ export function SlotCapacityShapeEditor({
 
   const exceedsRemaining = configuredSeatCapacity > remainingCapacity;
   const hasAtLeastOneBucket = localBuckets.some((b) => b.quantity > 0);
-  const canSave = localEnabled ? hasAtLeastOneBucket && !exceedsRemaining : true;
+  // Tous les compteurs à 0 = option désactivée, quel que soit le switch.
+  const effectiveEnabled = localEnabled && hasAtLeastOneBucket;
+  const serverEnabled = capacityShape?.enabled ?? false;
 
-  const hasChanges =
-    localEnabled !== (capacityShape?.enabled ?? false) ||
-    JSON.stringify([...localBuckets].sort((a, b) => a.maxPartySize - b.maxPartySize)) !==
-      JSON.stringify([...(capacityShape?.buckets ?? [])].sort((a, b) => a.maxPartySize - b.maxPartySize));
+  const hasChanges = effectiveEnabled
+    ? !serverEnabled ||
+      JSON.stringify(sortBuckets(localBuckets.filter((b) => b.quantity > 0))) !==
+        JSON.stringify(sortBuckets((capacityShape?.buckets ?? []).filter((b) => b.quantity > 0)))
+    : serverEnabled || (capacityShape?.needsReview ?? false);
+  const canSave = effectiveEnabled ? !exceedsRemaining : true;
 
   const setQuantity = (maxPartySize: number, quantity: number) => {
     const clamped = Math.max(0, quantity);
-    setLocalBuckets((prev) => {
-      const existing = prev.find((b) => b.maxPartySize === maxPartySize);
-      if (existing) {
-        return prev.map((b) => (b.maxPartySize === maxPartySize ? { ...b, quantity: clamped } : b));
-      }
-      return [...prev, { maxPartySize, quantity: clamped }];
-    });
+    const existing = localBuckets.find((b) => b.maxPartySize === maxPartySize);
+    const next = existing
+      ? localBuckets.map((b) => (b.maxPartySize === maxPartySize ? { ...b, quantity: clamped } : b))
+      : [...localBuckets, { maxPartySize, quantity: clamped }];
+    setLocalBuckets(next);
+    // Le switch suit les compteurs : au moins une table = activé, tout à 0 = désactivé.
+    setLocalEnabled(next.some((b) => b.quantity > 0));
   };
 
   const handleToggleEnabled = (next: boolean) => {
@@ -196,13 +200,13 @@ export function SlotCapacityShapeEditor({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      if (!localEnabled) {
+      if (!effectiveEnabled) {
         await disableShape({ slotId });
       } else {
         await configure({
           slotId,
           enabled: true,
-          buckets: localBuckets.filter((b) => b.quantity > 0 || b.maxPartySize),
+          buckets: localBuckets.filter((b) => b.quantity > 0),
         });
       }
       onClose();
@@ -252,60 +256,56 @@ export function SlotCapacityShapeEditor({
         </div>
       )}
 
-      {localEnabled && (
-        <>
-          {/* Une colonne par taille de table, côte à côte (retour à la ligne si besoin). */}
-          <div
-            className={cn(
-              "grid grid-cols-[repeat(auto-fit,minmax(4.25rem,1fr))] gap-x-2 gap-y-3",
-              large && "lg:grid-cols-[repeat(auto-fit,minmax(6rem,1fr))]"
-            )}
-          >
-            {displayBuckets.map((bucket) => (
-              <div key={bucket.maxPartySize} className="flex flex-col items-center gap-1">
-                <span className={cn("text-[11px] text-slate-600", large && "lg:text-sm")}>{bucket.maxPartySize} pers.</span>
-                <div className={cn("flex items-center", large && "lg:gap-1.5")}>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity - 1)}
-                    disabled={bucket.quantity <= 0}
-                    aria-label={`Retirer une table de ${bucket.maxPartySize}`}
-                    className={cn(
-                      "flex h-[26px] w-[26px] items-center justify-center rounded-full border bg-white transition-colors touch-manipulation",
-                      large && "lg:h-[30px] lg:w-[30px]",
-                      bucket.quantity <= 0
-                        ? "border-slate-100 text-slate-300"
-                        : "border-slate-200 text-slate-600 active:bg-slate-100"
-                    )}
-                  >
-                    <Minus size={12} className={cn(large && "lg:h-4 lg:w-4")} />
-                  </button>
-                  <span className={cn("w-4 text-center text-sm font-semibold tabular-nums text-slate-900", large && "lg:w-6 lg:text-base")}>
-                    {bucket.quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity + 1)}
-                    aria-label={`Ajouter une table de ${bucket.maxPartySize}`}
-                    className={cn(
-                      "flex h-[26px] w-[26px] items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors active:bg-slate-100 touch-manipulation",
-                      large && "lg:h-[30px] lg:w-[30px]"
-                    )}
-                  >
-                    <Plus size={12} className={cn(large && "lg:h-4 lg:w-4")} />
-                  </button>
-                </div>
-              </div>
-            ))}
+      {/* Une colonne par taille de table, côte à côte (retour à la ligne si besoin). */}
+      <div
+        className={cn(
+          "grid grid-cols-[repeat(auto-fit,minmax(4.25rem,1fr))] gap-x-2 gap-y-3",
+          large && "lg:grid-cols-[repeat(auto-fit,minmax(6rem,1fr))]"
+        )}
+      >
+        {displayBuckets.map((bucket) => (
+          <div key={bucket.maxPartySize} className="flex flex-col items-center gap-1">
+            <span className={cn("text-[11px] text-slate-600", large && "lg:text-sm")}>{bucket.maxPartySize} pers.</span>
+            <div className={cn("flex items-center", large && "lg:gap-1.5")}>
+              <button
+                type="button"
+                onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity - 1)}
+                disabled={bucket.quantity <= 0}
+                aria-label={`Retirer une table de ${bucket.maxPartySize}`}
+                className={cn(
+                  "flex h-[26px] w-[26px] items-center justify-center rounded-full border bg-white transition-colors touch-manipulation",
+                  large && "lg:h-[30px] lg:w-[30px]",
+                  bucket.quantity <= 0
+                    ? "border-slate-100 text-slate-300"
+                    : "border-slate-200 text-slate-600 active:bg-slate-100"
+                )}
+              >
+                <Minus size={12} className={cn(large && "lg:h-4 lg:w-4")} />
+              </button>
+              <span className={cn("w-4 text-center text-sm font-semibold tabular-nums text-slate-900", large && "lg:w-6 lg:text-base")}>
+                {bucket.quantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity + 1)}
+                aria-label={`Ajouter une table de ${bucket.maxPartySize}`}
+                className={cn(
+                  "flex h-[26px] w-[26px] items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors active:bg-slate-100 touch-manipulation",
+                  large && "lg:h-[30px] lg:w-[30px]"
+                )}
+              >
+                <Plus size={12} className={cn(large && "lg:h-4 lg:w-4")} />
+              </button>
+            </div>
           </div>
+        ))}
+      </div>
 
-          {/* Seul cas bloquant : plus de places en tables que de couverts restants. */}
-          {exceedsRemaining && (
-            <p className={cn("text-xs font-medium text-red-600", large && "lg:text-sm")}>
-              {configuredSeatCapacity} places en tables pour {remainingCapacity} couverts restants : réduisez le nombre de tables.
-            </p>
-          )}
-        </>
+      {/* Seul cas bloquant : plus de places en tables que de couverts restants. */}
+      {exceedsRemaining && (
+        <p className={cn("text-xs font-medium text-red-600", large && "lg:text-sm")}>
+          {configuredSeatCapacity} places en tables pour {remainingCapacity} couverts restants : réduisez le nombre de tables.
+        </p>
       )}
 
       <div className="flex gap-2">
@@ -323,7 +323,7 @@ export function SlotCapacityShapeEditor({
         <button
           type="button"
           onClick={handleSave}
-          disabled={isSaving || !canSave || (!hasChanges && !capacityShape?.needsReview)}
+          disabled={isSaving || !canSave || !hasChanges}
           className={cn("px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5", large && "lg:px-4 lg:py-2 lg:text-sm")}
         >
           {isSaving ? <Loader2 size={12} className="animate-spin" /> : "Enregistrer"}
@@ -331,6 +331,10 @@ export function SlotCapacityShapeEditor({
       </div>
     </div>
   );
+}
+
+function sortBuckets(buckets: CapacityBucketDto[]): CapacityBucketDto[] {
+  return [...buckets].sort((a, b) => a.maxPartySize - b.maxPartySize);
 }
 
 /** §38 — Résumé compact "1×4 · 2×2". Ne montre jamais needsReview ici. */
