@@ -23,7 +23,6 @@ import {
   CalendarCheck,
   CalendarDays,
   Settings,
-  Map,
   Clock,
   Sun,
   Moon,
@@ -50,8 +49,8 @@ import {
   BookmarkCheck,
   Timer,
   Coffee,
-  Search,
   Plus,
+  Menu,
 } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
@@ -68,6 +67,7 @@ import { ClientModal } from "@/components/admin/ClientModal";
 import { TabletNotificationBell } from "../components/TabletNotificationBell";
 import { TabletCreateReservationPopup, type ReservationPrefill } from "../components/TabletCreateReservationPopup";
 import { ReviewSuppressionButton } from "../components/ReviewSuppressionButton";
+import { TabletMenuPopup } from "../components/TabletMenuPopup";
 import { isCreatedDuringService } from "@/lib/utils/service-window";
 
 interface Reservation {
@@ -231,6 +231,7 @@ export default function TabletReservationsPage() {
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showClientSearch, setShowClientSearch] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [showCreatePopup, setShowCreatePopup] = useState(false);
   const [createPrefill, setCreatePrefill] = useState<ReservationPrefill | undefined>(undefined);
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, ReservationStatus>>({});
@@ -1060,7 +1061,7 @@ export default function TabletReservationsPage() {
           </button>
         </div>
 
-        {/* Search + Settings + Map - aligné à droite */}
+        {/* Création + Notifications + Paramètres + Menu - aligné à droite */}
         <div className="flex items-center gap-2 ml-auto">
           <button
             onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
@@ -1077,27 +1078,25 @@ export default function TabletReservationsPage() {
             }}
           />
           <button
-            onClick={() => setShowClientSearch(true)}
-            className="w-[52px] h-[52px] bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
-          >
-            <Search size={20} strokeWidth={1.5} />
-          </button>
-          <button
             onClick={() => setShowSettings(true)}
+            aria-label="Paramètres du jour"
             className="w-[52px] h-[52px] bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
           >
             <Settings size={20} strokeWidth={1.5} />
           </button>
           <button
-            onClick={() => setShowFloorPlan(!showFloorPlan)}
+            onClick={() => setShowMenu(true)}
+            aria-label="Menu"
+            aria-haspopup="dialog"
+            aria-expanded={showMenu}
             className={cn(
               "w-[52px] h-[52px] rounded-full border shadow-sm flex items-center justify-center transition-all active:scale-95",
-              showFloorPlan
+              showMenu
                 ? "bg-slate-800 border-slate-800 text-white"
                 : "bg-white/80 backdrop-blur-xl border-slate-200/60 text-slate-500 hover:text-slate-900 hover:bg-white"
             )}
           >
-            <Map size={20} strokeWidth={1.5} />
+            <Menu size={20} strokeWidth={1.5} />
           </button>
         </div>
       </header>
@@ -1202,6 +1201,19 @@ export default function TabletReservationsPage() {
         <DaySettingsPopup
           dateKey={dateKey}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Menu (options peu utilisées) */}
+      {showMenu && (
+        <TabletMenuPopup
+          showFloorPlan={showFloorPlan}
+          onSearchClient={() => {
+            setShowMenu(false);
+            setShowClientSearch(true);
+          }}
+          onToggleFloorPlan={() => setShowFloorPlan((v) => !v)}
+          onClose={() => setShowMenu(false)}
         />
       )}
 
