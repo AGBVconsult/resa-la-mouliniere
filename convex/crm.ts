@@ -1,5 +1,7 @@
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { computeSlotStartAt } from "./lib/tokens";
+import { applyOutcome, isVisit, isVisitStatus, type LedgerOutcome } from "./lib/crmVisits";
 
 const CRM_VERSION = "v2.2";
 const SCORE_VERSION = "v1";
@@ -14,14 +16,6 @@ const CRM_FINALIZE_HOUR = 6;
 const RECONCILE_DAYS = 14;
 const MAX_RECONCILE_RANGE_DAYS = 31;
 
-type LedgerOutcome =
-  | "completed"
-  | "completed_rehabilitated"
-  | "noshow"
-  | "cancelled"
-  | "late_cancelled"
-  | "departure_before_order";
-
 const OUTCOME_POINTS: Record<LedgerOutcome, number> = {
   completed: 10,
   completed_rehabilitated: 10,
@@ -30,6 +24,40 @@ const OUTCOME_POINTS: Record<LedgerOutcome, number> = {
   cancelled: 0,
   departure_before_order: 0,
 };
+
+type LedgerChange = {
+  outcome: LedgerOutcome | null;
+  previousOutcome: LedgerOutcome | null;
+  visitAt: number;
+};
+
+async function computeOutcome(ctx: any, r: any): Promise<LedgerOutcome | null> {
+  const status: string = r.status;
+
+  if (isVisitStatus(status)) {
+    return r.markedNoshowAt ? "completed_rehabilitated" : "completed";
+  }
+  if (status === "noshow") return "noshow";
+  if (status !== "cancelled") return null;
+
+  const cancelEvents = await ctx.db
+    .query("reservationEvents")
+    .withIndex("by_reservation", (q: any) => q.eq("reservationId", r._id))
+    .collect();
+
+  const isDepartureBeforeOrder = cancelEvents.some(
+    (e: any) => e.eventType === "status_change" && e.fromStatus === "seated" && e.toStatus === "cancelled"
+  );
+  if (isDepartureBeforeOrder) return "departure_before_order";
+
+  const isLateCancellation = cancelEvents.some(
+    (e: any) =>
+      e.eventType === "status_change" &&
+      e.toStatus === "cancelled" &&
+      (e.metadata?.isLateCancellation === true || e.metadata?.isLateCancellation === "true")
+  );
+  return isLateCancellation ? "late_cancelled" : "cancelled";
+}
 
 function normalize(str: string): string {
   return str
@@ -325,7 +353,9 @@ async function finalizeClientsForDate(ctx: any, dateKey: string): Promise<void> 
 async function processDateReservations(ctx: any, dateKey: string): Promise<{ reservations: number; clients: number }> {
   const restaurants = await ctx.db.query("restaurants").collect();
   const reservations: any[] = [];
+  const timezoneByRestaurant = new Map<string, string>();
   for (const restaurant of restaurants) {
+    timezoneByRestaurant.set(restaurant._id, restaurant.timezone ?? "Europe/Brussels");
     reservations.push(
       ...(await ctx.db
         .query("reservations")
@@ -338,9 +368,9 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
 
   let processedReservations = 0;
   const touchedClients = new Set<string>();
-  // Ledger entries created during this run, per client. Only these are added to
+  // Ledger changes made during this run, per client. Only these are applied to
   // the client's totals, so re-processing a date never double counts.
-  const newEntriesByClient = new Map<string, { reservationId: string; outcome: LedgerOutcome; createdAt: number }[]>();
+  const changesByClient = new Map<string, LedgerChange[]>();
 
   for (const r of reservations) {
     if (!r.phone) continue;
@@ -350,73 +380,46 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
       .withIndex("by_reservationId", (q: any) => q.eq("reservationId", r._id))
       .unique();
 
+    const outcome = await computeOutcome(ctx, r);
+    const visitAt = computeSlotStartAt(r.dateKey, r.timeKey, timezoneByRestaurant.get(r.restaurantId) ?? "Europe/Brussels");
+
+    let clientId: string;
     if (existingLedger) {
-      continue;
-    }
+      if (existingLedger.outcome === outcome) continue;
 
-    const clientId = r.clientId ?? (await getOrCreateClientId(ctx, r));
-    if (!clientId) continue;
-
-    if (!r.clientId) {
-      await ctx.db.patch(r._id, { clientId });
-    }
-
-    const status: string = r.status;
-
-    let outcome: LedgerOutcome | null = null;
-
-    // Exclude auto-released reservations where client never arrived (B2)
-    // These should not count as a visit in the CRM
-    const isAutoReleasedNotArrived = !!r.autoReleasedAt && !r.seatedAt;
-
-    if (status === "completed" && !isAutoReleasedNotArrived) {
-      outcome = r.markedNoshowAt ? "completed_rehabilitated" : "completed";
-    } else if (status === "noshow") {
-      outcome = "noshow";
-    } else if (status === "cancelled") {
-      const cancelEvents = await ctx.db
-        .query("reservationEvents")
-        .withIndex("by_reservation", (q: any) => q.eq("reservationId", r._id))
-        .collect();
-
-      const isDepartureBeforeOrder = cancelEvents.some(
-        (e: any) => e.eventType === "status_change" && e.fromStatus === "seated" && e.toStatus === "cancelled"
-      );
-
-      const isLateCancellation = cancelEvents.some(
-        (e: any) =>
-          e.eventType === "status_change" &&
-          e.toStatus === "cancelled" &&
-          (e.metadata?.isLateCancellation === true || e.metadata?.isLateCancellation === "true")
-      );
-
-      if (isDepartureBeforeOrder) {
-        outcome = "departure_before_order";
-      } else if (isLateCancellation) {
-        outcome = "late_cancelled";
+      // Status corrected after the date was processed (e.g. a past "confirmed"
+      // counted as a visit, then marked no-show): replace the ledger entry.
+      clientId = existingLedger.clientId;
+      if (outcome) {
+        await ctx.db.patch(existingLedger._id, { outcome, points: OUTCOME_POINTS[outcome] });
       } else {
-        outcome = "cancelled";
+        await ctx.db.delete(existingLedger._id);
       }
+    } else {
+      if (!outcome) continue;
+
+      const resolvedClientId = r.clientId ?? (await getOrCreateClientId(ctx, r));
+      if (!resolvedClientId) continue;
+      clientId = resolvedClientId;
+
+      if (!r.clientId) {
+        await ctx.db.patch(r._id, { clientId });
+      }
+
+      await ctx.db.insert("clientLedger", {
+        dateKey,
+        clientId,
+        reservationId: r._id,
+        outcome,
+        points: OUTCOME_POINTS[outcome],
+        createdAt: Date.now(),
+      });
     }
-
-    if (!outcome) continue;
-
-    const createdAt = Date.now();
-    const points = OUTCOME_POINTS[outcome];
-
-    await ctx.db.insert("clientLedger", {
-      dateKey,
-      clientId,
-      reservationId: r._id,
-      outcome,
-      points,
-      createdAt,
-    });
 
     touchedClients.add(clientId);
-    const clientEntries = newEntriesByClient.get(clientId) ?? [];
-    clientEntries.push({ reservationId: r._id, outcome, createdAt });
-    newEntriesByClient.set(clientId, clientEntries);
+    const clientChanges = changesByClient.get(clientId) ?? [];
+    clientChanges.push({ outcome, previousOutcome: existingLedger?.outcome ?? null, visitAt });
+    changesByClient.set(clientId, clientChanges);
     processedReservations++;
   }
 
@@ -428,8 +431,7 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
       continue;
     }
 
-    // Only the ledger entries created by this run
-    const newLedger = newEntriesByClient.get(clientId) ?? [];
+    const changes = changesByClient.get(clientId) ?? [];
 
     // Get all reservations for this client to calculate aggregations
     const allReservations = await ctx.db
@@ -448,25 +450,36 @@ async function processDateReservations(ctx: any, dateKey: string): Promise<{ res
       lastVisitAt: client.lastVisitAt as number | undefined,
     };
 
-    // Increment with this run's new entries only
-    for (const e of newLedger) {
-      const reservation = allReservations.find((r: any) => r._id === e.reservationId);
-      
-      if (e.outcome === "completed" || e.outcome === "completed_rehabilitated") {
-        totals.totalVisits++;
-        if (e.outcome === "completed_rehabilitated") {
-          totals.totalRehabilitatedNoShows++;
-        }
-        // Bug fix: Use reservation.completedAt instead of e.createdAt for lastVisitAt
-        const visitTimestamp = reservation?.completedAt ?? e.createdAt;
-        if (!totals.lastVisitAt || visitTimestamp > totals.lastVisitAt) {
-          totals.lastVisitAt = visitTimestamp;
+    let removedVisit = false;
+    for (const c of changes) {
+      if (c.previousOutcome) {
+        applyOutcome(totals, c.previousOutcome, -1);
+        if (isVisit(c.previousOutcome)) removedVisit = true;
+      }
+      if (c.outcome) {
+        applyOutcome(totals, c.outcome, 1);
+        if (isVisit(c.outcome) && (!totals.lastVisitAt || c.visitAt > totals.lastVisitAt)) {
+          totals.lastVisitAt = c.visitAt;
         }
       }
-      if (e.outcome === "noshow") totals.totalNoShows++;
-      if (e.outcome === "cancelled") totals.totalCancellations++;
-      if (e.outcome === "late_cancelled") totals.totalLateCancellations++;
-      if (e.outcome === "departure_before_order") totals.totalDeparturesBeforeOrder++;
+    }
+
+    // A visit was withdrawn: last visit = most recent reservation still counted as a visit
+    if (removedVisit) {
+      const ledger = await ctx.db
+        .query("clientLedger")
+        .withIndex("by_clientId", (q: any) => q.eq("clientId", clientId))
+        .collect();
+      const visitReservationIds = new Set(
+        ledger.filter((e: any) => isVisit(e.outcome)).map((e: any) => e.reservationId)
+      );
+      let lastVisitAt: number | undefined;
+      for (const r of allReservations) {
+        if (!visitReservationIds.has(r._id)) continue;
+        const at = computeSlotStartAt(r.dateKey, r.timeKey, timezoneByRestaurant.get(r.restaurantId) ?? "Europe/Brussels");
+        if (!lastVisitAt || at > lastVisitAt) lastVisitAt = at;
+      }
+      totals.lastVisitAt = lastVisitAt ?? (totals.totalVisits > 0 ? totals.lastVisitAt : undefined);
     }
 
     // Calculate aggregated reservation stats (similar to rebuildStats in clients.ts)
