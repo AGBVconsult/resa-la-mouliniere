@@ -30,6 +30,11 @@ import {
   DEFAULT_RETENTION_POLICY,
   STUCK_THRESHOLD_MS,
 } from "./lib/email/ops";
+import {
+  isReviewEligibleStatus,
+  isWithinReviewCooldown,
+  normalizeReviewEmail,
+} from "./lib/reviewEligibility";
 
 const emailJobType = v.union(
   v.literal("reservation.confirmed"),
@@ -539,18 +544,19 @@ export const enqueueReminders = internalMutation({
 });
 
 /**
- * Enqueue review emails for completed reservations yesterday (J+1).
+ * Enqueue review emails for yesterday's reservations (J+1).
  * Called by cron at 06:30 local time.
- * 
- * IMPORTANT: Excludes reservations with status:
- * - "no-show": client didn't show up
- * - "cancelled": client cancelled
- * - "refused": reservation was refused
- * - "incident": client had issues
  *
- * Also skips whole services suspended from the tablet
- * (serviceReviewSuppressions, e.g. poor mussel delivery).
- * 
+ * Règle sur le statut FINAL (pas l'historique) : tout statut génère l'envoi
+ * sauf cancelled, noshow, incident et refused (voir lib/reviewEligibility).
+ *
+ * Also skips:
+ * - whole services suspended from the tablet (serviceReviewSuppressions)
+ * - auto-released reservations where the client never arrived (B2)
+ * - reservations without a usable email
+ * - clients who already received a review request in the last 12 months
+ *   (reviewRequests, by clientId and by email)
+ *
  * Contract: reservation.review email type exists.
  * Dedupe via dedupeKey = "review:{reservationId}"
  */
@@ -566,20 +572,19 @@ export const enqueueReviewEmails = internalMutation({
 
     if (activeRestaurants.length === 0) {
       console.log("enqueueReviewEmails: no active restaurant");
-      return { scanned: 0, enqueued: 0, alreadyExists: 0, skippedIncident: 0, dateKey: null };
+      return { scanned: 0, enqueued: 0, alreadyExists: 0, skippedStatus: 0, dateKey: null };
     }
     if (activeRestaurants.length > 1) {
       console.log("enqueueReviewEmails: multiple active restaurants, skipping");
-      return { scanned: 0, enqueued: 0, alreadyExists: 0, skippedIncident: 0, dateKey: null };
+      return { scanned: 0, enqueued: 0, alreadyExists: 0, skippedStatus: 0, dateKey: null };
     }
 
     const restaurant = activeRestaurants[0];
     const yesterdayDateKey = computeYesterdayDateKey(restaurant.timezone, now);
 
-    // Find completed reservations for yesterday, per service.
+    // Find yesterday's reservations, per service.
     // Services whose review requests were suspended from the tablet
     // (serviceReviewSuppressions) are skipped entirely.
-    // Use by_restaurant_date_service index (can't filter by status in index, filter in memory)
     const reservations: Doc<"reservations">[] = [];
     const suppressedServices: Array<"lunch" | "dinner"> = [];
     let skippedServiceSuppressed = 0;
@@ -590,7 +595,6 @@ export const enqueueReviewEmails = internalMutation({
         .withIndex("by_restaurant_date_service", (q) =>
           q.eq("restaurantId", restaurant._id).eq("dateKey", yesterdayDateKey).eq("service", service)
         )
-        .filter((q) => q.eq(q.field("status"), "completed"))
         .collect();
 
       const suppression = await ctx.db
@@ -611,13 +615,17 @@ export const enqueueReviewEmails = internalMutation({
 
     let enqueued = 0;
     let alreadyExists = 0;
-    let skippedIncident = 0;
+    let skippedStatus = 0;
     let skippedAutoReleased = 0;
-
-    // Statuses to exclude from review emails
-    const excludedStatuses = ["no-show", "cancelled", "refused", "incident"];
+    let skippedNoEmail = 0;
+    let skippedCooldown = 0;
 
     for (const reservation of reservations) {
+      if (!isReviewEligibleStatus(reservation.status)) {
+        skippedStatus++;
+        continue;
+      }
+
       // Skip auto-released reservations where the client never arrived (B2):
       // no meal took place, so no review request.
       if (reservation.autoReleasedAt && !reservation.seatedAt) {
@@ -625,23 +633,9 @@ export const enqueueReviewEmails = internalMutation({
         continue;
       }
 
-      // Check if reservation ever had an excluded status (via reservationEvents)
-      const excludedEvent = await ctx.db
-        .query("reservationEvents")
-        .withIndex("by_reservation", (q) => q.eq("reservationId", reservation._id))
-        .filter((q) =>
-          q.or(
-            q.eq(q.field("toStatus"), "no-show"),
-            q.eq(q.field("toStatus"), "cancelled"),
-            q.eq(q.field("toStatus"), "refused"),
-            q.eq(q.field("toStatus"), "incident")
-          )
-        )
-        .first();
-
-      if (excludedEvent) {
-        skippedIncident++;
-        console.log("enqueueReviewEmails: skipping excluded reservation", { reservationId: reservation._id, status: excludedEvent.toStatus });
+      const email = normalizeReviewEmail(reservation.email);
+      if (!email) {
+        skippedNoEmail++;
         continue;
       }
 
@@ -655,6 +649,27 @@ export const enqueueReviewEmails = internalMutation({
 
       if (existing) {
         alreadyExists++;
+        continue;
+      }
+
+      // Max one review request per client every 12 months (by client and by email).
+      const lastByEmail = await ctx.db
+        .query("reviewRequests")
+        .withIndex("by_email_createdAt", (q) => q.eq("email", email))
+        .order("desc")
+        .first();
+      const clientId = reservation.clientId;
+      const lastByClient = clientId
+        ? await ctx.db
+            .query("reviewRequests")
+            .withIndex("by_clientId_createdAt", (q) => q.eq("clientId", clientId))
+            .order("desc")
+            .first()
+        : null;
+      const lastRequestedAt = Math.max(lastByEmail?.createdAt ?? -1, lastByClient?.createdAt ?? -1);
+
+      if (isWithinReviewCooldown(lastRequestedAt < 0 ? null : lastRequestedAt, now)) {
+        skippedCooldown++;
         continue;
       }
 
@@ -685,6 +700,15 @@ export const enqueueReviewEmails = internalMutation({
         updatedAt: now,
       });
 
+      await ctx.db.insert("reviewRequests", {
+        restaurantId: restaurant._id,
+        reservationId: reservation._id,
+        clientId,
+        email,
+        dateKey: reservation.dateKey,
+        createdAt: now,
+      });
+
       enqueued++;
     }
 
@@ -694,8 +718,10 @@ export const enqueueReviewEmails = internalMutation({
       scanned: reservations.length,
       enqueued,
       alreadyExists,
-      skippedIncident,
+      skippedStatus,
       skippedAutoReleased,
+      skippedNoEmail,
+      skippedCooldown,
       skippedServiceSuppressed,
       suppressedServices,
     });
@@ -704,8 +730,10 @@ export const enqueueReviewEmails = internalMutation({
       scanned: reservations.length,
       enqueued,
       alreadyExists,
-      skippedIncident,
+      skippedStatus,
       skippedAutoReleased,
+      skippedNoEmail,
+      skippedCooldown,
       skippedServiceSuppressed,
       dateKey: yesterdayDateKey,
     };

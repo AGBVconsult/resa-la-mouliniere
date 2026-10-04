@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Users, Clock, TrendingUp } from "lucide-react";
+import { ReviewRequestStatsCard } from "@/components/admin/ReviewRequestStatsCard";
 
 export default function AdminDashboardPage() {
   return (
@@ -64,6 +65,8 @@ export default function AdminDashboardPage() {
       </div>
 
       <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+        <ReviewRequestStatsCard />
+
         <Card style={{ backgroundColor: 'white', borderRadius: '0.5rem', border: '1px solid #e2e8f0' }}>
           <CardHeader style={{ padding: '1rem' }}>
             <CardTitle style={{ fontSize: '1rem', fontWeight: 600, color: '#0f172a' }}>Prochaines réservations</CardTitle>
