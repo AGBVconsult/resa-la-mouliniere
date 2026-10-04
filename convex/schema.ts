@@ -498,6 +498,21 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_restaurant_date_service", ["restaurantId", "dateKey", "service"]),
 
+  // Une ligne par demande d'avis mise en file (historique durable : emailJobs
+  // est purgé après 90 jours). Sert à la limite d'une demande par client tous
+  // les 12 mois et aux statistiques mensuelles de l'admin.
+  reviewRequests: defineTable({
+    restaurantId: v.id("restaurants"),
+    reservationId: v.id("reservations"),
+    clientId: v.optional(v.id("clients")),
+    email: v.string(), // normalisé (trim + minuscules)
+    dateKey: v.string(), // date du repas
+    createdAt: v.number(),
+  })
+    .index("by_email_createdAt", ["email", "createdAt"])
+    .index("by_clientId_createdAt", ["clientId", "createdAt"])
+    .index("by_restaurant_dateKey", ["restaurantId", "dateKey"]),
+
   clientLedger: defineTable({
     dateKey: v.string(),
     clientId: v.id("clients"),
