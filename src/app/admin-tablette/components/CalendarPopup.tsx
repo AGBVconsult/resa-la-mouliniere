@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users, DoorOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users, DoorOpen, Plus, Settings, Lock, Clock } from "lucide-react";
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const TIMEZONE = "Europe/Brussels";
@@ -13,6 +13,24 @@ interface CalendarPopupProps {
   onClose: () => void;
   onSelectDate: (dateKey: string) => void;
   selectedDateKey?: string;
+  /** Bouton (+) d'une case : nouvelle réservation pour ce jour */
+  onCreateReservation?: (dateKey: string) => void;
+  /** Bouton engrenage d'une case : gestion des créneaux de ce jour */
+  onOpenDaySettings?: (dateKey: string) => void;
+}
+
+const CLOSURE_LABELS = {
+  manual: "Fermeture manuelle",
+  period: "Période de fermeture",
+  noSlots: "Aucun créneau généré",
+  template: "Fermeture habituelle",
+} as const;
+
+function formatClosedAt(timestamp: number): string {
+  const date = new Date(timestamp);
+  const day = date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", timeZone: TIMEZONE });
+  const time = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: TIMEZONE });
+  return `le ${day} à ${time}`;
 }
 
 function getStatusColor(count: number, total: number, isPast: boolean): string {
@@ -27,13 +45,45 @@ function getStatusColor(count: number, total: number, isPast: boolean): string {
   return "bg-slate-200";
 }
 
-export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }: CalendarPopupProps) {
+export function CalendarPopup({
+  isOpen,
+  onClose,
+  onSelectDate,
+  selectedDateKey,
+  onCreateReservation,
+  onOpenDaySettings,
+}: CalendarPopupProps) {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
+  const [confirmReopenKey, setConfirmReopenKey] = useState<string | null>(null);
+  const [reopeningKey, setReopeningKey] = useState<string | null>(null);
+  const [reopenErrorKey, setReopenErrorKey] = useState<string | null>(null);
+  const reopenManualClosures = useMutation(api.slots.reopenManualClosures);
+
+  // Rouvrir en deux temps : un premier appui arme, le second confirme
+  const handleReopen = async (dateKey: string) => {
+    if (confirmReopenKey !== dateKey) {
+      setConfirmReopenKey(dateKey);
+      setReopenErrorKey(null);
+      return;
+    }
+    setReopeningKey(dateKey);
+    try {
+      await reopenManualClosures({ dateKey });
+      setConfirmReopenKey(null);
+    } catch (err) {
+      console.error("Error reopening day:", err);
+      setReopenErrorKey(dateKey);
+    } finally {
+      setReopeningKey(null);
+    }
+  };
   const [currentMonth, setCurrentMonth] = useState<number | null>(null);
   const [todayDateKey, setTodayDateKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
+      setConfirmReopenKey(null);
+      setReopenErrorKey(null);
       if (selectedDateKey) {
         const [year, month] = selectedDateKey.split("-").map(Number);
         setCurrentYear(year);
@@ -219,11 +269,24 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                   const isPast = todayDateKey ? dateKey < todayDateKey : false;
                   const showMutedBackground = isClosed || isPast;
                   const hasReservations = dayData && ((dayData.lunch.covers || 0) + (dayData.dinner.covers || 0)) > 0;
+                  const pendingCount = dayData?.pendingCount ?? 0;
+                  const periodName = dayData?.periodName ?? null;
+                  const closure = isClosed ? dayData.closure : null;
+                  const showActions = !isPast && (onCreateReservation || onOpenDaySettings);
 
                   return (
-                    <button
+                    <div
                       key={`day-${day}`}
+                      role="button"
+                      tabIndex={isClosed ? -1 : 0}
+                      aria-disabled={isClosed || undefined}
                       onClick={() => !isClosed && handleDayClick(day)}
+                      onKeyDown={(e) => {
+                        if (!isClosed && (e.key === "Enter" || e.key === " ")) {
+                          e.preventDefault();
+                          handleDayClick(day);
+                        }
+                      }}
                       className={`relative min-h-[80px] p-2 border-r border-b border-slate-100 transition-all duration-200 flex flex-col text-left
                         ${showMutedBackground ? "bg-slate-50/70" : hasReservations && !isClosed ? "bg-emerald-50/50 hover:bg-emerald-50" : "bg-white hover:bg-slate-50"}
                         ${isToday ? "ring-2 ring-inset ring-black z-10" : ""}
@@ -244,20 +307,103 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                       )}
 
                       {/* Header de la case */}
-                      <div className="flex items-start mb-2">
+                      <div className="relative flex items-start gap-1.5">
                         <span className={`text-sm font-semibold ${isToday ? "text-black" : isPast ? "text-slate-400" : "text-slate-500"}`}>
                           {day}
                         </span>
-                        {isToday && (
-                          <span className="text-[8px] font-bold uppercase tracking-widest bg-black text-white px-1.5 py-0.5 rounded-full ml-auto">
-                            Aujourd&apos;hui
-                          </span>
-                        )}
+                        <div className="ml-auto flex items-center gap-1">
+                          {isToday && (
+                            <span className="text-[8px] font-bold uppercase tracking-widest bg-black text-white px-1.5 py-0.5 rounded-full">
+                              Aujourd&apos;hui
+                            </span>
+                          )}
+                          {showActions && (
+                            <>
+                              {onCreateReservation && !isClosed && (
+                                <button
+                                  type="button"
+                                  aria-label="Nouvelle réservation"
+                                  title="Nouvelle réservation"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onCreateReservation(dateKey);
+                                  }}
+                                  className="w-6 h-6 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-black hover:border-slate-300 flex items-center justify-center transition-colors"
+                                >
+                                  <Plus size={12} strokeWidth={2.5} />
+                                </button>
+                              )}
+                              {onOpenDaySettings && (
+                                <button
+                                  type="button"
+                                  aria-label="Créneaux du jour"
+                                  title="Créneaux du jour"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onOpenDaySettings(dateKey);
+                                  }}
+                                  className="w-6 h-6 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-black hover:border-slate-300 flex items-center justify-center transition-colors"
+                                >
+                                  <Settings size={12} strokeWidth={2.5} />
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Badges : à confirmer, période spéciale */}
+                      {((pendingCount > 0 && !isPast) || periodName) && (
+                        <div className="relative flex flex-wrap gap-1 mt-1.5">
+                          {pendingCount > 0 && !isPast && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 rounded-full px-1.5 py-0.5">
+                              <Clock size={10} strokeWidth={2.5} />
+                              {pendingCount} à confirmer
+                            </span>
+                          )}
+                          {periodName && (
+                            <span className="text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 rounded-full px-1.5 py-0.5 truncate max-w-full">
+                              {periodName}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Motif de fermeture */}
+                      {closure && (
+                        <div className="relative mt-auto pt-2 flex flex-col gap-1">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                            <Lock size={11} strokeWidth={2.5} />
+                            {CLOSURE_LABELS[closure.reason]}
+                          </span>
+                          {closure.closedAt !== null && (
+                            <span className="text-[10px] text-slate-400">{formatClosedAt(closure.closedAt)}</span>
+                          )}
+                          {closure.reason === "manual" && !isPast && (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                disabled={reopeningKey === dateKey}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleReopen(dateKey);
+                                }}
+                                className={`self-start text-[10px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1 border transition-colors disabled:opacity-50
+                                  ${confirmReopenKey === dateKey ? "bg-black text-white border-black" : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"}`}
+                              >
+                                {confirmReopenKey === dateKey ? "Confirmer" : "Rouvrir"}
+                              </button>
+                              {reopenErrorKey === dateKey && (
+                                <span className="text-[10px] text-red-500">Échec, réessayez</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Contenu pour jours ouverts */}
                       {!isClosed && dayData && (
-                        <div className="space-y-1.5 mt-auto w-full">
+                        <div className="space-y-1.5 mt-auto pt-2 w-full">
                           {/* Déjeuner */}
                           {dayData.lunch.isOpen && (
                             <div className="flex items-center gap-2 w-full">
@@ -294,7 +440,7 @@ export function CalendarPopup({ isOpen, onClose, onSelectDate, selectedDateKey }
                           )}
                         </div>
                       )}
-                    </button>
+                    </div>
                   );
                 })
               )}
