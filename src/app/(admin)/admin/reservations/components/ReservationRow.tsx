@@ -566,7 +566,7 @@ export function ReservationRow({
           <span className={cn("px-1.5 py-0.5 text-[9px] rounded-full -mt-1", visitBadge.classes, visitBadge.fontWeight)}>
             {visits === 0 ? "NEW" : visits}
           </span>
-          <OutcomeIndicator reservation={reservation} size={18} className="-mt-1" />
+          <OutcomeIndicator reservation={reservation} size={16} className="ml-0.5" />
         </div>
 
         {/* Party size - Nbre */}
@@ -633,7 +633,7 @@ export function ReservationRow({
           <span className={cn("px-1.5 py-0.5 text-[10px] rounded-full -mt-1", visitBadge.classes, visitBadge.fontWeight)}>
             {visits === 0 ? "NEW" : visits}
           </span>
-          <OutcomeIndicator reservation={reservation} size={20} className="-mt-1" />
+          <OutcomeIndicator reservation={reservation} size={18} className="ml-0.5" />
         </div>
 
         {/* Party size - Nbre */}

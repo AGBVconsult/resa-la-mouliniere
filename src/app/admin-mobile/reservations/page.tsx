@@ -270,7 +270,7 @@ export default function MobileReservationsPage() {
                   {visits === 0 ? "NEW" : visits}
                 </span>
                 {/* No-show / incident : cette réservation ou la précédente du client */}
-                <OutcomeIndicator reservation={res} size={16} className="-mt-0.5" />
+                <OutcomeIndicator reservation={res} size={14} className="mt-0.5" />
               </div>
             );
           })()}
