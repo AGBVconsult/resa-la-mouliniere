@@ -186,7 +186,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
     return (
       <>
         <div className="fixed inset-0 bg-black/40 z-[200]" onClick={onClose} />
-        <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[600px] md:max-h-[90vh] bg-white rounded-3xl shadow-2xl z-[201] flex items-center justify-center">
+        <div className="fixed inset-4 top-[calc(1rem+env(safe-area-inset-top))] md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[600px] md:max-h-[90vh] bg-white rounded-3xl shadow-2xl z-[201] flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
         </div>
       </>
@@ -197,9 +197,9 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
     <>
       <div className="fixed inset-0 bg-black/40 z-[200]" onClick={onClose} />
       {/* Largeur adaptée à l'écran (iPad mini paysage ≈ 1133 px) : pleine largeur moins 24 px de marge, 1100 px max. */}
-      <div ref={modalRef} className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[calc(100vw-3rem)] md:max-w-[1100px] md:max-h-[calc(100dvh-3rem)] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
+      <div ref={modalRef} className="fixed inset-4 top-[calc(1rem+env(safe-area-inset-top))] md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[calc(100vw-3rem)] md:max-w-[1100px] md:max-h-[calc(100dvh-3rem)] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5">
+        <div className="flex items-center justify-between px-4 py-4 md:px-6 md:py-5">
           <h2 className="text-lg font-bold text-slate-900 capitalize">{formattedDate}</h2>
           <button
             onClick={onClose}
@@ -210,9 +210,9 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
         </div>
 
         {/* Content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pt-6 space-y-6">
-          {/* Services */}
-          <div className="grid grid-cols-2 gap-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pt-2 pb-24 md:px-6 md:pt-6 md:pb-0 space-y-6">
+          {/* Services : empilés sur mobile, côte à côte dès la tablette */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ServiceSection
               title="Déjeuner"
               service="lunch"
