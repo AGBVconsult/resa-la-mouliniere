@@ -194,18 +194,28 @@ export function CalendarPopup({
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-[#D3DBE1] shadow-sm bg-white text-[#4F6D84] text-[11px] font-bold tracking-tight">
-                <DoorOpen size={14} />
-                {monthStats.openDays} JOURS
+            {/* Statistiques du mois : une seule pastille d'infos, non cliquable */}
+            <div
+              role="group"
+              aria-label="Statistiques du mois"
+              className="flex items-center h-[52px] px-1.5 bg-white rounded-full border border-[#D3DBE1] shadow-[0_4px_14px_-8px_rgba(30,45,60,0.45)] text-[#4F6D84]"
+            >
+              <div className="flex items-center gap-1.5 px-3 whitespace-nowrap text-[#3E5A70]">
+                <Users size={15} strokeWidth={1.75} />
+                <span className="font-bold text-base tabular-nums text-[#22303C]">{monthStats.covers}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Couverts</span>
               </div>
-              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-[#D3DBE1] shadow-sm bg-white text-[#4F6D84] text-[11px] font-bold tracking-tight">
-                <CalendarDays size={14} />
-                {monthStats.reservations} RÉSA
+              <div className="w-px h-[22px] bg-[#E4E9ED]" />
+              <div className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+                <CalendarDays size={15} strokeWidth={1.75} />
+                <span className="font-bold text-base tabular-nums text-[#22303C]">{monthStats.reservations}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Résa</span>
               </div>
-              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-[#4F6D84] shadow-sm bg-[#4F6D84] text-white text-[11px] font-bold tracking-tight">
-                <Users size={14} />
-                {monthStats.covers} COUVERTS
+              <div className="w-px h-[22px] bg-[#E4E9ED]" />
+              <div className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+                <DoorOpen size={15} strokeWidth={1.75} />
+                <span className="font-bold text-base tabular-nums text-[#22303C]">{monthStats.openDays}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Jours</span>
               </div>
             </div>
           </header>
