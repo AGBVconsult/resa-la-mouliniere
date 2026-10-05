@@ -1069,13 +1069,14 @@ export default function TabletReservationsPage() {
           })}
         </div>
 
-        {/* Création + Notifications + Paramètres + Menu - aligné à droite */}
-        <div className="flex items-center gap-2 ml-auto">
+        {/* Création + Notifications + Paramètres + Menu - une seule pastille alignée à droite */}
+        <div className="flex items-center gap-0.5 ml-auto h-[52px] px-1 bg-white rounded-full border border-[#D3DBE1] shadow-[0_4px_14px_-8px_rgba(30,45,60,0.45)]">
           <button
             onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
-            className="w-[52px] h-[52px] bg-[#4F6D84] hover:bg-[#3E5A70] rounded-full shadow-sm flex items-center justify-center text-white transition-all active:scale-95"
+            aria-label="Nouvelle réservation"
+            className="w-[44px] h-[44px] bg-[#3E5A70] hover:bg-[#344D60] rounded-full shadow-[0_2px_6px_rgba(30,45,60,0.3)] flex items-center justify-center text-white transition-all active:scale-95"
           >
-            <Plus size={22} strokeWidth={2.5} />
+            <Plus size={20} strokeWidth={2.5} />
           </button>
           <TabletNotificationBell
             onNavigateToReservation={(dateKey, service, reservationId) => {
@@ -1088,7 +1089,7 @@ export default function TabletReservationsPage() {
           <button
             onClick={() => setShowSettings(true)}
             aria-label="Paramètres du jour"
-            className="w-[52px] h-[52px] bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
+            className="w-[44px] h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-[#F4F6F8] transition-all active:scale-95"
           >
             <Settings size={20} strokeWidth={1.5} />
           </button>
@@ -1098,10 +1099,10 @@ export default function TabletReservationsPage() {
             aria-haspopup="dialog"
             aria-expanded={showMenu}
             className={cn(
-              "w-[52px] h-[52px] rounded-full border shadow-sm flex items-center justify-center transition-all active:scale-95",
+              "w-[44px] h-[44px] rounded-full flex items-center justify-center transition-all active:scale-95",
               showMenu
-                ? "bg-[#3E5A70] border-[#3E5A70] text-white"
-                : "bg-white/80 backdrop-blur-xl border-slate-200/60 text-slate-500 hover:text-slate-900 hover:bg-white"
+                ? "bg-[#3E5A70] text-white"
+                : "text-slate-500 hover:text-slate-900 hover:bg-[#F4F6F8]"
             )}
           >
             <Menu size={20} strokeWidth={1.5} />
