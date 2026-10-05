@@ -281,7 +281,7 @@ export function CalendarPopup({
                                 e.stopPropagation();
                                 onOpenDaySettings(dateKey);
                               }}
-                              className="w-6 h-6 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-black hover:border-slate-300 flex items-center justify-center transition-colors"
+                              className="w-6 h-6 text-slate-500 hover:text-black flex items-center justify-center transition-colors"
                             >
                               <Settings size={12} strokeWidth={2.5} />
                             </button>
