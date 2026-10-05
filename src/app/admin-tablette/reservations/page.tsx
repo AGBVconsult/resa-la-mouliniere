@@ -692,15 +692,6 @@ export default function TabletReservationsPage() {
                   )}>
                     {visits === 0 ? "NEW" : visits}
                   </span>
-                  {/* Réservation précédente du client soldée par un no-show */}
-                  {res.lastNoShowDateKey && (
-                    <span
-                      className="h-[18px] w-[18px] flex items-center justify-center rounded-full bg-pink-100 text-pink-600 shrink-0"
-                      title={`Dernière réservation : no-show · ${format(parseISO(res.lastNoShowDateKey), "EEE d MMM", { locale: fr })}`}
-                    >
-                      <Ghost size={12} strokeWidth={2} />
-                    </span>
-                  )}
                   {/* Seulement s'il y a un indicateur : vide, sa marge élargirait la colonne pour rien */}
                   {(res.hasClientNotes || res.isLateClient || res.isSlowClient) && (
                     <div className="flex items-center gap-1 ml-4">
@@ -737,6 +728,17 @@ export default function TabletReservationsPage() {
                 <Baby className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
                 <Accessibility className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
                 <PawPrint className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+                {/* No-show : cette réservation ou la précédente du client */}
+                {(res.status === "noshow" || res.lastNoShowDateKey) && (
+                  <span
+                    className="flex shrink-0"
+                    title={res.status === "noshow"
+                      ? `No-show · ${format(parseISO(res.dateKey), "EEE d MMM", { locale: fr })}`
+                      : `Dernière réservation : no-show · ${format(parseISO(res.lastNoShowDateKey!), "EEE d MMM", { locale: fr })}`}
+                  >
+                    <Ghost className={cn("text-pink-600", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={2} />
+                  </span>
+                )}
               </div>
             </div>
           </div>
