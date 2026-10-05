@@ -20,6 +20,7 @@ import {
   Loader2,
   Settings,
   CalendarCheck,
+  Ghost,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
@@ -51,6 +52,7 @@ interface Reservation {
   primaryTableId?: Id<"tables">;
   version: number;
   totalVisits?: number;
+  lastNoShowDateKey?: string | null;
   createdAt?: number;
   acknowledgedAt?: number;
 }
@@ -264,6 +266,14 @@ export default function MobileReservationsPage() {
                 <span className={`px-1 py-0.5 text-[8px] rounded-full -mt-0.5 ${visitBadge.classes} ${visitBadge.fontWeight}`}>
                   {visits === 0 ? "NEW" : visits}
                 </span>
+                {res.lastNoShowDateKey && (
+                  <span
+                    className="h-4 w-4 -mt-0.5 flex items-center justify-center rounded-full bg-pink-100 text-pink-600 shrink-0"
+                    title={`Dernière réservation : no-show · ${format(parseISO(res.lastNoShowDateKey), "EEE d MMM", { locale: fr })}`}
+                  >
+                    <Ghost size={10} strokeWidth={2} />
+                  </span>
+                )}
               </div>
             );
           })()}

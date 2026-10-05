@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Baby, Accessibility, PawPrint, ChevronDown, MoreHorizontal, X, UserX, Icon } from "lucide-react";
+import { Users, Baby, Accessibility, PawPrint, ChevronDown, MoreHorizontal, X, UserX, Ghost, Icon } from "lucide-react";
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,27 @@ const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
   if (visits === 0) return { classes: "bg-emerald-500 text-white", fontWeight: "font-semibold" }; // New (vert)
   return { classes: "bg-blue-600 text-white", fontWeight: "font-semibold" }; // Autres (bleu foncé)
+}
+
+// Indicateur : la réservation précédente du client s'est soldée par un no-show
+function NoShowIndicator({ dateKey, isCompact }: { dateKey: string; isCompact?: boolean }) {
+  const label = new Date(`${dateKey}T12:00:00`).toLocaleDateString("fr-BE", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+  return (
+    <span
+      className={cn(
+        "-mt-1 flex shrink-0 items-center justify-center rounded-full bg-pink-100 text-pink-600",
+        isCompact ? "h-[18px] w-[18px]" : "h-5 w-5"
+      )}
+      title={`Dernière réservation : no-show · ${label}`}
+      aria-label={`Dernière réservation : no-show le ${label}`}
+    >
+      <Ghost className={isCompact ? "h-3 w-3" : "h-[13px] w-[13px]"} strokeWidth={2} />
+    </span>
+  );
 }
 
 // Phone prefix to country mapping (comprehensive list)
@@ -386,6 +407,7 @@ export interface Reservation {
   primaryTableId?: Id<"tables">;
   version: number;
   totalVisits?: number;
+  lastNoShowDateKey?: string | null;
   createdAt?: number;
   acknowledgedAt?: number;
 }
@@ -563,6 +585,7 @@ export function ReservationRow({
           <span className={cn("px-1.5 py-0.5 text-[9px] rounded-full -mt-1", visitBadge.classes, visitBadge.fontWeight)}>
             {visits === 0 ? "NEW" : visits}
           </span>
+          {reservation.lastNoShowDateKey && <NoShowIndicator dateKey={reservation.lastNoShowDateKey} isCompact />}
         </div>
 
         {/* Party size - Nbre */}
@@ -629,6 +652,7 @@ export function ReservationRow({
           <span className={cn("px-1.5 py-0.5 text-[10px] rounded-full -mt-1", visitBadge.classes, visitBadge.fontWeight)}>
             {visits === 0 ? "NEW" : visits}
           </span>
+          {reservation.lastNoShowDateKey && <NoShowIndicator dateKey={reservation.lastNoShowDateKey} />}
         </div>
 
         {/* Party size - Nbre */}

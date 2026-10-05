@@ -96,6 +96,7 @@ interface Reservation {
   hasClientNotes?: boolean;
   isLateClient?: boolean;
   isSlowClient?: boolean;
+  lastNoShowDateKey?: string | null;
   createdAt?: number;
   acknowledgedAt?: number;
 }
@@ -691,6 +692,15 @@ export default function TabletReservationsPage() {
                   )}>
                     {visits === 0 ? "NEW" : visits}
                   </span>
+                  {/* Réservation précédente du client soldée par un no-show */}
+                  {res.lastNoShowDateKey && (
+                    <span
+                      className="h-[18px] w-[18px] flex items-center justify-center rounded-full bg-pink-100 text-pink-600 shrink-0"
+                      title={`Dernière réservation : no-show · ${format(parseISO(res.lastNoShowDateKey), "EEE d MMM", { locale: fr })}`}
+                    >
+                      <Ghost size={12} strokeWidth={2} />
+                    </span>
+                  )}
                   {/* Seulement s'il y a un indicateur : vide, sa marge élargirait la colonne pour rien */}
                   {(res.hasClientNotes || res.isLateClient || res.isSlowClient) && (
                     <div className="flex items-center gap-1 ml-4">
