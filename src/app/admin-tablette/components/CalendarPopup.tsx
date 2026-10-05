@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users, DoorOpen, Settings } from "lucide-react";
+import { BRUME_GAUGE, getGaugeLevel } from "@/lib/constants/brume";
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const TIMEZONE = "Europe/Brussels";
@@ -17,16 +18,10 @@ interface CalendarPopupProps {
   onOpenDaySettings?: (dateKey: string) => void;
 }
 
-function getStatusColor(count: number, total: number, isPast: boolean): string {
-  const ratio = count / total;
-  if (isPast) {
-    if (count === 0) return "bg-slate-200";
-    return "bg-slate-400";
-  }
-  if (ratio >= 0.95) return "bg-red-500";
-  if (ratio >= 0.7) return "bg-orange-500";
-  if (count > 0) return "bg-emerald-500";
-  return "bg-slate-200";
+// Jauge du thème Brume : mêmes seuils et couleurs que la vue Service (gris pour les jours passés)
+function getGaugeColor(count: number, total: number, isPast: boolean): string {
+  if (isPast) return count === 0 ? "#C9D2DA" : "#9FB0BE";
+  return BRUME_GAUGE[getGaugeLevel(count, total)].bar;
 }
 
 export function CalendarPopup({
@@ -139,13 +134,13 @@ export function CalendarPopup({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-[#1E2A35]/50"
         onClick={onClose}
       />
       
       {/* Popup */}
       <div 
-        className="relative bg-slate-50 rounded-[32px] shadow-2xl flex flex-col overflow-hidden"
+        className="relative bg-[#E4E9ED] rounded-[32px] shadow-2xl flex flex-col overflow-hidden"
         style={{ width: "90vw", height: "90vh" }}
       >
         {/* Content */}
@@ -153,35 +148,35 @@ export function CalendarPopup({
           {/* Header */}
           <header className="flex flex-row items-center justify-between mb-6 shrink-0">
             <div className="flex items-center gap-6">
-              <h1 className="text-3xl font-bold tracking-tighter text-slate-900">
+              <h1 className="text-3xl font-bold tracking-tighter text-[#22303C]">
                 {monthLabel}{" "}
-                <span className="text-slate-300 font-normal">{currentYear}</span>
+                <span className="text-[#9FB0BE] font-normal">{currentYear}</span>
               </h1>
-              <div className="flex bg-white rounded-2xl shadow-sm border border-slate-200/60 p-1.5">
+              <div className="flex bg-white rounded-2xl shadow-sm border border-[#D3DBE1] p-1.5">
                 <button
                   onClick={goToPreviousMonth}
-                  className="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-400 hover:text-black"
+                  className="p-2 hover:bg-[#F4F6F8] rounded-xl transition-colors text-[#7E97AC] hover:text-[#2A3540]"
                 >
                   <ChevronLeft size={18} />
                 </button>
                 <button
                   onClick={goToNextMonth}
-                  className="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-400 hover:text-black"
+                  className="p-2 hover:bg-[#F4F6F8] rounded-xl transition-colors text-[#7E97AC] hover:text-[#2A3540]"
                 >
                   <ChevronRight size={18} />
                 </button>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-slate-200 shadow-sm bg-white text-slate-500 text-[11px] font-bold tracking-tight">
+              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-[#D3DBE1] shadow-sm bg-white text-[#4F6D84] text-[11px] font-bold tracking-tight">
                 <DoorOpen size={14} />
                 {monthStats.openDays} JOURS
               </div>
-              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-slate-200 shadow-sm bg-white text-slate-500 text-[11px] font-bold tracking-tight">
+              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-[#D3DBE1] shadow-sm bg-white text-[#4F6D84] text-[11px] font-bold tracking-tight">
                 <CalendarDays size={14} />
                 {monthStats.reservations} RÉSA
               </div>
-              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-black shadow-sm bg-black text-white text-[11px] font-bold tracking-tight">
+              <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-[#4F6D84] shadow-sm bg-[#4F6D84] text-white text-[11px] font-bold tracking-tight">
                 <Users size={14} />
                 {monthStats.covers} COUVERTS
               </div>
@@ -189,13 +184,13 @@ export function CalendarPopup({
           </header>
 
           {/* Calendar container */}
-          <div className="bg-white rounded-[32px] shadow-2xl shadow-slate-200/40 border border-slate-200/80 overflow-hidden flex-1 flex flex-col">
+          <div className="bg-white rounded-[32px] shadow-[0_10px_30px_-12px_rgba(30,45,60,0.35)] border border-[#D3DBE1] overflow-hidden flex-1 flex flex-col">
             {/* Days of week header */}
-            <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/30 shrink-0">
+            <div className="grid grid-cols-7 bg-[#4F6D84] shrink-0">
               {DAYS_OF_WEEK.map((d, i) => (
                 <div
                   key={`weekday-${i}`}
-                  className="py-4 px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 text-center"
+                  className="py-3.5 px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white/85 text-center"
                 >
                   {d}
                 </div>
@@ -206,7 +201,7 @@ export function CalendarPopup({
             <div className="grid grid-cols-7 flex-1">
               {!monthData ? (
                 <div className="col-span-7 flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  <Loader2 className="h-6 w-6 animate-spin text-[#7E97AC]" />
                 </div>
               ) : (
                 calendarDays.map((day, index) => {
@@ -214,7 +209,7 @@ export function CalendarPopup({
                     return (
                       <div
                         key={`empty-${index}`}
-                        className="bg-slate-50/10 border-r border-b border-slate-100 min-h-[80px]"
+                        className="bg-[#F4F6F8] border-r border-b border-[#E1E7EC] min-h-[80px]"
                       />
                     );
                   }
@@ -242,20 +237,20 @@ export function CalendarPopup({
                           handleDayClick(day);
                         }
                       }}
-                      className={`relative min-h-[80px] p-2 border-r border-b border-slate-100 transition-all duration-200 flex flex-col text-left
-                        ${showMutedBackground ? "bg-slate-50/70" : hasReservations && !isClosed ? "bg-emerald-50/50 hover:bg-emerald-50" : "bg-white hover:bg-slate-50"}
-                        ${isToday ? "ring-2 ring-inset ring-black z-10" : ""}
+                      className={`relative min-h-[80px] p-2 border-r border-b border-[#E1E7EC] transition-all duration-200 flex flex-col text-left
+                        ${showMutedBackground ? "bg-[#EEF1F4]" : hasReservations && !isClosed ? "bg-[#F1F5F8] hover:bg-[#E8EEF3]" : "bg-white hover:bg-[#F4F6F8]"}
+                        ${isToday ? "ring-2 ring-inset ring-[#3E5A70] z-10" : ""}
                         ${isPast ? "opacity-80" : ""}
-                        ${isSelected ? "bg-blue-50 ring-2 ring-blue-400 ring-inset" : ""}
+                        ${isSelected ? "bg-[#DEE7F0] ring-2 ring-[#4F6D84] ring-inset" : ""}
                         ${isClosed ? "cursor-default" : "cursor-pointer"}
                       `}
                     >
                       {/* Pattern rayé pour jours fermés */}
                       {isClosed && (
                         <div 
-                          className="absolute inset-0 opacity-5 pointer-events-none"
+                          className="absolute inset-0 opacity-[0.07] pointer-events-none"
                           style={{ 
-                            backgroundImage: "linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%, transparent)", 
+                            backgroundImage: "linear-gradient(45deg, #3E5A70 25%, transparent 25%, transparent 50%, #3E5A70 50%, #3E5A70 75%, transparent 75%, transparent)", 
                             backgroundSize: "10px 10px" 
                           }}
                         />
@@ -263,12 +258,12 @@ export function CalendarPopup({
 
                       {/* Header de la case */}
                       <div className="relative flex items-start gap-1.5">
-                        <span className={`text-sm font-semibold ${isToday ? "text-black" : isPast ? "text-slate-400" : "text-slate-500"}`}>
+                        <span className={`text-sm font-semibold ${isToday ? "text-[#22303C]" : isPast ? "text-[#9FB0BE]" : "text-[#4F6D84]"}`}>
                           {day}
                         </span>
                         <div className="ml-auto flex items-center gap-1">
                           {isToday && (
-                            <span className="text-[8px] font-bold uppercase tracking-widest bg-black text-white px-1.5 py-0.5 rounded-full">
+                            <span className="text-[8px] font-bold uppercase tracking-widest bg-[#3E5A70] text-white px-1.5 py-0.5 rounded-full">
                               Aujourd&apos;hui
                             </span>
                           )}
@@ -281,7 +276,7 @@ export function CalendarPopup({
                                 e.stopPropagation();
                                 onOpenDaySettings(dateKey);
                               }}
-                              className="w-6 h-6 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-black hover:border-slate-300 flex items-center justify-center transition-colors"
+                              className="w-6 h-6 rounded-lg border border-[#D3DBE1] bg-white text-[#7E97AC] hover:text-[#2A3540] hover:border-[#B3C2CE] flex items-center justify-center transition-colors"
                             >
                               <Settings size={12} strokeWidth={2.5} />
                             </button>
@@ -295,17 +290,20 @@ export function CalendarPopup({
                           {/* Déjeuner */}
                           {dayData.lunch.isOpen ? (
                             <div className="flex items-center gap-2 w-full">
-                              <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
+                              <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-[#9FB0BE]" : "text-[#7E97AC]"}`}>
                                 Déj
                               </span>
-                              <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="flex-1 h-1.5 bg-[#E4E9ED] rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.lunch.covers, dayData.lunch.capacityEffective, isPast)}`}
-                                  style={{ width: `${dayData.lunch.capacityEffective > 0 ? (dayData.lunch.covers / dayData.lunch.capacityEffective) * 100 : 0}%` }}
+                                  className="h-full rounded-full transition-all duration-700 ease-out"
+                                  style={{
+                                    width: `${dayData.lunch.capacityEffective > 0 ? (dayData.lunch.covers / dayData.lunch.capacityEffective) * 100 : 0}%`,
+                                    backgroundColor: getGaugeColor(dayData.lunch.covers, dayData.lunch.capacityEffective, isPast),
+                                  }}
                                 />
                               </div>
-                              <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
-                                {dayData.lunch.covers}<span className="font-normal text-slate-400">/{dayData.lunch.capacityEffective}</span>
+                              <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-[#7E97AC]" : "text-[#2A3540]"}`}>
+                                {dayData.lunch.covers}<span className="font-normal text-[#9FB0BE]">/{dayData.lunch.capacityEffective}</span>
                               </span>
                             </div>
                           ) : (
@@ -317,17 +315,20 @@ export function CalendarPopup({
                           {/* Dîner */}
                           {dayData.dinner.isOpen ? (
                             <div className="flex items-center gap-2 w-full">
-                              <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
+                              <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-[#9FB0BE]" : "text-[#7E97AC]"}`}>
                                 Dîn
                               </span>
-                              <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="flex-1 h-1.5 bg-[#E4E9ED] rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full transition-all duration-700 ease-out ${getStatusColor(dayData.dinner.covers, dayData.dinner.capacityEffective, isPast)}`}
-                                  style={{ width: `${dayData.dinner.capacityEffective > 0 ? (dayData.dinner.covers / dayData.dinner.capacityEffective) * 100 : 0}%` }}
+                                  className="h-full rounded-full transition-all duration-700 ease-out"
+                                  style={{
+                                    width: `${dayData.dinner.capacityEffective > 0 ? (dayData.dinner.covers / dayData.dinner.capacityEffective) * 100 : 0}%`,
+                                    backgroundColor: getGaugeColor(dayData.dinner.covers, dayData.dinner.capacityEffective, isPast),
+                                  }}
                                 />
                               </div>
-                              <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
-                                {dayData.dinner.covers}<span className="font-normal text-slate-400">/{dayData.dinner.capacityEffective}</span>
+                              <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-[#7E97AC]" : "text-[#2A3540]"}`}>
+                                {dayData.dinner.covers}<span className="font-normal text-[#9FB0BE]">/{dayData.dinner.capacityEffective}</span>
                               </span>
                             </div>
                           ) : (
