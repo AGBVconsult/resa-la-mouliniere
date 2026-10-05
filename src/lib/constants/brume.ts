@@ -31,10 +31,10 @@ export type GaugeLevel = "low" | "medium" | "high" | "full";
  * `bar` colore la barre, `text` le libellé « x dispo » (plus foncé, lisible sur le bandeau).
  */
 export const BRUME_GAUGE: Record<GaugeLevel, { bar: string; text: string }> = {
-  low: { bar: "#5E9C78", text: "#2F6B49" }, // < 50 % : vert
-  medium: { bar: "#D4AE45", text: "#7F5E0E" }, // 50–79 % : jaune
-  high: { bar: "#E08A3C", text: "#9A4A12" }, // 80–99 % : orange
-  full: { bar: "#CF5A55", text: "#9E2F2F" }, // complet : rouge
+  low: { bar: "#22C55E", text: "#15803D" }, // < 50 % : vert
+  medium: { bar: "#FACC15", text: "#A16207" }, // 50–79 % : jaune
+  high: { bar: "#F97316", text: "#C2410C" }, // 80–99 % : orange
+  full: { bar: "#EF4444", text: "#B91C1C" }, // complet : rouge
 };
 
 export function getGaugeLevel(covers: number, capacity: number): GaugeLevel {
