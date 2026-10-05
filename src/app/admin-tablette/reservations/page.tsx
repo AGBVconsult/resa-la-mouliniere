@@ -194,6 +194,8 @@ const SMART_STATUS_CONFIG: Record<string, {
   },
 };
 
+const MONTHS_SHORT = ["JAN", "FÉV", "MAR", "AVR", "MAI", "JUN", "JUL", "AOÛ", "SEP", "OCT", "NOV", "DÉC"];
+
 export default function TabletReservationsPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -342,10 +344,10 @@ export default function TabletReservationsPage() {
   }, []);
 
   const formatDateLabel = () => {
-    // Format: "SAM 21 FÉVR" (toujours ce format, même pour aujourd'hui)
+    // Format: "SAM 21 FÉV" (mois sur 3 lettres pour garder une largeur stable)
     const dayName = format(selectedDate, "EEE", { locale: fr }).toUpperCase().replace(".", "");
     const dayNum = format(selectedDate, "d", { locale: fr });
-    const monthName = format(selectedDate, "MMM", { locale: fr }).toUpperCase().replace(".", "");
+    const monthName = MONTHS_SHORT[selectedDate.getMonth()];
     return `${dayName} ${dayNum} ${monthName}`;
   };
   
@@ -972,47 +974,44 @@ export default function TabletReservationsPage() {
       {/* Header */}
       <header className="relative flex items-center py-12 px-8 border-b border-[#D3DBE1] bg-[#E4E9ED]">
         {/* Left: Date navigation */}
-        <div className="flex items-center h-[52px] bg-[#3E5A70] rounded-full shadow-[0_6px_16px_-8px_rgba(30,45,60,0.55)] pl-4 pr-2">
+        <div className="flex items-center h-[52px] bg-[#3E5A70] rounded-full shadow-[0_6px_16px_-8px_rgba(30,45,60,0.55)] px-1">
           {/* Bouton précédent */}
           <button
             onClick={goToPreviousDay}
-            className="w-[40px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 rounded-full"
+            aria-label="Jour précédent"
+            className="w-[44px] h-full flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 rounded-full"
           >
-            <ChevronLeft size={20} strokeWidth={2} />
+            <ChevronLeft size={16} strokeWidth={2} />
           </button>
-          
-          {/* Séparateur */}
-          <div className="w-px h-6 bg-white/20" />
-          
+
           {/* Date au centre */}
           <button
             onClick={() => setShowCalendarPopup(true)}
-            className="px-6 h-full flex items-center justify-center cursor-pointer group"
+            className="h-full min-w-[96px] flex items-center justify-center cursor-pointer group"
           >
-            <span className="text-sm font-bold text-white tracking-wide">
+            <span className="text-sm font-bold text-white tracking-wide whitespace-nowrap">
               {formatDateLabel()}
             </span>
           </button>
-          
-          {/* Séparateur */}
-          <div className="w-px h-6 bg-white/20" />
-          
+
           {/* Bouton suivant */}
           <button
             onClick={goToNextDay}
-            className="w-[40px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 rounded-full"
+            aria-label="Jour suivant"
+            className="w-[44px] h-full flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 rounded-full"
           >
-            <ChevronRight size={20} strokeWidth={2} />
+            <ChevronRight size={16} strokeWidth={2} />
           </button>
-          
+
           {/* Bouton Aujourd'hui intégré (visible seulement si pas aujourd'hui) */}
           {!isToday && (
             <button
               onClick={goToToday}
-              className="flex items-center gap-1.5 h-[36px] ml-2 px-3 bg-white hover:bg-[#E4E9ED] rounded-full text-[#3E5A70] font-semibold text-xs transition-all active:scale-95"
+              aria-label="Revenir à aujourd'hui"
+              className="flex items-center gap-1.5 h-[44px] ml-1 pl-2.5 pr-3 bg-white hover:bg-[#E4E9ED] rounded-full text-[#3E5A70] font-semibold text-xs transition-all active:scale-95"
             >
-              <RotateCcw size={14} strokeWidth={2} />
-              <span className="uppercase tracking-wide">Aujourd&apos;hui</span>
+              <RotateCcw size={13} strokeWidth={2} />
+              <span className="uppercase tracking-wide">Auj.</span>
             </button>
           )}
         </div>
