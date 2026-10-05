@@ -94,15 +94,15 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, p
 
   const Stepper = ({ label, value, set, min }: { label: string; value: number; set: (n: number) => void; min: number }) => (
     <div>
-      <label className="block text-xs text-slate-400 mb-1">{label}</label>
+      <label className="block text-xs text-[#7E97AC] mb-1">{label}</label>
       <div className="flex items-center gap-2">
         <button type="button" onClick={() => set(Math.max(min, value - 1))}
-          className="w-11 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center active:scale-95">
+          className="w-11 h-11 rounded-xl bg-[#EDF1F4] text-[#3E5A70] hover:bg-[#E2E8ED] flex items-center justify-center active:scale-95">
           <Minus size={18} />
         </button>
-        <span className="w-8 text-center font-semibold text-lg">{value}</span>
+        <span className="w-8 text-center font-semibold text-lg text-[#2A3540]">{value}</span>
         <button type="button" onClick={() => set(value + 1)}
-          className="w-11 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center active:scale-95">
+          className="w-11 h-11 rounded-xl bg-[#EDF1F4] text-[#3E5A70] hover:bg-[#E2E8ED] flex items-center justify-center active:scale-95">
           <Plus size={18} />
         </button>
       </div>
@@ -111,10 +111,10 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, p
 
   return (
     <>
-      <div className="fixed inset-0 backdrop-blur-[2px] bg-black/40 z-[200]" onClick={onClose} />
+      <div className="fixed inset-0 backdrop-blur-[2px] bg-[#1E2A35]/40 z-[200]" onClick={onClose} />
       <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[640px] md:max-h-[92vh] bg-white rounded-2xl shadow-2xl z-[201] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-[#334156] text-white shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 bg-[#4F6D84] text-white shrink-0">
           <h2 className="text-lg font-bold">Nouvelle réservation</h2>
           <button onClick={onClose} className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-95">
             <X size={22} />
@@ -126,24 +126,24 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, p
           {/* Date & Service */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Date</label>
+              <label className="block text-xs font-semibold text-[#4F6D84] uppercase tracking-wider mb-2">Date</label>
               <button
                 type="button"
                 onClick={() => setShowCalendar(true)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-left flex items-center gap-2 hover:bg-slate-50 active:scale-[0.98] transition-all"
+                className="w-full px-4 py-3 border border-[#D3DBE1] rounded-xl text-sm text-[#2A3540] text-left flex items-center gap-2 hover:bg-[#F4F6F8] active:scale-[0.98] transition-all"
               >
-                <Calendar size={16} className="text-slate-400 shrink-0" />
+                <Calendar size={16} className="text-[#7E97AC] shrink-0" />
                 {new Date(dateKey + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" })}
               </button>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Service</label>
+              <label className="block text-xs font-semibold text-[#4F6D84] uppercase tracking-wider mb-2">Service</label>
               <div className="flex gap-2">
                 {(["lunch","dinner"] as const).map((s) => (
                   <button key={s} type="button"
                     onClick={() => { setService(s); setTimeKey(s === "lunch" ? "12:00" : "19:00"); }}
                     className={cn("flex-1 py-3 rounded-xl text-sm font-medium",
-                      service === s ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}>
+                      service === s ? "bg-[#4F6D84] text-white" : "bg-[#EDF1F4] text-[#4A5A68] hover:bg-[#E2E8ED]")}>
                     {s === "lunch" ? "Midi" : "Soir"}
                   </button>
                 ))}
@@ -153,12 +153,12 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, p
 
           {/* Heure */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Heure</label>
+            <label className="block text-xs font-semibold text-[#4F6D84] uppercase tracking-wider mb-2">Heure</label>
             <div className="flex flex-wrap gap-2">
               {timeSlots.map((t) => (
                 <button key={t} type="button" onClick={() => setTimeKey(t)}
                   className={cn("px-4 py-2.5 rounded-lg text-sm font-medium",
-                    timeKey === t ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}>
+                    timeKey === t ? "bg-[#4F6D84] text-white" : "bg-[#EDF1F4] text-[#4A5A68] hover:bg-[#E2E8ED]")}>
                   {t}
                 </button>
               ))}
@@ -167,7 +167,7 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, p
 
           {/* Couverts */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-[#4F6D84] uppercase tracking-wider mb-2">
               Couverts ({partySize})
             </label>
             <div className="grid grid-cols-3 gap-4">
@@ -180,23 +180,23 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, p
           {/* Contact (tous optionnels) */}
           <div className="grid grid-cols-2 gap-4">
             <input placeholder="Prénom" value={firstName} onChange={(e) => setFirstName(e.target.value)}
-              className="px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              className="px-4 py-3 border border-[#D3DBE1] rounded-xl text-sm text-[#2A3540] placeholder:text-[#9FB0BE] focus:outline-none focus:ring-2 focus:ring-[#4F6D84]" />
             <input placeholder="Nom" value={lastName} onChange={(e) => setLastName(e.target.value)}
-              className="px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              className="px-4 py-3 border border-[#D3DBE1] rounded-xl text-sm text-[#2A3540] placeholder:text-[#9FB0BE] focus:outline-none focus:ring-2 focus:ring-[#4F6D84]" />
             <input type="tel" placeholder="Téléphone" value={phone} onChange={(e) => setPhone(e.target.value)}
-              className="px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              className="px-4 py-3 border border-[#D3DBE1] rounded-xl text-sm text-[#2A3540] placeholder:text-[#9FB0BE] focus:outline-none focus:ring-2 focus:ring-[#4F6D84]" />
             <input type="email" placeholder="Email (déclenche la confirmation)" value={email} onChange={(e) => setEmail(e.target.value)}
-              className="px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              className="px-4 py-3 border border-[#D3DBE1] rounded-xl text-sm text-[#2A3540] placeholder:text-[#9FB0BE] focus:outline-none focus:ring-2 focus:ring-[#4F6D84]" />
           </div>
 
           {/* Langue */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Langue</label>
+            <label className="block text-xs font-semibold text-[#4F6D84] uppercase tracking-wider mb-2">Langue</label>
             <div className="flex gap-1.5">
               {LANGUAGES.map((l) => (
                 <button key={l.value} type="button" onClick={() => setLanguage(l.value)}
                   className={cn("flex-1 py-2.5 rounded-lg text-xs font-bold",
-                    language === l.value ? "bg-slate-700 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}>
+                    language === l.value ? "bg-[#4F6D84] text-white" : "bg-[#EDF1F4] text-[#5B6B7A] hover:bg-[#E2E8ED]")}>
                   {l.label}
                 </button>
               ))}
@@ -205,12 +205,12 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, p
 
           {/* Options */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Options</label>
+            <label className="block text-xs font-semibold text-[#4F6D84] uppercase tracking-wider mb-2">Options</label>
             <div className="flex flex-wrap gap-2">
               {OPTIONS.map((o) => (
                 <button key={o.id} type="button" onClick={() => toggleOption(o.id)}
                   className={cn("px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5",
-                    options.includes(o.id) ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}>
+                    options.includes(o.id) ? "bg-[#4F6D84] text-white" : "bg-[#EDF1F4] text-[#4A5A68] hover:bg-[#E2E8ED]")}>
                   {options.includes(o.id) && <Check size={14} />}
                   {o.label}
                 </button>
@@ -220,21 +220,21 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, p
 
           {/* Note */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Note</label>
+            <label className="block text-xs font-semibold text-[#4F6D84] uppercase tracking-wider mb-2">Note</label>
             <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
               placeholder="Allergies, demandes spéciales…"
-              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" />
+              className="w-full px-4 py-3 border border-[#D3DBE1] rounded-xl text-sm text-[#2A3540] placeholder:text-[#9FB0BE] focus:outline-none focus:ring-2 focus:ring-[#4F6D84] resize-none" />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50 shrink-0">
+        <div className="flex gap-3 px-6 py-4 border-t border-[#E1E7EC] bg-[#F4F6F8] shrink-0">
           <button onClick={onClose} disabled={isSubmitting}
-            className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-100 disabled:opacity-50">
+            className="flex-1 py-3 rounded-xl border border-[#D3DBE1] bg-white text-[#4A5A68] font-medium hover:bg-[#E9EEF2] disabled:opacity-50">
             Annuler
           </button>
           <button onClick={handleSubmit} disabled={isSubmitting}
-            className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold flex items-center justify-center disabled:opacity-50">
+            className="flex-1 py-3 rounded-xl bg-[#4F6D84] hover:bg-[#3E5A70] text-white font-semibold flex items-center justify-center disabled:opacity-50">
             {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Créer la réservation"}
           </button>
         </div>
