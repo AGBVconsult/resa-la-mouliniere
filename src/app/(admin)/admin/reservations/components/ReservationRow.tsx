@@ -728,7 +728,7 @@ export function ReservationRow({
             {showMenu && (
               <>
                 <div 
-                  className="fixed inset-0 z-[99]" 
+                  className="fixed inset-0 backdrop-blur-[2px] z-[99]" 
                   onClick={() => setShowMenu(false)} 
                 />
                 <div 

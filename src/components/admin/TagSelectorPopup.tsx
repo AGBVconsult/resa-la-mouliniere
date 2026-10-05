@@ -84,7 +84,7 @@ export function TagSelectorPopup({ clientId, currentTags, onClose }: TagSelector
 
   return (
     <div
-      className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/30"
+      className="fixed inset-0 backdrop-blur-[2px] z-[100001] flex items-center justify-center bg-black/30"
       onClick={onClose}
     >
       <div

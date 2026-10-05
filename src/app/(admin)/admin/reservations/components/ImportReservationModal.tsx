@@ -130,7 +130,7 @@ export function ImportReservationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 backdrop-blur-[2px] bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-xl w-[650px] max-h-[90vh] overflow-auto shadow-2xl">
         {/* Header */}
         <div className="sticky top-0 bg-amber-50 border-b border-amber-200 px-6 py-4 flex items-center justify-between">

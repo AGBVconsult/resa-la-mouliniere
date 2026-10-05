@@ -139,7 +139,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
 
   if (!client) {
     return (
-      <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/50">
+      <div className="fixed inset-0 backdrop-blur-[2px] z-[100000] flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-2xl p-8">
           <div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-slate-600 rounded-full" />
         </div>
@@ -298,7 +298,7 @@ export function ClientModal({ clientId, currentReservationId, onClose }: ClientM
   return (
     <>
     <div 
-      className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 backdrop-blur-[2px] z-[100000] flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
       <div 

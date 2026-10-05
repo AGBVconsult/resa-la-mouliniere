@@ -64,7 +64,7 @@ export function ClientSearchPopup({ onClose, onSelectClient, onCreateReservation
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 backdrop-blur-[2px] z-50 flex items-start justify-center bg-black/40"
     >
       <div className="mt-20 w-full max-w-lg mx-4 bg-white rounded-2xl shadow-2xl border border-slate-200/60 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
         {/* Search header */}

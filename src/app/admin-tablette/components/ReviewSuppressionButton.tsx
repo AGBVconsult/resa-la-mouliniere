@@ -98,7 +98,7 @@ function ReviewSuppressionButtonInner({ dateKey, service }: ReviewSuppressionBut
 
       {confirmOpen && (
         <>
-          <div className="fixed inset-0 bg-black/40 z-[200]" onClick={() => !isSubmitting && setConfirmOpen(false)} />
+          <div className="fixed inset-0 backdrop-blur-[2px] bg-black/40 z-[200]" onClick={() => !isSubmitting && setConfirmOpen(false)} />
           <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(440px,calc(100vw-2rem))] bg-white rounded-3xl shadow-2xl z-[201] p-6">
             <h2 className="text-lg font-bold text-slate-900">
               {suppressed ? "Réactiver les demandes d'avis ?" : "Annuler les demandes d'avis ?"}
