@@ -233,6 +233,9 @@ export default function TabletReservationsPage() {
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  // Jour ciblé par les actions rapides du calendrier (sinon : jour affiché)
+  const [settingsDateKey, setSettingsDateKey] = useState<string | null>(null);
+  const [createDateKey, setCreateDateKey] = useState<string | null>(null);
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showCreatePopup, setShowCreatePopup] = useState(false);
@@ -1202,6 +1205,15 @@ export default function TabletReservationsPage() {
           setSelectedDate(new Date(year, month - 1, day));
         }}
         selectedDateKey={dateKey}
+        onCreateReservation={(targetDateKey) => {
+          setCreateDateKey(targetDateKey);
+          setCreatePrefill(undefined);
+          setShowCreatePopup(true);
+        }}
+        onOpenDaySettings={(targetDateKey) => {
+          setSettingsDateKey(targetDateKey);
+          setShowSettings(true);
+        }}
       />
 
       {/* Edit Reservation Popup */}
@@ -1216,8 +1228,11 @@ export default function TabletReservationsPage() {
       {/* Day Settings Popup */}
       {showSettings && (
         <DaySettingsPopup
-          dateKey={dateKey}
-          onClose={() => setShowSettings(false)}
+          dateKey={settingsDateKey ?? dateKey}
+          onClose={() => {
+            setShowSettings(false);
+            setSettingsDateKey(null);
+          }}
         />
       )}
 
@@ -1253,11 +1268,17 @@ export default function TabletReservationsPage() {
       {/* Create Reservation Popup */}
       {showCreatePopup && (
         <TabletCreateReservationPopup
-          defaultDateKey={dateKey}
+          defaultDateKey={createDateKey ?? dateKey}
           defaultService={selectedService === "dinner" ? "dinner" : "lunch"}
           prefill={createPrefill}
-          onClose={() => setShowCreatePopup(false)}
-          onSuccess={() => setShowCreatePopup(false)}
+          onClose={() => {
+            setShowCreatePopup(false);
+            setCreateDateKey(null);
+          }}
+          onSuccess={() => {
+            setShowCreatePopup(false);
+            setCreateDateKey(null);
+          }}
         />
       )}
 

@@ -965,6 +965,51 @@ export const toggleDaySlots = mutation({
 });
 
 // ═══════════════════════════════════════════════════════════════
+// MUTATION: reopenManualClosures (admin — bouton « Rouvrir » du calendrier)
+// Ne rouvre que les créneaux fermés manuellement : les fermetures du modèle
+// hebdomadaire et des périodes spéciales restent en place.
+// ═══════════════════════════════════════════════════════════════
+
+export const reopenManualClosures = mutation({
+  args: {
+    dateKey: v.string(),
+  },
+  handler: async (ctx, { dateKey }) => {
+    await requireRole(ctx, "admin");
+
+    if (!DATE_KEY_REGEX.test(dateKey)) {
+      throw Errors.INVALID_INPUT("dateKey", "Format YYYY-MM-DD requis");
+    }
+
+    const restaurant = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .first();
+
+    if (!restaurant) {
+      throw Errors.NO_ACTIVE_RESTAURANT();
+    }
+
+    const { manual } = await getSlotOverridesForDateRange(ctx, restaurant._id, dateKey, dateKey);
+    const now = Date.now();
+    let reopenedCount = 0;
+
+    for (const override of manual) {
+      if (override.patch.isOpen !== false) continue;
+      await ctx.db.patch(override._id, {
+        patch: { ...override.patch, isOpen: true },
+        updatedAt: now,
+      });
+      reopenedCount++;
+    }
+
+    console.log("Manual closures reopened", { dateKey, reopenedCount });
+
+    return { reopenedCount };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
 // MUTATION: addSlot (admin — add a temporary slot for a specific day)
 // Pour le Modal Day Override - bouton (+) Ajouter Créneau
 // ═══════════════════════════════════════════════════════════════
