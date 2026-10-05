@@ -17,12 +17,27 @@ import { fr } from "date-fns/locale";
 type EventType = "created" | "status_change" | "table_assignment" | "updated";
 type Status = "pending" | "confirmed" | "seated" | "completed" | "noshow" | "cancelled" | "refused" | "incident";
 
+interface ReservationSnapshot {
+  dateKey: string;
+  service: "lunch" | "dinner";
+  timeKey: string;
+  partySize: number;
+  adults?: number;
+  childrenCount?: number;
+  babyCount?: number;
+  note?: string | null;
+}
+
 interface ActivityEvent {
   _id: string;
   eventType: EventType;
   fromStatus?: string;
   toStatus?: string;
   createdAt: number;
+  changes?: {
+    before: ReservationSnapshot;
+    after: ReservationSnapshot;
+  } | null;
   reservation: {
     _id: string;
     firstName: string;
@@ -79,6 +94,43 @@ function formatDate(dateKey: string): string {
   const [year, month, day] = dateKey.split("-").map(Number);
   const date = new Date(year, month - 1, day);
   return date.toLocaleDateString("fr-BE", { day: "2-digit", month: "2-digit" });
+}
+
+function formatService(service: "lunch" | "dinner"): string {
+  return service === "lunch" ? "Midi" : "Soir";
+}
+
+function formatGuests(snapshot: ReservationSnapshot): string {
+  const parts = [`${snapshot.adults ?? snapshot.partySize} ad.`];
+  if (snapshot.childrenCount) parts.push(`${snapshot.childrenCount} enf.`);
+  if (snapshot.babyCount) parts.push(`${snapshot.babyCount} bébé${snapshot.babyCount > 1 ? "s" : ""}`);
+  return `${snapshot.partySize} (${parts.join(", ")})`;
+}
+
+function getChangeLines(changes: NonNullable<ActivityEvent["changes"]>): { label: string; from: string; to: string }[] {
+  const { before, after } = changes;
+  const lines: { label: string; from: string; to: string }[] = [];
+  if (before.dateKey !== after.dateKey) {
+    lines.push({ label: "Date", from: formatDate(before.dateKey), to: formatDate(after.dateKey) });
+  }
+  if (before.service !== after.service) {
+    lines.push({ label: "Service", from: formatService(before.service), to: formatService(after.service) });
+  }
+  if (before.timeKey !== after.timeKey) {
+    lines.push({ label: "Heure", from: before.timeKey, to: after.timeKey });
+  }
+  if (
+    before.partySize !== after.partySize ||
+    (before.adults ?? 0) !== (after.adults ?? 0) ||
+    (before.childrenCount ?? 0) !== (after.childrenCount ?? 0) ||
+    (before.babyCount ?? 0) !== (after.babyCount ?? 0)
+  ) {
+    lines.push({ label: "Couverts", from: formatGuests(before), to: formatGuests(after) });
+  }
+  if ((before.note ?? "").trim() !== (after.note ?? "").trim()) {
+    lines.push({ label: "Note", from: before.note?.trim() || "—", to: after.note?.trim() || "—" });
+  }
+  return lines;
 }
 
 export default function ActivityPage() {
@@ -162,6 +214,30 @@ export default function ActivityPage() {
                           {event.reservation.timeKey}
                         </span>
                       </div>
+                    )}
+                    {/* Détail de la modification (avant → après) */}
+                    {event.eventType === "updated" && (
+                      event.changes ? (
+                        (() => {
+                          const lines = getChangeLines(event.changes);
+                          return lines.length > 0 ? (
+                            <ul className="mt-2 space-y-1 rounded-lg bg-white/70 border border-blue-100 px-2.5 py-2">
+                              {lines.map((line) => (
+                                <li key={line.label} className="text-xs text-slate-600 flex flex-wrap items-baseline gap-1">
+                                  <span className="font-medium text-slate-500">{line.label} :</span>
+                                  <span className="line-through text-slate-400 break-words">{line.from}</span>
+                                  <span className="text-slate-400">→</span>
+                                  <span className="font-semibold text-blue-700 break-words">{line.to}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-2 text-xs text-slate-500">Aucun changement détecté</p>
+                          );
+                        })()
+                      ) : (
+                        <p className="mt-2 text-xs italic text-slate-400">Détail non disponible pour cette modification</p>
+                      )
                     )}
                   </div>
                 </div>

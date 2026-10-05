@@ -2079,6 +2079,7 @@ export const listRecentActivity = query({
         toStatus: event.toStatus,
         createdAt: event.createdAt,
         performedBy: event.performedBy,
+        changes: event.eventType === "updated" ? event.metadata ?? null : null,
         reservation: reservation ? {
           _id: reservation._id,
           firstName: reservation.firstName,

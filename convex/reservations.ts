@@ -1149,6 +1149,29 @@ export const _update = internalMutation({
       actualTime: args.now,
       scheduledTime: args.timeKey,
       performedBy: "client",
+      // Snapshot avant/après pour afficher le détail de la modification
+      metadata: {
+        before: {
+          dateKey: reservation.dateKey,
+          service: reservation.service,
+          timeKey: reservation.timeKey,
+          partySize: reservation.partySize,
+          adults: reservation.adults,
+          childrenCount: reservation.childrenCount,
+          babyCount: reservation.babyCount,
+          note: reservation.note ?? null,
+        },
+        after: {
+          dateKey: args.dateKey,
+          service: args.service,
+          timeKey: args.timeKey,
+          partySize: newPartySize,
+          adults: args.adults,
+          childrenCount: args.childrenCount,
+          babyCount: args.babyCount,
+          note: args.note ?? null,
+        },
+      },
       createdAt: args.now,
     });
 
