@@ -88,11 +88,12 @@ export function TabletNotificationBell({ onNavigateToReservation }: TabletNotifi
       {/* Bouton cloche */}
       <button
         onClick={() => setIsOpen(true)}
-        className="relative w-[52px] h-[52px] bg-white/80 backdrop-blur-xl rounded-full border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white transition-all active:scale-95"
+        aria-label={count > 0 ? `Notifications (${count})` : "Notifications"}
+        className="relative w-[44px] h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-[#F4F6F8] transition-all active:scale-95"
       >
         <Bell size={20} strokeWidth={1.5} className={cn(count > 0 && "text-orange-500")} />
         {count > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[22px] h-[22px] flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1 ring-2 ring-[#E4E4E4] animate-pulse">
+          <span className="absolute -top-1.5 -right-1 min-w-[22px] h-[22px] flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1 ring-2 ring-white animate-pulse">
             {count > 99 ? "99+" : count}
           </span>
         )}
