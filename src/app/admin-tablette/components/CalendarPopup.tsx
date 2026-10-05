@@ -293,7 +293,7 @@ export function CalendarPopup({
                       {!isClosed && dayData && (
                         <div className="space-y-1.5 mt-auto pt-2 w-full">
                           {/* Déjeuner */}
-                          {dayData.lunch.isOpen && (
+                          {dayData.lunch.isOpen ? (
                             <div className="flex items-center gap-2 w-full">
                               <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
                                 Déj
@@ -308,9 +308,14 @@ export function CalendarPopup({
                                 {dayData.lunch.covers}<span className="font-normal text-slate-400">/{dayData.lunch.capacityEffective}</span>
                               </span>
                             </div>
+                          ) : (
+                            // Service fermé : ligne vide pour garder Déj en haut et Dîn en bas
+                            <div aria-hidden className="invisible flex items-center gap-2 w-full">
+                              <span className="text-[11px] font-semibold">&nbsp;</span>
+                            </div>
                           )}
                           {/* Dîner */}
-                          {dayData.dinner.isOpen && (
+                          {dayData.dinner.isOpen ? (
                             <div className="flex items-center gap-2 w-full">
                               <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-slate-400" : "text-slate-500"}`}>
                                 Dîn
@@ -324,6 +329,11 @@ export function CalendarPopup({
                               <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-slate-500" : "text-slate-700"}`}>
                                 {dayData.dinner.covers}<span className="font-normal text-slate-400">/{dayData.dinner.capacityEffective}</span>
                               </span>
+                            </div>
+                          ) : (
+                            // Service fermé : ligne vide pour garder Déj en haut et Dîn en bas
+                            <div aria-hidden className="invisible flex items-center gap-2 w-full">
+                              <span className="text-[11px] font-semibold">&nbsp;</span>
                             </div>
                           )}
                         </div>
