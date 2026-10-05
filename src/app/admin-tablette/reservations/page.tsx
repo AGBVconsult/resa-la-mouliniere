@@ -276,16 +276,6 @@ export default function TabletReservationsPage() {
 
   const updateReservation = useMutation(api.admin.updateReservation);
   const cancelByClient = useMutation(api.admin.cancelByClient);
-  const incrementSlotCapacity = useMutation(api.slots.incrementSlotCapacity);
-
-  // « + » de l'en-tête de créneau : une place de plus ; la jauge se met à jour via slotsData
-  const handleIncrementCapacity = async (slotId: Id<"slots">) => {
-    try {
-      await incrementSlotCapacity({ slotId, delta: 1 });
-    } catch (error) {
-      toast.error(formatConvexError(error));
-    }
-  };
 
   const goToPreviousDay = () => setSelectedDate((d) => subDays(d, 1));
   const goToNextDay = () => setSelectedDate((d) => addDays(d, 1));
@@ -597,8 +587,7 @@ export default function TabletReservationsPage() {
         {sortedTimes.map((time) => {
           const groupReservations = timeGroups[time];
           const groupCovers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
-          const slot = slotsData?.[service]?.find((s: { _id: Id<"slots">; timeKey: string; capacity: number }) => s.timeKey === time);
-          const groupCapacity = slot?.capacity || 0;
+          const groupCapacity = slotsData?.[service]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
           // Jauge : vert, ambre quand il reste 20 % ou moins, rouge à complet
           const availableCovers = Math.max(0, groupCapacity - groupCovers);
           const fillRatio = groupCapacity > 0 ? Math.min(1, groupCovers / groupCapacity) : 0;
@@ -627,22 +616,6 @@ export default function TabletReservationsPage() {
                       {availableCovers > 0 ? `${availableCovers} dispo` : "complet"}
                     </span>
                   </>
-                )}
-                {slot && (
-                  // Zone tactile 88 px × hauteur du bandeau, « + » visuel de 22 px collé aux places dispo
-                  <button
-                    type="button"
-                    onClick={() => handleIncrementCapacity(slot._id)}
-                    aria-label={`Ajouter une place au créneau de ${time}`}
-                    className={cn(
-                      "group self-stretch w-[88px] -ml-3.5 pl-2.5 flex items-center",
-                      showFloorPlan || selectedService === "total" ? "-my-1" : "-my-[5px]"
-                    )}
-                  >
-                    <span className="flex items-center justify-center w-[22px] h-[22px] rounded-full bg-white/15 text-white transition-colors group-active:bg-white/35">
-                      <Plus size={14} strokeWidth={2.5} />
-                    </span>
-                  </button>
                 )}
               </div>
               <div className={cn(SUBGRID, "divide-y divide-slate-50")}>
