@@ -6,7 +6,6 @@ import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireRole } from "./lib/rbac";
 import { getSlotOverridesForDateRange } from "./lib/slotOverrides";
-import { resolveDayClosure, resolveServiceClosure, type ClosureReason } from "./lib/dayClosure";
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -22,12 +21,6 @@ interface ServiceEffective {
 interface DayEffective {
   lunch: ServiceEffective;
   dinner: ServiceEffective;
-  /** Réservations en attente de confirmation (statut "pending") */
-  pendingCount: number;
-  /** Nom de la période spéciale qui s'applique ce jour-là */
-  periodName: string | null;
-  /** Motif de fermeture, uniquement si les deux services sont fermés */
-  closure: { reason: ClosureReason; closedAt: number | null } | null;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -92,23 +85,7 @@ export const getMonthEffective = query({
 
     // Build closure map: dateKey -> { lunch: boolean, dinner: boolean }
     const closureMap = new Map<string, { lunch: boolean; dinner: boolean }>();
-    // Nom de la période spéciale par jour (toutes périodes confondues)
-    const periodNameMap = new Map<string, string>();
-
-    for (const period of monthPeriods) {
-      const periodStart = period.startDate > startDate ? period.startDate : startDate;
-      const periodEnd = period.endDate < endDate ? period.endDate : endDate;
-      const cursor = parseDateKey(periodStart);
-      const last = parseDateKey(periodEnd);
-      while (cursor <= last) {
-        if (period.applyRules.activeDays.includes(getISOWeekday(cursor))) {
-          const key = formatDateKey(cursor);
-          if (!periodNameMap.has(key)) periodNameMap.set(key, period.name);
-        }
-        cursor.setDate(cursor.getDate() + 1);
-      }
-    }
-
+    
     for (const period of monthPeriods) {
       if (period.applyRules.status !== "closed") continue;
       
@@ -148,23 +125,6 @@ export const getMonthEffective = query({
     const slotKeys = new Set(monthSlots.map((s) => s.slotKey));
     const { manual: manualOverrides, period: periodOverrides } =
       await getSlotOverridesForDateRange(ctx, restaurant._id, startDate, endDate);
-
-    // Fermetures manuelles par slotKey (pour expliquer un jour fermé)
-    const manualCloseAt = new Map<string, number>();
-    for (const override of manualOverrides) {
-      if (override.patch.isOpen === false) manualCloseAt.set(override.slotKey, override.updatedAt);
-    }
-
-    // Modèles hebdomadaires ouverts (pour distinguer "créneaux non générés" de "fermeture habituelle")
-    const templates = await ctx.db
-      .query("weeklyTemplates")
-      .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
-      .collect();
-    const openTemplates = new Set(
-      templates
-        .filter((t) => t.isOpen && t.slots.some((s) => s.isActive))
-        .map((t) => `${t.dayOfWeek}#${t.service}`)
-    );
 
     // Build overrides map with priority: MANUAL > PERIOD
     const overridesMap = new Map<string, { isOpen?: boolean; capacity?: number }>();
@@ -224,32 +184,11 @@ export const getMonthEffective = query({
       const lunchClosed = closure?.lunch ?? false;
       const dinnerClosed = closure?.dinner ?? false;
 
-      const lunchOpen = lunchClosed ? false : lunchSlots.some((s) => s.isOpen && s.capacity > 0);
-      const dinnerOpen = dinnerClosed ? false : dinnerSlots.some((s) => s.isOpen && s.capacity > 0);
-
-      let dayClosure: DayEffective["closure"] = null;
-      if (!lunchOpen && !dinnerOpen) {
-        const weekday = getISOWeekday(parseDateKey(dateKey));
-        const serviceClosure = (service: "lunch" | "dinner", slots: typeof lunchSlots, closedByPeriod: boolean) =>
-          resolveServiceClosure({
-            closedByPeriod,
-            slotCount: slots.length,
-            manualCloseTimestamps: slots
-              .map((s) => manualCloseAt.get(s.slotKey))
-              .filter((t): t is number => t !== undefined),
-            templateOpen: openTemplates.has(`${weekday}#${service}`),
-          });
-        dayClosure = resolveDayClosure(
-          serviceClosure("lunch", lunchSlots, lunchClosed),
-          serviceClosure("dinner", dinnerSlots, dinnerClosed)
-        );
-      }
-
       // Calculate effective values for each service
       // If a closure exists from specialPeriods, force isOpen to false
       result[dateKey] = {
         lunch: {
-          isOpen: lunchOpen,
+          isOpen: lunchClosed ? false : lunchSlots.some((s) => s.isOpen && s.capacity > 0),
           capacityEffective: lunchClosed ? 0 : lunchSlots
             .filter((s) => s.isOpen)
             .reduce((sum, s) => sum + s.capacity, 0),
@@ -257,16 +196,13 @@ export const getMonthEffective = query({
           reservationCount: lunchReservations.length,
         },
         dinner: {
-          isOpen: dinnerOpen,
+          isOpen: dinnerClosed ? false : dinnerSlots.some((s) => s.isOpen && s.capacity > 0),
           capacityEffective: dinnerClosed ? 0 : dinnerSlots
             .filter((s) => s.isOpen)
             .reduce((sum, s) => sum + s.capacity, 0),
           covers: dinnerReservations.reduce((sum, r) => sum + r.partySize, 0),
           reservationCount: dinnerReservations.length,
         },
-        pendingCount: dayReservations.filter((r) => r.status === "pending").length,
-        periodName: periodNameMap.get(dateKey) ?? null,
-        closure: dayClosure,
       };
     }
 
