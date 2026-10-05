@@ -588,17 +588,17 @@ export default function TabletReservationsPage() {
           return (
             <div key={time} className={SUBGRID}>
               <div className={cn(
-                "col-span-full sticky top-0 z-10 flex items-center gap-3.5 bg-[#CFD9E1] text-[#22303C] border-b border-[#BCC9D3]",
+                "col-span-full sticky top-0 z-10 flex items-center gap-3.5 bg-[#4F6D84] text-white",
                 showFloorPlan || selectedService === "total" ? "px-3 py-1" : "px-4 py-[5px]"
               )}>
                 <span className="font-black text-sm tabular-nums">{time}</span>
-                <div className="flex items-center gap-1.5 text-xs font-bold tabular-nums text-[#3E5A70]">
+                <div className="flex items-center gap-1.5 text-xs font-bold tabular-nums">
                   <UsersRound size={13} strokeWidth={2} />
                   <span>{groupCovers}</span>
                 </div>
                 {groupCapacity > 0 && (
                   <>
-                    <div className="w-[72px] h-[6px] rounded-full bg-[#B3C2CE] overflow-hidden">
+                    <div className="w-[72px] h-[6px] rounded-full bg-white/20 overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${fillRatio * 100}%`, backgroundColor: gauge.bar }} />
                     </div>
                     <span className="text-xs font-bold tabular-nums" style={{ color: gauge.text }}>
