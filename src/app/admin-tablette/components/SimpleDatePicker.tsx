@@ -59,7 +59,7 @@ export function SimpleDatePicker({ isOpen, onClose, onSelectDate, selectedDateKe
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="absolute inset-0 backdrop-blur-[2px] bg-black/30" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl p-5 w-[340px]">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">

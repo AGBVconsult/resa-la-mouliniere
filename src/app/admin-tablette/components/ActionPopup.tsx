@@ -33,7 +33,7 @@ export function ActionPopup({ status, onAction, onClose }: ActionPopupProps) {
   return (
     <>
       <div
-        className="fixed inset-0 z-40"
+        className="fixed inset-0 backdrop-blur-[2px] z-40"
         onClick={onClose}
       />
       <div className="absolute right-0 top-full mt-1 z-50 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 min-w-[160px] animate-in fade-in slide-in-from-top-2 duration-200">

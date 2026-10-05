@@ -185,7 +185,7 @@ export function AdminSidebar({ collapsed = false }: AdminSidebarProps) {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="md:hidden fixed inset-0 z-30 bg-black/50"
+          className="md:hidden fixed inset-0 backdrop-blur-[2px] z-30 bg-black/50"
           onClick={() => setMobileOpen(false)}
           data-sidebar-mobile-overlay
         />

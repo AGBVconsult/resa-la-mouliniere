@@ -103,7 +103,7 @@ export function TabletNotificationBell({ onNavigateToReservation }: TabletNotifi
         <div className="fixed inset-0 z-[100000] flex justify-end">
           {/* Overlay */}
           <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
+            className="absolute inset-0 backdrop-blur-[2px] bg-black/30 animate-in fade-in duration-200"
             onClick={() => setIsOpen(false)}
           />
           {/* Panneau */}

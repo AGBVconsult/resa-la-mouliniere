@@ -36,7 +36,7 @@ export function ClosureNoticeModal({
   const reopenFormatted = formatDateDisplay(reopenDate, lang);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Close button */}
         <div className="flex justify-end px-4 pt-4">

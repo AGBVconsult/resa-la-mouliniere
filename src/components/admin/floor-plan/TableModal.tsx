@@ -60,7 +60,7 @@ export function TableModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 backdrop-blur-[2px] bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-xl shadow-xl w-[calc(100%-2rem)] max-w-[400px] max-h-[90vh] overflow-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">

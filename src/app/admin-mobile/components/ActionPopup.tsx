@@ -79,7 +79,7 @@ export function ActionPopup({ status, onAction, onClose }: ActionPopupProps) {
 
   return (
     <>
-      <div className="fixed inset-0 z-[99]" onClick={onClose} />
+      <div className="fixed inset-0 backdrop-blur-[2px] z-[99]" onClick={onClose} />
       <div className="absolute right-0 top-8 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-[100] animate-in fade-in zoom-in-95 duration-200 origin-top-right">
         {actions.map((item, index) => (
           <div key={item.label}>

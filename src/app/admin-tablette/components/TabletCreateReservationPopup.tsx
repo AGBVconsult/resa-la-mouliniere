@@ -111,7 +111,7 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, p
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-[200]" onClick={onClose} />
+      <div className="fixed inset-0 backdrop-blur-[2px] bg-black/40 z-[200]" onClick={onClose} />
       <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[640px] md:max-h-[92vh] bg-white rounded-2xl shadow-2xl z-[201] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-[#334156] text-white shrink-0">

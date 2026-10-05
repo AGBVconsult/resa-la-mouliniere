@@ -121,7 +121,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/40 z-[200]" onClick={onClose} />
+      <div className="fixed inset-0 backdrop-blur-[2px] bg-black/40 z-[200]" onClick={onClose} />
 
       {/* Popup */}
       <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[600px] md:max-h-[90vh] bg-white rounded-2xl shadow-2xl z-[201] flex flex-col overflow-hidden">
