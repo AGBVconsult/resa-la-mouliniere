@@ -55,6 +55,7 @@ import {
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { OutcomeIndicator } from "@/components/admin/OutcomeIndicator";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { getFlag } from "@/lib/getFlag";
@@ -97,6 +98,7 @@ interface Reservation {
   isLateClient?: boolean;
   isSlowClient?: boolean;
   lastNoShowDateKey?: string | null;
+  lastIncidentDateKey?: string | null;
   createdAt?: number;
   acknowledgedAt?: number;
 }
@@ -692,17 +694,8 @@ export default function TabletReservationsPage() {
                   )}>
                     {visits === 0 ? "NEW" : visits}
                   </span>
-                  {/* No-show : cette réservation ou la précédente du client */}
-                  {(res.status === "noshow" || res.lastNoShowDateKey) && (
-                    <span
-                      className="h-[18px] w-[18px] flex items-center justify-center rounded-full bg-pink-100 text-pink-600 shrink-0"
-                      title={res.status === "noshow"
-                      ? `No-show · ${format(parseISO(res.dateKey), "EEE d MMM", { locale: fr })}`
-                      : `Dernière réservation : no-show · ${format(parseISO(res.lastNoShowDateKey!), "EEE d MMM", { locale: fr })}`}
-                    >
-                      <Ghost size={12} strokeWidth={2} />
-                    </span>
-                  )}
+                  {/* No-show / incident : cette réservation ou la précédente du client */}
+                  <OutcomeIndicator reservation={res} size={18} />
                   {/* Seulement s'il y a un indicateur : vide, sa marge élargirait la colonne pour rien */}
                   {(res.hasClientNotes || res.isLateClient || res.isSlowClient) && (
                     <div className="flex items-center gap-1 ml-4">

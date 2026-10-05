@@ -444,7 +444,7 @@ function buildReservationAdmin(doc: {
   completedAt: number | null;
   noshowAt: number | null;
   acknowledgedAt?: number;
-}, totalVisits: number = 0, clientId?: Id<"clients">, clientBehavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } = { hasNotes: false, isLate: false, isSlow: false }, lastNoShowDateKey: string | null = null) {
+}, totalVisits: number = 0, clientId?: Id<"clients">, clientBehavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } = { hasNotes: false, isLate: false, isSlow: false }, previousOutcome: PreviousOutcome | null = null) {
   return {
     _id: doc._id,
     restaurantId: doc.restaurantId,
@@ -481,29 +481,32 @@ function buildReservationAdmin(doc: {
     hasClientNotes: clientBehavior.hasNotes,
     isLateClient: clientBehavior.isLate,
     isSlowClient: clientBehavior.isSlow,
-    lastNoShowDateKey,
+    lastNoShowDateKey: previousOutcome?.status === "noshow" ? previousOutcome.dateKey : null,
+    lastIncidentDateKey: previousOutcome?.status === "incident" ? previousOutcome.dateKey : null,
   };
 }
 
 // Statuts qui soldent une réservation : le client est venu (seated/completed/incident) ou non (noshow)
 const OUTCOME_STATUSES = new Set(["seated", "completed", "incident", "noshow"]);
 
+type PreviousOutcome = { status: "noshow" | "incident"; dateKey: string };
+
 /**
- * Pour chaque réservation, renvoie la date (dateKey) de la réservation précédente du client
- * lorsque celle-ci s'est soldée par un no-show. Absente de la map sinon.
- * Seuls les clients ayant au moins un no-show voient leur historique lu.
+ * Pour chaque réservation, renvoie la réservation précédente du client (statut + dateKey)
+ * lorsque celle-ci s'est soldée par un no-show ou un incident. Absente de la map sinon.
+ * Seuls les clients déjà venus ou ayant un no-show voient leur historique lu.
  */
-async function getLastNoShowDateKeys(
+async function getPreviousOutcomes(
   ctx: QueryCtx,
   docs: Array<{ _id: Id<"reservations">; dateKey: string; timeKey: string; phone: string }>,
-  clientsMap: Map<string, { clientId: Id<"clients">; totalNoShows: number }>
-): Promise<Map<Id<"reservations">, string>> {
-  const result = new Map<Id<"reservations">, string>();
+  clientsMap: Map<string, { clientId: Id<"clients">; totalVisits: number; totalNoShows: number }>
+): Promise<Map<Id<"reservations">, PreviousOutcome>> {
+  const result = new Map<Id<"reservations">, PreviousOutcome>();
   const docsByClient = new Map<Id<"clients">, typeof docs>();
   for (const doc of docs) {
     if (!hasUsablePhone(doc.phone)) continue;
     const client = clientsMap.get(normalizePhone(doc.phone));
-    if (!client || client.totalNoShows === 0) continue;
+    if (!client || client.totalVisits + client.totalNoShows === 0) continue;
     const list = docsByClient.get(client.clientId) ?? [];
     list.push(doc);
     docsByClient.set(client.clientId, list);
@@ -526,7 +529,9 @@ async function getLastNoShowDateKeys(
         if (r.id === doc._id || r.at >= at) continue;
         if (!previous || r.at > previous.at) previous = r;
       }
-      if (previous?.status === "noshow") result.set(doc._id, previous.dateKey);
+      if (previous?.status === "noshow" || previous?.status === "incident") {
+        result.set(doc._id, { status: previous.status, dateKey: previous.dateKey });
+      }
     }
   }
   return result;
@@ -648,14 +653,14 @@ export const listReservations = query({
       }
     }
 
-    const lastNoShows = await getLastNoShowDateKeys(ctx, filteredDocs, clientsMap);
+    const previousOutcomes = await getPreviousOutcomes(ctx, filteredDocs, clientsMap);
 
     // Map to ReservationAdmin with totalVisits and clientId
     const page = filteredDocs.map((doc) => {
       const clientData = hasUsablePhone(doc.phone)
         ? clientsMap.get(normalizePhone(doc.phone))
         : undefined;
-      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false }, lastNoShows.get(doc._id) ?? null);
+      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false }, previousOutcomes.get(doc._id) ?? null);
     });
 
     return {
@@ -689,7 +694,7 @@ export const getReservation = query({
     let totalVisits = 0;
     let clientId: Id<"clients"> | undefined = undefined;
     let clientBehavior = { hasNotes: false, isLate: false, isSlow: false };
-    let lastNoShowDateKey: string | null = null;
+    let previousOutcome: PreviousOutcome | null = null;
 
     if (hasUsablePhone(reservation.phone)) {
       const phone = normalizePhone(reservation.phone);
@@ -705,12 +710,12 @@ export const getReservation = query({
         isSlow: client?.isSlowClient ?? false,
       };
       if (client) {
-        const lastNoShows = await getLastNoShowDateKeys(ctx, [reservation], new Map([[phone, { clientId: client._id, totalNoShows: client.totalNoShows ?? 0 }]]));
-        lastNoShowDateKey = lastNoShows.get(reservation._id) ?? null;
+        const previousOutcomes = await getPreviousOutcomes(ctx, [reservation], new Map([[phone, { clientId: client._id, totalVisits: client.totalVisits, totalNoShows: client.totalNoShows ?? 0 }]]));
+        previousOutcome = previousOutcomes.get(reservation._id) ?? null;
       }
     }
 
-    return buildReservationAdmin(reservation, totalVisits, clientId, clientBehavior, lastNoShowDateKey);
+    return buildReservationAdmin(reservation, totalVisits, clientId, clientBehavior, previousOutcome);
   },
 });
 
@@ -1988,13 +1993,13 @@ export const listPendingReservations = query({
       }
     }
 
-    const lastNoShows = await getLastNoShowDateKeys(ctx, pendingReservations, clientsMap);
+    const previousOutcomes = await getPreviousOutcomes(ctx, pendingReservations, clientsMap);
 
     return pendingReservations.map((doc) => {
       const clientData = hasUsablePhone(doc.phone)
         ? clientsMap.get(normalizePhone(doc.phone))
         : undefined;
-      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false }, lastNoShows.get(doc._id) ?? null);
+      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false }, previousOutcomes.get(doc._id) ?? null);
     });
   },
 });
