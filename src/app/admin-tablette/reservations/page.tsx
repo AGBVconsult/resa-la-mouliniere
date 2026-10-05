@@ -392,6 +392,19 @@ export default function TabletReservationsPage() {
   // Total journalier
   const totalCovers = lunchCovers + dinnerCovers;
 
+  // Switch de service : le fond animé suit la position et la largeur du segment actif
+  const serviceButtonRefs = useRef<Record<"total" | "lunch" | "dinner", HTMLButtonElement | null>>({ total: null, lunch: null, dinner: null });
+  const [serviceThumb, setServiceThumb] = useState<{ left: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    const updateThumb = () => {
+      const btn = serviceButtonRefs.current[selectedService];
+      if (btn) setServiceThumb({ left: btn.offsetLeft, width: btn.offsetWidth });
+    };
+    updateThumb();
+    // Les polices peuvent finir de charger après le premier rendu
+    document.fonts?.ready.then(updateThumb);
+  }, [selectedService, totalCovers, lunchCovers, dinnerCovers]);
+
   const getTableName = (res: Reservation) => {
     if (!tablesData) return "-";
     const primaryId = res.primaryTableId || (res.tableIds?.length > 0 ? res.tableIds[0] : null);
@@ -1016,56 +1029,44 @@ export default function TabletReservationsPage() {
           )}
         </div>
 
-        {/* Switch Total/Midi/Soir - centré */}
+        {/* Switch Total/Midi/Soir - centré (libellé visible uniquement sur le service actif) */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-[52px] bg-white rounded-full px-1 border border-[#D3DBE1] shadow-[0_4px_14px_-8px_rgba(30,45,60,0.45)]">
           {/* Fond animé */}
-          <div 
-            className="absolute top-1 bottom-1 bg-[#3E5A70] rounded-full transition-transform duration-300 ease-out shadow-md"
-            style={{
-              width: 'calc(33.33% - 2px)',
-              left: '4px',
-              transform: selectedService === "lunch" ? 'translateX(100%)' : selectedService === "dinner" ? 'translateX(200%)' : 'translateX(0)'
-            }}
-          />
-          
-          {/* Bouton Total */}
-          <button
-            onClick={() => setSelectedService("total")}
-            className={cn(
-              "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
-              selectedService === "total" ? "text-white" : "text-slate-500"
-            )}
-          >
-            <UsersRound size={14} strokeWidth={1.5} />
-            <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "total" ? "opacity-100" : "opacity-60")}>Total</span>
-            <span className="font-bold text-base">{totalCovers}</span>
-          </button>
-          
-          {/* Bouton Midi */}
-          <button
-            onClick={() => setSelectedService("lunch")}
-            className={cn(
-              "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
-              selectedService === "lunch" ? "text-white" : "text-slate-500"
-            )}
-          >
-            <Sun size={14} strokeWidth={1.5} className="text-[#D9A441]" />
-            <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "lunch" ? "opacity-100" : "opacity-60")}>Midi</span>
-            <span className="font-bold text-base">{lunchCovers}</span>
-          </button>
-          
-          {/* Bouton Soir */}
-          <button
-            onClick={() => setSelectedService("dinner")}
-            className={cn(
-              "relative z-10 flex items-center justify-center h-full rounded-full transition-all duration-300 w-24 gap-1.5",
-              selectedService === "dinner" ? "text-white" : "text-slate-500"
-            )}
-          >
-            <Moon size={14} strokeWidth={1.5} className={selectedService === "dinner" ? "text-[#C9D6E2]" : "text-[#7E97AC]"} />
-            <span className={cn("text-[10px] font-bold uppercase tracking-wider transition-opacity", selectedService === "dinner" ? "opacity-100" : "opacity-60")}>Soir</span>
-            <span className="font-bold text-base">{dinnerCovers}</span>
-          </button>
+          {serviceThumb && (
+            <div
+              className="absolute top-1 bottom-1 left-0 bg-[#3E5A70] rounded-full transition-all duration-300 ease-out shadow-md"
+              style={{ width: serviceThumb.width, transform: `translateX(${serviceThumb.left}px)` }}
+            />
+          )}
+
+          {([
+            { id: "total", label: "Total", covers: totalCovers },
+            { id: "lunch", label: "Midi", covers: lunchCovers },
+            { id: "dinner", label: "Soir", covers: dinnerCovers },
+          ] as const).map(({ id, label, covers }) => {
+            const isActive = selectedService === id;
+            return (
+              <button
+                key={id}
+                ref={(el) => { serviceButtonRefs.current[id] = el; }}
+                onClick={() => setSelectedService(id)}
+                aria-pressed={isActive}
+                aria-label={`${label} : ${covers} couverts`}
+                className={cn(
+                  "relative z-10 flex items-center justify-center h-full min-w-[56px] px-3 gap-1.5 rounded-full transition-colors duration-300",
+                  isActive ? "text-white" : "text-slate-500"
+                )}
+              >
+                {id === "total" && <UsersRound size={14} strokeWidth={1.5} />}
+                {id === "lunch" && <Sun size={14} strokeWidth={1.5} className="text-[#D9A441]" />}
+                {id === "dinner" && <Moon size={14} strokeWidth={1.5} className={isActive ? "text-[#C9D6E2]" : "text-[#7E97AC]"} />}
+                {isActive && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
+                )}
+                <span className="font-bold text-base tabular-nums">{covers}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Création + Notifications + Paramètres + Menu - aligné à droite */}
