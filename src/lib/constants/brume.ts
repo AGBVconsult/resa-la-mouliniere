@@ -19,9 +19,8 @@ export const BRUME = {
   /** Bandeau de créneau horaire (même bleu que le bouton de création) */
   band: "#4F6D84",
   line: "#D3DBE1",
-  /** Sol du plan de salle (planches de pin brumeux) */
+  /** Sol du plan de salle (uni) */
   floor: "#C5D0D8",
-  floorPattern: "repeating-linear-gradient(90deg, rgba(40,60,80,0.10) 0 1px, transparent 1px 60px)",
 } as const;
 
 export type GaugeLevel = "low" | "medium" | "high" | "full";

@@ -1162,7 +1162,7 @@ export default function TabletReservationsPage() {
             {showFloorPlan && (
           <div
             className="w-[45%] shrink-0 h-full border-l border-[#B3C2CE] overflow-hidden relative"
-            style={{ backgroundColor: BRUME.floor, backgroundImage: BRUME.floorPattern }}
+            style={{ backgroundColor: BRUME.floor }}
           >
               <ServiceFloorPlan
               dateKey={dateKey}
