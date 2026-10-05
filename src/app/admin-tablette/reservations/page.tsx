@@ -111,8 +111,8 @@ const SUBGRID = "col-span-full grid grid-cols-subgrid";
 
 // Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
-  if (visits === 0) return { classes: "bg-emerald-500 text-white", fontWeight: "font-semibold" }; // New (vert)
-  return { classes: "bg-blue-600 text-white", fontWeight: "font-semibold" }; // Autres (bleu foncé)
+  if (visits === 0) return { classes: "bg-[#12A27A] text-white", fontWeight: "font-semibold" }; // New (vert)
+  return { classes: "bg-[#3366D6] text-white", fontWeight: "font-semibold" }; // Autres (bleu foncé)
 }
 
 const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
@@ -138,36 +138,36 @@ const SMART_STATUS_CONFIG: Record<string, {
   label: string;
 }> = {
   pending: {
-    bg: "bg-[#FFEDD5]", // Pêche
-    iconColor: "text-orange-700",
+    bg: "bg-[#FCE6D2]", // Pêche
+    iconColor: "text-[#B4501A]",
     icon: Clock,
     nextStatus: "confirmed",
     label: "En attente",
   },
   confirmed: {
-    bg: "bg-[#FEF3C7]", // Jaune crème
-    iconColor: "text-amber-700",
+    bg: "bg-[#FAEFC8]", // Jaune crème
+    iconColor: "text-[#946200]",
     icon: ShieldQuestion,
     nextStatus: "cardPlaced",
     label: "Confirmé",
   },
   cardPlaced: {
-    bg: "bg-[#B8D0EA]", // Bleu légèrement plus foncé
-    iconColor: "text-blue-800",
+    bg: "bg-[#C9DAEE]", // Bleu carton
+    iconColor: "text-[#1F4690]",
     icon: CheckCheck,
     nextStatus: "seated",
     label: "Carton de réservation",
   },
   seated: {
-    bg: "bg-[#91BDA0]", // Vert sauge
-    iconColor: "text-green-900",
+    bg: "bg-[#C6E2CF]", // Vert sauge
+    iconColor: "text-[#1E5B36]",
     icon: UserRoundCheck,
     nextStatus: "completed",
     label: "Installé",
   },
   completed: {
-    bg: "bg-[#F1F5F9]", // Gris nuage
-    iconColor: "text-slate-600",
+    bg: "bg-[#EDF0F4]", // Gris nuage
+    iconColor: "text-[#5B6676]",
     icon: BookmarkCheck,
     nextStatus: null,
     label: "Terminé",
@@ -585,23 +585,35 @@ export default function TabletReservationsPage() {
           const groupReservations = timeGroups[time];
           const groupCovers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
           const groupCapacity = slotsData?.[service]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
-          const resaCount = groupReservations.length;
-          
+          // Jauge : vert, ambre quand il reste 20 % ou moins, rouge à complet
+          const availableCovers = Math.max(0, groupCapacity - groupCovers);
+          const fillRatio = groupCapacity > 0 ? Math.min(1, groupCovers / groupCapacity) : 0;
+          const gaugeLevel = groupCapacity > 0 && groupCovers >= groupCapacity
+            ? "full"
+            : groupCapacity > 0 && availableCovers / groupCapacity <= 0.2 ? "low" : "ok";
+          const gaugeColor = { ok: "#A7F3D0", low: "#FCD34D", full: "#FCA5A5" }[gaugeLevel];
+
           return (
             <div key={time} className={SUBGRID}>
               <div className={cn(
-                "col-span-full flex items-center gap-4 bg-[#334156] text-white border-b border-slate-600",
-                showFloorPlan || selectedService === "total" ? "px-3 py-1.5" : "px-4 py-2"
+                "col-span-full sticky top-0 z-10 flex items-center gap-3.5 bg-[#2E3A4D] text-white",
+                showFloorPlan || selectedService === "total" ? "px-3 py-1" : "px-4 py-[5px]"
               )}>
-                <div className="flex items-center gap-1.5 text-white">
-                  <Clock size={12} strokeWidth={2} />
-                  <span className="font-bold text-xs">{time}</span>
+                <span className="font-black text-sm tabular-nums">{time}</span>
+                <div className="flex items-center gap-1.5 text-xs font-bold tabular-nums">
+                  <UsersRound size={13} strokeWidth={2} />
+                  <span>{groupCovers}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-white/80">
-                  <UsersRound size={12} strokeWidth={2} />
-                  <span className="text-[10px]">{groupCovers} / {groupCapacity}</span>
-                </div>
-                <span className="text-white/60 text-[10px]">• {resaCount} résa{resaCount > 1 ? "s" : ""}</span>
+                {groupCapacity > 0 && (
+                  <>
+                    <div className="w-[72px] h-[5px] rounded-full bg-white/[0.18] overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${fillRatio * 100}%`, backgroundColor: gaugeColor }} />
+                    </div>
+                    <span className="text-xs font-bold tabular-nums" style={{ color: gaugeColor }}>
+                      {availableCovers > 0 ? `${availableCovers} dispo` : "complet"}
+                    </span>
+                  </>
+                )}
               </div>
               <div className={cn(SUBGRID, "divide-y divide-slate-50")}>
                 {groupReservations.map(renderReservationRow)}
@@ -666,24 +678,24 @@ export default function TabletReservationsPage() {
           onClick={handleRowClick}
           className={cn(
             SUBGRID,
-            "items-center hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 pl-4 py-1.5",
-            isExpanded && "bg-gray-50",
+            "items-center hover:bg-slate-50/50 cursor-pointer border-b border-[#EDF0F4] pl-4 py-1",
+            isExpanded && "bg-slate-50",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
             isHighlighted && !isSelectedForAssignment && "bg-amber-100 ring-2 ring-inset ring-amber-500 border-l-4 border-l-amber-500 shadow-sm animate-highlight-pulse",
-            isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-violet-50 hover:bg-violet-100/60 border-l-4 border-l-violet-300",
-            isUnassigned && !isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-amber-50/50"
+            isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-[#F7F5FF] hover:bg-violet-100/60 border-l-4 border-l-[#C9BFFB]",
+            isUnassigned && !isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-[#FFFCF5]"
           )}
           title={isAddedDuringService ? "Réservation enregistrée pendant le service" : undefined}
         >
           {/* Column: 2 lignes - largeur du nom le plus long (cf. LIST_GRID), au plus l'ancienne largeur fixe */}
-          <div className="flex flex-col gap-1 mr-4 max-w-[300px]">
+          <div className="flex flex-col gap-0.5 mr-4 max-w-[300px]">
             {/* Ligne 1: Prénom + Nom + Badge + Notes indicator */}
             {(() => {
               const visits = res.totalVisits ?? 0;
               const visitBadge = getVisitBadgeStyle(visits);
               return (
                 <div className="flex items-center gap-1.5">
-                  <span className={cn("text-gray-600", isCompact ? "text-sm" : "text-base")}>{res.firstName}</span>
+                  <span className={cn("text-slate-500", isCompact ? "text-sm" : "text-base")}>{res.firstName}</span>
                   <span className={cn("font-semibold mr-1.5", isCompact ? "text-sm" : "text-base")}>{res.lastName}</span>
                   <span className={cn(
                     "h-[18px] flex items-center justify-center",
@@ -716,11 +728,11 @@ export default function TabletReservationsPage() {
             {/* Ligne 2: Drapeau + Couverts + Options */}
             <div className="flex items-center gap-3">
               <span className={cn("shrink-0", isCompact ? "text-sm" : "text-base")}>{getFlag(res.phone, res.language)}</span>
-              <div className={cn("flex items-center gap-1 text-gray-600 whitespace-nowrap", isCompact ? "text-xs" : "text-sm")}>
-                <UsersRound className={cn("text-gray-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
+              <div className={cn("flex items-center gap-1 text-slate-500 whitespace-nowrap", isCompact ? "text-xs" : "text-sm")}>
+                <UsersRound className={cn("text-slate-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
                 <span className="font-semibold">{res.partySize}</span>
                 {(res.childrenCount > 0 || res.babyCount > 0) && (
-                  <span className="text-gray-400">
+                  <span className="text-slate-400">
                     ({res.childrenCount > 0 ? `${res.childrenCount}e` : ""}
                     {res.childrenCount > 0 && res.babyCount > 0 ? " + " : ""}
                     {res.babyCount > 0 ? `${res.babyCount}b` : ""})
@@ -728,24 +740,24 @@ export default function TabletReservationsPage() {
                 )}
               </div>
               <div className="flex items-center gap-1">
-                <Icon iconNode={stroller} className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-                <Baby className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-                <Accessibility className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-                <PawPrint className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
+                <Icon iconNode={stroller} className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("stroller") ? "text-slate-700" : "text-transparent")} strokeWidth={1.5} />
+                <Baby className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("highChair") ? "text-slate-700" : "text-transparent")} strokeWidth={1.5} />
+                <Accessibility className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("wheelchair") ? "text-slate-700" : "text-transparent")} strokeWidth={1.5} />
+                <PawPrint className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", hasOption("dogAccess") ? "text-slate-700" : "text-transparent")} strokeWidth={1.5} />
               </div>
             </div>
           </div>
 
           {/* Note preview - 3 lignes max, occupe tout l'espace restant (cf. LIST_GRID) */}
-          <span className={cn("text-gray-500 line-clamp-3 mr-4", isCompact ? "text-xs" : "text-sm")}>{res.note || "-"}</span>
+          <span className={cn("text-slate-500 line-clamp-3 mr-4", isCompact ? "text-xs" : "text-[13.5px] leading-[1.3]")}>{res.note || "-"}</span>
 
           {/* Table - Full Height - clic active l'assignation */}
           <div 
             className={cn(
-              "self-stretch flex shrink-0 -my-1.5 cursor-pointer transition-all duration-300 border-l border-black/10 w-16",
+              "self-stretch flex shrink-0 -my-1 cursor-pointer transition-all duration-300 border-l border-[#E8ECF1] w-16",
               isSelectedForAssignment 
                 ? "bg-blue-500" 
-                : "bg-slate-50 hover:bg-slate-100"
+                : "bg-[#F6F8FA] hover:bg-slate-100"
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -756,7 +768,7 @@ export default function TabletReservationsPage() {
               }
             }}
           >
-            <div className="flex flex-col items-center justify-center w-full py-2">
+            <div className="flex flex-col items-center justify-center w-full py-1">
               {isUnassigned ? (
                 <>
                   <LayoutGrid size={24} className={cn(
@@ -792,7 +804,7 @@ export default function TabletReservationsPage() {
             const isConfirmedWithTable = displayStatus === "confirmed" && hasTable;
             
             const statusConfig = isConfirmedWithTable 
-              ? { bg: "bg-[#D0E1F9]", iconColor: "text-blue-700", icon: Check, nextStatus: "cardPlaced", label: "Table assignée" }
+              ? { bg: "bg-[#DCE7F7]", iconColor: "text-[#2457B8]", icon: Check, nextStatus: "cardPlaced", label: "Table assignée" }
               : baseConfig;
             
             const StatusIcon = statusConfig.icon;
@@ -801,7 +813,7 @@ export default function TabletReservationsPage() {
             return (
               <div 
                 className={cn(
-                  "self-stretch flex shrink-0 -my-1.5 transition-all duration-300 border-l border-black/10",
+                  "self-stretch flex shrink-0 -my-1 transition-all duration-300 border-l border-slate-900/[0.06]",
                   statusConfig.bg
                 )}
                 onClick={(e) => e.stopPropagation()}
@@ -829,7 +841,7 @@ export default function TabletReservationsPage() {
                 {/* Action secondaire - Chevron menu */}
                 <button
                   onClick={(e) => togglePopup(e, res._id)}
-                  className="flex items-center justify-center w-8 h-full border-l border-black/10 hover:bg-black/5 transition-colors"
+                  className="flex items-center justify-center w-8 h-full border-l border-slate-900/[0.06] hover:bg-black/5 transition-colors"
                 >
                   <ChevronDown size={16} strokeWidth={2} className={statusConfig.iconColor} />
                 </button>
@@ -860,12 +872,12 @@ export default function TabletReservationsPage() {
                 <div className="flex flex-col gap-1">
                   {(() => {
                     const allStatuses = [
-                      { status: "pending", label: "En attente", desc: "Nécessite une validation", bg: "bg-[#FFEDD5]", iconColor: "text-orange-600", icon: Clock },
-                      { status: "confirmed", label: "Confirmé", desc: "À assigner", bg: "bg-[#FEF3C7]", iconColor: "text-amber-600", icon: ShieldQuestion },
-                      { status: "assigned", label: "Table assignée", desc: "Prêt pour accueil", bg: "bg-[#D0E1F9]", iconColor: "text-blue-600", icon: Check },
-                      { status: "cardPlaced", label: "Carton de réservation", desc: "Carton placé sur table", bg: "bg-[#B8D0EA]", iconColor: "text-blue-800", icon: CheckCheck },
-                      { status: "seated", label: "Installé", desc: "Client à table", bg: "bg-[#91BDA0]", iconColor: "text-green-900", icon: UserRoundCheck },
-                      { status: "completed", label: "Terminé", desc: "Table libérée", bg: "bg-[#F1F5F9]", iconColor: "text-slate-600", icon: BookmarkCheck },
+                      { status: "pending", label: "En attente", desc: "Nécessite une validation", bg: "bg-[#FCE6D2]", iconColor: "text-[#B4501A]", icon: Clock },
+                      { status: "confirmed", label: "Confirmé", desc: "À assigner", bg: "bg-[#FAEFC8]", iconColor: "text-[#946200]", icon: ShieldQuestion },
+                      { status: "assigned", label: "Table assignée", desc: "Prêt pour accueil", bg: "bg-[#DCE7F7]", iconColor: "text-[#2457B8]", icon: Check },
+                      { status: "cardPlaced", label: "Carton de réservation", desc: "Carton placé sur table", bg: "bg-[#C9DAEE]", iconColor: "text-[#1F4690]", icon: CheckCheck },
+                      { status: "seated", label: "Installé", desc: "Client à table", bg: "bg-[#C6E2CF]", iconColor: "text-[#1E5B36]", icon: UserRoundCheck },
+                      { status: "completed", label: "Terminé", desc: "Table libérée", bg: "bg-[#EDF0F4]", iconColor: "text-[#5B6676]", icon: BookmarkCheck },
                       { status: "noshow", label: "No-show", desc: "Absent", bg: "bg-[#FCE7F3]", iconColor: "text-pink-600", icon: Ghost },
                       { status: "cancelled", label: "Annulé", desc: "Annulation client", bg: "bg-[#FEE2E2]", iconColor: "text-red-600", icon: XCircle },
                       { status: "refused", label: "Refusé", desc: "Refus établissement", bg: "bg-[#E7E5E4]", iconColor: "text-stone-600", icon: Ban },
@@ -965,11 +977,11 @@ export default function TabletReservationsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F2F2F2]">
+    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#EFF1F4]">
       {/* Header */}
-      <header className="relative flex items-center py-12 px-8 border-b border-slate-200 bg-[#E4E4E4]">
+      <header className="relative flex items-center py-12 px-8 border-b border-[#DDE2E9] bg-[#E6E9EE]">
         {/* Left: Date navigation */}
-        <div className="flex items-center h-[52px] bg-[#334156] rounded-full shadow-lg pl-4 pr-2">
+        <div className="flex items-center h-[52px] bg-[#2E3A4D] rounded-full shadow-lg pl-4 pr-2">
           {/* Bouton précédent */}
           <button
             onClick={goToPreviousDay}
