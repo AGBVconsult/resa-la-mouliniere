@@ -141,7 +141,7 @@ export function CalendarPopup({
       {/* Popup */}
       <div 
         className="relative bg-[#E4E9ED] rounded-[32px] shadow-2xl flex flex-col overflow-hidden"
-        style={{ width: "90vw", height: "90vh" }}
+        style={{ width: "90vw", height: "84vh" }}
       >
         {/* Content */}
         <div className="flex flex-col h-full p-6">
