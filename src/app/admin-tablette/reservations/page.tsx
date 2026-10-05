@@ -681,15 +681,15 @@ export default function TabletReservationsPage() {
           title={isAddedDuringService ? "Réservation enregistrée pendant le service" : undefined}
         >
           {/* Column: 2 lignes - largeur du nom le plus long (cf. LIST_GRID), au plus l'ancienne largeur fixe */}
-          <div className="flex flex-col gap-0.5 mr-4 max-w-[300px]">
+          <div className="flex flex-col gap-px mr-4 max-w-[300px]">
             {/* Ligne 1: Prénom + Nom + Badge + Notes indicator */}
             {(() => {
               const visits = res.totalVisits ?? 0;
               const visitBadge = getVisitBadgeStyle(visits);
               return (
-                <div className="flex items-center gap-1.5">
-                  <span className={cn("text-slate-500", isCompact ? "text-sm" : "text-base")}>{res.firstName}</span>
-                  <span className={cn("font-semibold mr-1.5", isCompact ? "text-sm" : "text-base")}>{res.lastName}</span>
+                <div className="flex items-center gap-1.5 h-5">
+                  <span className={cn("text-slate-500", isCompact ? "text-sm" : "text-base/5")}>{res.firstName}</span>
+                  <span className={cn("font-semibold mr-1.5", isCompact ? "text-sm" : "text-base/5")}>{res.lastName}</span>
                   <span className={cn(
                     "h-[18px] flex items-center justify-center",
                     visits === 0 ? "px-1.5 rounded-full" : "min-w-[18px] rounded-full",
@@ -719,8 +719,8 @@ export default function TabletReservationsPage() {
               );
             })()}
             {/* Ligne 2: Drapeau + Couverts + Options */}
-            <div className="flex items-center gap-3">
-              <span className={cn("shrink-0", isCompact ? "text-sm" : "text-base")}>{getFlag(res.phone, res.language)}</span>
+            <div className="flex items-center gap-3 h-5">
+              <span className={cn("shrink-0", isCompact ? "text-sm" : "text-base/5")}>{getFlag(res.phone, res.language)}</span>
               <div className={cn("flex items-center gap-1 text-slate-500 whitespace-nowrap", isCompact ? "text-xs" : "text-sm")}>
                 <UsersRound className={cn("text-slate-400", isCompact ? "h-3 w-3" : "h-4 w-4")} strokeWidth={1.5} />
                 <span className="font-semibold">{res.partySize}</span>
@@ -741,8 +741,8 @@ export default function TabletReservationsPage() {
             </div>
           </div>
 
-          {/* Note preview - 3 lignes max, occupe tout l'espace restant (cf. LIST_GRID) */}
-          <span className={cn("text-slate-500 line-clamp-3 mr-4", isCompact ? "text-xs" : "text-[13.5px] leading-[1.3]")}>{res.note || "-"}</span>
+          {/* Note preview - 3 lignes max (3 × 13,5 px), occupe tout l'espace restant (cf. LIST_GRID) */}
+          <span className={cn("text-slate-500 line-clamp-3 mr-4", isCompact ? "text-xs" : "text-[12.5px] leading-[13.5px]")}>{res.note || "-"}</span>
 
           {/* Table - Full Height - clic active l'assignation */}
           <div 
@@ -761,7 +761,7 @@ export default function TabletReservationsPage() {
               }
             }}
           >
-            <div className="flex flex-col items-center justify-center w-full py-1">
+            <div className="flex flex-col items-center justify-center w-full">
               {isUnassigned ? (
                 <>
                   <LayoutGrid size={24} className={cn(
