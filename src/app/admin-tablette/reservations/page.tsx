@@ -70,7 +70,7 @@ import { TabletCreateReservationPopup, type ReservationPrefill } from "../compon
 import { ReviewSuppressionButton } from "../components/ReviewSuppressionButton";
 import { TabletMenuPopup } from "../components/TabletMenuPopup";
 import { isCreatedDuringService } from "@/lib/utils/service-window";
-import { BRUME, BRUME_GAUGE, STATUS_TONES } from "@/lib/constants/brume";
+import { BRUME, BRUME_GAUGE, STATUS_TONES, getGaugeLevel } from "@/lib/constants/brume";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -580,31 +580,28 @@ export default function TabletReservationsPage() {
           const groupReservations = timeGroups[time];
           const groupCovers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
           const groupCapacity = slotsData?.[service]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
-          // Jauge : vert, ambre quand il reste 20 % ou moins, rouge à complet (teintes Brume)
+          // Jauge : vert < 50 %, jaune < 80 %, orange < 100 %, rouge à complet
           const availableCovers = Math.max(0, groupCapacity - groupCovers);
           const fillRatio = groupCapacity > 0 ? Math.min(1, groupCovers / groupCapacity) : 0;
-          const gaugeLevel = groupCapacity > 0 && groupCovers >= groupCapacity
-            ? "full"
-            : groupCapacity > 0 && availableCovers / groupCapacity <= 0.2 ? "low" : "ok";
-          const gaugeColor = BRUME_GAUGE[gaugeLevel];
+          const gauge = BRUME_GAUGE[getGaugeLevel(groupCovers, groupCapacity)];
 
           return (
             <div key={time} className={SUBGRID}>
               <div className={cn(
-                "col-span-full sticky top-0 z-10 flex items-center gap-3.5 bg-[#E9EEF2] text-[#2A3540] border-b border-[#DDE4EA]",
+                "col-span-full sticky top-0 z-10 flex items-center gap-3.5 bg-[#CFD9E1] text-[#22303C] border-b border-[#BCC9D3]",
                 showFloorPlan || selectedService === "total" ? "px-3 py-1" : "px-4 py-[5px]"
               )}>
                 <span className="font-black text-sm tabular-nums">{time}</span>
-                <div className="flex items-center gap-1.5 text-xs font-bold tabular-nums text-[#4F6D84]">
+                <div className="flex items-center gap-1.5 text-xs font-bold tabular-nums text-[#3E5A70]">
                   <UsersRound size={13} strokeWidth={2} />
                   <span>{groupCovers}</span>
                 </div>
                 {groupCapacity > 0 && (
                   <>
-                    <div className="w-[72px] h-[5px] rounded-full bg-[#D3DCE3] overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${fillRatio * 100}%`, backgroundColor: gaugeColor }} />
+                    <div className="w-[72px] h-[6px] rounded-full bg-[#B3C2CE] overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${fillRatio * 100}%`, backgroundColor: gauge.bar }} />
                     </div>
-                    <span className="text-xs font-bold tabular-nums" style={{ color: gaugeColor }}>
+                    <span className="text-xs font-bold tabular-nums" style={{ color: gauge.text }}>
                       {availableCovers > 0 ? `${availableCovers} dispo` : "complet"}
                     </span>
                   </>
@@ -673,12 +670,12 @@ export default function TabletReservationsPage() {
           onClick={handleRowClick}
           className={cn(
             SUBGRID,
-            "items-center hover:bg-[#F7F9FA] cursor-pointer border-b border-[#E9EEF2] pl-4 py-1",
+            "items-center hover:bg-[#F4F6F8] cursor-pointer border-b border-[#E1E7EC] pl-4 py-1",
             isExpanded && "bg-[#F3F5F7]",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
             isHighlighted && !isSelectedForAssignment && "bg-amber-100 ring-2 ring-inset ring-amber-500 border-l-4 border-l-amber-500 shadow-sm animate-highlight-pulse",
             isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-[#F7F5FF] hover:bg-violet-100/60 border-l-4 border-l-[#C9BFFB]",
-            isUnassigned && !isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-[#FCFBF7]"
+            isUnassigned && !isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-[#FBF8F1]"
           )}
           title={isAddedDuringService ? "Réservation enregistrée pendant le service" : undefined}
         >
@@ -749,10 +746,10 @@ export default function TabletReservationsPage() {
           {/* Table - Full Height - clic active l'assignation */}
           <div 
             className={cn(
-              "self-stretch flex shrink-0 -my-1 cursor-pointer transition-all duration-300 border-l border-[#E3E8EC] w-16",
+              "self-stretch flex shrink-0 -my-1 cursor-pointer transition-all duration-300 border-l border-[#D3DBE1] w-16",
               isSelectedForAssignment 
                 ? "bg-[#4F6D84]" 
-                : "bg-[#F5F7F9] hover:bg-[#EBF0F3]"
+                : "bg-[#EDF1F4] hover:bg-[#E2E8ED]"
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -972,39 +969,39 @@ export default function TabletReservationsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F3F5F7]">
+    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#E4E9ED]">
       {/* Header */}
-      <header className="relative flex items-center py-12 px-8 border-b border-[#E3E8EC] bg-[#F3F5F7]">
+      <header className="relative flex items-center py-12 px-8 border-b border-[#D3DBE1] bg-[#E4E9ED]">
         {/* Left: Date navigation */}
-        <div className="flex items-center h-[52px] bg-white border border-[#E3E8EC] rounded-full shadow-[0_4px_14px_-8px_rgba(40,60,80,0.35)] pl-4 pr-2">
+        <div className="flex items-center h-[52px] bg-[#3E5A70] rounded-full shadow-[0_6px_16px_-8px_rgba(30,45,60,0.55)] pl-4 pr-2">
           {/* Bouton précédent */}
           <button
             onClick={goToPreviousDay}
-            className="w-[40px] h-full flex items-center justify-center text-[#7E97AC] hover:text-[#2A3540] hover:bg-[#F3F5F7] transition-all active:scale-95 rounded-full"
+            className="w-[40px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 rounded-full"
           >
             <ChevronLeft size={20} strokeWidth={2} />
           </button>
           
           {/* Séparateur */}
-          <div className="w-px h-6 bg-[#E3E8EC]" />
+          <div className="w-px h-6 bg-white/20" />
           
           {/* Date au centre */}
           <button
             onClick={() => setShowCalendarPopup(true)}
             className="px-6 h-full flex items-center justify-center cursor-pointer group"
           >
-            <span className="text-sm font-bold text-[#2A3540] tracking-wide">
+            <span className="text-sm font-bold text-white tracking-wide">
               {formatDateLabel()}
             </span>
           </button>
           
           {/* Séparateur */}
-          <div className="w-px h-6 bg-[#E3E8EC]" />
+          <div className="w-px h-6 bg-white/20" />
           
           {/* Bouton suivant */}
           <button
             onClick={goToNextDay}
-            className="w-[40px] h-full flex items-center justify-center text-[#7E97AC] hover:text-[#2A3540] hover:bg-[#F3F5F7] transition-all active:scale-95 rounded-full"
+            className="w-[40px] h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 rounded-full"
           >
             <ChevronRight size={20} strokeWidth={2} />
           </button>
@@ -1013,7 +1010,7 @@ export default function TabletReservationsPage() {
           {!isToday && (
             <button
               onClick={goToToday}
-              className="flex items-center gap-1.5 h-[36px] ml-2 px-3 bg-[#4F6D84] hover:bg-[#3E5A70] rounded-full text-white font-medium text-xs transition-all active:scale-95"
+              className="flex items-center gap-1.5 h-[36px] ml-2 px-3 bg-white hover:bg-[#E4E9ED] rounded-full text-[#3E5A70] font-semibold text-xs transition-all active:scale-95"
             >
               <RotateCcw size={14} strokeWidth={2} />
               <span className="uppercase tracking-wide">Aujourd&apos;hui</span>
@@ -1022,10 +1019,10 @@ export default function TabletReservationsPage() {
         </div>
 
         {/* Switch Total/Midi/Soir - centré */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-[52px] bg-white rounded-full px-1 border border-[#E3E8EC] shadow-[0_4px_14px_-8px_rgba(40,60,80,0.35)]">
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-[52px] bg-white rounded-full px-1 border border-[#D3DBE1] shadow-[0_4px_14px_-8px_rgba(30,45,60,0.45)]">
           {/* Fond animé */}
           <div 
-            className="absolute top-1 bottom-1 bg-[#4F6D84] rounded-full transition-transform duration-300 ease-out shadow-md"
+            className="absolute top-1 bottom-1 bg-[#3E5A70] rounded-full transition-transform duration-300 ease-out shadow-md"
             style={{
               width: 'calc(33.33% - 2px)',
               left: '4px',
@@ -1131,7 +1128,7 @@ export default function TabletReservationsPage() {
             </div>
             {/* Colonne Soir */}
             <div className="w-[50%] flex flex-col">
-              <div className="bg-[#E9EEF2] px-4 py-2 border-b border-[#D6DFE6] flex items-center gap-2">
+              <div className="bg-[#CFD9E1] px-4 py-2 border-b border-[#BCC9D3] flex items-center gap-2">
                 <Moon size={16} strokeWidth={1.5} className="text-[#4F6D84]" />
                 <span className="font-bold text-[#3E5A70]">SOIR</span>
                 <span className="text-[#4F6D84] text-sm">{dinnerCovers} couverts</span>
@@ -1165,7 +1162,7 @@ export default function TabletReservationsPage() {
             {/* Floor Plan */}
             {showFloorPlan && (
           <div
-            className="w-[45%] shrink-0 h-full border-l border-[#D3DBE1] overflow-hidden relative"
+            className="w-[45%] shrink-0 h-full border-l border-[#B3C2CE] overflow-hidden relative"
             style={{ backgroundColor: BRUME.floor, backgroundImage: BRUME.floorPattern }}
           >
               <ServiceFloorPlan

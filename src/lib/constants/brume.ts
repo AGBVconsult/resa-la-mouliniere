@@ -15,21 +15,36 @@ export const BRUME = {
   /** Texte principal / secondaire */
   ink: "#2A3540",
   /** Fond de page et d'en-tête */
-  bg: "#F3F5F7",
+  bg: "#E4E9ED",
   /** Bandeau de créneau horaire */
-  band: "#E9EEF2",
-  line: "#E3E8EC",
+  band: "#CFD9E1",
+  line: "#D3DBE1",
   /** Sol du plan de salle (planches de pin brumeux) */
-  floor: "#DCE2E6",
-  floorPattern: "repeating-linear-gradient(90deg, rgba(60,80,100,0.07) 0 1px, transparent 1px 60px)",
+  floor: "#C5D0D8",
+  floorPattern: "repeating-linear-gradient(90deg, rgba(40,60,80,0.10) 0 1px, transparent 1px 60px)",
 } as const;
 
-/** Jauge de remplissage d'un créneau, lisible sur le bandeau clair */
-export const BRUME_GAUGE = {
-  ok: "#5E8F72",
-  low: "#C08A2A",
-  full: "#BF4F4F",
-} as const;
+export type GaugeLevel = "low" | "medium" | "high" | "full";
+
+/**
+ * Jauge de remplissage d'un créneau : la couleur suit le taux de remplissage.
+ * `bar` colore la barre, `text` le libellé « x dispo » (plus foncé, lisible sur le bandeau).
+ */
+export const BRUME_GAUGE: Record<GaugeLevel, { bar: string; text: string }> = {
+  low: { bar: "#5E9C78", text: "#2F6B49" }, // < 50 % : vert
+  medium: { bar: "#D4AE45", text: "#7F5E0E" }, // 50–79 % : jaune
+  high: { bar: "#E08A3C", text: "#9A4A12" }, // 80–99 % : orange
+  full: { bar: "#CF5A55", text: "#9E2F2F" }, // complet : rouge
+};
+
+export function getGaugeLevel(covers: number, capacity: number): GaugeLevel {
+  if (capacity <= 0) return "low";
+  const ratio = covers / capacity;
+  if (ratio >= 1) return "full";
+  if (ratio >= 0.8) return "high";
+  if (ratio >= 0.5) return "medium";
+  return "low";
+}
 
 export type StatusToneKey =
   | "pending"
