@@ -1,4 +1,5 @@
 import { query, mutation } from "./_generated/server";
+import type { QueryCtx } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
@@ -443,7 +444,7 @@ function buildReservationAdmin(doc: {
   completedAt: number | null;
   noshowAt: number | null;
   acknowledgedAt?: number;
-}, totalVisits: number = 0, clientId?: Id<"clients">, clientBehavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } = { hasNotes: false, isLate: false, isSlow: false }) {
+}, totalVisits: number = 0, clientId?: Id<"clients">, clientBehavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } = { hasNotes: false, isLate: false, isSlow: false }, lastNoShowDateKey: string | null = null) {
   return {
     _id: doc._id,
     restaurantId: doc.restaurantId,
@@ -480,7 +481,55 @@ function buildReservationAdmin(doc: {
     hasClientNotes: clientBehavior.hasNotes,
     isLateClient: clientBehavior.isLate,
     isSlowClient: clientBehavior.isSlow,
+    lastNoShowDateKey,
   };
+}
+
+// Statuts qui soldent une réservation : le client est venu (seated/completed/incident) ou non (noshow)
+const OUTCOME_STATUSES = new Set(["seated", "completed", "incident", "noshow"]);
+
+/**
+ * Pour chaque réservation, renvoie la date (dateKey) de la réservation précédente du client
+ * lorsque celle-ci s'est soldée par un no-show. Absente de la map sinon.
+ * Seuls les clients ayant au moins un no-show voient leur historique lu.
+ */
+async function getLastNoShowDateKeys(
+  ctx: QueryCtx,
+  docs: Array<{ _id: Id<"reservations">; dateKey: string; timeKey: string; phone: string }>,
+  clientsMap: Map<string, { clientId: Id<"clients">; totalNoShows: number }>
+): Promise<Map<Id<"reservations">, string>> {
+  const result = new Map<Id<"reservations">, string>();
+  const docsByClient = new Map<Id<"clients">, typeof docs>();
+  for (const doc of docs) {
+    if (!hasUsablePhone(doc.phone)) continue;
+    const client = clientsMap.get(normalizePhone(doc.phone));
+    if (!client || client.totalNoShows === 0) continue;
+    const list = docsByClient.get(client.clientId) ?? [];
+    list.push(doc);
+    docsByClient.set(client.clientId, list);
+  }
+
+  for (const [clientId, clientDocs] of docsByClient) {
+    const history = (
+      await ctx.db
+        .query("reservations")
+        .withIndex("by_clientId", (q) => q.eq("clientId", clientId))
+        .collect()
+    )
+      .filter((r) => OUTCOME_STATUSES.has(r.status))
+      .map((r) => ({ id: r._id, at: `${r.dateKey} ${r.timeKey}`, dateKey: r.dateKey, status: r.status }));
+
+    for (const doc of clientDocs) {
+      const at = `${doc.dateKey} ${doc.timeKey}`;
+      let previous: (typeof history)[number] | undefined;
+      for (const r of history) {
+        if (r.id === doc._id || r.at >= at) continue;
+        if (!previous || r.at > previous.at) previous = r;
+      }
+      if (previous?.status === "noshow") result.set(doc._id, previous.dateKey);
+    }
+  }
+  return result;
 }
 
 /**
@@ -579,7 +628,7 @@ export const listReservations = query({
     const phones = Array.from(phoneSet);
     
     // Batch lookup clients by phone
-    const clientsMap = new Map<string, { totalVisits: number; clientId: Id<"clients">; behavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } }>();
+    const clientsMap = new Map<string, { totalVisits: number; totalNoShows: number; clientId: Id<"clients">; behavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } }>();
     for (const phone of phones) {
       const client = await ctx.db
         .query("clients")
@@ -588,6 +637,7 @@ export const listReservations = query({
       if (client) {
         clientsMap.set(phone, { 
           totalVisits: client.totalVisits, 
+          totalNoShows: client.totalNoShows ?? 0,
           clientId: client._id,
           behavior: {
             hasNotes: (client.notes?.length ?? 0) > 0,
@@ -598,12 +648,14 @@ export const listReservations = query({
       }
     }
 
+    const lastNoShows = await getLastNoShowDateKeys(ctx, filteredDocs, clientsMap);
+
     // Map to ReservationAdmin with totalVisits and clientId
     const page = filteredDocs.map((doc) => {
       const clientData = hasUsablePhone(doc.phone)
         ? clientsMap.get(normalizePhone(doc.phone))
         : undefined;
-      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false });
+      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false }, lastNoShows.get(doc._id) ?? null);
     });
 
     return {
@@ -637,6 +689,7 @@ export const getReservation = query({
     let totalVisits = 0;
     let clientId: Id<"clients"> | undefined = undefined;
     let clientBehavior = { hasNotes: false, isLate: false, isSlow: false };
+    let lastNoShowDateKey: string | null = null;
 
     if (hasUsablePhone(reservation.phone)) {
       const phone = normalizePhone(reservation.phone);
@@ -651,9 +704,13 @@ export const getReservation = query({
         isLate: client?.isLateClient ?? false,
         isSlow: client?.isSlowClient ?? false,
       };
+      if (client) {
+        const lastNoShows = await getLastNoShowDateKeys(ctx, [reservation], new Map([[phone, { clientId: client._id, totalNoShows: client.totalNoShows ?? 0 }]]));
+        lastNoShowDateKey = lastNoShows.get(reservation._id) ?? null;
+      }
     }
 
-    return buildReservationAdmin(reservation, totalVisits, clientId, clientBehavior);
+    return buildReservationAdmin(reservation, totalVisits, clientId, clientBehavior, lastNoShowDateKey);
   },
 });
 
@@ -1911,7 +1968,7 @@ export const listPendingReservations = query({
       pendingReservations.filter((doc) => hasUsablePhone(doc.phone)).map((doc) => normalizePhone(doc.phone))
     );
     const phones = Array.from(phoneSet);
-    const clientsMap = new Map<string, { totalVisits: number; clientId: Id<"clients">; behavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } }>();
+    const clientsMap = new Map<string, { totalVisits: number; totalNoShows: number; clientId: Id<"clients">; behavior: { hasNotes: boolean; isLate: boolean; isSlow: boolean } }>();
     for (const phone of phones) {
       const client = await ctx.db
         .query("clients")
@@ -1920,6 +1977,7 @@ export const listPendingReservations = query({
       if (client) {
         clientsMap.set(phone, { 
           totalVisits: client.totalVisits, 
+          totalNoShows: client.totalNoShows ?? 0,
           clientId: client._id,
           behavior: {
             hasNotes: (client.notes?.length ?? 0) > 0,
@@ -1930,11 +1988,13 @@ export const listPendingReservations = query({
       }
     }
 
+    const lastNoShows = await getLastNoShowDateKeys(ctx, pendingReservations, clientsMap);
+
     return pendingReservations.map((doc) => {
       const clientData = hasUsablePhone(doc.phone)
         ? clientsMap.get(normalizePhone(doc.phone))
         : undefined;
-      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false });
+      return buildReservationAdmin(doc, clientData?.totalVisits ?? 0, clientData?.clientId, clientData?.behavior ?? { hasNotes: false, isLate: false, isSlow: false }, lastNoShows.get(doc._id) ?? null);
     });
   },
 });
