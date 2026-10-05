@@ -30,7 +30,7 @@ function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: stri
 }
 
 // Indicateur no-show : la réservation elle-même (isSelf) ou la précédente du client s'est soldée par un no-show
-function NoShowIndicator({ dateKey, isSelf = false }: { dateKey: string; isSelf?: boolean }) {
+function NoShowIndicator({ dateKey, isCompact, isSelf = false }: { dateKey: string; isCompact?: boolean; isSelf?: boolean }) {
   const label = new Date(`${dateKey}T12:00:00`).toLocaleDateString("fr-BE", {
     weekday: "short",
     day: "numeric",
@@ -38,11 +38,14 @@ function NoShowIndicator({ dateKey, isSelf = false }: { dateKey: string; isSelf?
   });
   return (
     <span
-      className="flex shrink-0"
+      className={cn(
+        "-mt-1 flex shrink-0 items-center justify-center rounded-full bg-pink-100 text-pink-600",
+        isCompact ? "h-[18px] w-[18px]" : "h-5 w-5"
+      )}
       title={isSelf ? `No-show · ${label}` : `Dernière réservation : no-show · ${label}`}
       aria-label={isSelf ? `No-show le ${label}` : `Dernière réservation : no-show le ${label}`}
     >
-      <Ghost className="h-4 w-4 text-pink-600" strokeWidth={2} />
+      <Ghost className={isCompact ? "h-3 w-3" : "h-[13px] w-[13px]"} strokeWidth={2} />
     </span>
   );
 }
@@ -582,6 +585,9 @@ export function ReservationRow({
           <span className={cn("px-1.5 py-0.5 text-[9px] rounded-full -mt-1", visitBadge.classes, visitBadge.fontWeight)}>
             {visits === 0 ? "NEW" : visits}
           </span>
+          {reservation.status === "noshow" ? (
+            <NoShowIndicator dateKey={reservation.dateKey} isCompact isSelf />
+          ) : reservation.lastNoShowDateKey && <NoShowIndicator dateKey={reservation.lastNoShowDateKey} isCompact />}
         </div>
 
         {/* Party size - Nbre */}
@@ -602,14 +608,11 @@ export function ReservationRow({
         <span className="w-8 text-base text-center shrink-0">{getFlag(reservation.phone, reservation.language)}</span>
 
         {/* Options */}
-        <div className="w-24 flex items-center gap-1 shrink-0">
+        <div className="w-20 flex items-center gap-1 shrink-0">
           <Icon iconNode={stroller} className={cn("h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <Baby className={cn("h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <Accessibility className={cn("h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <PawPrint className={cn("h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-          {reservation.status === "noshow" ? (
-            <NoShowIndicator dateKey={reservation.dateKey} isSelf />
-          ) : reservation.lastNoShowDateKey && <NoShowIndicator dateKey={reservation.lastNoShowDateKey} />}
         </div>
       </div>
     );
@@ -651,6 +654,9 @@ export function ReservationRow({
           <span className={cn("px-1.5 py-0.5 text-[10px] rounded-full -mt-1", visitBadge.classes, visitBadge.fontWeight)}>
             {visits === 0 ? "NEW" : visits}
           </span>
+          {reservation.status === "noshow" ? (
+            <NoShowIndicator dateKey={reservation.dateKey} isSelf />
+          ) : reservation.lastNoShowDateKey && <NoShowIndicator dateKey={reservation.lastNoShowDateKey} />}
         </div>
 
         {/* Party size - Nbre */}
@@ -678,14 +684,11 @@ export function ReservationRow({
         <span className="w-10 text-lg text-center">{getFlag(reservation.phone, reservation.language)}</span>
 
         {/* Options */}
-        <div className="w-28 flex items-center gap-1.5">
+        <div className="w-24 flex items-center gap-1.5">
           <Icon iconNode={stroller} className={cn("h-4 w-4", hasOption("stroller") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <Baby className={cn("h-4 w-4", hasOption("highChair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <Accessibility className={cn("h-4 w-4", hasOption("wheelchair") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
           <PawPrint className={cn("h-4 w-4", hasOption("dogAccess") ? "text-black" : "text-transparent")} strokeWidth={1.5} />
-          {reservation.status === "noshow" ? (
-            <NoShowIndicator dateKey={reservation.dateKey} isSelf />
-          ) : reservation.lastNoShowDateKey && <NoShowIndicator dateKey={reservation.lastNoShowDateKey} />}
         </div>
 
         {/* Message (Note) */}
