@@ -55,7 +55,7 @@ import {
 import { stroller } from "@lucide/lab";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { OutcomeIndicator } from "@/components/admin/OutcomeIndicator";
+import { OutcomeIndicator, getOutcome } from "@/components/admin/OutcomeIndicator";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { getFlag } from "@/lib/getFlag";
@@ -694,11 +694,11 @@ export default function TabletReservationsPage() {
                   )}>
                     {visits === 0 ? "NEW" : visits}
                   </span>
-                  {/* No-show / incident : cette réservation ou la précédente du client */}
-                  <OutcomeIndicator reservation={res} size={18} />
                   {/* Seulement s'il y a un indicateur : vide, sa marge élargirait la colonne pour rien */}
-                  {(res.hasClientNotes || res.isLateClient || res.isSlowClient) && (
-                    <div className="flex items-center gap-1 ml-4">
+                  {(getOutcome(res) || res.hasClientNotes || res.isLateClient || res.isSlowClient) && (
+                    <div className="flex items-center gap-1 ml-1">
+                      {/* No-show / incident (exclusifs) : cette réservation ou la précédente du client */}
+                      <OutcomeIndicator reservation={res} size={18} />
                       {res.hasClientNotes && (
                         <Bookmark size={16} className="text-amber-500" strokeWidth={2} fill="currentColor" />
                       )}
