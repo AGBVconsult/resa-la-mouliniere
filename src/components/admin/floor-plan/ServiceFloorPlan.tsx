@@ -62,6 +62,8 @@ interface ServiceFloorPlanProps {
   hideHeader?: boolean;
   hideCapacity?: boolean;
   nameDisplay?: "firstName" | "lastName";
+  /** Palette des tables : "classic" (admin desktop) ou "brume" (tablette) */
+  tone?: "classic" | "brume";
 }
 
 type TableStatus = "seated" | "reserved" | "free" | "blocked";
@@ -77,6 +79,19 @@ const STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: str
 const SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
   reserved: { bg: "bg-[#CFC7F0]", text: "text-purple-900" }, // Lavande
   seated: { bg: "bg-[#A9C9B4]", text: "text-black" }, // Vert-de-gris
+};
+
+// Thème Brume (tablette) : même code couleur, teintes accordées au gris-bleu
+const BRUME_STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: string }> = {
+  free: { bg: "bg-white shadow-[0_6px_14px_-6px_rgba(40,60,80,0.35)]", border: "border-transparent", text: "text-[#3E5A70]" },
+  reserved: { bg: "bg-[#CBD9E7]", border: "border-transparent", text: "text-[#24496E]" }, // Bleu brume
+  seated: { bg: "bg-[#A9CDB5]", border: "border-transparent", text: "text-[#1F4A33]" }, // Vert sauge
+  blocked: { bg: "bg-[#B9C3CC]", border: "border-transparent", text: "text-[#4A5865]" },
+};
+
+const BRUME_SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
+  reserved: { bg: "bg-[#D6D1EC]", text: "text-[#45397A]" }, // Lavande brumeuse
+  seated: { bg: "bg-[#C3DDCB]", text: "text-[#1F4A33]" }, // Vert-de-gris
 };
 
 function getReservationStatusAsTableStatus(resStatus: string): TableStatus {
@@ -107,7 +122,11 @@ export function ServiceFloorPlan({
   hideHeader = false,
   hideCapacity = false,
   nameDisplay = "lastName",
+  tone = "classic",
 }: ServiceFloorPlanProps) {
+  const isBrume = tone === "brume";
+  const statusPalette = isBrume ? BRUME_STATUS_COLORS : STATUS_COLORS;
+  const splitPalette = isBrume ? BRUME_SPLIT_ACCENTS : SPLIT_ACCENTS;
   const [isAssigning, setIsAssigning] = useState(false);
   const [activeZone, setActiveZone] = useState<"salle" | "terrasse">("salle");
   const [tabletScale, setTabletScale] = useState(1);
@@ -411,7 +430,7 @@ export function ServiceFloorPlan({
       {filteredTables.map((table) => {
         const isEditingThisTable = editingTable?.tableId === table.tableId;
         const isPending = pendingTableIds.includes(table.tableId);
-        const statusColors = STATUS_COLORS[table.status as TableStatus];
+        const statusColors = statusPalette[table.status as TableStatus];
         const width = (table.width ?? 1) * TABLE_SIZE - 4;
         const height = (table.height ?? 1) * TABLE_SIZE - 4;
         const reservations = table.reservations;
@@ -428,15 +447,17 @@ export function ServiceFloorPlan({
             key={table.tableId}
             className={cn(
               "absolute transition-all duration-150",
-              table.shape === "round" ? "rounded-full" : "rounded-lg",
+              table.shape === "round" ? "rounded-full" : isBrume ? "rounded-xl" : "rounded-lg",
               !isSplit && (
                 isEditingThisTable
                   ? "bg-amber-400 ring-2 ring-amber-500 ring-offset-1"
                   : isPending
-                    ? "bg-blue-200 ring-2 ring-blue-500 ring-offset-1"
+                    ? isBrume
+                      ? "bg-[#DEE7F0] ring-2 ring-[#4F6D84] ring-offset-1"
+                      : "bg-blue-200 ring-2 ring-blue-500 ring-offset-1"
                     : statusColors.bg
               ),
-              isSplit && isPending && "ring-2 ring-blue-500 ring-offset-1",
+              isSplit && isPending && (isBrume ? "ring-2 ring-[#4F6D84] ring-offset-1" : "ring-2 ring-blue-500 ring-offset-1"),
               isSplit && isEditingThisTable && "ring-2 ring-amber-500 ring-offset-1",
               statusColors.border,
               table.status === "blocked" && "opacity-50",
@@ -465,7 +486,7 @@ export function ServiceFloorPlan({
               <div
                 className={cn(
                   "flex w-full h-full overflow-hidden",
-                  table.shape === "round" ? "rounded-full" : "rounded-lg",
+                  table.shape === "round" ? "rounded-full" : isBrume ? "rounded-xl" : "rounded-lg",
                   isVerticalSplit ? "flex-col" : "flex-row"
                 )}
               >
@@ -479,12 +500,12 @@ export function ServiceFloorPlan({
                   if (isThisHalfEditing) {
                     halfBg = "bg-amber-400";
                     halfText = "text-amber-900";
-                  } else if (idx === 1 && sameStatus && SPLIT_ACCENTS[resaTableStatus]) {
-                    halfBg = SPLIT_ACCENTS[resaTableStatus].bg;
-                    halfText = SPLIT_ACCENTS[resaTableStatus].text;
+                  } else if (idx === 1 && sameStatus && splitPalette[resaTableStatus]) {
+                    halfBg = splitPalette[resaTableStatus].bg;
+                    halfText = splitPalette[resaTableStatus].text;
                   } else {
-                    halfBg = STATUS_COLORS[resaTableStatus].bg;
-                    halfText = STATUS_COLORS[resaTableStatus].text;
+                    halfBg = statusPalette[resaTableStatus].bg;
+                    halfText = statusPalette[resaTableStatus].text;
                   }
                   const displayName = nameDisplay === "firstName" ? (resa.firstName?.trim() || resa.lastName) : resa.lastName;
 
@@ -592,7 +613,7 @@ export function ServiceFloorPlan({
             className={cn(
               "px-5 py-2 text-sm font-semibold rounded-full transition-all active:scale-95",
               activeZone === "salle"
-                ? "bg-slate-800 text-white shadow-sm"
+                ? isBrume ? "bg-[#3E5A70] text-white shadow-sm" : "bg-slate-800 text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-800"
             )}
           >
@@ -604,7 +625,7 @@ export function ServiceFloorPlan({
             className={cn(
               "px-5 py-2 text-sm font-semibold rounded-full transition-all active:scale-95",
               activeZone === "terrasse"
-                ? "bg-slate-800 text-white shadow-sm"
+                ? isBrume ? "bg-[#3E5A70] text-white shadow-sm" : "bg-slate-800 text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-800"
             )}
           >

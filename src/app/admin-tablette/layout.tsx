@@ -19,7 +19,7 @@ export const viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#0f172a",
+  themeColor: "#F3F5F7",
 };
 
 export default async function AdminTabletLayout({
