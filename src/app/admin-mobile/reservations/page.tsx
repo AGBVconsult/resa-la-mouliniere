@@ -28,6 +28,7 @@ import { getFlag } from "@/lib/getFlag";
 import { SegmentedBar } from "../components/SegmentedBar";
 import { StatusPill } from "../components/StatusPill";
 import { ActionPopup } from "../components/ActionPopup";
+import { DaySettingsPopup } from "../../admin-tablette/components/DaySettingsPopup";
 import { isCreatedDuringService } from "@/lib/utils/service-window";
 
 interface Reservation {
@@ -78,6 +79,7 @@ export default function MobileReservationsPage() {
 
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [openPopupId, setOpenPopupId] = useState<Id<"reservations"> | null>(null);
+  const [showDaySettings, setShowDaySettings] = useState(false);
   const [selectedService, setSelectedService] = useState<"lunch" | "dinner">(() => {
     const serviceParam = searchParams.get("service");
     if (serviceParam === "lunch" || serviceParam === "dinner") {
@@ -455,7 +457,12 @@ export default function MobileReservationsPage() {
               Dîner
             </button>
           </div>
-          <button className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-slate-700 transition-colors">
+          <button
+            onClick={() => setShowDaySettings(true)}
+            className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-slate-700 transition-colors"
+            aria-label="Gérer les créneaux du jour"
+            title="Gérer les créneaux du jour"
+          >
             <Settings size={18} strokeWidth={2} />
           </button>
         </div>
@@ -521,6 +528,13 @@ export default function MobileReservationsPage() {
             </div>
           )}
         </div>
+      )}
+
+      {showDaySettings && (
+        <DaySettingsPopup
+          dateKey={dateKey}
+          onClose={() => setShowDaySettings(false)}
+        />
       )}
     </div>
   );
