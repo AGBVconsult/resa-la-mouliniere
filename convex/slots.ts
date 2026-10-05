@@ -745,65 +745,6 @@ export const updateSlot = mutation({
 });
 
 // ═══════════════════════════════════════════════════════════════
-// MUTATION: incrementSlotCapacity (admin — +N couverts sur un créneau)
-// Bouton « + » de l'en-tête de créneau (tablette). L'incrément part de la
-// capacité effective lue dans la transaction : deux taps rapides donnent +2.
-// ═══════════════════════════════════════════════════════════════
-
-export const incrementSlotCapacity = mutation({
-  args: {
-    slotId: v.id("slots"),
-    delta: v.number(),
-  },
-  handler: async (ctx, { slotId, delta }) => {
-    await requireRole(ctx, "admin");
-
-    if (!Number.isInteger(delta) || delta === 0) {
-      throw Errors.INVALID_INPUT("delta", "Doit être un entier non nul");
-    }
-
-    const slot = await ctx.db.get(slotId);
-    if (!slot) {
-      throw Errors.SLOT_NOT_FOUND(slotId);
-    }
-
-    const slotOverrides = await ctx.db
-      .query("slotOverrides")
-      .withIndex("by_restaurant_slotKey", (q) =>
-        q.eq("restaurantId", slot.restaurantId).eq("slotKey", slot.slotKey)
-      )
-      .collect();
-    const existingManual = slotOverrides.find((o) => o.origin === "manual") ?? null;
-    const previousCapacity = resolveEffectiveCapacity(slot.capacity, slotOverrides);
-    const capacity = Math.max(0, previousCapacity + delta);
-    const now = Date.now();
-
-    if (existingManual) {
-      await ctx.db.patch(existingManual._id, {
-        patch: { ...existingManual.patch, capacity },
-        updatedAt: now,
-      });
-    } else {
-      await ctx.db.insert("slotOverrides", {
-        restaurantId: slot.restaurantId,
-        slotKey: slot.slotKey,
-        origin: "manual",
-        patch: { capacity },
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-
-    // PRD-013 §31 — override manuel de capacité => typologie à revoir.
-    if (isCapacityChange(previousCapacity, capacity)) {
-      await markCapacityShapeNeedsReview(ctx, { restaurantId: slot.restaurantId, slotKey: slot.slotKey, now });
-    }
-
-    return { capacity };
-  },
-});
-
-// ═══════════════════════════════════════════════════════════════
 // MUTATION: batchUpdateSlots (admin — update multiple slots)
 // Pour le Modal Day Override - sauvegarde en batch
 // ═══════════════════════════════════════════════════════════════
