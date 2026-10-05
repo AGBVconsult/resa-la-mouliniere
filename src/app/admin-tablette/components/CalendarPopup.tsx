@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users, DoorOpen, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw, Loader2, CalendarDays, Users, DoorOpen, Settings } from "lucide-react";
 import { BRUME_GAUGE, getGaugeLevel } from "@/lib/constants/brume";
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -79,6 +79,16 @@ export function CalendarPopup({
     }
   };
 
+  // Retour au mois en cours (Europe/Brussels)
+  const [todayYear, todayMonth] = todayDateKey ? todayDateKey.split("-").map(Number) : [null, null];
+  const isCurrentMonth = currentYear === todayYear && currentMonth === todayMonth;
+
+  const goToCurrentMonth = () => {
+    if (!todayYear || !todayMonth) return;
+    setCurrentYear(todayYear);
+    setCurrentMonth(todayMonth);
+  };
+
   const calendarDays = useMemo(() => {
     if (!currentYear || !currentMonth) return [];
 
@@ -148,23 +158,40 @@ export function CalendarPopup({
           {/* Header */}
           <header className="flex flex-row items-center justify-between mb-6 shrink-0">
             <div className="flex items-center gap-6">
-              <h1 className="text-3xl font-bold tracking-tighter text-[#22303C]">
-                {monthLabel}{" "}
-                <span className="text-[#9FB0BE] font-normal">{currentYear}</span>
-              </h1>
-              <div className="flex bg-white rounded-2xl shadow-sm border border-[#D3DBE1] p-1.5">
+              {/* Navigateur de mois : même pastille que le navigateur de date du header */}
+              <div className="flex items-center h-[52px] bg-[#3E5A70] rounded-full shadow-[0_6px_16px_-8px_rgba(30,45,60,0.55)] px-1">
                 <button
                   onClick={goToPreviousMonth}
-                  className="p-2 hover:bg-[#F4F6F8] rounded-xl transition-colors text-[#7E97AC] hover:text-[#2A3540]"
+                  aria-label="Mois précédent"
+                  className="w-[44px] h-full flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 rounded-full"
                 >
-                  <ChevronLeft size={18} />
+                  <ChevronLeft size={16} strokeWidth={2} />
                 </button>
+
+                <h1 className="min-w-[118px] px-1 text-center text-sm font-bold text-white uppercase tracking-wide whitespace-nowrap">
+                  {monthLabel}{" "}
+                  <span className="font-normal text-white/55">{currentYear}</span>
+                </h1>
+
                 <button
                   onClick={goToNextMonth}
-                  className="p-2 hover:bg-[#F4F6F8] rounded-xl transition-colors text-[#7E97AC] hover:text-[#2A3540]"
+                  aria-label="Mois suivant"
+                  className="w-[44px] h-full flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 rounded-full"
                 >
-                  <ChevronRight size={18} />
+                  <ChevronRight size={16} strokeWidth={2} />
                 </button>
+
+                {/* Bouton Ce mois (visible seulement hors du mois en cours) */}
+                {!isCurrentMonth && todayYear && (
+                  <button
+                    onClick={goToCurrentMonth}
+                    aria-label="Revenir au mois en cours"
+                    className="flex items-center gap-1.5 h-[44px] ml-1 pl-2.5 pr-3 bg-white hover:bg-[#E4E9ED] rounded-full text-[#3E5A70] font-semibold text-xs whitespace-nowrap transition-all active:scale-95"
+                  >
+                    <RotateCcw size={13} strokeWidth={2} />
+                    <span className="uppercase tracking-wide">Ce mois</span>
+                  </button>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
