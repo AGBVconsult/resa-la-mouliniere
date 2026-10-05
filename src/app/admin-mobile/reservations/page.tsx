@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePaginatedQuery, useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { OutcomeIndicator } from "@/components/admin/OutcomeIndicator";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { ReservationStatus } from "../../../../spec/contracts.generated";
 import {
@@ -20,7 +21,6 @@ import {
   Loader2,
   Settings,
   CalendarCheck,
-  Ghost,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
@@ -53,6 +53,7 @@ interface Reservation {
   version: number;
   totalVisits?: number;
   lastNoShowDateKey?: string | null;
+  lastIncidentDateKey?: string | null;
   createdAt?: number;
   acknowledgedAt?: number;
 }
@@ -266,16 +267,8 @@ export default function MobileReservationsPage() {
                 <span className={`px-1 py-0.5 text-[8px] rounded-full -mt-0.5 ${visitBadge.classes} ${visitBadge.fontWeight}`}>
                   {visits === 0 ? "NEW" : visits}
                 </span>
-                {(res.status === "noshow" || res.lastNoShowDateKey) && (
-                  <span
-                    className="h-4 w-4 -mt-0.5 flex items-center justify-center rounded-full bg-pink-100 text-pink-600 shrink-0"
-                    title={res.status === "noshow"
-                      ? `No-show · ${format(parseISO(res.dateKey), "EEE d MMM", { locale: fr })}`
-                      : `Dernière réservation : no-show · ${format(parseISO(res.lastNoShowDateKey!), "EEE d MMM", { locale: fr })}`}
-                  >
-                    <Ghost size={10} strokeWidth={2} />
-                  </span>
-                )}
+                {/* No-show / incident : cette réservation ou la précédente du client */}
+                <OutcomeIndicator reservation={res} size={16} className="-mt-0.5" />
               </div>
             );
           })()}
