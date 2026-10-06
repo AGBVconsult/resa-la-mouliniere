@@ -575,7 +575,7 @@ export default function TabletReservationsPage() {
           service={service}
           date={selectedDate}
           isToday={isToday}
-          slots={slotsData?.[service] ?? []}
+          slots={slotsData?.[service]}
         />
       );
     }
