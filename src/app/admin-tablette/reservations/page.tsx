@@ -778,11 +778,11 @@ export default function TabletReservationsPage() {
               {isUnassigned ? (
                 <>
                   <LayoutGrid size={24} className={cn(
-                    isSelectedForAssignment ? "text-white" : "text-slate-400"
+                    isSelectedForAssignment ? "text-white" : "text-slate-500"
                   )} />
                   <span className={cn(
                     "text-[10px] font-medium mt-1 tracking-wide",
-                    isSelectedForAssignment ? "text-white" : "text-slate-400"
+                    isSelectedForAssignment ? "text-white" : "text-slate-500"
                   )}>ASSIG.</span>
                 </>
               ) : (
