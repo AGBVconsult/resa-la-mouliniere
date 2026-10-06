@@ -985,22 +985,12 @@ export default function TabletReservationsPage() {
           reset={isToday ? undefined : { label: "Auj.", ariaLabel: "Revenir à aujourd'hui", onClick: goToToday }}
         />
 
-        {/* Switch Total/Midi/Soir - centré */}
-        <div className="absolute left-1/2 -translate-x-1/2">
+        {/* Switch Total/Midi/Soir - centré, suivi du bouton rond des créneaux */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
           <SegmentedControl
             ariaLabel="Service"
             value={selectedService}
             onChange={setSelectedService}
-            trailing={
-              <button
-                type="button"
-                onClick={() => setShowSettings(true)}
-                aria-label={selectedService === "total" ? "Créneaux du jour" : `Créneaux du ${selectedService === "lunch" ? "midi" : "soir"}`}
-                className="w-[38px] h-full flex items-center justify-center rounded-full text-[#0C0C0C] hover:bg-black/5 transition-colors active:scale-95"
-              >
-                <Settings size={18} strokeWidth={1.75} />
-              </button>
-            }
             options={[
               { value: "total", covers: totalCovers, label: "Total" },
               { value: "lunch", covers: lunchCovers, label: "Midi" },
@@ -1016,6 +1006,14 @@ export default function TabletReservationsPage() {
               ),
             }))}
           />
+          <button
+            type="button"
+            onClick={() => setShowSettings(true)}
+            aria-label={selectedService === "total" ? "Créneaux du jour" : `Créneaux du ${selectedService === "lunch" ? "midi" : "soir"}`}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.08),0_6px_16px_-6px_rgba(0,0,0,0.25)] text-[#0C0C0C] hover:bg-[#FAFAFA] transition-colors active:scale-95"
+          >
+            <Settings size={18} strokeWidth={1.75} />
+          </button>
         </div>
 
         {/* Création + Notifications + Paramètres + Menu - une seule pastille alignée à droite */}
