@@ -65,7 +65,9 @@ export function EmptyServiceState({ service, date, isToday, slots }: EmptyServic
           Aucune réservation {when}
         </h3>
         <p className="text-sm leading-relaxed text-[#6E6E6E]">
-          Le service est encore calme. Les réservations apparaîtront ici.
+          Le service est encore calme.
+          <br />
+          Les réservations apparaîtront ici.
         </p>
         <span className="flex items-center gap-2 h-8 px-3.5 rounded-full bg-[#F6F6F6] text-[13px] text-[#464646]">
           <span className={cn("w-2 h-2 rounded-full", isOpen ? "bg-[#22C55E]" : "bg-[#BDBDBD]")} />
