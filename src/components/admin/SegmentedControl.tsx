@@ -17,6 +17,8 @@ interface SegmentedControlProps<T extends string> {
   size?: "md" | "sm";
   ariaLabel?: string;
   className?: string;
+  /** Élément ajouté au bout du rail, après un séparateur (ex. bouton de réglages) */
+  trailing?: ReactNode;
 }
 
 /**
@@ -30,6 +32,7 @@ export function SegmentedControl<T extends string>({
   size = "md",
   ariaLabel,
   className,
+  trailing,
 }: SegmentedControlProps<T>) {
   const buttonRefs = useRef<Partial<Record<T, HTMLButtonElement | null>>>({});
   const [thumb, setThumb] = useState<{ left: number; width: number } | null>(null);
@@ -81,6 +84,12 @@ export function SegmentedControl<T extends string>({
           </button>
         );
       })}
+      {trailing && (
+        <>
+          <span aria-hidden className="w-px h-[18px] bg-black/10 mx-0.5" />
+          {trailing}
+        </>
+      )}
     </div>
   );
 }

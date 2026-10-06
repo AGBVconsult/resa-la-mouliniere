@@ -991,6 +991,16 @@ export default function TabletReservationsPage() {
             ariaLabel="Service"
             value={selectedService}
             onChange={setSelectedService}
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShowSettings(true)}
+                aria-label={selectedService === "total" ? "Créneaux du jour" : `Créneaux du ${selectedService === "lunch" ? "midi" : "soir"}`}
+                className="w-[38px] h-full flex items-center justify-center rounded-full text-[#0C0C0C] hover:bg-black/5 transition-colors active:scale-95"
+              >
+                <Settings size={18} strokeWidth={1.75} />
+              </button>
+            }
             options={[
               { value: "total", covers: totalCovers, label: "Total" },
               { value: "lunch", covers: lunchCovers, label: "Midi" },
@@ -1025,13 +1035,6 @@ export default function TabletReservationsPage() {
               setHighlightedReservationId(reservationId);
             }}
           />
-          <button
-            onClick={() => setShowSettings(true)}
-            aria-label="Paramètres du jour"
-            className="w-10 h-10 flex items-center justify-center text-[#464646] hover:text-[#0C0C0C] transition-colors active:scale-95"
-          >
-            <Settings size={20} strokeWidth={1.5} />
-          </button>
           <button
             onClick={() => setShowMenu(true)}
             aria-label="Menu"
@@ -1154,6 +1157,7 @@ export default function TabletReservationsPage() {
       {showSettings && (
         <DaySettingsPopup
           dateKey={settingsDateKey ?? dateKey}
+          focusService={!settingsDateKey && selectedService !== "total" ? selectedService : undefined}
           onClose={() => {
             setShowSettings(false);
             setSettingsDateKey(null);
