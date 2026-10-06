@@ -71,7 +71,7 @@ export function EmptyServiceState({ service, date, isToday, slots }: EmptyServic
             <>
               Aucun créneau n&apos;est ouvert pour ce service.
               <br />
-              Ouvrez des créneaux avec l&apos;engrenage pour prendre des réservations.
+              Ouvrez des créneaux avec le bouton de réglage, en haut, pour prendre des réservations.
             </>
           ) : (
             <>

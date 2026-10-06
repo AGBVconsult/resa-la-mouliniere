@@ -20,7 +20,7 @@ import {
   Icon,
   CalendarCheck,
   CalendarDays,
-  Settings,
+  SlidersHorizontal,
   Clock,
   Sun,
   Moon,
@@ -989,7 +989,7 @@ export default function TabletReservationsPage() {
           reset={isToday ? undefined : { label: "Auj.", ariaLabel: "Revenir à aujourd'hui", onClick: goToToday }}
         />
 
-        {/* Switch Total/Midi/Soir - centré, suivi de l'engrenage des créneaux */}
+        {/* Switch Total/Midi/Soir - centré, suivi du bouton des créneaux (curseurs) */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
           <SegmentedControl
             ariaLabel="Service"
@@ -1014,9 +1014,9 @@ export default function TabletReservationsPage() {
             type="button"
             onClick={() => setShowSettings(true)}
             aria-label={selectedService === "total" ? "Créneaux du jour" : `Créneaux du ${selectedService === "lunch" ? "midi" : "soir"}`}
-            className="w-10 h-10 flex items-center justify-center text-[#0C0C0C] hover:text-[#464646] transition-colors active:scale-95"
+            className="w-10 h-10 flex items-center justify-center text-[#3884FF] hover:text-[#2F74E6] transition-colors active:scale-95"
           >
-            <Settings size={20} strokeWidth={1.75} />
+            <SlidersHorizontal size={20} strokeWidth={1.75} />
           </button>
         </div>
 
