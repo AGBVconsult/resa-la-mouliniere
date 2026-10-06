@@ -141,7 +141,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
           {/* Date & Service */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-500 mb-2">
                 <Calendar size={14} className="inline mr-1" />
                 Date
               </label>
@@ -155,7 +155,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
               </button>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-500 mb-2">
                 Service
               </label>
               <div className="flex gap-2">
@@ -187,7 +187,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
 
           {/* Time */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-slate-500 mb-2">
               <Clock size={14} className="inline mr-1" />
               Heure
             </label>
@@ -211,7 +211,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
 
           {/* Party size */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-slate-500 mb-2">
               <Users size={14} className="inline mr-1" />
               Couverts
             </label>
@@ -282,7 +282,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
           {/* Contact */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-500 mb-2">
                 Prénom
               </label>
               <input
@@ -293,7 +293,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-500 mb-2">
                 Nom
               </label>
               <input
@@ -307,7 +307,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-500 mb-2">
                 <Phone size={14} className="inline mr-1" />
                 Téléphone
               </label>
@@ -319,7 +319,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-500 mb-2">
                 <Mail size={14} className="inline mr-1" />
                 Email
               </label>
@@ -334,7 +334,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
 
           {/* Options */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-slate-500 mb-2">
               Options
             </label>
             <div className="flex flex-wrap gap-2">
@@ -357,7 +357,7 @@ export function EditReservationPopup({ reservation, onClose, onSuccess }: EditRe
 
           {/* Note */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-slate-500 mb-2">
               <MessageSquare size={14} className="inline mr-1" />
               Note
             </label>

@@ -138,7 +138,7 @@ export function ClientSearchPopup({ onClose, onSelectClient, onCreateReservation
                           </span>
                           {flag && <span className="text-sm">{flag}</span>}
                           <span className={cn(
-                            "text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full",
+                            "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
                             client.clientStatus === "vip" ? "bg-amber-100 text-amber-700" :
                             client.clientStatus === "bad_guest" ? "bg-red-100 text-red-600" :
                             client.clientStatus === "regular" ? "bg-blue-100 text-blue-700" :

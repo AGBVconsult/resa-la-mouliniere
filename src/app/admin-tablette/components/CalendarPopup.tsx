@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { ChevronLeft, ChevronRight, RotateCcw, Loader2, CalendarDays, Users, DoorOpen, Settings } from "lucide-react";
+import { NavPill } from "./NavPill";
+import { Loader2, CalendarDays, Users, DoorOpen, Settings } from "lucide-react";
 import { BRUME_GAUGE, getGaugeLevel } from "@/lib/constants/brume";
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -20,7 +21,7 @@ interface CalendarPopupProps {
 
 // Jauge du thème Brume : mêmes seuils et couleurs que la vue Service (gris pour les jours passés)
 function getGaugeColor(count: number, total: number, isPast: boolean): string {
-  if (isPast) return count === 0 ? "#C9D2DA" : "#9FB0BE";
+  if (isPast) return count === 0 ? "#C9D2DA" : "#A5A5A5";
   return BRUME_GAUGE[getGaugeLevel(count, total)].bar;
 }
 
@@ -144,13 +145,13 @@ export function CalendarPopup({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 backdrop-blur-[2px] bg-[#1E2A35]/50"
+        className="absolute inset-0 backdrop-blur-[2px] bg-[#000000]/50"
         onClick={onClose}
       />
       
       {/* Popup */}
       <div 
-        className="relative bg-[#E4E9ED] rounded-[32px] shadow-2xl flex flex-col overflow-hidden"
+        className="relative bg-[#F6F6F6] rounded-[32px] shadow-2xl flex flex-col overflow-hidden"
         style={{ width: "90vw", height: "84vh" }}
       >
         {/* Content */}
@@ -158,76 +159,50 @@ export function CalendarPopup({
           {/* Header */}
           <header className="flex flex-row items-center justify-between mb-6 shrink-0">
             <div className="flex items-center gap-6">
-              {/* Navigateur de mois : même pastille que le navigateur de date du header */}
-              <div className="flex items-center h-[52px] bg-[#3E5A70] rounded-full shadow-[0_6px_16px_-8px_rgba(30,45,60,0.55)] px-1">
-                <button
-                  onClick={goToPreviousMonth}
-                  aria-label="Mois précédent"
-                  className="w-[44px] h-full flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 rounded-full"
-                >
-                  <ChevronLeft size={16} strokeWidth={2} />
-                </button>
-
-                <h1 className="min-w-[118px] px-1 text-center text-sm font-bold text-white uppercase tracking-wide whitespace-nowrap">
-                  {monthLabel}{" "}
-                  <span className="font-normal text-white/55">{currentYear}</span>
-                </h1>
-
-                <button
-                  onClick={goToNextMonth}
-                  aria-label="Mois suivant"
-                  className="w-[44px] h-full flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 rounded-full"
-                >
-                  <ChevronRight size={16} strokeWidth={2} />
-                </button>
-
-                {/* Bouton Ce mois (visible seulement hors du mois en cours) */}
-                {!isCurrentMonth && todayYear && (
-                  <button
-                    onClick={goToCurrentMonth}
-                    aria-label="Revenir au mois en cours"
-                    className="flex items-center gap-1.5 h-[44px] ml-1 pl-2.5 pr-3 bg-white hover:bg-[#E4E9ED] rounded-full text-[#3E5A70] font-semibold text-xs whitespace-nowrap transition-all active:scale-95"
-                  >
-                    <RotateCcw size={13} strokeWidth={2} />
-                    <span className="uppercase tracking-wide">Ce mois</span>
-                  </button>
-                )}
-              </div>
+              {/* Navigateur de mois : même composant que le navigateur de date du header */}
+              <NavPill
+                label={<span>{monthLabel} <span className="font-normal text-[#6E6E6E]">{currentYear}</span></span>}
+                onPrevious={goToPreviousMonth}
+                onNext={goToNextMonth}
+                previousLabel="Mois précédent"
+                nextLabel="Mois suivant"
+                reset={!isCurrentMonth && todayYear ? { label: "Ce mois", ariaLabel: "Revenir au mois en cours", onClick: goToCurrentMonth } : undefined}
+              />
             </div>
             {/* Statistiques du mois : une seule pastille d'infos, non cliquable */}
             <div
               role="group"
               aria-label="Statistiques du mois"
-              className="flex items-center h-[52px] px-1.5 bg-white rounded-full border border-[#D3DBE1] shadow-[0_4px_14px_-8px_rgba(30,45,60,0.45)] text-[#4F6D84]"
+              className="flex items-center h-9 px-1.5 bg-[#EFEFEF] rounded-full text-[#6E6E6E]"
             >
-              <div className="flex items-center gap-1.5 px-3 whitespace-nowrap text-[#3E5A70]">
+              <div className="flex items-center gap-1.5 px-3 whitespace-nowrap">
                 <Users size={15} strokeWidth={1.75} />
-                <span className="font-bold text-base tabular-nums text-[#22303C]">{monthStats.covers}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider">Couverts</span>
+                <span className="font-bold text-base tabular-nums text-[#0C0C0C]">{monthStats.covers}</span>
+                <span className="text-sm">couverts</span>
               </div>
-              <div className="w-px h-[22px] bg-[#E4E9ED]" />
+              <div className="w-px h-[18px] bg-black/10" />
               <div className="flex items-center gap-1.5 px-3 whitespace-nowrap">
                 <CalendarDays size={15} strokeWidth={1.75} />
-                <span className="font-bold text-base tabular-nums text-[#22303C]">{monthStats.reservations}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider">Résa</span>
+                <span className="font-bold text-base tabular-nums text-[#0C0C0C]">{monthStats.reservations}</span>
+                <span className="text-sm">résa</span>
               </div>
-              <div className="w-px h-[22px] bg-[#E4E9ED]" />
+              <div className="w-px h-[18px] bg-black/10" />
               <div className="flex items-center gap-1.5 px-3 whitespace-nowrap">
                 <DoorOpen size={15} strokeWidth={1.75} />
-                <span className="font-bold text-base tabular-nums text-[#22303C]">{monthStats.openDays}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider">Jours</span>
+                <span className="font-bold text-base tabular-nums text-[#0C0C0C]">{monthStats.openDays}</span>
+                <span className="text-sm">jours</span>
               </div>
             </div>
           </header>
 
           {/* Calendar container */}
-          <div className="bg-white rounded-[32px] shadow-[0_10px_30px_-12px_rgba(30,45,60,0.35)] border border-[#D3DBE1] overflow-hidden flex-1 flex flex-col">
+          <div className="bg-white rounded-[32px] shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)] border border-[#E5E5E5] overflow-hidden flex-1 flex flex-col">
             {/* Days of week header */}
-            <div className="grid grid-cols-7 bg-[#4F6D84] shrink-0">
+            <div className="grid grid-cols-7 bg-[#464646] shrink-0">
               {DAYS_OF_WEEK.map((d, i) => (
                 <div
                   key={`weekday-${i}`}
-                  className="py-3.5 px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white/85 text-center"
+                  className="py-3 px-4 text-xs font-semibold text-white/85 text-center"
                 >
                   {d}
                 </div>
@@ -238,7 +213,7 @@ export function CalendarPopup({
             <div className="grid grid-cols-7 flex-1">
               {!monthData ? (
                 <div className="col-span-7 flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-[#7E97AC]" />
+                  <Loader2 className="h-6 w-6 animate-spin text-[#6E6E6E]" />
                 </div>
               ) : (
                 calendarDays.map((day, index) => {
@@ -246,7 +221,7 @@ export function CalendarPopup({
                     return (
                       <div
                         key={`empty-${index}`}
-                        className="bg-[#F4F6F8] border-r border-b border-[#E1E7EC] min-h-[80px]"
+                        className="bg-[#FAFAFA] border-r border-b border-[#EFEFEF] min-h-[80px]"
                       />
                     );
                   }
@@ -274,11 +249,11 @@ export function CalendarPopup({
                           handleDayClick(day);
                         }
                       }}
-                      className={`relative min-h-[80px] p-2 border-r border-b border-[#E1E7EC] transition-all duration-200 flex flex-col text-left
-                        ${showMutedBackground ? "bg-[#EEF1F4]" : hasReservations && !isClosed ? "bg-[#F1F5F8] hover:bg-[#E8EEF3]" : "bg-white hover:bg-[#F4F6F8]"}
-                        ${isToday ? "ring-2 ring-inset ring-[#3E5A70] z-10" : ""}
+                      className={`relative min-h-[80px] p-2 border-r border-b border-[#EFEFEF] transition-all duration-200 flex flex-col text-left
+                        ${showMutedBackground ? "bg-[#F6F6F6]" : hasReservations && !isClosed ? "bg-[#FAFAFA] hover:bg-[#F2F2F2]" : "bg-white hover:bg-[#FAFAFA]"}
+                        ${isToday ? "ring-2 ring-inset ring-[#0C0C0C] z-10" : ""}
                         ${isPast ? "opacity-80" : ""}
-                        ${isSelected ? "bg-[#DEE7F0] ring-2 ring-[#4F6D84] ring-inset" : ""}
+                        ${isSelected ? "bg-[#EAF2FF] ring-2 ring-[#3884FF] ring-inset" : ""}
                         ${isClosed ? "cursor-default" : "cursor-pointer"}
                       `}
                     >
@@ -287,7 +262,7 @@ export function CalendarPopup({
                         <div 
                           className="absolute inset-0 opacity-[0.07] pointer-events-none"
                           style={{ 
-                            backgroundImage: "linear-gradient(45deg, #3E5A70 25%, transparent 25%, transparent 50%, #3E5A70 50%, #3E5A70 75%, transparent 75%, transparent)", 
+                            backgroundImage: "linear-gradient(45deg, #464646 25%, transparent 25%, transparent 50%, #464646 50%, #464646 75%, transparent 75%, transparent)", 
                             backgroundSize: "10px 10px" 
                           }}
                         />
@@ -295,12 +270,12 @@ export function CalendarPopup({
 
                       {/* Header de la case */}
                       <div className="relative flex items-start gap-1.5">
-                        <span className={`text-sm font-semibold ${isToday ? "text-[#22303C]" : isPast ? "text-[#9FB0BE]" : "text-[#4F6D84]"}`}>
+                        <span className={`text-sm font-semibold ${isToday ? "text-[#0C0C0C]" : isPast ? "text-[#A5A5A5]" : "text-[#464646]"}`}>
                           {day}
                         </span>
                         <div className="ml-auto flex items-center gap-1">
                           {isToday && (
-                            <span className="text-[8px] font-bold uppercase tracking-widest bg-[#3E5A70] text-white px-1.5 py-0.5 rounded-full">
+                            <span className="text-[10px] font-semibold bg-[#3884FF] text-white px-2 py-0.5 rounded-full">
                               Aujourd&apos;hui
                             </span>
                           )}
@@ -313,7 +288,7 @@ export function CalendarPopup({
                                 e.stopPropagation();
                                 onOpenDaySettings(dateKey);
                               }}
-                              className="w-6 h-6 text-[#7E97AC] hover:text-[#2A3540] flex items-center justify-center transition-colors"
+                              className="w-6 h-6 text-[#6E6E6E] hover:text-[#2D2D2D] flex items-center justify-center transition-colors"
                             >
                               <Settings size={12} strokeWidth={2.5} />
                             </button>
@@ -327,10 +302,10 @@ export function CalendarPopup({
                           {/* Déjeuner */}
                           {dayData.lunch.isOpen ? (
                             <div className="flex items-center gap-2 w-full">
-                              <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-[#9FB0BE]" : "text-[#7E97AC]"}`}>
+                              <span className={`text-[11px] font-semibold shrink-0 w-6 ${isPast ? "text-[#A5A5A5]" : "text-[#6E6E6E]"}`}>
                                 Déj
                               </span>
-                              <div className="flex-1 h-1.5 bg-[#E4E9ED] rounded-full overflow-hidden">
+                              <div className="flex-1 h-1.5 bg-[#F6F6F6] rounded-full overflow-hidden">
                                 <div 
                                   className="h-full rounded-full transition-all duration-700 ease-out"
                                   style={{
@@ -339,8 +314,8 @@ export function CalendarPopup({
                                   }}
                                 />
                               </div>
-                              <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-[#7E97AC]" : "text-[#2A3540]"}`}>
-                                {dayData.lunch.covers}<span className="font-normal text-[#9FB0BE]">/{dayData.lunch.capacityEffective}</span>
+                              <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-[#6E6E6E]" : "text-[#2D2D2D]"}`}>
+                                {dayData.lunch.covers}<span className="font-normal text-[#A5A5A5]">/{dayData.lunch.capacityEffective}</span>
                               </span>
                             </div>
                           ) : (
@@ -352,10 +327,10 @@ export function CalendarPopup({
                           {/* Dîner */}
                           {dayData.dinner.isOpen ? (
                             <div className="flex items-center gap-2 w-full">
-                              <span className={`text-[11px] font-semibold uppercase shrink-0 w-6 ${isPast ? "text-[#9FB0BE]" : "text-[#7E97AC]"}`}>
+                              <span className={`text-[11px] font-semibold shrink-0 w-6 ${isPast ? "text-[#A5A5A5]" : "text-[#6E6E6E]"}`}>
                                 Dîn
                               </span>
-                              <div className="flex-1 h-1.5 bg-[#E4E9ED] rounded-full overflow-hidden">
+                              <div className="flex-1 h-1.5 bg-[#F6F6F6] rounded-full overflow-hidden">
                                 <div 
                                   className="h-full rounded-full transition-all duration-700 ease-out"
                                   style={{
@@ -364,8 +339,8 @@ export function CalendarPopup({
                                   }}
                                 />
                               </div>
-                              <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-[#7E97AC]" : "text-[#2A3540]"}`}>
-                                {dayData.dinner.covers}<span className="font-normal text-[#9FB0BE]">/{dayData.dinner.capacityEffective}</span>
+                              <span className={`text-[11px] font-bold shrink-0 ${isPast ? "text-[#6E6E6E]" : "text-[#2D2D2D]"}`}>
+                                {dayData.dinner.covers}<span className="font-normal text-[#A5A5A5]">/{dayData.dinner.capacityEffective}</span>
                               </span>
                             </div>
                           ) : (

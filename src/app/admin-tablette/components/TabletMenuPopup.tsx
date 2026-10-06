@@ -42,7 +42,7 @@ export function TabletMenuPopup({
         className="mt-[84px] mr-4 w-[340px] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/60 overflow-hidden origin-top-right animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200"
       >
         <div className="flex items-center justify-between pl-5 pr-3 pt-4 pb-2">
-          <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-slate-400">
+          <span className="text-[11px] font-semibold text-slate-400">
             Menu
           </span>
           <button

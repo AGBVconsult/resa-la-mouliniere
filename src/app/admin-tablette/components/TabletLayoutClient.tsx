@@ -10,6 +10,8 @@ import { VersionChecker } from "@/components/VersionChecker";
 
 interface TabletLayoutClientProps {
   children: ReactNode;
+  /** Classe de la police de l'interface tablette (next/font) */
+  fontClassName?: string;
 }
 
 const NAV_ITEMS = [
@@ -17,7 +19,7 @@ const NAV_ITEMS = [
   { id: "reservations", label: "Réservations", icon: ListChecks, href: "/admin-tablette/reservations" },
 ] as const;
 
-export function TabletLayoutClient({ children }: TabletLayoutClientProps) {
+export function TabletLayoutClient({ children, fontClassName }: TabletLayoutClientProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -30,7 +32,7 @@ export function TabletLayoutClient({ children }: TabletLayoutClientProps) {
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-[#FDFDFD] font-sans antialiased text-slate-900">
+      <div className={cn("min-h-screen bg-[#F6F6F6] antialiased text-[#0C0C0C]", fontClassName)}>
         {/* Main Content - Full width, no sidebar */}
         <main className="w-screen h-screen overflow-hidden">
           {children}
