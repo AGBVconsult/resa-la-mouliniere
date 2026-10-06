@@ -19,6 +19,29 @@ const STROKE = {
   strokeLinejoin: "round" as const,
 };
 
+/** Pancarte « Fermé » suspendue à un crochet bleu */
+function ClosedSignIllustration() {
+  return (
+    <svg viewBox="0 0 200 150" className="w-[200px] h-[150px] overflow-visible" aria-hidden>
+      <ellipse cx="100" cy="138" rx="70" ry="7" fill="#F1F1F1" />
+      <path d="M100 18 52 58M100 18l48 40" {...STROKE} />
+      <rect x="40" y="56" width="120" height="64" rx="14" {...STROKE} fill="#FFFFFF" />
+      <text
+        x="100"
+        y="97"
+        textAnchor="middle"
+        fontSize="24"
+        fontWeight="600"
+        fill="#6E6E6E"
+        style={{ fontFamily: "inherit" }}
+      >
+        Fermé
+      </text>
+      <circle cx="100" cy="16" r="6" fill="#3884FF" />
+    </svg>
+  );
+}
+
 /** Carnet de réservations ouvert et vierge, avec un stylo bleu */
 function BookIllustration() {
   return (
@@ -61,8 +84,8 @@ export function EmptyServiceState({ service, date, isToday, slots }: EmptyServic
 
   return (
     <div className="h-full min-h-[360px] flex items-center justify-center px-8 py-12">
-      <div className="flex flex-col items-center text-center gap-3.5 max-w-[380px]">
-        <BookIllustration />
+      <div className="flex flex-col items-center text-center gap-3.5 max-w-[420px]">
+        {isClosed ? <ClosedSignIllustration /> : <BookIllustration />}
         <h3 className="mt-1.5 text-xl font-semibold text-[#0C0C0C] text-balance">
           {isClosed ? `Service fermé ${when}` : `Aucune réservation ${when}`}
         </h3>
@@ -71,7 +94,7 @@ export function EmptyServiceState({ service, date, isToday, slots }: EmptyServic
             <>
               Aucun créneau n&apos;est ouvert pour ce service.
               <br />
-              Ouvrez des créneaux avec le bouton de réglage, en haut, pour prendre des réservations.
+              Ouvrez des créneaux avec le bouton de réglage.
             </>
           ) : (
             <>

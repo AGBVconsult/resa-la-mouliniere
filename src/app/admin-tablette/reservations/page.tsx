@@ -1016,7 +1016,7 @@ export default function TabletReservationsPage() {
             aria-label={selectedService === "total" ? "Créneaux du jour" : `Créneaux du ${selectedService === "lunch" ? "midi" : "soir"}`}
             className="w-10 h-10 flex items-center justify-center text-[#3884FF] hover:text-[#2F74E6] transition-colors active:scale-95"
           >
-            <SlidersHorizontal size={20} strokeWidth={1.75} />
+            <SlidersHorizontal size={24} strokeWidth={1.75} />
           </button>
         </div>
 
