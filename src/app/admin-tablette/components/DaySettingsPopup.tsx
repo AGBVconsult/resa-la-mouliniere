@@ -28,9 +28,11 @@ type DaySlotState = SlotState<Id<"slots">>;
 interface DaySettingsPopupProps {
   dateKey: string;
   onClose: () => void;
+  /** Service ouvert depuis le sélecteur de service : mis en évidence */
+  focusService?: "lunch" | "dinner";
 }
 
-export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
+export function DaySettingsPopup({ dateKey, onClose, focusService }: DaySettingsPopupProps) {
   const slotsData = useQuery(api.slots.listByDate, { dateKey });
   const batchUpdateSlots = useMutation(api.slots.batchUpdateSlots);
   const addSlot = useMutation(api.slots.addSlot);
@@ -213,6 +215,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pt-2 pb-24 md:px-6 md:pt-6 md:pb-0 space-y-6">
           {/* Services : empilés sur mobile, côte à côte dès la tablette */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={cn("rounded-3xl", focusService === "lunch" && "ring-2 ring-[#3884FF] ring-offset-4")}>
             <ServiceSection
               title="Déjeuner"
               service="lunch"
@@ -231,7 +234,9 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
               onNewSlotCapacityChange={setNewSlotCapacity}
               onConfirmAddSlot={() => handleAddSlot("lunch")}
             />
+            </div>
 
+            <div className={cn("rounded-3xl", focusService === "dinner" && "ring-2 ring-[#3884FF] ring-offset-4")}>
             <ServiceSection
               title="Dîner"
               service="dinner"
@@ -250,6 +255,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
               onNewSlotCapacityChange={setNewSlotCapacity}
               onConfirmAddSlot={() => handleAddSlot("dinner")}
             />
+            </div>
           </div>
         </div>
 
