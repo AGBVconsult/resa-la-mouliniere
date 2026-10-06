@@ -157,7 +157,7 @@ export function TabletCreateReservationPopup({ defaultDateKey, defaultService, p
             <div className="flex flex-wrap gap-2">
               {timeSlots.map((t) => (
                 <button key={t} type="button" onClick={() => setTimeKey(t)}
-                  className={cn("px-4 py-2.5 rounded-full text-sm font-medium",
+                  className={cn("px-3 py-1.5 rounded-full text-sm font-medium",
                     timeKey === t ? "bg-[#4F6D84] text-white" : "bg-[#EDF1F4] text-[#4A5A68] hover:bg-[#E2E8ED]")}>
                   {t}
                 </button>
