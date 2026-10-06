@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { SegmentedControl } from "@/components/admin/SegmentedControl";
 import { Users, X, Check } from "lucide-react";
 import {
   GRID_CELL_SIZE,
@@ -81,12 +82,12 @@ const SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
   seated: { bg: "bg-[#A9C9B4]", text: "text-black" }, // Vert-de-gris
 };
 
-// Thème Brume (tablette) : même code couleur, teintes accordées au gris-bleu
+// Thème tablette (palette neutre) : même code couleur des statuts
 const BRUME_STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: string }> = {
-  free: { bg: "bg-white shadow-[0_6px_14px_-6px_rgba(40,60,80,0.35)]", border: "border-transparent", text: "text-[#3E5A70]" },
+  free: { bg: "bg-white shadow-[0_6px_14px_-6px_rgba(0,0,0,0.28)]", border: "border-transparent", text: "text-[#2D2D2D]" },
   reserved: { bg: "bg-[#CBD9E7]", border: "border-transparent", text: "text-[#24496E]" }, // Bleu brume
   seated: { bg: "bg-[#A9CDB5]", border: "border-transparent", text: "text-[#1F4A33]" }, // Vert sauge
-  blocked: { bg: "bg-[#B9C3CC]", border: "border-transparent", text: "text-[#4A5865]" },
+  blocked: { bg: "bg-[#CBCBCB]", border: "border-transparent", text: "text-[#464646]" },
 };
 
 const BRUME_SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
@@ -453,11 +454,11 @@ export function ServiceFloorPlan({
                   ? "bg-amber-400 ring-2 ring-amber-500 ring-offset-1"
                   : isPending
                     ? isBrume
-                      ? "bg-[#DEE7F0] ring-2 ring-[#4F6D84] ring-offset-1"
+                      ? "bg-[#EAF2FF] ring-2 ring-[#3884FF] ring-offset-1"
                       : "bg-blue-200 ring-2 ring-blue-500 ring-offset-1"
                     : statusColors.bg
               ),
-              isSplit && isPending && (isBrume ? "ring-2 ring-[#4F6D84] ring-offset-1" : "ring-2 ring-blue-500 ring-offset-1"),
+              isSplit && isPending && (isBrume ? "ring-2 ring-[#3884FF] ring-offset-1" : "ring-2 ring-blue-500 ring-offset-1"),
               isSplit && isEditingThisTable && "ring-2 ring-amber-500 ring-offset-1",
               statusColors.border,
               table.status === "blocked" && "opacity-50",
@@ -605,7 +606,22 @@ export function ServiceFloorPlan({
   if (hideHeader) {
     return (
       <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center pt-16 pb-6 px-6">
-        {/* Switch de zone — pilule, aligné à droite */}
+        {/* Switch de zone, aligné à droite */}
+        {isBrume ? (
+          <div className="absolute top-4 right-4 z-30">
+            <SegmentedControl
+              size="sm"
+              ariaLabel="Zone"
+              className="bg-[#D6D6D6]"
+              value={activeZone}
+              onChange={setActiveZone}
+              options={[
+                { value: "salle", label: "Salle" },
+                { value: "terrasse", label: "Terrasse" },
+              ]}
+            />
+          </div>
+        ) : (
         <div className="absolute top-3 right-3 z-30 flex items-center gap-1 bg-white/90 backdrop-blur-md rounded-full p-1 shadow-lg border border-white/40">
           <button
             type="button"
@@ -613,7 +629,7 @@ export function ServiceFloorPlan({
             className={cn(
               "px-5 py-2 text-sm font-semibold rounded-full transition-all active:scale-95",
               activeZone === "salle"
-                ? isBrume ? "bg-[#3E5A70] text-white shadow-sm" : "bg-slate-800 text-white shadow-sm"
+                ? "bg-slate-800 text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-800"
             )}
           >
@@ -625,13 +641,14 @@ export function ServiceFloorPlan({
             className={cn(
               "px-5 py-2 text-sm font-semibold rounded-full transition-all active:scale-95",
               activeZone === "terrasse"
-                ? isBrume ? "bg-[#3E5A70] text-white shadow-sm" : "bg-slate-800 text-white shadow-sm"
+                ? "bg-slate-800 text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-800"
             )}
           >
             Terrasse
           </button>
         </div>
+        )}
 
         <div
           className="relative shrink-0"

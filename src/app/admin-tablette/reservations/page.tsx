@@ -9,8 +9,6 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { ReservationStatus } from "../../../../spec/contracts.generated";
 import {
-  ChevronLeft,
-  ChevronRight,
   UsersRound,
   MoreHorizontal,
   Loader2,
@@ -66,6 +64,8 @@ import { DaySettingsPopup } from "../components/DaySettingsPopup";
 import { ClientSearchPopup } from "../components/ClientSearchPopup";
 import { ClientModal } from "@/components/admin/ClientModal";
 import { TabletNotificationBell } from "../components/TabletNotificationBell";
+import { NavPill } from "../components/NavPill";
+import { SegmentedControl } from "@/components/admin/SegmentedControl";
 import { TabletCreateReservationPopup, type ReservationPrefill } from "../components/TabletCreateReservationPopup";
 import { ReviewSuppressionButton } from "../components/ReviewSuppressionButton";
 import { TabletMenuPopup } from "../components/TabletMenuPopup";
@@ -110,10 +110,10 @@ interface Reservation {
 const LIST_GRID = "grid grid-cols-[max-content_minmax(0,1fr)_auto_auto]";
 const SUBGRID = "col-span-full grid grid-cols-subgrid";
 
-// Visit badge styles - New: 0 (vert sauge) | Autres: bleu brume + texte blanc
+// Visit badge styles - New: 0 (vert sauge) | Autres: bleu + texte blanc
 function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
   if (visits === 0) return { classes: "bg-[#3F8F6F] text-white", fontWeight: "font-semibold" }; // New (vert)
-  return { classes: "bg-[#4F6D84] text-white", fontWeight: "font-semibold" }; // Autres (bleu brume)
+  return { classes: "bg-[#3884FF] text-white", fontWeight: "font-semibold" }; // Autres (bleu)
 }
 
 const STATUS_COLORS: Record<string, { bg: string; animate?: boolean }> = {
@@ -194,7 +194,7 @@ const SMART_STATUS_CONFIG: Record<string, {
   },
 };
 
-const MONTHS_SHORT = ["JAN", "FÉV", "MAR", "AVR", "MAI", "JUN", "JUL", "AOÛ", "SEP", "OCT", "NOV", "DÉC"];
+const MONTHS_SHORT = ["jan", "fév", "mar", "avr", "mai", "jun", "jul", "aoû", "sep", "oct", "nov", "déc"];
 
 export default function TabletReservationsPage() {
   const searchParams = useSearchParams();
@@ -344,8 +344,9 @@ export default function TabletReservationsPage() {
   }, []);
 
   const formatDateLabel = () => {
-    // Format: "SAM 21 FÉV" (mois sur 3 lettres pour garder une largeur stable)
-    const dayName = format(selectedDate, "EEE", { locale: fr }).toUpperCase().replace(".", "");
+    // Format: "Sam 21 fév" (mois sur 3 lettres pour garder une largeur stable)
+    const dayShort = format(selectedDate, "EEE", { locale: fr }).replace(".", "");
+    const dayName = dayShort.charAt(0).toUpperCase() + dayShort.slice(1);
     const dayNum = format(selectedDate, "d", { locale: fr });
     const monthName = MONTHS_SHORT[selectedDate.getMonth()];
     return `${dayName} ${dayNum} ${monthName}`;
@@ -391,19 +392,6 @@ export default function TabletReservationsPage() {
 
   // Total journalier
   const totalCovers = lunchCovers + dinnerCovers;
-
-  // Switch de service : le fond animé suit la position et la largeur du segment actif
-  const serviceButtonRefs = useRef<Record<"total" | "lunch" | "dinner", HTMLButtonElement | null>>({ total: null, lunch: null, dinner: null });
-  const [serviceThumb, setServiceThumb] = useState<{ left: number; width: number } | null>(null);
-  useLayoutEffect(() => {
-    const updateThumb = () => {
-      const btn = serviceButtonRefs.current[selectedService];
-      if (btn) setServiceThumb({ left: btn.offsetLeft, width: btn.offsetWidth });
-    };
-    updateThumb();
-    // Les polices peuvent finir de charger après le premier rendu
-    document.fonts?.ready.then(updateThumb);
-  }, [selectedService, totalCovers, lunchCovers, dinnerCovers]);
 
   const getTableName = (res: Reservation) => {
     if (!tablesData) return "-";
@@ -602,10 +590,10 @@ export default function TabletReservationsPage() {
           return (
             <div key={time} className={SUBGRID}>
               <div className={cn(
-                "col-span-full sticky top-0 z-10 flex items-center gap-3.5 bg-[#4F6D84] text-white",
+                "col-span-full sticky top-0 z-10 flex items-center gap-3.5 bg-[#464646] text-white",
                 showFloorPlan || selectedService === "total" ? "px-3 py-1" : "px-4 py-[5px]"
               )}>
-                <span className="font-black text-sm tabular-nums">{time}</span>
+                <span className="font-extrabold text-sm tabular-nums">{time}</span>
                 <div className="flex items-center gap-1.5 text-xs font-bold tabular-nums">
                   <UsersRound size={13} strokeWidth={2} />
                   <span>{groupCovers}</span>
@@ -636,7 +624,7 @@ export default function TabletReservationsPage() {
             )}>
               <div className="flex items-center gap-1.5 text-slate-500">
                 <X size={12} strokeWidth={2} />
-                <span className="font-semibold uppercase tracking-wide text-[10px]">
+                <span className="font-semibold text-[11px]">
                   Annulations / No-show
                 </span>
               </div>
@@ -684,12 +672,12 @@ export default function TabletReservationsPage() {
           onClick={handleRowClick}
           className={cn(
             SUBGRID,
-            "items-center hover:bg-[#F4F6F8] cursor-pointer border-b border-[#E1E7EC] pl-4 py-1",
-            isExpanded && "bg-[#F3F5F7]",
+            "items-center hover:bg-[#FAFAFA] cursor-pointer border-b border-[#EFEFEF] pl-4 py-1",
+            isExpanded && "bg-[#F6F6F6]",
             isSelectedForAssignment && "bg-emerald-50 border-l-4 border-l-emerald-500",
             isHighlighted && !isSelectedForAssignment && "bg-amber-100 ring-2 ring-inset ring-amber-500 border-l-4 border-l-amber-500 shadow-sm animate-highlight-pulse",
             isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-[#F7F5FF] hover:bg-violet-100/60 border-l-4 border-l-[#C9BFFB]",
-            isUnassigned && !isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-[#FBF8F1]"
+            isUnassigned && !isAddedDuringService && !isSelectedForAssignment && !isHighlighted && "bg-[#FAFAFA]"
           )}
           title={isAddedDuringService ? "Réservation enregistrée pendant le service" : undefined}
         >
@@ -710,7 +698,7 @@ export default function TabletReservationsPage() {
                     visitBadge.fontWeight,
                     "text-[9px]"
                   )}>
-                    {visits === 0 ? "NEW" : visits}
+                    {visits === 0 ? "New" : visits}
                   </span>
                   {/* Seulement s'il y a un indicateur : vide, sa marge élargirait la colonne pour rien */}
                   {(getOutcome(res) || res.hasClientNotes || res.isLateClient || res.isSlowClient) && (
@@ -760,10 +748,10 @@ export default function TabletReservationsPage() {
           {/* Table - Full Height - clic active l'assignation */}
           <div 
             className={cn(
-              "self-stretch flex shrink-0 -my-1 cursor-pointer transition-all duration-300 border-l border-[#D3DBE1] w-16",
+              "self-stretch flex shrink-0 -my-1 cursor-pointer transition-all duration-300 border-l border-[#EFEFEF] w-16",
               isSelectedForAssignment 
-                ? "bg-[#4F6D84]" 
-                : "bg-[#EDF1F4] hover:bg-[#E2E8ED]"
+                ? "bg-[#3884FF]" 
+                : "bg-[#F6F6F6] hover:bg-[#EFEFEF]"
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -781,19 +769,19 @@ export default function TabletReservationsPage() {
                     isSelectedForAssignment ? "text-white" : "text-slate-500"
                   )} />
                   <span className={cn(
-                    "text-[10px] font-medium mt-1 tracking-wide",
+                    "text-[10px] font-medium mt-1",
                     isSelectedForAssignment ? "text-white" : "text-slate-500"
-                  )}>ASSIG.</span>
+                  )}>Assig.</span>
                 </>
               ) : (
                 <>
                   <span className={cn(
-                    "text-[10px] font-medium tracking-wide",
+                    "text-[10px] font-medium",
                     isSelectedForAssignment ? "text-white" : "text-slate-400"
-                  )}>TABLE</span>
+                  )}>Table</span>
                   <span className={cn(
                     "text-2xl font-bold leading-none",
-                    isSelectedForAssignment ? "text-white" : "text-[#2A3540]"
+                    isSelectedForAssignment ? "text-white" : "text-[#2D2D2D]"
                   )}>{getTableName(res)}</span>
                 </>
               )}
@@ -870,7 +858,7 @@ export default function TabletReservationsPage() {
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center mb-4">
+                <p className="text-sm font-semibold text-[#6E6E6E] text-center mb-4">
                   Changer le statut
                 </p>
                 
@@ -938,8 +926,8 @@ export default function TabletReservationsPage() {
                           className={cn(
                             "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all",
                             isCurrentStatus 
-                              ? "bg-[#F3F5F7] border border-[#C9D5DF]" 
-                              : "border border-transparent hover:bg-[#F7F9FA]"
+                              ? "bg-[#F6F6F6] border border-[#E5E5E5]" 
+                              : "border border-transparent hover:bg-[#FAFAFA]"
                           )}
                         >
                           <div className={cn(
@@ -967,12 +955,12 @@ export default function TabletReservationsPage() {
           <div className="col-span-full bg-gray-50/50 px-4 py-4 ml-8 border-b border-gray-100">
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Contact</p>
+                <p className="text-xs font-semibold text-[#6E6E6E] mb-1">Contact</p>
                 <p className="text-sm">{res.phone}</p>
                 <p className="text-sm text-gray-600">{res.email}</p>
               </div>
               <div className="col-span-2">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Note</p>
+                <p className="text-xs font-semibold text-[#6E6E6E] mb-1">Note</p>
                 <p className="text-sm text-gray-700">{res.note || "Aucune note"}</p>
               </div>
             </div>
@@ -983,98 +971,49 @@ export default function TabletReservationsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#E4E9ED]">
+    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F6F6F6]">
       {/* Header */}
-      <header className="relative flex items-center py-12 px-8 border-b border-[#D3DBE1] bg-[#E4E9ED]">
+      <header className="relative flex items-center py-12 px-8 border-b border-[#E5E5E5] bg-white">
         {/* Left: Date navigation */}
-        <div className="flex items-center h-[52px] bg-[#3E5A70] rounded-full shadow-[0_6px_16px_-8px_rgba(30,45,60,0.55)] px-1">
-          {/* Bouton précédent */}
-          <button
-            onClick={goToPreviousDay}
-            aria-label="Jour précédent"
-            className="w-[44px] h-full flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 rounded-full"
-          >
-            <ChevronLeft size={16} strokeWidth={2} />
-          </button>
+        <NavPill
+          label={formatDateLabel()}
+          onPrevious={goToPreviousDay}
+          onNext={goToNextDay}
+          previousLabel="Jour précédent"
+          nextLabel="Jour suivant"
+          onLabelClick={() => setShowCalendarPopup(true)}
+          reset={isToday ? undefined : { label: "Auj.", ariaLabel: "Revenir à aujourd'hui", onClick: goToToday }}
+        />
 
-          {/* Date au centre */}
-          <button
-            onClick={() => setShowCalendarPopup(true)}
-            className="h-full min-w-[96px] flex items-center justify-center cursor-pointer group"
-          >
-            <span className="text-sm font-bold text-white tracking-wide whitespace-nowrap">
-              {formatDateLabel()}
-            </span>
-          </button>
-
-          {/* Bouton suivant */}
-          <button
-            onClick={goToNextDay}
-            aria-label="Jour suivant"
-            className="w-[44px] h-full flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 rounded-full"
-          >
-            <ChevronRight size={16} strokeWidth={2} />
-          </button>
-
-          {/* Bouton Aujourd'hui intégré (visible seulement si pas aujourd'hui) */}
-          {!isToday && (
-            <button
-              onClick={goToToday}
-              aria-label="Revenir à aujourd'hui"
-              className="flex items-center gap-1.5 h-[44px] ml-1 pl-2.5 pr-3 bg-white hover:bg-[#E4E9ED] rounded-full text-[#3E5A70] font-semibold text-xs transition-all active:scale-95"
-            >
-              <RotateCcw size={13} strokeWidth={2} />
-              <span className="uppercase tracking-wide">Auj.</span>
-            </button>
-          )}
-        </div>
-
-        {/* Switch Total/Midi/Soir - centré (libellé visible uniquement sur le service actif) */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center h-[52px] bg-white rounded-full px-1 border border-[#D3DBE1] shadow-[0_4px_14px_-8px_rgba(30,45,60,0.45)]">
-          {/* Fond animé */}
-          {serviceThumb && (
-            <div
-              className="absolute top-1 bottom-1 left-0 bg-[#3E5A70] rounded-full transition-all duration-300 ease-out shadow-md"
-              style={{ width: serviceThumb.width, transform: `translateX(${serviceThumb.left}px)` }}
-            />
-          )}
-
-          {([
-            { id: "total", label: "Total", covers: totalCovers },
-            { id: "lunch", label: "Midi", covers: lunchCovers },
-            { id: "dinner", label: "Soir", covers: dinnerCovers },
-          ] as const).map(({ id, label, covers }) => {
-            const isActive = selectedService === id;
-            return (
-              <button
-                key={id}
-                ref={(el) => { serviceButtonRefs.current[id] = el; }}
-                onClick={() => setSelectedService(id)}
-                aria-pressed={isActive}
-                aria-label={`${label} : ${covers} couverts`}
-                className={cn(
-                  "relative z-10 flex items-center justify-center h-full min-w-[56px] px-3 gap-1.5 rounded-full transition-colors duration-300",
-                  isActive ? "text-white" : "text-slate-500"
-                )}
-              >
-                {id === "total" && <UsersRound size={14} strokeWidth={1.5} />}
-                {id === "lunch" && <Sun size={14} strokeWidth={1.5} className="text-[#D9A441]" />}
-                {id === "dinner" && <Moon size={14} strokeWidth={1.5} className={isActive ? "text-[#C9D6E2]" : "text-[#7E97AC]"} />}
-                {isActive && (
-                  <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
-                )}
-                <span className="font-bold text-base tabular-nums">{covers}</span>
-              </button>
-            );
-          })}
+        {/* Switch Total/Midi/Soir - centré */}
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <SegmentedControl
+            ariaLabel="Service"
+            value={selectedService}
+            onChange={setSelectedService}
+            options={[
+              { value: "total", covers: totalCovers, label: "Total" },
+              { value: "lunch", covers: lunchCovers, label: "Midi" },
+              { value: "dinner", covers: dinnerCovers, label: "Soir" },
+            ].map(({ value, covers, label }) => ({
+              value: value as "total" | "lunch" | "dinner",
+              ariaLabel: `${label} : ${covers} couverts`,
+              label: (
+                <>
+                  <span>{label}</span>
+                  <span className="font-bold tabular-nums">{covers}</span>
+                </>
+              ),
+            }))}
+          />
         </div>
 
         {/* Création + Notifications + Paramètres + Menu - une seule pastille alignée à droite */}
-        <div className="flex items-center gap-0.5 ml-auto h-[52px] px-1 bg-white rounded-full border border-[#D3DBE1] shadow-[0_4px_14px_-8px_rgba(30,45,60,0.45)]">
+        <div className="flex items-center gap-1.5 ml-auto">
           <button
             onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
             aria-label="Nouvelle réservation"
-            className="w-[44px] h-[44px] bg-[#3E5A70] hover:bg-[#344D60] rounded-full shadow-[0_2px_6px_rgba(30,45,60,0.3)] flex items-center justify-center text-white transition-all active:scale-95"
+            className="w-10 h-10 bg-[#3884FF] hover:bg-[#2F74E6] rounded-full shadow-[0_4px_12px_-4px_rgba(56,132,255,0.6)] flex items-center justify-center text-white transition-all active:scale-95"
           >
             <Plus size={20} strokeWidth={2.5} />
           </button>
@@ -1089,7 +1028,7 @@ export default function TabletReservationsPage() {
           <button
             onClick={() => setShowSettings(true)}
             aria-label="Paramètres du jour"
-            className="w-[44px] h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-[#F4F6F8] transition-all active:scale-95"
+            className="w-10 h-10 flex items-center justify-center text-[#464646] hover:text-[#0C0C0C] transition-colors active:scale-95"
           >
             <Settings size={20} strokeWidth={1.5} />
           </button>
@@ -1099,10 +1038,8 @@ export default function TabletReservationsPage() {
             aria-haspopup="dialog"
             aria-expanded={showMenu}
             className={cn(
-              "w-[44px] h-[44px] rounded-full flex items-center justify-center transition-all active:scale-95",
-              showMenu
-                ? "bg-[#3E5A70] text-white"
-                : "text-slate-500 hover:text-slate-900 hover:bg-[#F4F6F8]"
+              "w-10 h-10 flex items-center justify-center transition-colors active:scale-95",
+              showMenu ? "text-[#0C0C0C]" : "text-[#464646] hover:text-[#0C0C0C]"
             )}
           >
             <Menu size={20} strokeWidth={1.5} />
@@ -1116,11 +1053,11 @@ export default function TabletReservationsPage() {
         {selectedService === "total" ? (
           <>
             {/* Colonne Midi */}
-            <div className="w-[50%] flex flex-col border-r border-[#E3E8EC]">
-              <div className="bg-[#F7F2E6] px-4 py-2 border-b border-[#EADFC6] flex items-center gap-2">
+            <div className="w-[50%] flex flex-col border-r border-[#E5E5E5]">
+              <div className="bg-[#F6F6F6] px-4 py-2 border-b border-[#E5E5E5] flex items-center gap-2">
                 <Sun size={16} strokeWidth={1.5} className="text-[#D9A441]" />
-                <span className="font-bold text-[#7A5B1E]">MIDI</span>
-                <span className="text-[#8A6A2A] text-sm">{lunchCovers} couverts</span>
+                <span className="font-bold text-[#0C0C0C]">Midi</span>
+                <span className="text-[#6E6E6E] text-sm">{lunchCovers} couverts</span>
               </div>
               <div className="flex-1 overflow-y-auto bg-white">
                 {renderReservationsList(lunchReservations as Reservation[], "lunch")}
@@ -1128,10 +1065,10 @@ export default function TabletReservationsPage() {
             </div>
             {/* Colonne Soir */}
             <div className="w-[50%] flex flex-col">
-              <div className="bg-[#CFD9E1] px-4 py-2 border-b border-[#BCC9D3] flex items-center gap-2">
-                <Moon size={16} strokeWidth={1.5} className="text-[#4F6D84]" />
-                <span className="font-bold text-[#3E5A70]">SOIR</span>
-                <span className="text-[#4F6D84] text-sm">{dinnerCovers} couverts</span>
+              <div className="bg-[#F6F6F6] px-4 py-2 border-b border-[#E5E5E5] flex items-center gap-2">
+                <Moon size={16} strokeWidth={1.5} className="text-[#6E6E6E]" />
+                <span className="font-bold text-[#0C0C0C]">Soir</span>
+                <span className="text-[#6E6E6E] text-sm">{dinnerCovers} couverts</span>
               </div>
               <div className="flex-1 overflow-y-auto bg-white">
                 {renderReservationsList(dinnerReservations as Reservation[], "dinner")}
@@ -1162,7 +1099,7 @@ export default function TabletReservationsPage() {
             {/* Floor Plan */}
             {showFloorPlan && (
           <div
-            className="w-[45%] shrink-0 h-full border-l border-[#B3C2CE] overflow-hidden relative"
+            className="w-[45%] shrink-0 h-full border-l border-[#E5E5E5] overflow-hidden relative"
             style={{ backgroundColor: BRUME.floor }}
           >
               <ServiceFloorPlan

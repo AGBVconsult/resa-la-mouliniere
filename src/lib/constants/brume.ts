@@ -1,33 +1,33 @@
 /**
- * Thème « Brume » de l'interface tablette : gris-bleu brumeux, esprit scandinave.
+ * Thème de l'interface tablette : palette neutre (gris sans teinte, texte quasi noir,
+ * un seul accent bleu #3884FF), police Montserrat, aucun texte tout en majuscules.
  *
  * Le code couleur des statuts est conservé (pêche = en attente, jaune = confirmé,
- * bleu = table assignée / carton, vert = installé, rose = no-show, rouge = annulé…),
- * mais chaque teinte est légèrement désaturée et rafraîchie pour s'accorder au gris-bleu.
+ * bleu = table assignée / carton, vert = installé, rose = no-show, rouge = annulé…).
  *
  * Les classes sont écrites en entier (pas de concaténation) pour que Tailwind les détecte.
  */
 
 export const BRUME = {
-  /** Accent principal (barre de service active, « Aujourd'hui », création, sélection) */
-  accent: "#4F6D84",
-  accentStrong: "#3E5A70",
-  /** Texte principal / secondaire */
-  ink: "#2A3540",
-  /** Fond de page et d'en-tête */
-  bg: "#E4E9ED",
-  /** Bandeau de créneau horaire (même bleu que le bouton de création) */
-  band: "#4F6D84",
-  line: "#D3DBE1",
+  /** Accent unique (création, « Auj. », sélection, badges) */
+  accent: "#3884FF",
+  accentStrong: "#2F74E6",
+  /** Texte principal */
+  ink: "#0C0C0C",
+  /** Fond de page (le header est blanc) */
+  bg: "#F6F6F6",
+  /** Bandeau de créneau horaire */
+  band: "#464646",
+  line: "#E5E5E5",
   /** Sol du plan de salle (uni) */
-  floor: "#C5D0D8",
+  floor: "#E5E5E5",
 } as const;
 
 export type GaugeLevel = "low" | "medium" | "high" | "full";
 
 /**
  * Jauge de remplissage d'un créneau : la couleur suit le taux de remplissage.
- * `bar` colore la barre, `text` le libellé « x dispo » (plus clair, lisible sur le bandeau bleu).
+ * `bar` colore la barre, `text` le libellé « x dispo » (plus clair, lisible sur le bandeau foncé).
  */
 export const BRUME_GAUGE: Record<GaugeLevel, { bar: string; text: string }> = {
   low: { bar: "#22C55E", text: "#86EFAC" }, // < 50 % : vert

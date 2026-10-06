@@ -89,11 +89,11 @@ export function TabletNotificationBell({ onNavigateToReservation }: TabletNotifi
       <button
         onClick={() => setIsOpen(true)}
         aria-label={count > 0 ? `Notifications (${count})` : "Notifications"}
-        className="relative w-[44px] h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-[#F4F6F8] transition-all active:scale-95"
+        className="relative w-10 h-10 flex items-center justify-center text-[#464646] hover:text-[#0C0C0C] transition-colors active:scale-95"
       >
         <Bell size={20} strokeWidth={1.5} className={cn(count > 0 && "text-orange-500")} />
         {count > 0 && (
-          <span className="absolute -top-1.5 -right-1 min-w-[22px] h-[22px] flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1 ring-2 ring-white animate-pulse">
+          <span className="absolute -top-1.5 -right-1 min-w-[22px] h-[22px] flex items-center justify-center bg-[#3884FF] text-white text-xs font-bold rounded-full px-1 ring-2 ring-white animate-pulse">
             {count > 99 ? "99+" : count}
           </span>
         )}
@@ -110,7 +110,7 @@ export function TabletNotificationBell({ onNavigateToReservation }: TabletNotifi
           {/* Panneau */}
           <div className="relative w-[440px] max-w-[90vw] h-full bg-[#F8F8F8] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 bg-[#334156] text-white shrink-0">
+            <div className="flex items-center justify-between px-6 py-5 bg-[#464646] text-white shrink-0">
               <div className="flex items-center gap-3">
                 <Clock size={22} strokeWidth={2} />
                 <div>
@@ -140,7 +140,7 @@ export function TabletNotificationBell({ onNavigateToReservation }: TabletNotifi
               ) : (
                 groups.map(([dateKey, items]) => (
                   <div key={dateKey}>
-                    <div className="sticky top-0 z-10 px-6 py-2 bg-[#E4E4E4]/95 backdrop-blur text-xs font-bold uppercase tracking-wide text-slate-500">
+                    <div className="sticky top-0 z-10 px-6 py-2 bg-[#E4E4E4]/95 backdrop-blur text-xs font-bold text-slate-500">
                       {dayLabel(dateKey)}
                     </div>
                     {items.map((r) => {
@@ -163,7 +163,7 @@ export function TabletNotificationBell({ onNavigateToReservation }: TabletNotifi
                                 "h-[18px] px-1.5 rounded-full text-[9px] font-semibold flex items-center",
                                 getVisitBadgeStyle(r.totalVisits ?? 0),
                               )}>
-                                {(r.totalVisits ?? 0) === 0 ? "NEW" : r.totalVisits}
+                                {(r.totalVisits ?? 0) === 0 ? "New" : r.totalVisits}
                               </span>
                               <span className="ml-auto">{getFlag(r.phone, r.language)}</span>
                             </div>

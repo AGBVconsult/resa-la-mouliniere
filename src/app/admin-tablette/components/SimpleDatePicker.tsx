@@ -77,7 +77,7 @@ export function SimpleDatePicker({ isOpen, onClose, onSelectDate, selectedDateKe
         {/* Day headers */}
         <div className="grid grid-cols-7 mb-1">
           {DAYS.map((d) => (
-            <div key={d} className="text-center text-[10px] font-bold uppercase text-slate-400 py-1">
+            <div key={d} className="text-center text-[10px] font-bold text-slate-400 py-1">
               {d}
             </div>
           ))}
