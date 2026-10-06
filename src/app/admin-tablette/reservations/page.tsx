@@ -65,6 +65,7 @@ import { ClientSearchPopup } from "../components/ClientSearchPopup";
 import { ClientModal } from "@/components/admin/ClientModal";
 import { TabletNotificationBell } from "../components/TabletNotificationBell";
 import { NavPill } from "../components/NavPill";
+import { EmptyServiceState } from "../components/EmptyServiceState";
 import { SegmentedControl } from "@/components/admin/SegmentedControl";
 import { TabletCreateReservationPopup, type ReservationPrefill } from "../components/TabletCreateReservationPopup";
 import { ReviewSuppressionButton } from "../components/ReviewSuppressionButton";
@@ -570,9 +571,12 @@ export default function TabletReservationsPage() {
     
     if (sortedTimes.length === 0 && cancelledReservations.length === 0) {
       return (
-        <div className="px-5 py-12 text-center text-base text-slate-400">
-          Aucune réservation
-        </div>
+        <EmptyServiceState
+          service={service}
+          date={selectedDate}
+          isToday={isToday}
+          slots={slotsData?.[service] ?? []}
+        />
       );
     }
     
