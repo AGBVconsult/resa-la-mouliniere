@@ -2,14 +2,13 @@
 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 
 interface EmptyServiceStateProps {
   service: "lunch" | "dinner";
   date: Date;
   isToday: boolean;
-  /** Créneaux du service pour ce jour */
-  slots: Array<{ isOpen: boolean; capacity: number }>;
+  /** Créneaux du service pour ce jour (undefined tant qu'ils chargent) */
+  slots?: Array<{ isOpen: boolean; capacity: number }>;
 }
 
 const STROKE = {
@@ -47,39 +46,48 @@ function BookIllustration() {
 
 /**
  * État vide de la liste d'un service : illustration du carnet, message adapté au
- * service et au jour, rappel des couverts encore disponibles.
+ * service et au jour, rappel des couverts encore disponibles. Si aucun créneau du
+ * service n'est ouvert, le message indique que le service est fermé.
  */
 export function EmptyServiceState({ service, date, isToday, slots }: EmptyServiceStateProps) {
   const moment = service === "lunch" ? "midi" : "soir";
   const when = isToday ? `ce ${moment}` : `${format(date, "EEEE", { locale: fr })} ${moment}`;
 
-  const openSlots = slots.filter((s) => s.isOpen);
+  const openSlots = slots?.filter((s) => s.isOpen) ?? [];
   const availableCovers = openSlots.reduce((sum, s) => sum + s.capacity, 0);
   const isOpen = openSlots.length > 0;
+  // Fermé seulement une fois les créneaux chargés, pour éviter un faux « fermé » au chargement
+  const isClosed = slots !== undefined && !isOpen;
 
   return (
     <div className="h-full min-h-[360px] flex items-center justify-center px-8 py-12">
       <div className="flex flex-col items-center text-center gap-3.5 max-w-[380px]">
         <BookIllustration />
         <h3 className="mt-1.5 text-xl font-semibold text-[#0C0C0C] text-balance">
-          Aucune réservation {when}
+          {isClosed ? `Service fermé ${when}` : `Aucune réservation ${when}`}
         </h3>
         <p className="text-sm leading-relaxed text-[#6E6E6E]">
-          Le service est encore calme.
-          <br />
-          Les réservations apparaîtront ici.
-        </p>
-        <span className="flex items-center gap-2 h-8 px-3.5 rounded-full bg-[#F6F6F6] text-[13px] text-[#464646]">
-          <span className={cn("w-2 h-2 rounded-full", isOpen ? "bg-[#22C55E]" : "bg-[#BDBDBD]")} />
-          {isOpen ? (
+          {isClosed ? (
             <>
-              <span className="font-bold text-[#0C0C0C] tabular-nums">{availableCovers}</span>
-              couverts disponibles · {openSlots.length} créneau{openSlots.length > 1 ? "x" : ""} ouvert{openSlots.length > 1 ? "s" : ""}
+              Aucun créneau n&apos;est ouvert pour ce service.
+              <br />
+              Ouvrez des créneaux avec l&apos;engrenage pour prendre des réservations.
             </>
           ) : (
-            "Aucun créneau ouvert"
+            <>
+              Le service est encore calme.
+              <br />
+              Les réservations apparaîtront ici.
+            </>
           )}
-        </span>
+        </p>
+        {isOpen && (
+          <span className="flex items-center gap-2 h-8 px-3.5 rounded-full bg-[#F6F6F6] text-[13px] text-[#464646]">
+            <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
+            <span className="font-bold text-[#0C0C0C] tabular-nums">{availableCovers}</span>
+            couverts disponibles · {openSlots.length} créneau{openSlots.length > 1 ? "x" : ""} ouvert{openSlots.length > 1 ? "s" : ""}
+          </span>
+        )}
       </div>
     </div>
   );
