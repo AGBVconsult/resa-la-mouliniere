@@ -1071,15 +1071,8 @@ export default function TabletReservationsPage() {
           </button>
         </div>
 
-        {/* Création + Notifications + Paramètres + Menu - une seule pastille alignée à droite */}
+        {/* Notifications + Menu, alignés à droite (le « + » est en bas à droite de l'écran) */}
         <div className="flex items-center gap-1.5 ml-auto">
-          <button
-            onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
-            aria-label="Nouvelle réservation"
-            className="w-10 h-10 bg-[#3884FF] hover:bg-[#2F74E6] rounded-full shadow-[0_4px_12px_-4px_rgba(56,132,255,0.6)] flex items-center justify-center text-white transition-all active:scale-95"
-          >
-            <Plus size={20} strokeWidth={2.5} />
-          </button>
           <TabletNotificationBell
             onNavigateToReservation={(dateKey, service, reservationId) => {
               const [y, m, d] = dateKey.split("-").map(Number);
@@ -1219,6 +1212,16 @@ export default function TabletReservationsPage() {
       )}
 
       {/* Menu (options peu utilisées) */}
+      {/* Nouvelle réservation : bouton flottant en bas à droite (zone libérée sous le plan de salle) */}
+      <button
+        onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
+        aria-label="Nouvelle réservation"
+        className="fixed right-6 z-40 w-14 h-14 bg-[#3884FF] hover:bg-[#2F74E6] rounded-full shadow-[0_8px_20px_-6px_rgba(56,132,255,0.7)] flex items-center justify-center text-white transition-all active:scale-95"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
+      >
+        <Plus size={26} strokeWidth={2.5} />
+      </button>
+
       {showMenu && (
         <TabletMenuPopup
           showFloorPlan={showFloorPlan}
