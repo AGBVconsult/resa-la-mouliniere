@@ -802,7 +802,7 @@ export function ServiceFloorPlan({
 
   if (hideHeader) {
     return (
-      <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center pt-16 pb-6 px-6">
+      <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-start justify-center pt-14 pb-24 px-6">
         {/* Switch de zone, aligné à droite */}
         {isBrume ? (
           <div className="absolute top-4 right-4 z-30">
@@ -853,7 +853,7 @@ export function ServiceFloorPlan({
             width: gridLayout.width,
             height: gridLayout.height,
             transform: `scale(${tabletScale})`,
-            transformOrigin: 'center center',
+            transformOrigin: 'top center',
           }}
         >
           {renderTables()}
