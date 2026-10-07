@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { format, parseISO, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -899,7 +900,9 @@ export default function TabletReservationsPage() {
           })()}
 
           {/* Popup menu contextuel - Changer le statut */}
-          {openPopupId === res._id && (
+          {/* Rendu dans <body> : sur iPad (Safari), les conteneurs scrollables créent un contexte
+              d'empilement qui laissait le plan de salle et le bouton + au-dessus du voile */}
+          {openPopupId === res._id && createPortal(
             <>
               <div className="fixed inset-0 backdrop-blur-[2px] z-[99999] bg-black/10" onClick={(e) => { e.stopPropagation(); setOpenPopupId(null); }} />
               <div 
@@ -1001,7 +1004,8 @@ export default function TabletReservationsPage() {
                   })()}
                 </div>
               </div>
-            </>
+            </>,
+            document.body
           )}
         </div>
 
