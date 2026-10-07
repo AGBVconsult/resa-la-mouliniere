@@ -117,7 +117,7 @@ const BRUME_CHAIR_COLORS: Record<TableStatus, string> = {
 // les dossiers sont dessinés à l'extérieur, dans l'espace entre les tables.
 const CHAIR_GAP = 2; // espace entre le plateau et le dossier
 const CHAIR_DEPTH = 3.4;
-const CHAIR_MAX_LENGTH = 15;
+const CHAIR_MAX_LENGTH = 20;
 
 /**
  * Tailles de police (px) de l'heure et du nom, proportionnelles au plateau (thème tablette) :
