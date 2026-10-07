@@ -22,12 +22,11 @@ interface CalendarPopupProps {
 
 type ServiceDay = { isOpen: boolean; covers: number; capacityEffective: number };
 
-/** Bande d'un service : couleur douce selon le remplissage (gris pour les jours passés). Service fermé : pas de bande. */
-function ServiceBand({ label, service, isPast }: { label: string; service: ServiceDay; isPast: boolean }) {
+/** Bande d'un service : couleur douce selon le remplissage. Service fermé : pas de bande. */
+function ServiceBand({ label, service }: { label: string; service: ServiceDay }) {
   if (!service.isOpen) return <div aria-hidden className="h-[22px]" />;
-  const tone = isPast
-    ? { bg: "bg-[#F2F2F2]", text: "text-[#8E8E8E]" }
-    : service.covers === 0
+  const tone =
+    service.covers === 0
       ? // Ouvert mais aucun couvert réservé : teinte ardoise claire, distincte du vert
         { bg: "bg-[#EDF1F7]", text: "text-[#64748B]" }
       : BRUME_GAUGE_SOFT[getGaugeLevel(service.covers, service.capacityEffective)];
@@ -207,9 +206,10 @@ export function CalendarPopup({
       </header>
 
       {/* Calendrier compact, centré : cases de hauteur fixe (pas étirées sur tout l'écran) */}
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center px-10 pt-6 pb-4">
+      {/* Mêmes marges latérales que le header (px-8) : aligné sur le sélecteur de mois, centré */}
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col px-8 pt-6 pb-4">
         {/* Grille du mois */}
-        <div className="w-full max-w-[1404px] flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
+        <div className="w-full flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
           {/* Jours de la semaine */}
           <div className="grid grid-cols-7 bg-[#F0F0F0] shrink-0">
             {DAYS_OF_WEEK.map((d, i) => (
@@ -256,9 +256,7 @@ export function CalendarPopup({
                     className={cn(
                       "relative px-2 pt-1.5 pb-2 border-r border-b border-[#F0F0F0] flex flex-col gap-1 text-left cursor-pointer transition-colors",
                       isClosed ? "bg-[#F6F6F6] hover:bg-[#EFEFEF]" : "bg-white hover:bg-[#FAFAFA]",
-                      isSelected && "bg-[#F3F8FF]",
-                      (isToday || isSelected) && "z-10 ring-2 ring-inset",
-                      isToday ? "ring-[#3884FF]" : isSelected && "ring-[#9CC0FF]"
+                      isSelected && "bg-[#F3F8FF]"
                     )}
                   >
                     {/* Rayures des jours fermés */}
@@ -287,10 +285,13 @@ export function CalendarPopup({
                     {/* Bandes midi / soir */}
                     {dayData && !isClosed && (
                       <div className="relative mt-auto grid gap-1">
-                        <ServiceBand label="Midi" service={dayData.lunch} isPast={isPast} />
-                        <ServiceBand label="Soir" service={dayData.dinner} isPast={isPast} />
+                        <ServiceBand label="Midi" service={dayData.lunch} />
+                        <ServiceBand label="Soir" service={dayData.dinner} />
                       </div>
                     )}
+
+                    {/* Jours passés : voile clair par-dessus (bandes toujours en couleur, mais estompées) */}
+                    {isPast && <div aria-hidden className="absolute inset-0 bg-white/55 pointer-events-none" />}
                   </div>
                 );
               })
@@ -299,7 +300,7 @@ export function CalendarPopup({
         </div>
 
         {/* Légende du remplissage */}
-        <div className="w-full max-w-[1404px] flex flex-wrap justify-end gap-4 pt-2.5 text-xs text-[#6E6E6E]">
+        <div className="w-full flex flex-wrap justify-end gap-4 pt-2.5 text-xs text-[#6E6E6E]">
           <span className="flex items-center gap-1.5">
             <span className="w-3.5 h-2.5 rounded-[3px] border border-black/5 bg-[#EDF1F7]" />
             aucun couvert
