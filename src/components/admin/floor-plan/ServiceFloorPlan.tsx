@@ -86,27 +86,28 @@ const SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
 // Le statut teinte le plateau, son contour et les dossiers.
 const BRUME_STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: string }> = {
   free: { bg: "bg-white", border: "border border-[#D6D6D6] shadow-[0_1px_2px_rgba(0,0,0,0.05)]", text: "text-[#464646]" },
-  reserved: { bg: "bg-[#EAF2FF]", border: "border border-[#9CC0FF] shadow-[0_1px_2px_rgba(0,0,0,0.05)]", text: "text-[#1F4F9E]" },
-  seated: { bg: "bg-[#E3F5EA]", border: "border border-[#8FD3A8] shadow-[0_1px_2px_rgba(0,0,0,0.05)]", text: "text-[#166534]" },
+  // Tables occupées en aplat franc + texte blanc : lisibles d'un coup d'œil
+  reserved: { bg: "bg-[#3884FF]", border: "border border-[#2F74E6] shadow-[0_1px_3px_rgba(56,132,255,0.35)]", text: "text-white" },
+  seated: { bg: "bg-[#22A55B]", border: "border border-[#1C8A4C] shadow-[0_1px_3px_rgba(34,165,91,0.35)]", text: "text-white" },
   blocked: { bg: "bg-[#EFEFEF]", border: "border border-dashed border-[#DDDDDD]", text: "text-[#9A9A9A]" },
 };
 
 const BRUME_SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
-  reserved: { bg: "bg-[#EEEAFB]", text: "text-[#45397A]" }, // Lavande pâle
-  seated: { bg: "bg-[#D3EEDD]", text: "text-[#166534]" }, // Vert-de-gris pâle
+  reserved: { bg: "bg-[#6E62D9]", text: "text-white" }, // Indigo
+  seated: { bg: "bg-[#167A45]", text: "text-white" }, // Vert profond
 };
 
 // Couleur des dossiers selon le statut de la table
 const BRUME_CHAIR_COLORS: Record<TableStatus, string> = {
   free: "#D9D9D9",
-  reserved: "#B9D3FF",
-  seated: "#B4E3C5",
+  reserved: "#9CC0FF",
+  seated: "#8FD3A8",
   blocked: "#E6E6E6",
 };
 
 // Marge réservée aux chaises autour du plateau, à l'intérieur de l'emprise de la table
-const CHAIR_MARGIN = 7;
-const CHAIR_GAP = 2.5; // espace entre le plateau et le dossier
+const CHAIR_MARGIN = 6;
+const CHAIR_GAP = 2; // espace entre le plateau et le dossier
 const CHAIR_DEPTH = 3.4;
 const CHAIR_MAX_LENGTH = 15;
 
@@ -715,11 +716,18 @@ export function ServiceFloorPlan({
                   </button>
                 )}
                 {table.reservation ? (
-                  <div className="flex flex-col items-center justify-center w-full h-full">
+                  <div className="flex flex-col items-center justify-center w-full h-full overflow-hidden">
                     <span className={cn("text-[10px] font-bold leading-tight", isEditingThisTable ? "text-amber-900" : statusColors.text)}>
                       {table.reservation.timeKey}
                     </span>
-                    <span className={cn("text-[9px] leading-tight truncate max-w-full px-0.5", isEditingThisTable ? "text-amber-900" : statusColors.text)}>
+                    <span
+                      className={cn(
+                        "leading-tight max-w-full",
+                        // Tablette : plateau étroit → nom coupé net (sans « … ») pour garder plus de lettres
+                        isBrume ? "text-[8.5px] font-semibold whitespace-nowrap overflow-hidden text-clip" : "text-[9px] truncate px-0.5",
+                        isEditingThisTable ? "text-amber-900" : statusColors.text
+                      )}
+                    >
                       {nameDisplay === "firstName" ? (table.reservation.firstName?.trim() || table.reservation.lastName) : table.reservation.lastName}
                     </span>
                   </div>
