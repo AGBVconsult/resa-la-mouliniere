@@ -69,6 +69,8 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-lato)", "system-ui", "sans-serif"],
         heading: ["'Transat Text W01 Black'", "system-ui", "sans-serif"],
+        // Interface tablette : police système (SF Pro sur iPad), aucun téléchargement
+        tablet: ["-apple-system", "BlinkMacSystemFont", "system-ui", "'Segoe UI'", "Roboto", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

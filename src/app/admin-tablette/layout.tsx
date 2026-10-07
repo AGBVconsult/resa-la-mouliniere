@@ -1,10 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Montserrat } from "next/font/google";
 import { TabletLayoutClient } from "./components/TabletLayoutClient";
-
-// Police de l'interface tablette
-const montserrat = Montserrat({ subsets: ["latin"], display: "swap" });
 
 export const metadata = {
   title: "Admin Tablette - La Moulinière",
@@ -37,5 +33,5 @@ export default async function AdminTabletLayout({
     redirect("/admin/login");
   }
 
-  return <TabletLayoutClient fontClassName={montserrat.className}>{children}</TabletLayoutClient>;
+  return <TabletLayoutClient fontClassName="font-tablet tabular-nums">{children}</TabletLayoutClient>;
 }
