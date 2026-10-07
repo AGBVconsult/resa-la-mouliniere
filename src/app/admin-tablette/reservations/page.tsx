@@ -627,7 +627,7 @@ export default function TabletReservationsPage() {
                 <span className="font-extrabold text-sm tabular-nums">{time}</span>
                 {groupCapacity > 0 && (
                   <>
-                    <div className="w-[72px] h-[6px] rounded-full bg-white/20 overflow-hidden">
+                    <div className="w-[72px] h-[3px] rounded-full bg-white/20 overflow-hidden">
                       <div className="h-full rounded-full transition-[width] duration-200" style={{ width: `${fillRatio * 100}%`, backgroundColor: gauge.bar }} />
                     </div>
                     <span className="text-xs font-bold tabular-nums" style={{ color: gauge.text }}>
