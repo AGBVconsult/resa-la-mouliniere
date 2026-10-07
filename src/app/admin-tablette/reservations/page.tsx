@@ -621,7 +621,7 @@ export default function TabletReservationsPage() {
           return (
             <div key={time} className={SUBGRID}>
               <div className={cn(
-                "col-span-full sticky top-0 z-10 flex items-center gap-3.5 bg-[#464646] text-white",
+                "col-span-full sticky top-0 z-10 flex items-center gap-3.5 bg-[#5E5E5E] text-white",
                 showFloorPlan || selectedService === "total" ? "px-3 py-1" : "px-4 py-[5px]"
               )}>
                 <span className="font-extrabold text-sm tabular-nums">{time}</span>

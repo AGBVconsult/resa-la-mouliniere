@@ -17,7 +17,7 @@ export const BRUME = {
   /** Fond de page (le header est blanc) */
   bg: "#F6F6F6",
   /** Bandeau de créneau horaire */
-  band: "#464646",
+  band: "#5E5E5E",
   line: "#E5E5E5",
   /** Sol du plan de salle (très clair, tables « plan d'architecte ») */
   floor: "#F7F7F7",
