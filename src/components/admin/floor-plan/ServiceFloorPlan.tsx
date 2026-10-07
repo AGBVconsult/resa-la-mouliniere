@@ -131,6 +131,9 @@ function getInfoFontSizes(w: number, h: number) {
   };
 }
 
+// Terrasse : chaises dans l'autre sens que la règle par défaut, sauf pour ces tables
+const TERRACE_KEEP_CHAIR_ORIENTATION = new Set(["500", "501", "402", "403"]);
+
 type ChairSide = "top" | "right" | "bottom" | "left";
 
 /**
@@ -296,7 +299,8 @@ export function ServiceFloorPlan({
     });
   }, [tableStates, activeZone]);
 
-  // Tables collées à une autre au-dessus ou en dessous : leurs chaises passent sur les côtés
+  // Tables collées à une autre au-dessus ou en dessous : leurs chaises passent sur les côtés.
+  // En terrasse, l'orientation est inversée (sauf exceptions).
   const sideSeatingTableIds = useMemo(() => {
     const ids = new Set<string>();
     const span = TABLE_SIZE / GRID_CELL_SIZE; // taille d'une table en cases de grille
@@ -311,7 +315,9 @@ export function ServiceFloorPlan({
         const touchingY = gapY >= 0 && gapY < 1;
         return overlapX && touchingY;
       });
-      if (stacked) ids.add(t.tableId);
+      const zone = t.zone === "terrace" ? "terrasse" : t.zone;
+      const flip = zone === "terrasse" && !TERRACE_KEEP_CHAIR_ORIENTATION.has(t.name);
+      if (stacked !== flip) ids.add(t.tableId);
     }
     return ids;
   }, [filteredTables]);
