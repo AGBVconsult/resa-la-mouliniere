@@ -94,22 +94,21 @@ const SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
 // Le statut teinte le plateau, son contour et les dossiers.
 const BRUME_STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: string }> = {
   free: { bg: "bg-white", border: "border border-[#D6D6D6] shadow-[0_1px_2px_rgba(0,0,0,0.05)]", text: "text-[#464646]" },
-  // Tables occupées en aplat franc + texte blanc : lisibles d'un coup d'œil
-  reserved: { bg: "bg-[#3884FF]", border: "border border-[#2F74E6] shadow-[0_1px_3px_rgba(56,132,255,0.35)]", text: "text-white" },
-  seated: { bg: "bg-[#22A55B]", border: "border border-[#1C8A4C] shadow-[0_1px_3px_rgba(34,165,91,0.35)]", text: "text-white" },
+  reserved: { bg: "bg-[#EAF2FF]", border: "border border-[#9CC0FF] shadow-[0_1px_2px_rgba(0,0,0,0.05)]", text: "text-[#1F4F9E]" },
+  seated: { bg: "bg-[#E3F5EA]", border: "border border-[#8FD3A8] shadow-[0_1px_2px_rgba(0,0,0,0.05)]", text: "text-[#166534]" },
   blocked: { bg: "bg-[#EFEFEF]", border: "border border-dashed border-[#DDDDDD]", text: "text-[#9A9A9A]" },
 };
 
 const BRUME_SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
-  reserved: { bg: "bg-[#6E62D9]", text: "text-white" }, // Indigo
-  seated: { bg: "bg-[#167A45]", text: "text-white" }, // Vert profond
+  reserved: { bg: "bg-[#EEEAFB]", text: "text-[#45397A]" }, // Lavande pâle
+  seated: { bg: "bg-[#D3EEDD]", text: "text-[#166534]" }, // Vert-de-gris pâle
 };
 
 // Couleur des dossiers selon le statut de la table
 const BRUME_CHAIR_COLORS: Record<TableStatus, string> = {
   free: "#D9D9D9",
-  reserved: "#9CC0FF",
-  seated: "#8FD3A8",
+  reserved: "#B9D3FF",
+  seated: "#B4E3C5",
   blocked: "#E6E6E6",
 };
 
@@ -118,6 +117,18 @@ const CHAIR_MARGIN = 6;
 const CHAIR_GAP = 2; // espace entre le plateau et le dossier
 const CHAIR_DEPTH = 3.4;
 const CHAIR_MAX_LENGTH = 15;
+
+/**
+ * Tailles de police (px) de l'heure et du nom, proportionnelles au plateau (thème tablette) :
+ * l'heure tient dans la largeur, le nom garde le plus de lettres possible.
+ */
+function getInfoFontSizes(w: number, h: number) {
+  const base = Math.min(w, h * 1.4);
+  return {
+    time: Math.max(7, Math.min(13, base * 0.26)),
+    name: Math.max(6.5, Math.min(11, base * 0.22)),
+  };
+}
 
 type ChairSide = "top" | "right" | "bottom" | "left";
 
@@ -584,6 +595,8 @@ export function ServiceFloorPlan({
         const reservations = table.reservations;
         const isSplit = reservations !== undefined && reservations.length === 2;
         const isVerticalSplit = height > width;
+        // Taille des infos d'une moitié de table partagée (thème tablette)
+        const halfFonts = isVerticalSplit ? getInfoFontSizes(width, height / 2) : getInfoFontSizes(width / 2, height);
 
         // For split tables, determine which half is being edited
         const editingHalfIndex = isSplit && isEditingThisTable
@@ -681,10 +694,20 @@ export function ServiceFloorPlan({
                         handleTableClick(table.tableId, table.status as TableStatus, resa.id, table);
                       }}
                     >
-                      <span className={cn("text-[8px] font-bold leading-tight", halfText)}>
+                      <span
+                        className={cn("font-bold leading-tight", !isBrume && "text-[8px]", halfText)}
+                        style={isBrume ? { fontSize: halfFonts.time } : undefined}
+                      >
                         {resa.timeKey}
                       </span>
-                      <span className={cn("text-[7px] leading-tight truncate max-w-full px-0.5", halfText)}>
+                      <span
+                        className={cn(
+                          "leading-tight max-w-full",
+                          isBrume ? "font-medium whitespace-nowrap overflow-hidden text-clip px-px" : "text-[7px] truncate px-0.5",
+                          halfText
+                        )}
+                        style={isBrume ? { fontSize: halfFonts.name } : undefined}
+                      >
                         {displayName}
                       </span>
                     </div>
@@ -725,16 +748,20 @@ export function ServiceFloorPlan({
                 )}
                 {table.reservation ? (
                   <div className="flex flex-col items-center justify-center w-full h-full overflow-hidden">
-                    <span className={cn("text-[10px] font-bold leading-tight", isEditingThisTable ? "text-amber-900" : statusColors.text)}>
+                    <span
+                      className={cn("font-bold leading-tight", !isBrume && "text-[10px]", isEditingThisTable ? "text-amber-900" : statusColors.text)}
+                      style={isBrume ? { fontSize: getInfoFontSizes(width, height).time } : undefined}
+                    >
                       {table.reservation.timeKey}
                     </span>
                     <span
                       className={cn(
                         "leading-tight max-w-full",
-                        // Tablette : plateau étroit → nom coupé net (sans « … ») pour garder plus de lettres
-                        isBrume ? "text-[8.5px] font-semibold whitespace-nowrap overflow-hidden text-clip" : "text-[9px] truncate px-0.5",
+                        // Tablette : nom coupé net (sans « … ») pour garder le plus de lettres possible
+                        isBrume ? "font-medium whitespace-nowrap overflow-hidden text-clip px-px" : "text-[9px] truncate px-0.5",
                         isEditingThisTable ? "text-amber-900" : statusColors.text
                       )}
+                      style={isBrume ? { fontSize: getInfoFontSizes(width, height).name } : undefined}
                     >
                       {nameDisplay === "firstName" ? (table.reservation.firstName?.trim() || table.reservation.lastName) : table.reservation.lastName}
                     </span>
