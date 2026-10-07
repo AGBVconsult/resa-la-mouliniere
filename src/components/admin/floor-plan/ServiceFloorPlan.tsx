@@ -112,8 +112,12 @@ const CHAIR_MAX_LENGTH = 15;
 
 type ChairSide = "top" | "right" | "bottom" | "left";
 
-/** Dossiers (position + taille) autour d'un plateau w × h */
-function getChairs(capacity: number, w: number, h: number, round: boolean) {
+/**
+ * Dossiers (position + taille) autour d'un plateau w × h.
+ * `sideSeating` place les chaises d'une petite table carrée à gauche et à droite
+ * (table collée à une autre au-dessus ou en dessous).
+ */
+function getChairs(capacity: number, w: number, h: number, round: boolean, sideSeating = false) {
   const n = Math.max(0, Math.min(capacity, 12));
   const chairs: Array<{ x: number; y: number; width: number; height: number; angle: number }> = [];
   if (n === 0) return chairs;
@@ -141,7 +145,7 @@ function getChairs(capacity: number, w: number, h: number, round: boolean) {
   if (w === h && n > 4) {
     const order: ChairSide[] = ["top", "bottom", "right", "left"];
     for (let i = 0; i < n; i++) perSide[order[i % 4]]++;
-  } else if (w >= h) {
+  } else if (w > h || (w === h && !sideSeating)) {
     perSide.top = Math.ceil(n / 2);
     perSide.bottom = n - perSide.top;
   } else {
@@ -170,11 +174,25 @@ function getChairs(capacity: number, w: number, h: number, round: boolean) {
 }
 
 /** Dossiers pleins dessinés autour du plateau (thème tablette) */
-function TableChairs({ capacity, width, height, round, color }: { capacity: number; width: number; height: number; round: boolean; color: string }) {
+function TableChairs({
+  capacity,
+  width,
+  height,
+  round,
+  color,
+  sideSeating,
+}: {
+  capacity: number;
+  width: number;
+  height: number;
+  round: boolean;
+  color: string;
+  sideSeating: boolean;
+}) {
   // Le plateau a une bordure de 1 px : on se cale sur le bord extérieur
   return (
     <>
-      {getChairs(capacity, width, height, round).map((chair, i) => (
+      {getChairs(capacity, width, height, round, sideSeating).map((chair, i) => (
         <span
           key={i}
           aria-hidden
@@ -256,6 +274,26 @@ export function ServiceFloorPlan({
       return true;
     });
   }, [tableStates, activeZone]);
+
+  // Tables collées à une autre au-dessus ou en dessous : leurs chaises passent sur les côtés
+  const sideSeatingTableIds = useMemo(() => {
+    const ids = new Set<string>();
+    const span = TABLE_SIZE / GRID_CELL_SIZE; // taille d'une table en cases de grille
+    for (const t of filteredTables) {
+      const tx = t.positionX, ty = t.positionY;
+      const tw = (t.width ?? 1) * span, th = (t.height ?? 1) * span;
+      const stacked = filteredTables.some((o) => {
+        if (o.tableId === t.tableId) return false;
+        const ow = (o.width ?? 1) * span, oh = (o.height ?? 1) * span;
+        const overlapX = o.positionX < tx + tw && o.positionX + ow > tx;
+        const gapY = o.positionY >= ty ? o.positionY - (ty + th) : ty - (o.positionY + oh);
+        const touchingY = gapY >= 0 && gapY < 1;
+        return overlapX && touchingY;
+      });
+      if (stacked) ids.add(t.tableId);
+    }
+    return ids;
+  }, [filteredTables]);
 
   // Bbox de la zone active (dimensions + offset du conteneur affiché)
   const gridLayout = useMemo(() => computeGridLayout(filteredTables, hideHeader), [filteredTables, hideHeader]);
@@ -588,6 +626,7 @@ export function ServiceFloorPlan({
                 height={height}
                 round={table.shape === "round"}
                 color={BRUME_CHAIR_COLORS[table.status as TableStatus] ?? BRUME_CHAIR_COLORS.free}
+                sideSeating={sideSeatingTableIds.has(table.tableId)}
               />
             )}
             {/* === SPLIT TABLE (2 reservations) === */}
