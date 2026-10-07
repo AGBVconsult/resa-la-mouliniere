@@ -1,6 +1,6 @@
 /**
  * Thème de l'interface tablette : palette neutre (gris sans teinte, texte quasi noir,
- * un seul accent bleu #3884FF), police Montserrat, aucun texte tout en majuscules.
+ * un seul accent bleu #3884FF), police système (SF Pro sur iPad), aucun texte tout en majuscules.
  *
  * Le code couleur des statuts est conservé (pêche = en attente, jaune = confirmé,
  * bleu = table assignée / carton, vert = installé, rose = no-show, rouge = annulé…).
