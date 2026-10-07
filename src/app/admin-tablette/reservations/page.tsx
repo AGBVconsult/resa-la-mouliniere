@@ -10,6 +10,7 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import type { ReservationStatus } from "../../../../spec/contracts.generated";
 import {
   UsersRound,
+  Minus,
   MoreHorizontal,
   Loader2,
   X,
@@ -269,6 +270,31 @@ export default function TabletReservationsPage() {
   );
 
   const updateReservation = useMutation(api.admin.updateReservation);
+  const updateSlot = useMutation(api.slots.updateSlot);
+
+  // Capacité d'un créneau ajustée depuis son bandeau (– / +) : valeur affichée tout de suite,
+  // en attendant que le serveur la confirme (plusieurs appuis rapides s'enchaînent)
+  const [pendingCapacity, setPendingCapacity] = useState<Record<string, number>>({});
+  const adjustSlotCapacity = useCallback(
+    async (slotId: Id<"slots">, current: number, delta: number) => {
+      const next = Math.max(0, current + delta);
+      if (next === current) return;
+      setPendingCapacity((prev) => ({ ...prev, [slotId]: next }));
+      try {
+        await updateSlot({ slotId, capacity: next });
+      } catch (error) {
+        toast.error(formatConvexError(error));
+      } finally {
+        setPendingCapacity((prev) => {
+          if (prev[slotId] !== next) return prev;
+          const rest = { ...prev };
+          delete rest[slotId];
+          return rest;
+        });
+      }
+    },
+    [updateSlot, toast]
+  );
   const cancelByClient = useMutation(api.admin.cancelByClient);
 
   const goToPreviousDay = () => setSelectedDate((d) => subDays(d, 1));
@@ -585,7 +611,8 @@ export default function TabletReservationsPage() {
         {sortedTimes.map((time) => {
           const groupReservations = timeGroups[time];
           const groupCovers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
-          const groupCapacity = slotsData?.[service]?.find((s: { timeKey: string; capacity: number }) => s.timeKey === time)?.capacity || 0;
+          const slot = slotsData?.[service]?.find((s: { timeKey: string }) => s.timeKey === time);
+          const groupCapacity = slot ? (pendingCapacity[slot._id] ?? slot.capacity) || 0 : 0;
           // Jauge : vert < 50 %, jaune < 80 %, orange < 100 %, rouge à complet
           const availableCovers = Math.max(0, groupCapacity - groupCovers);
           const fillRatio = groupCapacity > 0 ? Math.min(1, groupCovers / groupCapacity) : 0;
@@ -598,20 +625,44 @@ export default function TabletReservationsPage() {
                 showFloorPlan || selectedService === "total" ? "px-3 py-1" : "px-4 py-[5px]"
               )}>
                 <span className="font-extrabold text-sm tabular-nums">{time}</span>
-                <div className="flex items-center gap-1.5 text-xs font-bold tabular-nums">
-                  <UsersRound size={13} strokeWidth={2} />
-                  <span>{groupCovers}</span>
-                </div>
                 {groupCapacity > 0 && (
                   <>
                     <div className="w-[72px] h-[6px] rounded-full bg-white/20 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${fillRatio * 100}%`, backgroundColor: gauge.bar }} />
+                      <div className="h-full rounded-full transition-[width] duration-200" style={{ width: `${fillRatio * 100}%`, backgroundColor: gauge.bar }} />
                     </div>
                     <span className="text-xs font-bold tabular-nums" style={{ color: gauge.text }}>
                       {availableCovers > 0 ? `${availableCovers} dispo` : "complet"}
                     </span>
                   </>
                 )}
+                {/* Réglage de la capacité du créneau (ce jour uniquement) */}
+                {slot && (
+                  <div className="flex items-center gap-0.5">
+                    <span aria-hidden className="w-px h-[18px] bg-white/25 mr-1.5" />
+                    <button
+                      type="button"
+                      onClick={() => adjustSlotCapacity(slot._id, groupCapacity, -1)}
+                      disabled={groupCapacity <= 0}
+                      aria-label={`Retirer une place à ${time}`}
+                      className="w-7 h-7 -my-1 flex items-center justify-center rounded-full text-white hover:bg-white/10 active:bg-white/20 disabled:opacity-40 transition-colors"
+                    >
+                      <Minus size={18} strokeWidth={2.2} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => adjustSlotCapacity(slot._id, groupCapacity, 1)}
+                      aria-label={`Ajouter une place à ${time}`}
+                      className="w-7 h-7 -my-1 flex items-center justify-center rounded-full text-white hover:bg-white/10 active:bg-white/20 transition-colors"
+                    >
+                      <Plus size={18} strokeWidth={2.2} />
+                    </button>
+                  </div>
+                )}
+                {/* Couverts réservés : dernière info du bandeau */}
+                <div className="ml-auto flex items-center gap-1.5 text-xs font-bold tabular-nums">
+                  <UsersRound size={13} strokeWidth={2} />
+                  <span>{groupCovers}</span>
+                </div>
               </div>
               <div className={cn(SUBGRID, "divide-y divide-slate-50")}>
                 {groupReservations.map(renderReservationRow)}
