@@ -112,8 +112,8 @@ const BRUME_CHAIR_COLORS: Record<TableStatus, string> = {
   blocked: "#E6E6E6",
 };
 
-// Marge réservée aux chaises autour du plateau, à l'intérieur de l'emprise de la table
-const CHAIR_MARGIN = 6;
+// Le plateau garde exactement l'emprise du plan configuré (Réglages > Tables) :
+// les dossiers sont dessinés à l'extérieur, dans l'espace entre les tables.
 const CHAIR_GAP = 2; // espace entre le plateau et le dossier
 const CHAIR_DEPTH = 3.4;
 const CHAIR_MAX_LENGTH = 15;
@@ -588,10 +588,9 @@ export function ServiceFloorPlan({
         const isEditingThisTable = editingTable?.tableId === table.tableId;
         const isPending = pendingTableIds.includes(table.tableId);
         const statusColors = statusPalette[table.status as TableStatus];
-        // Thème tablette : le plateau est rentré pour laisser la place aux chaises dans l'emprise
-        const inset = isBrume ? CHAIR_MARGIN : 0;
-        const width = (table.width ?? 1) * TABLE_SIZE - 4 - inset * 2;
-        const height = (table.height ?? 1) * TABLE_SIZE - 4 - inset * 2;
+        // Même emprise que l'éditeur du plan de salle (FloorPlanTable)
+        const width = (table.width ?? 1) * TABLE_SIZE - 4;
+        const height = (table.height ?? 1) * TABLE_SIZE - 4;
         const reservations = table.reservations;
         const isSplit = reservations !== undefined && reservations.length === 2;
         const isVerticalSplit = height > width;
@@ -634,8 +633,8 @@ export function ServiceFloorPlan({
               isAssigning && "pointer-events-none opacity-70"
             )}
             style={{
-              left: table.positionX * GRID_CELL_SIZE - gridLayout.offsetX + 2 + inset,
-              top: table.positionY * GRID_CELL_SIZE - gridLayout.offsetY + 2 + inset,
+              left: table.positionX * GRID_CELL_SIZE - gridLayout.offsetX + 2,
+              top: table.positionY * GRID_CELL_SIZE - gridLayout.offsetY + 2,
               width,
               height,
             }}
