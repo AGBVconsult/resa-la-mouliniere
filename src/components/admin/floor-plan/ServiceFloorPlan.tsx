@@ -17,16 +17,16 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 
-// `tight` (mode tablette) : bbox au plus près des tables, sans marge ni taille minimale,
-// pour que la mise à l'échelle exploite tout l'espace disponible.
+// `matchEditor` (mode tablette) : même cadre que l'éditeur du plan de salle (desktop) —
+// origine en (0,0), toutes les tables, 2 cases de marge — pour que la disposition soit identique.
 function computeGridLayout(
   tables: Array<{ positionX: number; positionY: number; width?: number; height?: number; status: string }>,
-  tight = false
+  matchEditor = false
 ) {
   if (tables.length === 0) return { width: 400, height: 200, offsetX: 0, offsetY: 0 };
 
   const active = tables.filter((t) => t.status !== "blocked");
-  const bbox = active.length > 0 ? active : tables;
+  const bbox = matchEditor || active.length === 0 ? tables : active;
 
   let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
   for (const t of bbox) {
@@ -38,14 +38,22 @@ function computeGridLayout(
     if (t.positionY + h > maxY) maxY = t.positionY + h;
   }
 
-  const pad = tight ? 0 : 2;
-  const minWidth = tight ? 0 : 400;
-  const minHeight = tight ? 0 : 200;
+  const pad = 2;
+  if (matchEditor) {
+    // Identique à FloorPlanGrid (réglages > tables)
+    return {
+      width: Math.max((maxX + pad) * GRID_CELL_SIZE, 400),
+      height: Math.max((maxY + pad) * GRID_CELL_SIZE, 200),
+      offsetX: 0,
+      offsetY: 0,
+    };
+  }
+
   const originX = Math.max(minX - pad, 0);
   const originY = Math.max(minY - pad, 0);
   return {
-    width: Math.min(Math.max((maxX - originX + pad) * GRID_CELL_SIZE, minWidth), GRID_WIDTH),
-    height: Math.min(Math.max((maxY - originY + pad) * GRID_CELL_SIZE, minHeight), GRID_HEIGHT),
+    width: Math.min(Math.max((maxX - originX + pad) * GRID_CELL_SIZE, 400), GRID_WIDTH),
+    height: Math.min(Math.max((maxY - originY + pad) * GRID_CELL_SIZE, 200), GRID_HEIGHT),
     offsetX: originX * GRID_CELL_SIZE,
     offsetY: originY * GRID_CELL_SIZE,
   };
