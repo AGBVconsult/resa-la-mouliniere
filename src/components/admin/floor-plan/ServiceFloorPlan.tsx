@@ -82,18 +82,102 @@ const SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
   seated: { bg: "bg-[#A9C9B4]", text: "text-black" }, // Vert-de-gris
 };
 
-// Thème tablette (palette neutre) : même code couleur des statuts
+// Thème tablette : tables « plan d'architecte » (trait fin, chaises dessinées autour).
+// Le statut colore le contour et teinte légèrement le plateau.
 const BRUME_STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: string }> = {
-  free: { bg: "bg-white shadow-[0_6px_14px_-6px_rgba(0,0,0,0.28)]", border: "border-transparent", text: "text-[#2D2D2D]" },
-  reserved: { bg: "bg-[#CBD9E7]", border: "border-transparent", text: "text-[#24496E]" }, // Bleu brume
-  seated: { bg: "bg-[#A9CDB5]", border: "border-transparent", text: "text-[#1F4A33]" }, // Vert sauge
-  blocked: { bg: "bg-[#CBCBCB]", border: "border-transparent", text: "text-[#464646]" },
+  free: { bg: "bg-white", border: "border-[1.5px] border-[#8E8E8E]", text: "text-[#464646]" },
+  reserved: { bg: "bg-[#EAF2FF]", border: "border-[1.5px] border-[#3884FF]", text: "text-[#1F4F9E]" },
+  seated: { bg: "bg-[#E8F6EE]", border: "border-[1.5px] border-[#22C55E]", text: "text-[#166534]" },
+  blocked: { bg: "bg-[#EFEFEF]", border: "border-[1.5px] border-dashed border-[#BDBDBD]", text: "text-[#6E6E6E]" },
 };
 
 const BRUME_SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
-  reserved: { bg: "bg-[#D6D1EC]", text: "text-[#45397A]" }, // Lavande brumeuse
-  seated: { bg: "bg-[#C3DDCB]", text: "text-[#1F4A33]" }, // Vert-de-gris
+  reserved: { bg: "bg-[#EEEAFB]", text: "text-[#45397A]" }, // Lavande pâle
+  seated: { bg: "bg-[#DCF1E4]", text: "text-[#166534]" }, // Vert-de-gris pâle
 };
+
+// Couleur du trait des chaises selon le statut de la table
+const BRUME_CHAIR_COLORS: Record<TableStatus, string> = {
+  free: "#A8A8A8",
+  reserved: "#7FAEFF",
+  seated: "#7CD4A0",
+  blocked: "#CFCFCF",
+};
+
+// Marge réservée aux chaises autour du plateau, à l'intérieur de l'emprise de la table
+const CHAIR_MARGIN = 7;
+const CHAIR_LENGTH = 11;
+const CHAIR_DEPTH = 4.5;
+
+/** Positions des chaises (centre + rotation) autour d'un plateau w × h */
+function getChairPositions(capacity: number, w: number, h: number, round: boolean) {
+  const n = Math.max(0, Math.min(capacity, 12));
+  const off = CHAIR_MARGIN - 1 - CHAIR_DEPTH / 2; // distance entre le bord du plateau et le centre de la chaise
+  const seats: Array<{ x: number; y: number; angle: number }> = [];
+  if (n === 0) return seats;
+  if (round) {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+      seats.push({ x: w / 2 + Math.cos(a) * (w / 2 + off), y: h / 2 + Math.sin(a) * (h / 2 + off), angle: (a * 180) / Math.PI + 90 });
+    }
+    return seats;
+  }
+  const spread = (count: number, length: number) => Array.from({ length: count }, (_, i) => ((i + 1) * length) / (count + 1));
+  const horizontal = w >= h; // chaises sur les grands côtés
+  if (n <= 2) {
+    // Table de 2 : une chaise de chaque côté du petit axe
+    if (horizontal && w > h) {
+      seats.push({ x: w / 2, y: -off, angle: 0 }, { x: w / 2, y: h + off, angle: 180 });
+    } else {
+      seats.push({ x: -off, y: h / 2, angle: 270 }, { x: w + off, y: h / 2, angle: 90 });
+    }
+    return seats.slice(0, n);
+  }
+  if (w === h) {
+    // Plateau carré : chaises réparties sur les quatre côtés
+    const per = [0, 0, 0, 0];
+    for (let i = 0; i < n; i++) per[i % 4]++;
+    spread(per[0], w).forEach((x) => seats.push({ x, y: -off, angle: 0 }));
+    spread(per[1], h).forEach((y) => seats.push({ x: w + off, y, angle: 90 }));
+    spread(per[2], w).forEach((x) => seats.push({ x, y: h + off, angle: 180 }));
+    spread(per[3], h).forEach((y) => seats.push({ x: -off, y, angle: 270 }));
+    return seats;
+  }
+  // Plateau rectangulaire : grands côtés, puis une chaise en bout si nombre impair
+  const side = Math.floor(n / 2);
+  const end = n - side * 2;
+  if (horizontal) {
+    spread(side, w).forEach((x) => seats.push({ x, y: -off, angle: 0 }, { x, y: h + off, angle: 180 }));
+    if (end) seats.push({ x: w + off, y: h / 2, angle: 90 });
+  } else {
+    spread(side, h).forEach((y) => seats.push({ x: -off, y, angle: 270 }, { x: w + off, y, angle: 90 }));
+    if (end) seats.push({ x: w / 2, y: h + off, angle: 180 });
+  }
+  return seats;
+}
+
+/** Chaises au trait, dessinées autour du plateau (thème tablette) */
+function TableChairs({ capacity, width, height, round, color }: { capacity: number; width: number; height: number; round: boolean; color: string }) {
+  return (
+    <>
+      {getChairPositions(capacity, width, height, round).map((seat, i) => (
+        <span
+          key={i}
+          aria-hidden
+          className="absolute pointer-events-none rounded-[3px] bg-[#F7F7F7]"
+          style={{
+            left: seat.x - CHAIR_LENGTH / 2,
+            top: seat.y - CHAIR_DEPTH / 2,
+            width: CHAIR_LENGTH,
+            height: CHAIR_DEPTH,
+            border: `1.3px solid ${color}`,
+            transform: `rotate(${seat.angle}deg)`,
+          }}
+        />
+      ))}
+    </>
+  );
+}
 
 function getReservationStatusAsTableStatus(resStatus: string): TableStatus {
   if (resStatus === "seated") return "seated";
@@ -432,8 +516,10 @@ export function ServiceFloorPlan({
         const isEditingThisTable = editingTable?.tableId === table.tableId;
         const isPending = pendingTableIds.includes(table.tableId);
         const statusColors = statusPalette[table.status as TableStatus];
-        const width = (table.width ?? 1) * TABLE_SIZE - 4;
-        const height = (table.height ?? 1) * TABLE_SIZE - 4;
+        // Thème tablette : le plateau est rentré pour laisser la place aux chaises dans l'emprise
+        const inset = isBrume ? CHAIR_MARGIN : 0;
+        const width = (table.width ?? 1) * TABLE_SIZE - 4 - inset * 2;
+        const height = (table.height ?? 1) * TABLE_SIZE - 4 - inset * 2;
         const reservations = table.reservations;
         const isSplit = reservations !== undefined && reservations.length === 2;
         const isVerticalSplit = height > width;
@@ -448,7 +534,7 @@ export function ServiceFloorPlan({
             key={table.tableId}
             className={cn(
               "absolute transition-all duration-150",
-              table.shape === "round" ? "rounded-full" : isBrume ? "rounded-xl" : "rounded-lg",
+              table.shape === "round" ? "rounded-full" : isBrume ? "rounded-md" : "rounded-lg",
               !isSplit && (
                 isEditingThisTable
                   ? "bg-amber-400 ring-2 ring-amber-500 ring-offset-1"
@@ -474,20 +560,29 @@ export function ServiceFloorPlan({
               isAssigning && "pointer-events-none opacity-70"
             )}
             style={{
-              left: table.positionX * GRID_CELL_SIZE - gridLayout.offsetX + 2,
-              top: table.positionY * GRID_CELL_SIZE - gridLayout.offsetY + 2,
+              left: table.positionX * GRID_CELL_SIZE - gridLayout.offsetX + 2 + inset,
+              top: table.positionY * GRID_CELL_SIZE - gridLayout.offsetY + 2 + inset,
               width,
               height,
             }}
             onClick={!isSplit ? () => handleTableClick(table.tableId, table.status as TableStatus, table.reservation?.id, table) : undefined}
           >
+            {isBrume && (
+              <TableChairs
+                capacity={table.capacity}
+                width={width}
+                height={height}
+                round={table.shape === "round"}
+                color={BRUME_CHAIR_COLORS[table.status as TableStatus] ?? BRUME_CHAIR_COLORS.free}
+              />
+            )}
             {/* === SPLIT TABLE (2 reservations) === */}
             {isSplit ? (
               <>
               <div
                 className={cn(
                   "flex w-full h-full overflow-hidden",
-                  table.shape === "round" ? "rounded-full" : isBrume ? "rounded-xl" : "rounded-lg",
+                  table.shape === "round" ? "rounded-full" : isBrume ? "rounded-[5px]" : "rounded-lg",
                   isVerticalSplit ? "flex-col" : "flex-row"
                 )}
               >
@@ -612,7 +707,7 @@ export function ServiceFloorPlan({
             <SegmentedControl
               size="sm"
               ariaLabel="Zone"
-              className="bg-[#D6D6D6]"
+              className="bg-[#E5E5E5]"
               value={activeZone}
               onChange={setActiveZone}
               options={[

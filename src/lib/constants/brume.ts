@@ -19,8 +19,8 @@ export const BRUME = {
   /** Bandeau de créneau horaire */
   band: "#464646",
   line: "#E5E5E5",
-  /** Sol du plan de salle (uni) */
-  floor: "#E5E5E5",
+  /** Sol du plan de salle (très clair, tables « plan d'architecte ») */
+  floor: "#F7F7F7",
 } as const;
 
 export type GaugeLevel = "low" | "medium" | "high" | "full";
