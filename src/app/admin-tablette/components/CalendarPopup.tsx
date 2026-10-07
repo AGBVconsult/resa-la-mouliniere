@@ -27,7 +27,10 @@ function ServiceBand({ label, service, isPast }: { label: string; service: Servi
   if (!service.isOpen) return <div aria-hidden className="h-[22px]" />;
   const tone = isPast
     ? { bg: "bg-[#F2F2F2]", text: "text-[#8E8E8E]" }
-    : BRUME_GAUGE_SOFT[getGaugeLevel(service.covers, service.capacityEffective)];
+    : service.covers === 0
+      ? // Ouvert mais aucun couvert réservé : teinte ardoise claire, distincte du vert
+        { bg: "bg-[#EDF1F7]", text: "text-[#64748B]" }
+      : BRUME_GAUGE_SOFT[getGaugeLevel(service.covers, service.capacityEffective)];
   return (
     <div className={cn("h-[22px] rounded-md px-2 flex items-center justify-between text-[11px] tabular-nums", tone.bg, tone.text)}>
       <span className="font-medium opacity-80">{label}</span>
@@ -206,7 +209,7 @@ export function CalendarPopup({
       {/* Calendrier compact, centré : cases de hauteur fixe (pas étirées sur tout l'écran) */}
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center px-10 pt-6 pb-4">
         {/* Grille du mois */}
-        <div className="w-full max-w-[1080px] flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
+        <div className="w-full max-w-[1404px] flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
           {/* Jours de la semaine */}
           <div className="grid grid-cols-7 bg-[#F0F0F0] shrink-0">
             {DAYS_OF_WEEK.map((d, i) => (
@@ -216,7 +219,7 @@ export function CalendarPopup({
             ))}
           </div>
 
-          <div className="grid grid-cols-7 auto-rows-[92px]">
+          <div className="grid grid-cols-7 auto-rows-[120px]">
             {!monthData ? (
               <div className="col-span-7 flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-[#6E6E6E]" />
@@ -296,7 +299,11 @@ export function CalendarPopup({
         </div>
 
         {/* Légende du remplissage */}
-        <div className="w-full max-w-[1080px] flex flex-wrap justify-end gap-4 pt-2.5 text-xs text-[#6E6E6E]">
+        <div className="w-full max-w-[1404px] flex flex-wrap justify-end gap-4 pt-2.5 text-xs text-[#6E6E6E]">
+          <span className="flex items-center gap-1.5">
+            <span className="w-3.5 h-2.5 rounded-[3px] border border-black/5 bg-[#EDF1F7]" />
+            aucun couvert
+          </span>
           {([
             ["low", "moins de 50 %"],
             ["medium", "50 à 79 %"],
