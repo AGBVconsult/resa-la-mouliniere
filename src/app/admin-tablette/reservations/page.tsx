@@ -1169,6 +1169,11 @@ export default function TabletReservationsPage() {
               dateKey={dateKey}
               service={selectedService as "lunch" | "dinner"}
             />
+            {/* Même référence que le bouton avis (bottom-6) : les deux bas de bouton sont alignés */}
+            <NewReservationFab
+              className="absolute bottom-6 right-6"
+              onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
+            />
           </div>
         )}
           </>
@@ -1212,15 +1217,13 @@ export default function TabletReservationsPage() {
       )}
 
       {/* Menu (options peu utilisées) */}
-      {/* Nouvelle réservation : bouton flottant en bas à droite (zone libérée sous le plan de salle) */}
-      <button
-        onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
-        aria-label="Nouvelle réservation"
-        className="fixed right-6 z-40 w-14 h-14 bg-[#3884FF] hover:bg-[#2F74E6] rounded-full shadow-[0_8px_20px_-6px_rgba(56,132,255,0.7)] flex items-center justify-center text-white transition-all active:scale-95"
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
-      >
-        <Plus size={26} strokeWidth={2.5} />
-      </button>
+      {/* Plan de salle masqué : le bouton « + » reste en bas à droite de l'écran */}
+      {!showFloorPlan && (
+        <NewReservationFab
+          className="fixed bottom-6 right-6"
+          onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
+        />
+      )}
 
       {showMenu && (
         <TabletMenuPopup
@@ -1270,5 +1273,21 @@ export default function TabletReservationsPage() {
         />
       )}
     </div>
+  );
+}
+
+/** Bouton flottant « Nouvelle réservation » (bas droite) */
+function NewReservationFab({ className, onClick }: { className: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label="Nouvelle réservation"
+      className={cn(
+        "z-40 w-14 h-14 bg-[#3884FF] hover:bg-[#2F74E6] rounded-full shadow-[0_8px_20px_-6px_rgba(56,132,255,0.7)] flex items-center justify-center text-white transition-all active:scale-95",
+        className
+      )}
+    >
+      <Plus size={26} strokeWidth={2.5} />
+    </button>
   );
 }

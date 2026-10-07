@@ -803,9 +803,9 @@ export function ServiceFloorPlan({
   if (hideHeader) {
     return (
       <div ref={tabletContainerRef} className="relative w-full h-full overflow-hidden flex items-start justify-center pt-14 pb-24 px-6">
-        {/* Switch de zone, aligné à droite */}
+        {/* Switch de zone, centré horizontalement sur le plan */}
         {isBrume ? (
-          <div className="absolute top-4 right-4 z-30">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
             <SegmentedControl
               size="sm"
               ariaLabel="Zone"
