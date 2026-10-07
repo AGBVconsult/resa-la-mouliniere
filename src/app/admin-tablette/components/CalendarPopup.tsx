@@ -233,7 +233,6 @@ export function CalendarPopup({
                 const dateKey = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                 const dayData = monthData?.[dateKey];
                 const isToday = dateKey === todayDateKey;
-                const isSelected = dateKey === selectedDateKey && !isToday;
                 const isClosed = !!dayData && !dayData.lunch.isOpen && !dayData.dinner.isOpen;
                 const isPast = todayDateKey ? dateKey < todayDateKey : false;
                 const dayCovers = dayData
@@ -255,8 +254,7 @@ export function CalendarPopup({
                     }}
                     className={cn(
                       "relative px-2 pt-1.5 pb-2 border-r border-b border-[#F0F0F0] flex flex-col gap-1 text-left cursor-pointer transition-colors",
-                      isClosed ? "bg-[#F6F6F6] hover:bg-[#EFEFEF]" : "bg-white hover:bg-[#FAFAFA]",
-                      isSelected && "bg-[#F3F8FF]"
+                      isClosed ? "bg-[#F6F6F6] hover:bg-[#EFEFEF]" : "bg-white hover:bg-[#FAFAFA]"
                     )}
                   >
                     {/* Rayures des jours fermés */}
