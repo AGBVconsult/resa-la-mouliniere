@@ -1056,10 +1056,11 @@ export default function TabletReservationsPage() {
     </div>
   );
 
-  // Calendrier : page plein écran à la place de la vue du jour (même header, même hauteur)
-  if (showCalendarPopup) {
-    return (
-      <>
+  return (
+    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F6F6F6]">
+      {showCalendarPopup ? (
+        /* Calendrier : page plein écran à la place de la vue du jour (même header, même hauteur).
+           Les fenêtres (menu, recherche client, fiche client…) restent rendues par-dessus. */
         <CalendarPopup
           isOpen
           onClose={() => setShowCalendarPopup(false)}
@@ -1070,25 +1071,8 @@ export default function TabletReservationsPage() {
           selectedDateKey={dateKey}
           headerActions={headerActions}
         />
-        {showMenu && (
-          <TabletMenuPopup
-            showFloorPlan={showFloorPlan}
-            onSearchClient={() => {
-              // Retour à la vue du jour, où s'ouvre la recherche client
-              setShowMenu(false);
-              setShowCalendarPopup(false);
-              setShowClientSearch(true);
-            }}
-            onToggleFloorPlan={() => setShowFloorPlan((v) => !v)}
-            onClose={() => setShowMenu(false)}
-          />
-        )}
-      </>
-    );
-  }
-
-  return (
-    <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F6F6F6]">
+      ) : (
+      <>
       {/* Header */}
       <header className="relative flex items-center py-12 px-8 border-b border-[#E5E5E5] bg-white">
         {/* Left: Date navigation */}
@@ -1220,6 +1204,8 @@ export default function TabletReservationsPage() {
           </>
         )}
       </div>
+      </>
+      )}
 
 
       {/* Edit Reservation Popup */}
@@ -1245,7 +1231,7 @@ export default function TabletReservationsPage() {
 
       {/* Menu (options peu utilisées) */}
       {/* Plan de salle masqué : le bouton « + » reste en bas à droite de l'écran */}
-      {!showFloorPlan && (
+      {!showFloorPlan && !showCalendarPopup && (
         <NewReservationFab
           className="fixed bottom-6 right-6"
           onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
