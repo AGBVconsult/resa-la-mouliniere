@@ -1184,7 +1184,7 @@ export default function TabletReservationsPage() {
         )}
       </div>
 
-      {/* Calendar Popup */}
+      {/* Calendrier : page plein écran, on en sort en touchant un jour */}
       <CalendarPopup
         isOpen={showCalendarPopup}
         onClose={() => setShowCalendarPopup(false)}
@@ -1193,10 +1193,6 @@ export default function TabletReservationsPage() {
           setSelectedDate(new Date(year, month - 1, day));
         }}
         selectedDateKey={dateKey}
-        onOpenDaySettings={(targetDateKey) => {
-          setSettingsDateKey(targetDateKey);
-          setShowSettings(true);
-        }}
       />
 
       {/* Edit Reservation Popup */}

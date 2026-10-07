@@ -70,3 +70,14 @@ export const STATUS_TONES: Record<StatusToneKey, { bg: string; iconColor: string
   refused: { bg: "bg-[#E6E4E1]", iconColor: "text-[#5E5852]" }, // Pierre
   incident: { bg: "bg-[#DDE3E9]", iconColor: "text-[#3E4C5A]" }, // Ardoise claire
 };
+
+/**
+ * Version pastel de la jauge (calendrier) : fond doux + texte foncé lisible, même seuils.
+ * Classes complètes pour que Tailwind les détecte.
+ */
+export const BRUME_GAUGE_SOFT: Record<GaugeLevel, { bg: string; text: string }> = {
+  low: { bg: "bg-[#E3F6EA]", text: "text-[#166534]" },
+  medium: { bg: "bg-[#FDF3C4]", text: "text-[#854D0E]" },
+  high: { bg: "bg-[#FFE4CC]", text: "text-[#9A3412]" },
+  full: { bg: "bg-[#FDDCDC]", text: "text-[#991B1B]" },
+};
