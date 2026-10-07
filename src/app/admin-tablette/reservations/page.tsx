@@ -1230,8 +1230,8 @@ export default function TabletReservationsPage() {
       )}
 
       {/* Menu (options peu utilisées) */}
-      {/* Plan de salle masqué : le bouton « + » reste en bas à droite de l'écran */}
-      {!showFloorPlan && !showCalendarPopup && (
+      {/* Plan de salle masqué ou calendrier : le bouton « + » reste en bas à droite de l'écran */}
+      {(!showFloorPlan || showCalendarPopup) && (
         <NewReservationFab
           className="fixed bottom-6 right-6"
           onClick={() => { setCreatePrefill(undefined); setShowCreatePopup(true); }}
