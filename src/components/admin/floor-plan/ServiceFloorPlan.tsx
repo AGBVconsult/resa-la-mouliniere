@@ -17,8 +17,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 
-// `matchEditor` (mode tablette) : même cadre que l'éditeur du plan de salle (desktop) —
-// origine en (0,0), toutes les tables, 2 cases de marge — pour que la disposition soit identique.
+// `matchEditor` (mode tablette) : toutes les tables (y compris bloquées) gardent exactement
+// leurs positions relatives de l'éditeur ; le cadre est resserré au plus près pour que la mise
+// à l'échelle exploite tout l'écran (petite marge pour les dossiers dessinés autour).
 function computeGridLayout(
   tables: Array<{ positionX: number; positionY: number; width?: number; height?: number; status: string }>,
   matchEditor = false
@@ -40,12 +41,12 @@ function computeGridLayout(
 
   const pad = 2;
   if (matchEditor) {
-    // Identique à FloorPlanGrid (réglages > tables)
+    const margin = 8; // px : place pour les dossiers autour des tables du bord
     return {
-      width: Math.max((maxX + pad) * GRID_CELL_SIZE, 400),
-      height: Math.max((maxY + pad) * GRID_CELL_SIZE, 200),
-      offsetX: 0,
-      offsetY: 0,
+      width: (maxX - minX) * GRID_CELL_SIZE + margin * 2,
+      height: (maxY - minY) * GRID_CELL_SIZE + margin * 2,
+      offsetX: minX * GRID_CELL_SIZE - margin,
+      offsetY: minY * GRID_CELL_SIZE - margin,
     };
   }
 
