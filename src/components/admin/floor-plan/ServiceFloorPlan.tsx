@@ -126,8 +126,8 @@ const CHAIR_MAX_LENGTH = 15;
 function getInfoFontSizes(w: number, h: number) {
   const base = Math.min(w, h * 1.4);
   return {
-    time: Math.max(7, Math.min(13, base * 0.26)),
-    name: Math.max(6.5, Math.min(11, base * 0.22)),
+    time: Math.max(3.5, Math.min(6.5, base * 0.13)),
+    name: Math.max(3.25, Math.min(5.5, base * 0.11)),
   };
 }
 
