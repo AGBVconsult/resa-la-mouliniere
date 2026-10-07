@@ -82,96 +82,110 @@ const SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
   seated: { bg: "bg-[#A9C9B4]", text: "text-black" }, // Vert-de-gris
 };
 
-// Thème tablette : tables « plan d'architecte » (trait fin, chaises dessinées autour).
-// Le statut colore le contour et teinte légèrement le plateau.
+// Thème tablette : plateau plein et doux, chaises en petits dossiers pleins collés au plateau.
+// Le statut teinte le plateau, son contour et les dossiers.
 const BRUME_STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: string }> = {
-  free: { bg: "bg-white", border: "border-[1.5px] border-[#8E8E8E]", text: "text-[#464646]" },
-  reserved: { bg: "bg-[#EAF2FF]", border: "border-[1.5px] border-[#3884FF]", text: "text-[#1F4F9E]" },
-  seated: { bg: "bg-[#E8F6EE]", border: "border-[1.5px] border-[#22C55E]", text: "text-[#166534]" },
-  blocked: { bg: "bg-[#EFEFEF]", border: "border-[1.5px] border-dashed border-[#BDBDBD]", text: "text-[#6E6E6E]" },
+  free: { bg: "bg-white", border: "border border-[#D6D6D6] shadow-[0_1px_2px_rgba(0,0,0,0.05)]", text: "text-[#464646]" },
+  reserved: { bg: "bg-[#EAF2FF]", border: "border border-[#9CC0FF] shadow-[0_1px_2px_rgba(0,0,0,0.05)]", text: "text-[#1F4F9E]" },
+  seated: { bg: "bg-[#E3F5EA]", border: "border border-[#8FD3A8] shadow-[0_1px_2px_rgba(0,0,0,0.05)]", text: "text-[#166534]" },
+  blocked: { bg: "bg-[#EFEFEF]", border: "border border-dashed border-[#DDDDDD]", text: "text-[#9A9A9A]" },
 };
 
 const BRUME_SPLIT_ACCENTS: Record<string, { bg: string; text: string }> = {
   reserved: { bg: "bg-[#EEEAFB]", text: "text-[#45397A]" }, // Lavande pâle
-  seated: { bg: "bg-[#DCF1E4]", text: "text-[#166534]" }, // Vert-de-gris pâle
+  seated: { bg: "bg-[#D3EEDD]", text: "text-[#166534]" }, // Vert-de-gris pâle
 };
 
-// Couleur du trait des chaises selon le statut de la table
+// Couleur des dossiers selon le statut de la table
 const BRUME_CHAIR_COLORS: Record<TableStatus, string> = {
-  free: "#A8A8A8",
-  reserved: "#7FAEFF",
-  seated: "#7CD4A0",
-  blocked: "#CFCFCF",
+  free: "#D9D9D9",
+  reserved: "#B9D3FF",
+  seated: "#B4E3C5",
+  blocked: "#E6E6E6",
 };
 
 // Marge réservée aux chaises autour du plateau, à l'intérieur de l'emprise de la table
 const CHAIR_MARGIN = 7;
-const CHAIR_LENGTH = 11;
-const CHAIR_DEPTH = 4.5;
+const CHAIR_GAP = 2.5; // espace entre le plateau et le dossier
+const CHAIR_DEPTH = 3.4;
+const CHAIR_MAX_LENGTH = 15;
 
-/** Positions des chaises (centre + rotation) autour d'un plateau w × h */
-function getChairPositions(capacity: number, w: number, h: number, round: boolean) {
+type ChairSide = "top" | "right" | "bottom" | "left";
+
+/** Dossiers (position + taille) autour d'un plateau w × h */
+function getChairs(capacity: number, w: number, h: number, round: boolean) {
   const n = Math.max(0, Math.min(capacity, 12));
-  const off = CHAIR_MARGIN - 1 - CHAIR_DEPTH / 2; // distance entre le bord du plateau et le centre de la chaise
-  const seats: Array<{ x: number; y: number; angle: number }> = [];
-  if (n === 0) return seats;
+  const chairs: Array<{ x: number; y: number; width: number; height: number; angle: number }> = [];
+  if (n === 0) return chairs;
+  const dist = CHAIR_GAP + CHAIR_DEPTH / 2; // distance entre le bord du plateau et le milieu du dossier
+
   if (round) {
+    const length = Math.min(CHAIR_MAX_LENGTH - 1, ((Math.PI * w) / n) * 0.6);
+    const r = w / 2 + dist;
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-      seats.push({ x: w / 2 + Math.cos(a) * (w / 2 + off), y: h / 2 + Math.sin(a) * (h / 2 + off), angle: (a * 180) / Math.PI + 90 });
+      chairs.push({
+        x: w / 2 + Math.cos(a) * r,
+        y: h / 2 + Math.sin(a) * r,
+        width: length,
+        height: CHAIR_DEPTH,
+        angle: (a * 180) / Math.PI + 90,
+      });
     }
-    return seats;
+    return chairs;
   }
-  const spread = (count: number, length: number) => Array.from({ length: count }, (_, i) => ((i + 1) * length) / (count + 1));
-  const horizontal = w >= h; // chaises sur les grands côtés
-  if (n <= 2) {
-    // Table de 2 : une chaise de chaque côté du petit axe
-    if (horizontal && w > h) {
-      seats.push({ x: w / 2, y: -off, angle: 0 }, { x: w / 2, y: h + off, angle: 180 });
-    } else {
-      seats.push({ x: -off, y: h / 2, angle: 270 }, { x: w + off, y: h / 2, angle: 90 });
-    }
-    return seats.slice(0, n);
-  }
-  if (w === h) {
-    // Plateau carré : chaises réparties sur les quatre côtés
-    const per = [0, 0, 0, 0];
-    for (let i = 0; i < n; i++) per[i % 4]++;
-    spread(per[0], w).forEach((x) => seats.push({ x, y: -off, angle: 0 }));
-    spread(per[1], h).forEach((y) => seats.push({ x: w + off, y, angle: 90 }));
-    spread(per[2], w).forEach((x) => seats.push({ x, y: h + off, angle: 180 }));
-    spread(per[3], h).forEach((y) => seats.push({ x: -off, y, angle: 270 }));
-    return seats;
-  }
-  // Plateau rectangulaire : grands côtés, puis une chaise en bout si nombre impair
-  const side = Math.floor(n / 2);
-  const end = n - side * 2;
-  if (horizontal) {
-    spread(side, w).forEach((x) => seats.push({ x, y: -off, angle: 0 }, { x, y: h + off, angle: 180 }));
-    if (end) seats.push({ x: w + off, y: h / 2, angle: 90 });
+
+  // Répartition par côté : grands côtés (haut/bas pour une table carrée ou horizontale),
+  // les quatre côtés seulement pour un grand carré (> 4 couverts)
+  const perSide: Record<ChairSide, number> = { top: 0, right: 0, bottom: 0, left: 0 };
+  if (w === h && n > 4) {
+    const order: ChairSide[] = ["top", "bottom", "right", "left"];
+    for (let i = 0; i < n; i++) perSide[order[i % 4]]++;
+  } else if (w >= h) {
+    perSide.top = Math.ceil(n / 2);
+    perSide.bottom = n - perSide.top;
   } else {
-    spread(side, h).forEach((y) => seats.push({ x: -off, y, angle: 270 }, { x: w + off, y, angle: 90 }));
-    if (end) seats.push({ x: w / 2, y: h + off, angle: 180 });
+    perSide.left = Math.ceil(n / 2);
+    perSide.right = n - perSide.left;
   }
-  return seats;
+
+  (Object.keys(perSide) as ChairSide[]).forEach((side) => {
+    const count = perSide[side];
+    if (!count) return;
+    const horizontal = side === "top" || side === "bottom";
+    const sideLength = horizontal ? w : h;
+    const length = Math.min(CHAIR_MAX_LENGTH, (sideLength / count) * 0.62);
+    for (let i = 0; i < count; i++) {
+      const along = ((i + 1) * sideLength) / (count + 1);
+      chairs.push({
+        x: horizontal ? along : side === "left" ? -dist : w + dist,
+        y: horizontal ? (side === "top" ? -dist : h + dist) : along,
+        width: horizontal ? length : CHAIR_DEPTH,
+        height: horizontal ? CHAIR_DEPTH : length,
+        angle: 0,
+      });
+    }
+  });
+  return chairs;
 }
 
-/** Chaises au trait, dessinées autour du plateau (thème tablette) */
+/** Dossiers pleins dessinés autour du plateau (thème tablette) */
 function TableChairs({ capacity, width, height, round, color }: { capacity: number; width: number; height: number; round: boolean; color: string }) {
+  // Le plateau a une bordure de 1 px : on se cale sur le bord extérieur
   return (
     <>
-      {getChairPositions(capacity, width, height, round).map((seat, i) => (
+      {getChairs(capacity, width, height, round).map((chair, i) => (
         <span
           key={i}
           aria-hidden
-          className="absolute pointer-events-none rounded-[3px] bg-[#F7F7F7]"
+          className="absolute pointer-events-none rounded-full"
           style={{
-            left: seat.x - CHAIR_LENGTH / 2,
-            top: seat.y - CHAIR_DEPTH / 2,
-            width: CHAIR_LENGTH,
-            height: CHAIR_DEPTH,
-            border: `1.3px solid ${color}`,
-            transform: `rotate(${seat.angle}deg)`,
+            left: chair.x - chair.width / 2 - 1,
+            top: chair.y - chair.height / 2 - 1,
+            width: chair.width,
+            height: chair.height,
+            backgroundColor: color,
+            transform: chair.angle ? `rotate(${chair.angle}deg)` : undefined,
           }}
         />
       ))}
@@ -534,7 +548,7 @@ export function ServiceFloorPlan({
             key={table.tableId}
             className={cn(
               "absolute transition-all duration-150",
-              table.shape === "round" ? "rounded-full" : isBrume ? "rounded-md" : "rounded-lg",
+              table.shape === "round" ? "rounded-full" : "rounded-lg",
               !isSplit && (
                 isEditingThisTable
                   ? "bg-amber-400 ring-2 ring-amber-500 ring-offset-1"
@@ -547,7 +561,7 @@ export function ServiceFloorPlan({
               isSplit && isPending && (isBrume ? "ring-2 ring-[#3884FF] ring-offset-1" : "ring-2 ring-blue-500 ring-offset-1"),
               isSplit && isEditingThisTable && "ring-2 ring-amber-500 ring-offset-1",
               statusColors.border,
-              table.status === "blocked" && "opacity-50",
+              table.status === "blocked" && !isBrume && "opacity-50",
               // Mode édition actif : toute table non désactivée est cliquable
               editingTable && table.status !== "blocked" && "cursor-pointer hover:scale-[1.02] hover:shadow-md",
               // Mode assignation normal : tables avec de la place cliquables
@@ -582,7 +596,7 @@ export function ServiceFloorPlan({
               <div
                 className={cn(
                   "flex w-full h-full overflow-hidden",
-                  table.shape === "round" ? "rounded-full" : isBrume ? "rounded-[5px]" : "rounded-lg",
+                  table.shape === "round" ? "rounded-full" : isBrume ? "rounded-[7px]" : "rounded-lg",
                   isVerticalSplit ? "flex-col" : "flex-row"
                 )}
               >
