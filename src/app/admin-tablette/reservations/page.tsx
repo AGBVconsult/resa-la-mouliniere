@@ -1029,6 +1029,64 @@ export default function TabletReservationsPage() {
     );
   };
 
+  // Notifications + menu : mêmes boutons, même place, dans le header du jour et du calendrier
+  const headerActions = (
+    <div className="flex items-center gap-1.5 ml-auto">
+      <TabletNotificationBell
+        onNavigateToReservation={(dateKey, service, reservationId) => {
+          const [y, m, d] = dateKey.split("-").map(Number);
+          setSelectedDate(new Date(y, m - 1, d));
+          setSelectedService(service);
+          setHighlightedReservationId(reservationId);
+          setShowCalendarPopup(false);
+        }}
+      />
+      <button
+        onClick={() => setShowMenu(true)}
+        aria-label="Menu"
+        aria-haspopup="dialog"
+        aria-expanded={showMenu}
+        className={cn(
+          "w-10 h-10 flex items-center justify-center transition-colors active:scale-95",
+          showMenu ? "text-[#0C0C0C]" : "text-[#464646] hover:text-[#0C0C0C]"
+        )}
+      >
+        <Menu size={20} strokeWidth={1.5} />
+      </button>
+    </div>
+  );
+
+  // Calendrier : page plein écran à la place de la vue du jour (même header, même hauteur)
+  if (showCalendarPopup) {
+    return (
+      <>
+        <CalendarPopup
+          isOpen
+          onClose={() => setShowCalendarPopup(false)}
+          onSelectDate={(newDateKey) => {
+            const [year, month, day] = newDateKey.split("-").map(Number);
+            setSelectedDate(new Date(year, month - 1, day));
+          }}
+          selectedDateKey={dateKey}
+          headerActions={headerActions}
+        />
+        {showMenu && (
+          <TabletMenuPopup
+            showFloorPlan={showFloorPlan}
+            onSearchClient={() => {
+              // Retour à la vue du jour, où s'ouvre la recherche client
+              setShowMenu(false);
+              setShowCalendarPopup(false);
+              setShowClientSearch(true);
+            }}
+            onToggleFloorPlan={() => setShowFloorPlan((v) => !v)}
+            onClose={() => setShowMenu(false)}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300 bg-[#F6F6F6]">
       {/* Header */}
@@ -1076,28 +1134,7 @@ export default function TabletReservationsPage() {
         </div>
 
         {/* Notifications + Menu, alignés à droite (le « + » est en bas à droite de l'écran) */}
-        <div className="flex items-center gap-1.5 ml-auto">
-          <TabletNotificationBell
-            onNavigateToReservation={(dateKey, service, reservationId) => {
-              const [y, m, d] = dateKey.split("-").map(Number);
-              setSelectedDate(new Date(y, m - 1, d));
-              setSelectedService(service);
-              setHighlightedReservationId(reservationId);
-            }}
-          />
-          <button
-            onClick={() => setShowMenu(true)}
-            aria-label="Menu"
-            aria-haspopup="dialog"
-            aria-expanded={showMenu}
-            className={cn(
-              "w-10 h-10 flex items-center justify-center transition-colors active:scale-95",
-              showMenu ? "text-[#0C0C0C]" : "text-[#464646] hover:text-[#0C0C0C]"
-            )}
-          >
-            <Menu size={20} strokeWidth={1.5} />
-          </button>
-        </div>
+        {headerActions}
       </header>
 
       {/* Main content with floor plan */}
@@ -1184,16 +1221,6 @@ export default function TabletReservationsPage() {
         )}
       </div>
 
-      {/* Calendrier : page plein écran, on en sort en touchant un jour */}
-      <CalendarPopup
-        isOpen={showCalendarPopup}
-        onClose={() => setShowCalendarPopup(false)}
-        onSelectDate={(newDateKey) => {
-          const [year, month, day] = newDateKey.split("-").map(Number);
-          setSelectedDate(new Date(year, month - 1, day));
-        }}
-        selectedDateKey={dateKey}
-      />
 
       {/* Edit Reservation Popup */}
       {editingReservation && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { NavPill } from "./NavPill";
@@ -16,6 +16,8 @@ interface CalendarPopupProps {
   onClose: () => void;
   onSelectDate: (dateKey: string) => void;
   selectedDateKey?: string;
+  /** Boutons de droite du header (notifications, menu) : mêmes que la vue du jour */
+  headerActions?: ReactNode;
 }
 
 type ServiceDay = { isOpen: boolean; covers: number; capacityEffective: number };
@@ -42,6 +44,7 @@ export function CalendarPopup({
   onClose,
   onSelectDate,
   selectedDateKey,
+  headerActions,
 }: CalendarPopupProps) {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [currentMonth, setCurrentMonth] = useState<number | null>(null);
@@ -160,14 +163,11 @@ export function CalendarPopup({
 
   if (!isOpen) return null;
 
-  // Page plein écran (et non une fenêtre) : on en sort en touchant un jour
+  // Page plein écran (à la place de la vue du jour) : on en sort en touchant un jour
   return (
-    <div
-      className="fixed inset-0 z-50 flex flex-col bg-[#F6F6F6] animate-in fade-in duration-200"
-      style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-    >
-      {/* Header : mois + statistiques */}
-      <header className="flex items-center justify-between gap-4 px-8 py-6 bg-white border-b border-[#E5E5E5] shrink-0">
+    <div className="flex flex-col h-full w-full bg-[#F6F6F6] animate-in fade-in duration-200">
+      {/* Header : mêmes dimensions que celui de la vue du jour (mois à gauche, stats au centre, actions à droite) */}
+      <header className="relative flex items-center py-12 px-8 border-b border-[#E5E5E5] bg-white shrink-0">
         <NavPill
           label={<span>{monthLabel} <span className="font-normal text-[#6E6E6E]">{currentYear}</span></span>}
           onPrevious={goToPreviousMonth}
@@ -176,11 +176,11 @@ export function CalendarPopup({
           nextLabel="Mois suivant"
           reset={!isCurrentMonth && todayYear ? { label: "Ce mois", ariaLabel: "Revenir au mois en cours", onClick: goToCurrentMonth } : undefined}
         />
-        {/* Statistiques du mois : une seule pastille d'infos, non cliquable */}
+        {/* Statistiques du mois : une seule pastille d'infos, non cliquable, centrée */}
         <div
           role="group"
           aria-label="Statistiques du mois"
-          className="flex items-center h-9 px-1.5 bg-[#EFEFEF] rounded-full text-[#6E6E6E]"
+          className="absolute left-1/2 -translate-x-1/2 flex items-center h-9 px-1.5 bg-[#EFEFEF] rounded-full text-[#6E6E6E]"
         >
           <div className="flex items-center gap-1.5 px-3 whitespace-nowrap">
             <Users size={15} strokeWidth={1.75} />
@@ -200,6 +200,7 @@ export function CalendarPopup({
             <span className="text-sm">jours</span>
           </div>
         </div>
+        {headerActions}
       </header>
 
       <div className="flex-1 min-h-0 flex flex-col px-6 pt-4 pb-3">
