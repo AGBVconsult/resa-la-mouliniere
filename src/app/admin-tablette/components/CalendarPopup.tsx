@@ -240,21 +240,20 @@ export function CalendarPopup({
                     <div
                       key={`day-${day}`}
                       role="button"
-                      tabIndex={isClosed ? -1 : 0}
-                      aria-disabled={isClosed || undefined}
-                      onClick={() => !isClosed && handleDayClick(day)}
+                      tabIndex={0}
+                      onClick={() => handleDayClick(day)}
                       onKeyDown={(e) => {
-                        if (!isClosed && (e.key === "Enter" || e.key === " ")) {
+                        if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
                           handleDayClick(day);
                         }
                       }}
                       className={`relative min-h-[80px] p-2 border-r border-b border-[#EFEFEF] transition-all duration-200 flex flex-col text-left
-                        ${showMutedBackground ? "bg-[#F6F6F6]" : hasReservations && !isClosed ? "bg-[#FAFAFA] hover:bg-[#F2F2F2]" : "bg-white hover:bg-[#FAFAFA]"}
+                        ${showMutedBackground ? "bg-[#F6F6F6] hover:bg-[#EFEFEF]" : hasReservations && !isClosed ? "bg-[#FAFAFA] hover:bg-[#F2F2F2]" : "bg-white hover:bg-[#FAFAFA]"}
                         ${isToday ? "ring-2 ring-inset ring-[#0C0C0C] z-10" : ""}
                         ${isPast ? "opacity-80" : ""}
                         ${isSelected ? "bg-[#EAF2FF] ring-2 ring-[#3884FF] ring-inset" : ""}
-                        ${isClosed ? "cursor-default" : "cursor-pointer"}
+                        cursor-pointer
                       `}
                     >
                       {/* Pattern rayé pour jours fermés */}
