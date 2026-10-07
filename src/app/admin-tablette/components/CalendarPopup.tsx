@@ -207,7 +207,7 @@ export function CalendarPopup({
 
       {/* Calendrier compact, centré : cases de hauteur fixe (pas étirées sur tout l'écran) */}
       {/* Mêmes marges latérales que le header (px-8) : aligné sur le sélecteur de mois, centré */}
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col px-8 pt-6 pb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col px-8 pt-6 pb-24">
         {/* Grille du mois */}
         <div className="w-full flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
           {/* Jours de la semaine */}
