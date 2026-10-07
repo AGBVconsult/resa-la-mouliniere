@@ -203,9 +203,10 @@ export function CalendarPopup({
         {headerActions}
       </header>
 
-      <div className="flex-1 min-h-0 flex flex-col px-6 pt-4 pb-3">
+      {/* Calendrier compact, centré : cases de hauteur fixe (pas étirées sur tout l'écran) */}
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center px-10 pt-6 pb-4">
         {/* Grille du mois */}
-        <div className="flex-1 min-h-0 flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
+        <div className="w-full max-w-[1080px] flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
           {/* Jours de la semaine */}
           <div className="grid grid-cols-7 bg-[#F0F0F0] shrink-0">
             {DAYS_OF_WEEK.map((d, i) => (
@@ -215,7 +216,7 @@ export function CalendarPopup({
             ))}
           </div>
 
-          <div className="grid grid-cols-7 flex-1 auto-rows-fr">
+          <div className="grid grid-cols-7 auto-rows-[92px]">
             {!monthData ? (
               <div className="col-span-7 flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-[#6E6E6E]" />
@@ -250,7 +251,7 @@ export function CalendarPopup({
                       }
                     }}
                     className={cn(
-                      "relative min-h-[72px] px-2 pt-1.5 pb-2 border-r border-b border-[#F0F0F0] flex flex-col gap-1 text-left cursor-pointer transition-colors",
+                      "relative px-2 pt-1.5 pb-2 border-r border-b border-[#F0F0F0] flex flex-col gap-1 text-left cursor-pointer transition-colors",
                       isClosed ? "bg-[#F6F6F6] hover:bg-[#EFEFEF]" : "bg-white hover:bg-[#FAFAFA]",
                       isSelected && "bg-[#F3F8FF]",
                       (isToday || isSelected) && "z-10 ring-2 ring-inset",
@@ -295,7 +296,7 @@ export function CalendarPopup({
         </div>
 
         {/* Légende du remplissage */}
-        <div className="flex flex-wrap justify-end gap-4 pt-2.5 text-xs text-[#6E6E6E]">
+        <div className="w-full max-w-[1080px] flex flex-wrap justify-end gap-4 pt-2.5 text-xs text-[#6E6E6E]">
           {([
             ["low", "moins de 50 %"],
             ["medium", "50 à 79 %"],
