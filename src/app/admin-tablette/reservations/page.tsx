@@ -659,8 +659,8 @@ export default function TabletReservationsPage() {
                   </div>
                 )}
                 {/* Couverts réservés : dernière info du bandeau */}
-                <div className="ml-auto flex items-center gap-1.5 text-xs font-bold tabular-nums">
-                  <UsersRound size={13} strokeWidth={2} />
+                <div className="ml-auto flex items-center gap-1.5 text-sm font-extrabold tabular-nums">
+                  <UsersRound size={16} strokeWidth={2} />
                   <span>{groupCovers}</span>
                 </div>
               </div>
