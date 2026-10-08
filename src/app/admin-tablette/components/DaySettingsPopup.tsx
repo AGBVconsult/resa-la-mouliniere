@@ -425,6 +425,7 @@ function ServiceSection({
                     unit="dispo"
                     ariaLabel={`Places disponibles à ${slot.timeKey}`}
                   />
+                  <span aria-hidden className="flex-1" />
                   <SlotMeta maxGroupSize={slot.maxGroupSize} capacityShape={rawSlot?.capacityShape} />
                   <Switch
                     checked={slot.isOpen}

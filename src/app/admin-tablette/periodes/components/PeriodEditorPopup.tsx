@@ -383,6 +383,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                   unit="places"
                   ariaLabel={`Capacité du créneau ${slot.timeKey}`}
                 />
+                <span aria-hidden className="flex-1" />
                 <SlotMeta maxGroupSize={slot.maxGroupSize} />
                 <Switch
                   checked={slot.isActive}
