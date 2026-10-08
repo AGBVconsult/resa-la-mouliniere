@@ -16,6 +16,8 @@ interface ServiceEffective {
   capacityEffective: number;
   covers: number;
   reservationCount: number;
+  /** Réservations en attente de validation */
+  pendingCount: number;
 }
 
 interface DayEffective {
@@ -194,6 +196,7 @@ export const getMonthEffective = query({
             .reduce((sum, s) => sum + s.capacity, 0),
           covers: lunchReservations.reduce((sum, r) => sum + r.partySize, 0),
           reservationCount: lunchReservations.length,
+          pendingCount: lunchReservations.filter((r) => r.status === "pending").length,
         },
         dinner: {
           isOpen: dinnerClosed ? false : dinnerSlots.some((s) => s.isOpen && s.capacity > 0),
@@ -202,6 +205,7 @@ export const getMonthEffective = query({
             .reduce((sum, s) => sum + s.capacity, 0),
           covers: dinnerReservations.reduce((sum, r) => sum + r.partySize, 0),
           reservationCount: dinnerReservations.length,
+          pendingCount: dinnerReservations.filter((r) => r.status === "pending").length,
         },
       };
     }
