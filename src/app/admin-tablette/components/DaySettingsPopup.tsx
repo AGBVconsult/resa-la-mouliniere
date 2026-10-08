@@ -411,7 +411,7 @@ function ServiceSection({
                 className={cn("px-3 transition-colors", slot.isOpen ? "bg-transparent" : "bg-slate-100/50")}
               >
                 {/* heure · curseur · x dispo · options · interrupteur · ⋯ */}
-                <div className="flex h-[54px] items-center gap-3">
+                <div className="flex h-11 items-center gap-3">
                   <span className="w-[46px] shrink-0 text-base font-extrabold tabular-nums text-slate-800">{slot.timeKey}</span>
                   <SlotSlider
                     value={toRemainingCovers(slot.capacity, reservedCovers)}
