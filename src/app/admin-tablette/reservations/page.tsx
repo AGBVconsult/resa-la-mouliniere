@@ -1221,7 +1221,6 @@ export default function TabletReservationsPage() {
       {showSettings && (
         <DaySettingsPopup
           dateKey={settingsDateKey ?? dateKey}
-          focusService={!settingsDateKey && selectedService !== "total" ? selectedService : undefined}
           onClose={() => {
             setShowSettings(false);
             setSettingsDateKey(null);
