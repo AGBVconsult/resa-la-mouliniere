@@ -210,16 +210,9 @@ export function CalendarPopup({
       <div className="flex-1 min-h-0 flex flex-col p-4">
         {/* Grille du mois */}
         <div className="w-full flex-1 min-h-0 flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
-          {/* Jours de la semaine */}
-          <div className="grid grid-cols-7 bg-[#F0F0F0] shrink-0">
-            {DAYS_OF_WEEK.map((d, i) => (
-              <div key={`weekday-${i}`} className="py-2.5 text-xs font-semibold text-[#6E6E6E] text-center">
-                {d}
-              </div>
-            ))}
-          </div>
-
-          {/* Les semaines se partagent la hauteur disponible : tout le mois tient à l'écran */}
+          {/* Les semaines se partagent la hauteur disponible : tout le mois tient à l'écran.
+              Pas de bandeau des jours : le nom du jour est affiché dans les cases de la 1re ligne,
+              qui reçoivent ainsi l'arrondi haut de la carte. */}
           <div className="grid grid-cols-7 flex-1 min-h-0 auto-rows-fr">
             {!monthData ? (
               <div className="col-span-7 flex items-center justify-center">
@@ -227,8 +220,16 @@ export function CalendarPopup({
               </div>
             ) : (
               calendarDays.map((day, index) => {
+                const weekdayLabel = index < 7 ? (
+                  <span className="text-[11px] font-semibold text-[#6E6E6E]">{DAYS_OF_WEEK[index]}</span>
+                ) : null;
+
                 if (day === null) {
-                  return <div key={`empty-${index}`} className="bg-[#FAFAFA] border-r border-b border-[#F0F0F0]" />;
+                  return (
+                    <div key={`empty-${index}`} className="bg-[#FAFAFA] border-r border-b border-[#F0F0F0] px-2 pt-1.5">
+                      {weekdayLabel && <div className="flex items-center min-h-[20px]">{weekdayLabel}</div>}
+                    </div>
+                  );
                 }
 
                 const dateKey = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -270,6 +271,7 @@ export function CalendarPopup({
 
                     {/* Numéro, badge du jour, total de couverts (à droite) */}
                     <div className="relative flex items-center gap-1.5 min-h-[20px]">
+                      {weekdayLabel}
                       <span className={cn("text-[13px] font-bold tabular-nums", isPast ? "text-[#A5A5A5]" : "text-[#2D2D2D]")}>{day}</span>
                       {isToday && (
                         <span className="text-[10px] font-semibold bg-[#3884FF] text-white px-2 py-0.5 rounded-full">Auj.</span>
