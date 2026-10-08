@@ -13,6 +13,7 @@ import {
   mergeSlotStates,
   toRemainingCovers,
   capacityFromRemainingCovers,
+  MAX_REMAINING_COVERS,
   isSlotModified,
   buildSlotUpdate,
   type SlotState,
@@ -21,8 +22,7 @@ import {
   GroupSizeRow,
   SlotMeta,
   SlotOptionsButton,
-  SlotSlider,
-  COVER_SLIDER_MAX,
+  SlotCoverStepper,
   SLOT_POPOVER_ATTR,
   useCloseOnOutsidePointer,
 } from "@/components/admin/SlotRowControls";
@@ -410,14 +410,14 @@ function ServiceSection({
                 {...(optionsSlotId === slot._id ? { [SLOT_POPOVER_ATTR]: "" } : {})}
                 className={cn("px-3 transition-colors", slot.isOpen ? "bg-transparent" : "bg-slate-100/50")}
               >
-                {/* heure · curseur · x dispo · options · interrupteur · ⋯ */}
+                {/* heure · barre · x dispo | − + · options · interrupteur · ⋯ */}
                 <div className="flex h-11 items-center gap-3">
                   <span className="w-[46px] shrink-0 text-base font-extrabold tabular-nums text-slate-800">{slot.timeKey}</span>
-                  <SlotSlider
+                  <SlotCoverStepper
                     value={toRemainingCovers(slot.capacity, reservedCovers)}
                     reservedCovers={reservedCovers}
                     min={0}
-                    max={COVER_SLIDER_MAX}
+                    max={MAX_REMAINING_COVERS}
                     isOpen={slot.isOpen}
                     onChange={(remaining) =>
                       onCapacityChange(slot._id, capacityFromRemainingCovers(remaining, reservedCovers))

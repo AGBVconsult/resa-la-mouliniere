@@ -10,7 +10,7 @@ import {
   GroupSizeRow,
   SlotMeta,
   SlotOptionsButton,
-  SlotSlider,
+  SlotCoverStepper,
   SLOT_POPOVER_ATTR,
   useCloseOnOutsidePointer,
 } from "@/components/admin/SlotRowControls";
@@ -365,7 +365,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
         <div className="bg-white rounded-2xl overflow-hidden divide-y divide-[#F3F3F3]">
           {config.slots.length === 0 && <p className="py-4 text-center text-sm text-[#8A8A8A]">Aucun créneau</p>}
           {config.slots.map((slot, index) => (
-            // Même ligne que « Réglages du jour » : heure · curseur · x places · options · interrupteur · ⋯.
+            // Même ligne que « Réglages du jour » : heure · x places | − + · options · interrupteur · ⋯.
             <div
               key={slot.timeKey}
               {...(optionsTime === slot.timeKey ? { [SLOT_POPOVER_ATTR]: "" } : {})}
@@ -373,7 +373,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
             >
               <div className="flex h-11 items-center gap-3">
                 <span className="w-[46px] shrink-0 text-base font-extrabold tabular-nums text-slate-800">{slot.timeKey}</span>
-                <SlotSlider
+                <SlotCoverStepper
                   value={slot.capacity}
                   reservedCovers={0}
                   min={MIN_CAPACITY}
@@ -381,6 +381,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                   isOpen={slot.isActive}
                   onChange={(capacity) => updateSlot(index, { capacity })}
                   unit="places"
+                  showBar={false}
                   ariaLabel={`Capacité du créneau ${slot.timeKey}`}
                 />
                 <span aria-hidden className="flex-1" />
