@@ -385,7 +385,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                 )}
               >
                 <UsersRound size={13} strokeWidth={1.75} />
-                {slot.maxGroupSize !== null ? `max ${slot.maxGroupSize}` : "libre"}
+                {slot.maxGroupSize !== null ? `max ${slot.maxGroupSize}` : "groupe libre"}
               </button>
               {slot.maxGroupSize !== null && (
                 <div className={cn("flex items-center h-7 shrink-0 rounded-full bg-[#F2F2F2]", !slot.isActive && "opacity-40")}>

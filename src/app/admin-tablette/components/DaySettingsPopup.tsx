@@ -193,7 +193,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
     return (
       <>
         <div className="fixed inset-0 backdrop-blur-[2px] bg-black/40 z-[200]" onClick={onClose} />
-        <div className="fixed inset-4 top-[calc(1rem+env(safe-area-inset-top))] md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[600px] md:max-h-[90vh] bg-white rounded-3xl shadow-2xl z-[201] flex items-center justify-center">
+        <div className="fixed inset-4 top-[calc(1rem+env(safe-area-inset-top))] md:inset-6 md:top-[calc(1.5rem+env(safe-area-inset-top))] bg-white rounded-3xl shadow-2xl z-[201] flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
         </div>
       </>
@@ -203,8 +203,8 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
   return (
     <>
       <div className="fixed inset-0 backdrop-blur-[2px] bg-black/40 z-[200]" onClick={onClose} />
-      {/* Largeur adaptée à l'écran (iPad mini paysage ≈ 1133 px) : pleine largeur moins 64 px de marge, 1000 px max. */}
-      <div ref={modalRef} className="fixed inset-4 top-[calc(1rem+env(safe-area-inset-top))] md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[calc(100vw-8rem)] md:max-w-[1000px] md:max-h-[calc(100dvh-3rem)] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
+      {/* Même marge de chaque côté de l'écran (16 px sur mobile, 24 px dès la tablette). */}
+      <div ref={modalRef} className="fixed inset-4 top-[calc(1rem+env(safe-area-inset-top))] md:inset-6 md:top-[calc(1.5rem+env(safe-area-inset-top))] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 md:px-6 md:py-5">
           <h2 className="text-lg font-bold text-slate-900 capitalize">{formattedDate}</h2>
@@ -474,6 +474,7 @@ function ServiceSection({
 /**
  * Puce « groupe libre » / « max N » d'un créneau, même dessin que l'éditeur de période.
  * Un toucher bascule entre groupe libre et limité ; − + règlent la taille une fois limitée.
+ * Largeur fixe : basculer ne déplace ni ne fait passer à la ligne le reste du créneau.
  */
 function GroupSizeChip({
   value,
@@ -490,7 +491,7 @@ function GroupSizeChip({
   return (
     <div
       className={cn(
-        "relative flex h-8 shrink-0 items-center rounded-full text-xs font-medium lg:text-sm",
+        "relative flex h-8 w-[7.5rem] shrink-0 items-center rounded-full text-xs font-medium lg:w-[8.5rem] lg:text-sm",
         isLimited ? "bg-[#DEE7F0] text-[#2F5B86]" : "bg-[#F2F2F2] text-[#6E6E6E]",
         disabled && "opacity-40"
       )}
@@ -502,10 +503,10 @@ function GroupSizeChip({
         aria-pressed={isLimited}
         aria-label={isLimited ? `Groupe limité à ${value} : rendre libre` : "Groupe libre : limiter la taille"}
         title={isLimited ? `Groupe de ${value} personnes maximum` : "Groupe libre"}
-        className="flex h-full items-center gap-1 whitespace-nowrap rounded-full px-2 touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        className="flex h-full min-w-0 flex-1 items-center gap-1 whitespace-nowrap rounded-full px-2.5 touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
       >
         <UsersRound size={14} strokeWidth={1.75} />
-        <span className="tabular-nums">{isLimited ? `max ${value}` : "libre"}</span>
+        <span className="tabular-nums">{isLimited ? `max ${value}` : "groupe libre"}</span>
       </button>
       {isLimited && (
         <>
