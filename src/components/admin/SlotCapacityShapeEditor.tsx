@@ -35,7 +35,7 @@ export type CapacityShapeSummaryDto = {
 
 // Tailles proposées par défaut (§36) — le backend n'est jamais limité à ces
 // valeurs, ce ne sont que des raccourcis UI.
-const DEFAULT_BUCKET_SIZES = [2, 4, 6, 8];
+const DEFAULT_BUCKET_SIZES = [2, 4, 6];
 
 /** Table vue de dessus avec une chaise de chaque côté (même trait que lucide). */
 function TableIcon({ size = 24, className, strokeWidth = 1.8 }: Pick<LucideProps, "size" | "className" | "strokeWidth">) {
