@@ -206,10 +206,10 @@ export function CalendarPopup({
       </header>
 
       {/* Calendrier compact, centré : cases de hauteur fixe (pas étirées sur tout l'écran) */}
-      {/* Marge de 20 px sur les 4 côtés (la ligne des jours se place dans la zone, au-dessus de la carte) */}
-      <div className="flex-1 min-h-0 flex flex-col p-5">
+      {/* Marge de 20 px sur les 4 côtés ; en haut (header → bordure de la carte), la ligne des jours occupe ces 20 px */}
+      <div className="flex-1 min-h-0 flex flex-col px-5 pb-5">
         {/* Jours de la semaine : au-dessus de la carte, sans fond */}
-        <div className="grid grid-cols-7 shrink-0 pb-1.5">
+        <div className="grid grid-cols-7 items-center h-5 shrink-0">
           {DAYS_OF_WEEK.map((d, i) => (
             <div key={`weekday-${i}`} className="text-xs font-semibold text-[#6E6E6E] text-center">
               {d}
