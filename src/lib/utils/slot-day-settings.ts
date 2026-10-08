@@ -89,7 +89,7 @@ export function buildSlotUpdate<TId extends string>(slot: SlotState<TId>) {
 }
 
 /** Taille de groupe proposée quand on limite un créneau en « groupe libre ». */
-export const DEFAULT_LIMITED_GROUP_SIZE = 8;
+export const DEFAULT_LIMITED_GROUP_SIZE = 6;
 /** Bornes de la taille de groupe maximale réglable sur un créneau. */
 export const MIN_GROUP_SIZE = 1;
 export const MAX_GROUP_SIZE = 50;

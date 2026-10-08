@@ -6,6 +6,7 @@ import { api } from "../../../../../convex/_generated/api";
 import { AlertTriangle, Check, DoorClosed, Loader2, Moon, Plus, Sun, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
+import { DEFAULT_LIMITED_GROUP_SIZE } from "@/lib/utils/slot-day-settings";
 import { CoverStepper } from "@/components/admin/CoverStepper";
 import { GroupSizeChip, GroupSizePanel } from "@/components/admin/GroupSizeChip";
 import { useToast } from "@/hooks/use-toast";
@@ -379,7 +380,13 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                   <GroupSizeChip
                     value={slot.maxGroupSize}
                     isOpen={openGroupTime === slot.timeKey}
-                    onClick={() => setOpenGroupTime((current) => (current === slot.timeKey ? null : slot.timeKey))}
+                    onClick={() => {
+                      // Ouvrir la puce d'un créneau en groupe libre propose d'emblée max 6.
+                      if (slot.maxGroupSize === null && openGroupTime !== slot.timeKey) {
+                        updateSlot(index, { maxGroupSize: DEFAULT_LIMITED_GROUP_SIZE });
+                      }
+                      setOpenGroupTime((current) => (current === slot.timeKey ? null : slot.timeKey));
+                    }}
                     disabled={!slot.isActive}
                   />
                 </div>

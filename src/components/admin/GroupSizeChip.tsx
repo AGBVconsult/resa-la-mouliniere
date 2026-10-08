@@ -1,21 +1,13 @@
 "use client";
 
-import { UsersRound, X } from "lucide-react";
+import { UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MIN_GROUP_SIZE } from "@/lib/utils/slot-day-settings";
 
 /** Borne haute du curseur ; la position suivante correspond à « groupe libre ». */
 export const GROUP_SLIDER_MAX = 20;
 const FREE_POSITION = GROUP_SLIDER_MAX + 1;
-// Repères placés à leur position réelle sur le curseur (1 → 21).
-const SLIDER_MARKS = [
-  { position: 1, label: "1" },
-  { position: 5, label: "5" },
-  { position: 10, label: "10" },
-  { position: 15, label: "15" },
-  { position: 20, label: "20" },
-  { position: 21, label: "libre" },
-];
+const SLIDER_LABELS = ["1", "5", "10", "15", "20", "libre"];
 
 /**
  * Puce « groupe libre » / « max N » d'un créneau, partagée par les réglages du jour
@@ -45,13 +37,13 @@ export function GroupSizeChip({
       aria-expanded={isOpen}
       aria-label={isLimited ? `Taille de groupe : ${value} personnes maximum` : "Taille de groupe : groupe libre"}
       className={cn(
-        "relative flex h-8 w-[7.5rem] shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-xs font-medium touch-manipulation transition-colors lg:w-[8.5rem] lg:text-sm",
+        "relative flex h-[34px] min-w-[132px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-[11px] text-[13.5px] font-semibold touch-manipulation transition-colors",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-40",
         isLimited ? "bg-[#DEE7F0] text-[#2F5B86]" : "bg-[#F2F2F2] text-[#6E6E6E]",
-        isOpen && "ring-2 ring-[#2F5B86]/50"
+        isOpen && "shadow-[inset_0_0_0_2px_#2F5B86]"
       )}
     >
-      <UsersRound size={14} strokeWidth={1.75} className="shrink-0" />
+      <UsersRound size={17} strokeWidth={1.8} className="shrink-0" />
       <span className="tabular-nums">{isLimited ? `max ${value}` : "groupe libre"}</span>
       {isModified && (
         <span
@@ -64,7 +56,7 @@ export function GroupSizeChip({
 }
 
 /**
- * Panneau déployé sous la ligne : curseur de 1 à 20, « groupe libre » en bout de course.
+ * Panneau déployé sous la ligne : curseur de 1 à 20, « libre » en bout de course.
  * Une valeur existante au-delà de 20 reste affichée telle quelle tant qu'on ne touche pas au curseur.
  */
 export function GroupSizePanel({
@@ -78,47 +70,41 @@ export function GroupSizePanel({
 }) {
   const position = value === null ? FREE_POSITION : Math.min(GROUP_SLIDER_MAX, Math.max(MIN_GROUP_SIZE, value));
   return (
-    <div className="w-full mt-1 mb-1.5 px-3 py-2.5 rounded-xl border border-[#C9D6E4] bg-[#F3F7FB] space-y-1.5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-[#2F5B86] lg:text-sm">
-          {value === null ? "Groupe libre" : `${value} personnes maximum`}
-        </span>
+    <div
+      role="dialog"
+      aria-label="Taille de groupe"
+      className="ml-auto mb-2.5 grid w-[310px] max-w-full gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_40px_rgba(15,23,42,0.18)]"
+    >
+      <div className="flex items-center justify-between text-[13px] font-extrabold text-slate-900">
+        <span>{value === null ? "Groupe libre" : `Max ${value} personnes`}</span>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Fermer"
-          className="p-1 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors"
+          className="text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors"
         >
-          <X size={14} />
+          Fermer
         </button>
       </div>
-      <input
-        type="range"
-        min={MIN_GROUP_SIZE}
-        max={FREE_POSITION}
-        step={1}
-        value={position}
-        onChange={(e) => {
-          const next = Number(e.target.value);
-          onChange(next >= FREE_POSITION ? null : next);
-        }}
-        aria-label="Taille de groupe maximale"
-        aria-valuetext={value === null ? "Groupe libre" : `${value} personnes maximum`}
-        className="h-8 w-full cursor-pointer accent-[#2F5B86] touch-manipulation"
-      />
-      <div className="relative h-4 mx-2 text-[11px] font-medium text-slate-500">
-        {SLIDER_MARKS.map(({ position, label }) => (
-          <span
-            key={label}
-            className={cn(
-              "absolute top-0",
-              position === FREE_POSITION ? "-translate-x-3/4 text-[#2F5B86]" : "-translate-x-1/2"
-            )}
-            style={{ left: `${((position - MIN_GROUP_SIZE) / (FREE_POSITION - MIN_GROUP_SIZE)) * 100}%` }}
-          >
-            {label}
-          </span>
-        ))}
+      <div className="grid gap-1.5">
+        <input
+          type="range"
+          min={MIN_GROUP_SIZE}
+          max={FREE_POSITION}
+          step={1}
+          value={position}
+          onChange={(e) => {
+            const next = Number(e.target.value);
+            onChange(next >= FREE_POSITION ? null : next);
+          }}
+          aria-label="Taille de groupe maximale"
+          aria-valuetext={value === null ? "Groupe libre" : `${value} personnes maximum`}
+          className="w-full cursor-pointer accent-[#2F5B86] touch-manipulation"
+        />
+        <div className="flex justify-between text-[11px] font-semibold text-slate-500">
+          {SLIDER_LABELS.map((label) => (
+            <span key={label}>{label}</span>
+          ))}
+        </div>
       </div>
     </div>
   );
