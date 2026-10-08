@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { format, parseISO, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePaginatedQuery, useMutation, useQuery } from "convex/react";
@@ -202,6 +202,7 @@ const MONTHS_SHORT = ["jan", "fév", "mar", "avr", "mai", "jun", "jul", "aoû", 
 export default function TabletReservationsPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const router = useRouter();
 
   const [selectedDate, setSelectedDate] = useState(() => {
     const dateParam = searchParams.get("date");
@@ -1245,6 +1246,7 @@ export default function TabletReservationsPage() {
             setShowClientSearch(true);
           }}
           onToggleFloorPlan={() => setShowFloorPlan((v) => !v)}
+          onOpenPeriods={() => router.push("/admin-tablette/periodes")}
           onClose={() => setShowMenu(false)}
         />
       )}

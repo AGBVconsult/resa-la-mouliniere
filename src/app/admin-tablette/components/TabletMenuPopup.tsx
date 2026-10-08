@@ -1,24 +1,26 @@
 "use client";
 
 import { useEffect } from "react";
-import { Search, Map, X, ChevronRight } from "lucide-react";
+import { Search, Map, X, ChevronRight, CalendarRange } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TabletMenuPopupProps {
   showFloorPlan: boolean;
   onSearchClient: () => void;
   onToggleFloorPlan: () => void;
+  onOpenPeriods: () => void;
   onClose: () => void;
 }
 
 /**
  * Menu regroupant les options peu utilisées de la page réservations
- * (recherche client, affichage du plan de salle) pour alléger l'en-tête.
+ * (recherche client, affichage du plan de salle, périodes spéciales) pour alléger l'en-tête.
  */
 export function TabletMenuPopup({
   showFloorPlan,
   onSearchClient,
   onToggleFloorPlan,
+  onOpenPeriods,
   onClose,
 }: TabletMenuPopupProps) {
   useEffect(() => {
@@ -98,6 +100,20 @@ export function TabletMenuPopup({
                 )}
               />
             </span>
+          </button>
+
+          <button
+            onClick={onOpenPeriods}
+            className="w-full flex items-center gap-4 px-3 py-3 rounded-2xl text-left hover:bg-slate-50 active:bg-slate-100 transition-colors"
+          >
+            <span className="w-11 h-11 shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+              <CalendarRange size={20} strokeWidth={1.5} />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-[15px] font-medium text-slate-900">Périodes spéciales</span>
+              <span className="block text-xs text-slate-400 mt-0.5">Ouvertures et fermetures exceptionnelles</span>
+            </span>
+            <ChevronRight size={18} className="text-slate-300 shrink-0" />
           </button>
         </div>
       </div>
