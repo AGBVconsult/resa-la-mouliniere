@@ -277,7 +277,7 @@ export function SlotCapacityShapeEditor({
               <div
                 key={bucket.maxPartySize}
                 className={cn(
-                  "flex h-8 min-w-0 flex-1 items-center justify-between rounded-full pl-3 pr-1 text-xs font-bold",
+                  "flex h-8 min-w-0 flex-1 items-center justify-between rounded-full pl-3 pr-1 text-sm font-semibold",
                   bucket.quantity > 0
                     ? needsReview && !hasChanges
                       ? "bg-amber-100 text-amber-700"
@@ -296,7 +296,7 @@ export function SlotCapacityShapeEditor({
                   >
                     <Minus size={13} strokeWidth={2.4} />
                   </button>
-                  <span className="min-w-[12px] text-center text-[13px] tabular-nums text-slate-900">{bucket.quantity}</span>
+                  <span className="min-w-[12px] text-center text-sm font-semibold tabular-nums text-[#0C0C0C]">{bucket.quantity}</span>
                   <button
                     type="button"
                     onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity + 1)}

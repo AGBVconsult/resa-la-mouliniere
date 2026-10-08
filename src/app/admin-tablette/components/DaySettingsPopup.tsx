@@ -441,7 +441,7 @@ function ServiceSection({
                 </div>
 
                 {optionsSlotId === slot._id && (
-                  <div className="space-y-2 pb-3">
+                  <div className="space-y-3 pt-2 pb-4">
                     <GroupSizeRow value={slot.maxGroupSize} onChange={(size) => onMaxGroupSizeChange(slot._id, size)} />
                     {rawSlot && (
                       <SlotCapacityShapeEditor
