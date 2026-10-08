@@ -157,28 +157,33 @@ export function PeriodEditorPopup({ kind, period, onClose, onDelete }: PeriodEdi
     : isOuverture ? "Nouvelle ouverture" : "Nouvelle fermeture";
 
   const inputClass =
-    "h-11 w-full rounded-xl border border-[#E2E2E2] bg-white px-3 text-[15px] text-[#0C0C0C] focus:outline-none focus:border-[#3884FF] focus:ring-[3px] focus:ring-[#3884FF]/20";
+    "h-10 w-full min-w-0 appearance-none rounded-xl border border-[#E2E2E2] bg-white px-3 text-left text-[15px] text-[#0C0C0C] focus:outline-none focus:border-[#3884FF] focus:ring-[3px] focus:ring-[#3884FF]/20 [&::-webkit-date-and-time-value]:text-left";
 
   return (
     <>
-      <div className="fixed inset-0 backdrop-blur-[2px] bg-black/40 z-[200]" onClick={onClose} />
+      {/* Centrage par flex : un translate serait écrasé par l'animation d'entrée */}
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 pt-[calc(1rem+env(safe-area-inset-top))] bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="period-editor-title"
+        onClick={(e) => e.stopPropagation()}
         className={cn(
-          "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-3rem)] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200",
-          isOuverture ? "w-[1000px]" : "w-[560px]"
+          "w-full max-h-full bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200",
+          isOuverture ? "max-w-[1000px]" : "max-w-[560px]"
         )}
       >
-        <div className="flex items-center justify-between px-6 py-5">
+        <div className="flex items-center justify-between px-5 py-3.5 shrink-0">
           <h2 id="period-editor-title" className="text-lg font-bold">{title}</h2>
           <button type="button" onClick={onClose} aria-label="Fermer" className="p-2 rounded-full hover:bg-slate-100 transition-colors">
             <X size={20} className="text-slate-500" />
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6 space-y-5">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pb-5 space-y-4">
           {error && (
             <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-red-50 text-sm text-red-700">
               <AlertTriangle size={16} className="shrink-0" />
@@ -186,8 +191,8 @@ export function PeriodEditorPopup({ kind, period, onClose, onDelete }: PeriodEdi
             </div>
           )}
 
-          <div className={cn("grid gap-3.5", isOuverture ? "grid-cols-[1.4fr_1fr_1fr]" : "grid-cols-2")}>
-            <div className={cn("flex flex-col gap-1.5", !isOuverture && "col-span-2")}>
+          <div className={cn("grid gap-3", isOuverture ? "grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-2")}>
+            <div className={cn("flex flex-col gap-1 min-w-0", !isOuverture && "col-span-2")}>
               <label htmlFor="period-name" className="text-[13px] font-medium text-[#6E6E6E]">Titre de la période</label>
               <input
                 id="period-name"
@@ -199,19 +204,19 @@ export function PeriodEditorPopup({ kind, period, onClose, onDelete }: PeriodEdi
                 className={inputClass}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1 min-w-0">
               <label htmlFor="period-start" className="text-[13px] font-medium text-[#6E6E6E]">Du</label>
               <input id="period-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1 min-w-0">
               <label htmlFor="period-end" className="text-[13px] font-medium text-[#6E6E6E]">Au</label>
               <input id="period-end" type="date" value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
-              <span className="text-xs text-[#8A8A8A] h-4">{dayCount ? `${dayCount} jour${dayCount > 1 ? "s" : ""}` : ""}</span>
+              <span className="text-xs text-[#8A8A8A] h-3.5 leading-none">{dayCount ? `${dayCount} jour${dayCount > 1 ? "s" : ""}` : ""}</span>
             </div>
           </div>
 
           {isOuverture ? (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <ServiceCard service="lunch" config={lunch} onChange={setLunch} />
               <ServiceCard service="dinner" config={dinner} onChange={setDinner} />
             </div>
@@ -227,13 +232,13 @@ export function PeriodEditorPopup({ kind, period, onClose, onDelete }: PeriodEdi
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#EFEFEF]">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[#EFEFEF] shrink-0">
           {onDelete && (
             <button
               type="button"
               onClick={onDelete}
               disabled={isSaving}
-              className="mr-auto h-11 px-4 flex items-center gap-1.5 rounded-full bg-[#F1F1F1] text-sm font-semibold text-red-600 disabled:opacity-50"
+              className="mr-auto h-10 px-4 flex items-center gap-1.5 rounded-full bg-[#F1F1F1] text-sm font-semibold text-red-600 disabled:opacity-50"
             >
               <Trash2 size={16} />
               Supprimer
@@ -243,7 +248,7 @@ export function PeriodEditorPopup({ kind, period, onClose, onDelete }: PeriodEdi
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="h-11 px-5 rounded-full bg-[#F1F1F1] text-sm font-semibold text-[#464646] disabled:opacity-50"
+            className="h-10 px-5 rounded-full bg-[#F1F1F1] text-sm font-semibold text-[#464646] disabled:opacity-50"
           >
             Annuler
           </button>
@@ -251,12 +256,13 @@ export function PeriodEditorPopup({ kind, period, onClose, onDelete }: PeriodEdi
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="h-11 px-5 rounded-full bg-[#3884FF] hover:bg-[#2F74E6] text-sm font-semibold text-white flex items-center gap-2 disabled:opacity-60 transition-colors"
+            className="h-10 px-5 rounded-full bg-[#3884FF] hover:bg-[#2F74E6] text-sm font-semibold text-white flex items-center gap-2 disabled:opacity-60 transition-colors"
           >
             {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
             {isEditing ? "Enregistrer" : "Créer"}
           </button>
         </div>
+      </div>
       </div>
     </>
   );
@@ -311,7 +317,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
 
   return (
     <div className="bg-[#F6F6F6] rounded-3xl overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#ECECEC]">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#ECECEC]">
         <span className="flex items-center gap-2 font-semibold">
           <Icon size={18} strokeWidth={1.75} className={service === "lunch" ? "text-[#D9A441]" : "text-[#6E6E6E]"} />
           {label}
@@ -319,7 +325,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
         <Toggle checked={config.isOpen} onChange={() => onChange({ ...config, isOpen: !config.isOpen })} label={`Ouvrir le ${label.toLowerCase()}`} />
       </div>
 
-      <div className={cn("p-3.5 space-y-3 transition-opacity", !config.isOpen && "opacity-45 pointer-events-none")}>
+      <div className={cn("p-3 space-y-2.5 transition-opacity", !config.isOpen && "opacity-45 pointer-events-none")}>
         <div className="flex gap-1.5">
           {DAYS.map((day) => {
             const on = config.activeDays.includes(day.value);
@@ -331,7 +337,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                 aria-pressed={on}
                 aria-label={day.name}
                 className={cn(
-                  "w-[38px] h-[38px] rounded-full border text-[13px] font-semibold transition-colors",
+                  "w-[34px] h-[34px] rounded-full border text-[13px] font-semibold transition-colors",
                   on ? "bg-[#0C0C0C] border-[#0C0C0C] text-white" : "bg-white border-[#E2E2E2] text-[#6E6E6E]"
                 )}
               >
@@ -344,25 +350,25 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
         <div className="bg-white rounded-2xl overflow-hidden divide-y divide-[#F3F3F3]">
           {config.slots.length === 0 && <p className="py-4 text-center text-sm text-[#8A8A8A]">Aucun créneau</p>}
           {config.slots.map((slot, index) => (
-            <div key={slot.timeKey} className="flex items-center gap-2 px-2.5 py-1.5">
-              <span className={cn("w-14 text-[15px] font-semibold tabular-nums", !slot.isActive && "opacity-40")}>{slot.timeKey}</span>
-              <div className={cn("flex items-center h-9 rounded-full bg-[#F2F2F2]", !slot.isActive && "opacity-40")}>
+            <div key={slot.timeKey} className="flex items-center gap-1.5 px-2 py-1">
+              <span className={cn("w-12 shrink-0 text-[15px] font-semibold tabular-nums", !slot.isActive && "opacity-40")}>{slot.timeKey}</span>
+              <div className={cn("flex items-center h-8 shrink-0 rounded-full bg-[#F2F2F2]", !slot.isActive && "opacity-40")}>
                 <button
                   type="button"
                   onClick={() => updateSlot(index, { capacity: Math.max(MIN_CAPACITY, slot.capacity - 1) })}
                   disabled={slot.capacity <= MIN_CAPACITY}
                   aria-label={`Retirer une place à ${slot.timeKey}`}
-                  className="w-9 h-9 flex items-center justify-center text-[#464646] disabled:opacity-40"
+                  className="w-8 h-8 flex items-center justify-center text-[#464646] disabled:opacity-40"
                 >
                   <Minus size={16} strokeWidth={2.2} />
                 </button>
-                <span className="min-w-[28px] text-center text-[15px] font-semibold tabular-nums">{slot.capacity}</span>
+                <span className="min-w-[26px] text-center text-[15px] font-semibold tabular-nums">{slot.capacity}</span>
                 <button
                   type="button"
                   onClick={() => updateSlot(index, { capacity: Math.min(MAX_CAPACITY, slot.capacity + 1) })}
                   disabled={slot.capacity >= MAX_CAPACITY}
                   aria-label={`Ajouter une place à ${slot.timeKey}`}
-                  className="w-9 h-9 flex items-center justify-center text-[#464646] disabled:opacity-40"
+                  className="w-8 h-8 flex items-center justify-center text-[#464646] disabled:opacity-40"
                 >
                   <Plus size={16} strokeWidth={2.2} />
                 </button>
@@ -372,7 +378,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                 onClick={() => updateSlot(index, { maxGroupSize: slot.maxGroupSize === null ? 4 : null })}
                 aria-pressed={slot.maxGroupSize !== null}
                 className={cn(
-                  "h-[30px] px-2.5 flex items-center gap-1 rounded-full text-xs font-medium whitespace-nowrap",
+                  "h-7 px-2 flex items-center gap-1 rounded-full text-xs font-medium whitespace-nowrap",
                   slot.maxGroupSize !== null ? "bg-[#DEE7F0] text-[#2F5B86]" : "bg-[#F2F2F2] text-[#6E6E6E]",
                   !slot.isActive && "opacity-40"
                 )}
@@ -381,12 +387,12 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                 {slot.maxGroupSize !== null ? `max ${slot.maxGroupSize}` : "groupe libre"}
               </button>
               {slot.maxGroupSize !== null && (
-                <div className={cn("flex items-center h-[30px] rounded-full bg-[#F2F2F2]", !slot.isActive && "opacity-40")}>
+                <div className={cn("flex items-center h-7 shrink-0 rounded-full bg-[#F2F2F2]", !slot.isActive && "opacity-40")}>
                   <button
                     type="button"
                     onClick={() => updateSlot(index, { maxGroupSize: Math.max(1, (slot.maxGroupSize ?? 1) - 1) })}
                     aria-label="Réduire la taille de groupe maximale"
-                    className="w-7 h-[30px] flex items-center justify-center text-[#464646]"
+                    className="w-6 h-7 flex items-center justify-center text-[#464646]"
                   >
                     <Minus size={14} strokeWidth={2.2} />
                   </button>
@@ -394,7 +400,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                     type="button"
                     onClick={() => updateSlot(index, { maxGroupSize: Math.min(50, (slot.maxGroupSize ?? 0) + 1) })}
                     aria-label="Augmenter la taille de groupe maximale"
-                    className="w-7 h-[30px] flex items-center justify-center text-[#464646]"
+                    className="w-6 h-7 flex items-center justify-center text-[#464646]"
                   >
                     <Plus size={14} strokeWidth={2.2} />
                   </button>
@@ -406,7 +412,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                 type="button"
                 onClick={() => onChange({ ...config, slots: config.slots.filter((_, i) => i !== index) })}
                 aria-label={`Supprimer le créneau ${slot.timeKey}`}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#8A8A8A] hover:bg-red-50 hover:text-red-600 transition-colors"
+                className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[#8A8A8A] hover:bg-red-50 hover:text-red-600 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -418,13 +424,13 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
           <button
             type="button"
             onClick={() => setNewTime(service === "lunch" ? "13:30" : "19:30")}
-            className="w-full h-10 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#C9D9F5] text-sm font-medium text-[#3884FF]"
+            className="w-full h-9 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#C9D9F5] text-sm font-medium text-[#3884FF]"
           >
             <Plus size={16} strokeWidth={2} />
             Ajouter un créneau
           </button>
         ) : (
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-2xl bg-white border border-[#C9D9F5]">
+          <div className="flex items-center gap-2 px-2 py-1 rounded-2xl bg-white border border-[#C9D9F5]">
             <input
               type="time"
               value={newTime}
