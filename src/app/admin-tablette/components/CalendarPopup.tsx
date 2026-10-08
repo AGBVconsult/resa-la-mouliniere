@@ -271,7 +271,7 @@ export function CalendarPopup({
                     <div className="relative flex items-center gap-1.5 min-h-[22px]">
                       <span className={cn("text-[15px] font-bold tabular-nums", isPast ? "text-[#A5A5A5]" : "text-[#2D2D2D]")}>{day}</span>
                       {isToday && (
-                        <span className="text-[10px] font-semibold bg-[#3884FF] text-white px-2 py-0.5 rounded-full">Aujourd&apos;hui</span>
+                        <span className="text-[10px] font-semibold bg-[#3884FF] text-white px-2 py-0.5 rounded-full">Auj.</span>
                       )}
                       {dayData && !isClosed && (
                         <span className={cn("ml-auto flex items-center gap-1 text-[13px] font-medium tabular-nums", isPast ? "text-[#A5A5A5]" : "text-[#464646]")}>
