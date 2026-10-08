@@ -176,7 +176,7 @@ export function CalendarPopup({
           onNext={goToNextMonth}
           previousLabel="Mois précédent"
           nextLabel="Mois suivant"
-          reset={!isCurrentMonth && todayYear ? { label: "Ce mois", ariaLabel: "Revenir au mois en cours", onClick: goToCurrentMonth } : undefined}
+          reset={!isCurrentMonth && todayYear ? { label: "Auj.", ariaLabel: "Revenir au mois en cours", onClick: goToCurrentMonth } : undefined}
         />
         {/* Statistiques du mois : une seule pastille d'infos, non cliquable, centrée */}
         <div
