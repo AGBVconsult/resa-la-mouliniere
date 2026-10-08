@@ -207,9 +207,9 @@ export function CalendarPopup({
 
       {/* Calendrier compact, centré : cases de hauteur fixe (pas étirées sur tout l'écran) */}
       {/* Mêmes marges latérales que le header (px-8) : aligné sur le sélecteur de mois, centré */}
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col px-8 pt-6 pb-24">
+      <div className="flex-1 min-h-0 flex flex-col px-8 pt-5 pb-3">
         {/* Grille du mois */}
-        <div className="w-full flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
+        <div className="w-full flex-1 min-h-0 flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
           {/* Jours de la semaine */}
           <div className="grid grid-cols-7 bg-[#F0F0F0] shrink-0">
             {DAYS_OF_WEEK.map((d, i) => (
@@ -219,7 +219,8 @@ export function CalendarPopup({
             ))}
           </div>
 
-          <div className="grid grid-cols-7 auto-rows-[120px]">
+          {/* Les semaines se partagent la hauteur disponible : tout le mois tient à l'écran */}
+          <div className="grid grid-cols-7 flex-1 min-h-0 auto-rows-fr">
             {!monthData ? (
               <div className="col-span-7 flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-[#6E6E6E]" />
@@ -253,7 +254,7 @@ export function CalendarPopup({
                       }
                     }}
                     className={cn(
-                      "relative px-2 pt-1.5 pb-2 border-r border-b border-[#F0F0F0] flex flex-col gap-1 text-left cursor-pointer transition-colors",
+                      "relative min-h-0 overflow-hidden px-2 pt-1.5 pb-1.5 border-r border-b border-[#F0F0F0] flex flex-col gap-1 text-left cursor-pointer transition-colors",
                       isClosed ? "bg-[#F6F6F6] hover:bg-[#EFEFEF]" : "bg-white hover:bg-[#FAFAFA]"
                     )}
                   >
