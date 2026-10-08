@@ -142,6 +142,12 @@ interface SlotCapacityShapeEditorProps {
   onClose: () => void;
   /** Agrandit boutons et textes à partir de `lg` (≥ 1024 px, iPad mini paysage). */
   large?: boolean;
+  /**
+   * Version une ligne (options d'un créneau sur tablette) : « Tables » puis les
+   * tailles côte à côte. Pas d'interrupteur : l'option est active dès qu'il reste
+   * une table, désactivée quand tout est à 0.
+   */
+  inline?: boolean;
 }
 
 /**
@@ -155,6 +161,7 @@ export function SlotCapacityShapeEditor({
   capacityShape,
   onClose,
   large,
+  inline,
 }: SlotCapacityShapeEditorProps) {
   const configure = useMutation(api.slotCapacityShapes.configure);
   const disableShape = useMutation(api.slotCapacityShapes.disable);
@@ -254,6 +261,87 @@ export function SlotCapacityShapeEditor({
       setIsSaving(false);
     }
   };
+
+  // ── Version une ligne ─────────────────────────────────────────
+  if (inline) {
+    const needsReview = capacityShape?.needsReview ?? false;
+    return (
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2.5">
+          <span className="w-[54px] shrink-0 text-[12.5px] font-bold leading-tight text-slate-600">
+            Tables
+            {needsReview && <span className="block text-[11px] text-amber-700">à revoir</span>}
+          </span>
+          <div className="flex min-w-0 flex-1 gap-1.5">
+            {displayBuckets.map((bucket) => (
+              <div
+                key={bucket.maxPartySize}
+                className={cn(
+                  "flex h-9 min-w-0 flex-1 items-center justify-between rounded-[10px] pl-2 pr-0.5 text-xs font-bold",
+                  bucket.quantity > 0
+                    ? needsReview && !hasChanges
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-green-100 text-green-700"
+                    : "bg-slate-100 text-slate-500"
+                )}
+              >
+                <span className="whitespace-nowrap">{bucket.maxPartySize} p.</span>
+                <span className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity - 1)}
+                    disabled={bucket.quantity <= 0}
+                    aria-label={`Retirer une table de ${bucket.maxPartySize}`}
+                    className="flex h-[34px] w-[22px] items-center justify-center text-slate-700 touch-manipulation disabled:text-slate-300"
+                  >
+                    <Minus size={13} strokeWidth={2.4} />
+                  </button>
+                  <span className="min-w-[12px] text-center text-[13px] tabular-nums text-slate-900">{bucket.quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity + 1)}
+                    aria-label={`Ajouter une table de ${bucket.maxPartySize}`}
+                    className="flex h-[34px] w-[22px] items-center justify-center text-slate-700 touch-manipulation"
+                  >
+                    <Plus size={13} strokeWidth={2.4} />
+                  </button>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {exceedsRemaining && (
+          <p className="pl-[64px] text-xs font-medium text-red-600">
+            {configuredSeatCapacity} places en tables pour {remainingCapacity} couverts restants : réduisez le nombre de tables.
+          </p>
+        )}
+        {(hasChanges || needsReview) && (
+          <div className="flex items-center justify-end gap-3 pl-[64px]">
+            {needsReview && !hasChanges && (
+              <button
+                type="button"
+                onClick={handleDisableFromReview}
+                disabled={isSaving}
+                className="text-xs font-semibold text-slate-500 underline hover:text-slate-700"
+              >
+                Désactiver
+              </button>
+            )}
+            {hasChanges && (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving || !canSave}
+                className="flex h-8 items-center gap-1.5 rounded-lg bg-emerald-500 px-3 text-xs font-semibold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isSaving ? <Loader2 size={12} className="animate-spin" /> : "Enregistrer les tables"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // ── Mode édition ──────────────────────────────────────────────
   return (
