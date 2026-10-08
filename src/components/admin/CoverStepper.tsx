@@ -46,6 +46,9 @@ interface CoverStepperProps {
   large?: boolean;
   /** `stepper` : − valeur + (défaut) ; `inline` : « x dispo » | − + (style en-tête de créneau). */
   layout?: "stepper" | "inline";
+  /** Bornes de saisie (défaut : 0 à MAX_REMAINING_COVERS). */
+  min?: number;
+  max?: number;
 }
 
 export function CoverStepper({
@@ -57,6 +60,8 @@ export function CoverStepper({
   valueClassName,
   large,
   layout = "stepper",
+  min = 0,
+  max = MAX_REMAINING_COVERS,
 }: CoverStepperProps) {
 
   // Références à jour pour la répétition de l'appui long (évite les closures périmées).
@@ -82,7 +87,7 @@ export function CoverStepper({
   }, [disabled]);
 
   const step = (delta: number): boolean => {
-    const next = clampRemainingCovers(valueRef.current + delta);
+    const next = Math.max(min, clampRemainingCovers(valueRef.current + delta, max));
     if (next === valueRef.current) return false;
     valueRef.current = next;
     onChangeRef.current(next);
@@ -106,7 +111,7 @@ export function CoverStepper({
   };
 
   const isStepDisabled = (delta: number) =>
-    disabled || (delta < 0 ? value <= 0 : value >= MAX_REMAINING_COVERS);
+    disabled || (delta < 0 ? value <= min : value >= max);
 
   const stepButtonProps = (delta: number) => ({
     type: "button" as const,
