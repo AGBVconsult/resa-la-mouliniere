@@ -206,8 +206,8 @@ export function CalendarPopup({
       </header>
 
       {/* Calendrier compact, centré : cases de hauteur fixe (pas étirées sur tout l'écran) */}
-      {/* Mêmes marges latérales que le header (px-8) : aligné sur le sélecteur de mois, centré */}
-      <div className="flex-1 min-h-0 flex flex-col px-8 pt-5 pb-3">
+      {/* Marge identique sur les 4 côtés, calée sur la marge du bas (bande de la légende) : 38 px */}
+      <div className="flex-1 min-h-0 flex flex-col px-[38px] pt-[38px]">
         {/* Grille du mois */}
         <div className="w-full flex-1 min-h-0 flex flex-col bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
           {/* Jours de la semaine */}
@@ -298,8 +298,8 @@ export function CalendarPopup({
           </div>
         </div>
 
-        {/* Légende du remplissage */}
-        <div className="w-full flex flex-wrap justify-end gap-4 pt-2.5 text-xs text-[#6E6E6E]">
+        {/* Légende du remplissage : centrée dans la marge du bas (38 px, comme les autres côtés) */}
+        <div className="w-full h-[38px] shrink-0 flex flex-wrap items-center justify-end gap-x-4 text-xs text-[#6E6E6E]">
           <span className="flex items-center gap-1.5">
             <span className="w-3.5 h-2.5 rounded-[3px] border border-black/5 bg-[#EDF1F7]" />
             aucun couvert
