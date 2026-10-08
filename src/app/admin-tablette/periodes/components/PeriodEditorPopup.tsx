@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { AlertTriangle, Check, DoorClosed, Loader2, Moon, Plus, Sun, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { DEFAULT_LIMITED_GROUP_SIZE } from "@/lib/utils/slot-day-settings";
-import { CoverChip, CoverPanel, GroupSizeChip, GroupSizePanel } from "@/components/admin/SlotChips";
+import {
+  CoverChip,
+  CoverPanel,
+  GroupSizeChip,
+  GroupSizePanel,
+  useCloseOnOutsidePointer,
+} from "@/components/admin/SlotChips";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { daysBetween, formatDate, type Period, type PeriodKind } from "../periodUtils";
@@ -296,6 +302,9 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
   const [newTime, setNewTime] = useState<string | null>(null);
   // Un seul réglage ouvert à la fois : places ou taille de groupe d'un créneau.
   const [openPanel, setOpenPanel] = useState<{ time: string; kind: "covers" | "group" } | null>(null);
+  const closePanel = useCallback(() => setOpenPanel(null), []);
+  // Toucher n'importe où ailleurs que dans une puce ou un panneau ferme le panneau ouvert.
+  useCloseOnOutsidePointer(openPanel !== null, closePanel);
   const togglePanel = (time: string, kind: "covers" | "group") =>
     setOpenPanel((current) => (current?.time === time && current.kind === kind ? null : { time, kind }));
   const label = service === "lunch" ? "Midi" : "Soir";
@@ -361,7 +370,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
             // Même ligne que « Réglages du jour » : heure · places · groupe · interrupteur · ×.
             <div key={slot.timeKey} className={cn("px-3 transition-colors", !slot.isActive && "bg-slate-100/50")}>
               {/* Grille : heure | puce places | puce groupe | — | interrupteur · ×.
-                  Chaque réglage s'ouvre en 2e rangée, à partir de la colonne de sa puce. */}
+                  Chaque réglage s'ouvre en 2e rangée, sur toute la largeur du créneau. */}
               <div className="grid grid-cols-[auto_auto_auto_minmax(0,1fr)_auto_auto] items-center gap-x-1.5">
                 <div className="flex h-[52px] items-center min-w-[46px] lg:min-w-[52px]">
                   <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
@@ -405,7 +414,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                 </button>
 
                 {slot.isActive && openPanel?.time === slot.timeKey && openPanel.kind === "covers" && (
-                  <div className="col-start-2 col-end-[-1]">
+                  <div className="col-span-full">
                     <CoverPanel
                       value={slot.capacity}
                       originalValue={slot.capacity}
@@ -413,16 +422,16 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                       max={MAX_CAPACITY}
                       noun="place"
                       onChange={(capacity) => updateSlot(index, { capacity })}
-                      onClose={() => setOpenPanel(null)}
+                      onClose={closePanel}
                     />
                   </div>
                 )}
                 {slot.isActive && openPanel?.time === slot.timeKey && openPanel.kind === "group" && (
-                  <div className="col-start-3 col-end-[-1]">
+                  <div className="col-span-full">
                     <GroupSizePanel
                       value={slot.maxGroupSize}
                       onChange={(maxGroupSize) => updateSlot(index, { maxGroupSize })}
-                      onClose={() => setOpenPanel(null)}
+                      onClose={closePanel}
                     />
                   </div>
                 )}

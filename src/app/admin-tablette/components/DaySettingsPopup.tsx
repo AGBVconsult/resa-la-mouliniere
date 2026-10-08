@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -18,7 +18,15 @@ import {
   DEFAULT_LIMITED_GROUP_SIZE,
   type SlotState,
 } from "@/lib/utils/slot-day-settings";
-import { CoverChip, CoverPanel, GroupSizeChip, GroupSizePanel, TablesChip } from "@/components/admin/SlotChips";
+import {
+  CoverChip,
+  CoverPanel,
+  GroupSizeChip,
+  GroupSizePanel,
+  TablesChip,
+  SLOT_POPOVER_ATTR,
+  useCloseOnOutsidePointer,
+} from "@/components/admin/SlotChips";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 import {
   SlotCapacityShapeEditor,
@@ -320,6 +328,9 @@ function ServiceSection({
   const rawSlotById = new Map(rawSlots.map((s) => [s._id, s]));
   // Un seul panneau ouvert à la fois par service : taille de groupe ou tables restantes.
   const [openPanel, setOpenPanel] = useState<{ slotId: Id<"slots">; kind: "covers" | "group" | "tables" } | null>(null);
+  const closePanel = useCallback(() => setOpenPanel(null), []);
+  // Toucher n'importe où ailleurs que dans une puce ou un panneau ferme le panneau ouvert.
+  useCloseOnOutsidePointer(openPanel !== null, closePanel);
   const togglePanel = (slotId: Id<"slots">, kind: "covers" | "group" | "tables") =>
     setOpenPanel((current) => (current?.slotId === slotId && current.kind === kind ? null : { slotId, kind }));
   const isPanelOpen = (slotId: Id<"slots">, kind: "covers" | "group" | "tables") =>
@@ -407,8 +418,7 @@ function ServiceSection({
                 )}
               >
                 {/* Grille : heure | puce dispo | puce groupe | puce tables | — | interrupteur.
-                    Chaque réglage s'ouvre en 2e rangée, à partir de la colonne de sa puce ;
-                    les tables restantes occupent toute la largeur. */}
+                    Chaque réglage s'ouvre en 2e rangée, sur toute la largeur du créneau. */}
                 <div className="grid grid-cols-[auto_auto_auto_auto_minmax(0,1fr)_auto] items-center gap-x-1.5">
                   <div className="flex h-[52px] items-center min-w-[46px] lg:min-w-[52px]">
                     <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
@@ -458,35 +468,35 @@ function ServiceSection({
                   </div>
 
                   {slot.isOpen && isPanelOpen(slot._id, "covers") && (
-                    <div className="col-start-2 col-end-[-1]">
+                    <div className="col-span-full">
                       <CoverPanel
                         value={toRemainingCovers(slot.capacity, reservedCovers)}
                         originalValue={toRemainingCovers(slot.originalCapacity, reservedCovers)}
                         onChange={(remaining) =>
                           onCapacityChange(slot._id, capacityFromRemainingCovers(remaining, reservedCovers))
                         }
-                        onClose={() => setOpenPanel(null)}
+                        onClose={closePanel}
                       />
                     </div>
                   )}
 
                   {slot.isOpen && isPanelOpen(slot._id, "group") && (
-                    <div className="col-start-3 col-end-[-1]">
+                    <div className="col-span-full">
                       <GroupSizePanel
                         value={slot.maxGroupSize}
                         onChange={(size) => onMaxGroupSizeChange(slot._id, size)}
-                        onClose={() => setOpenPanel(null)}
+                        onClose={closePanel}
                       />
                     </div>
                   )}
 
                   {rawSlot && isPanelOpen(slot._id, "tables") && (
-                    <div className="col-span-full mb-2.5">
+                    <div className="col-span-full mb-2.5" {...{ [SLOT_POPOVER_ATTR]: "" }}>
                       <SlotCapacityShapeEditor
                         slotId={slot._id}
                         remainingCapacity={rawSlot.remainingCapacity}
                         capacityShape={rawSlot.capacityShape}
-                        onClose={() => setOpenPanel(null)}
+                        onClose={closePanel}
                         large
                       />
                     </div>
