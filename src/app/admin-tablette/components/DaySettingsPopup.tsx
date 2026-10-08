@@ -28,11 +28,9 @@ type DaySlotState = SlotState<Id<"slots">>;
 interface DaySettingsPopupProps {
   dateKey: string;
   onClose: () => void;
-  /** Service ouvert depuis le sélecteur de service : mis en évidence */
-  focusService?: "lunch" | "dinner";
 }
 
-export function DaySettingsPopup({ dateKey, onClose, focusService }: DaySettingsPopupProps) {
+export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
   const slotsData = useQuery(api.slots.listByDate, { dateKey });
   const batchUpdateSlots = useMutation(api.slots.batchUpdateSlots);
   const addSlot = useMutation(api.slots.addSlot);
@@ -198,8 +196,8 @@ export function DaySettingsPopup({ dateKey, onClose, focusService }: DaySettings
   return (
     <>
       <div className="fixed inset-0 backdrop-blur-[2px] bg-black/40 z-[200]" onClick={onClose} />
-      {/* Largeur adaptée à l'écran (iPad mini paysage ≈ 1133 px) : pleine largeur moins 24 px de marge, 1100 px max. */}
-      <div ref={modalRef} className="fixed inset-4 top-[calc(1rem+env(safe-area-inset-top))] md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[calc(100vw-3rem)] md:max-w-[1100px] md:max-h-[calc(100dvh-3rem)] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
+      {/* Largeur adaptée à l'écran (iPad mini paysage ≈ 1133 px) : pleine largeur moins 64 px de marge, 1000 px max. */}
+      <div ref={modalRef} className="fixed inset-4 top-[calc(1rem+env(safe-area-inset-top))] md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[calc(100vw-8rem)] md:max-w-[1000px] md:max-h-[calc(100dvh-3rem)] bg-white rounded-3xl shadow-2xl z-[201] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 md:px-6 md:py-5">
           <h2 className="text-lg font-bold text-slate-900 capitalize">{formattedDate}</h2>
@@ -215,7 +213,6 @@ export function DaySettingsPopup({ dateKey, onClose, focusService }: DaySettings
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pt-2 pb-24 md:px-6 md:pt-6 md:pb-0 space-y-6">
           {/* Services : empilés sur mobile, côte à côte dès la tablette */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className={cn("rounded-3xl", focusService === "lunch" && "ring-2 ring-[#3884FF] ring-offset-4")}>
             <ServiceSection
               title="Déjeuner"
               service="lunch"
@@ -234,9 +231,7 @@ export function DaySettingsPopup({ dateKey, onClose, focusService }: DaySettings
               onNewSlotCapacityChange={setNewSlotCapacity}
               onConfirmAddSlot={() => handleAddSlot("lunch")}
             />
-            </div>
 
-            <div className={cn("rounded-3xl", focusService === "dinner" && "ring-2 ring-[#3884FF] ring-offset-4")}>
             <ServiceSection
               title="Dîner"
               service="dinner"
@@ -255,7 +250,6 @@ export function DaySettingsPopup({ dateKey, onClose, focusService }: DaySettings
               onNewSlotCapacityChange={setNewSlotCapacity}
               onConfirmAddSlot={() => handleAddSlot("dinner")}
             />
-            </div>
           </div>
         </div>
 
@@ -330,11 +324,12 @@ function ServiceSection({
       {/* Slots */}
       <div className="p-3 space-y-0 divide-y divide-slate-100">
         {/* Créneaux horaires header */}
-        <div className="flex items-center justify-between mb-3">
+        {/* px-3 + -mr-1 : l'icône (+) s'aligne sur le bord droit des switchs des créneaux */}
+        <div className="flex items-center justify-between mb-2 px-3">
           <span className="text-sm text-slate-500">Créneaux horaires</span>
           <button
             onClick={onStartAddSlot}
-            className="p-1 hover:bg-slate-200 rounded-lg transition-colors"
+            className="-mr-1 p-1 hover:bg-slate-200 rounded-lg transition-colors"
           >
             <Plus size={16} className="text-slate-600" />
           </button>
@@ -396,7 +391,7 @@ function ServiceSection({
               <div
                 key={slot._id}
                 className={cn(
-                  "flex flex-col gap-1 px-3 py-1 transition-colors",
+                  "flex flex-col gap-1 px-3 transition-colors",
                   slot.isOpen ? "bg-transparent" : "bg-slate-100/50"
                 )}
               >
@@ -437,7 +432,7 @@ function ServiceSection({
                     <Switch
                       checked={slot.isOpen}
                       onCheckedChange={(open) => onSlotToggle(slot._id, open)}
-                      className="scale-75 lg:scale-90"
+                      className="origin-right scale-75 lg:scale-90"
                     />
                   </div>
                 </div>
