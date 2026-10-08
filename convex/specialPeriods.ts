@@ -8,6 +8,7 @@ import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { requireRole } from "./lib/rbac";
 import { Errors } from "./lib/errors";
+import { isClosedBy, loadClosureCoverage } from "./lib/closures";
 
 // Types
 type Service = "lunch" | "dinner";
@@ -624,6 +625,17 @@ export const update = mutation({
       await generateOverrides(ctx, period.restaurantId, args.periodId, startDate, endDate, applyRules);
     }
 
+    // Fermeture modifiée : les jours qu'elle ne couvre plus redeviennent ouverts
+    // pour les ouvertures qui les chevauchent
+    if (period.applyRules.status === "closed" || applyRules.status === "closed") {
+      await reapplyOverlappingOpenings(
+        ctx,
+        period.restaurantId,
+        period.startDate < startDate ? period.startDate : startDate,
+        period.endDate > endDate ? period.endDate : endDate
+      );
+    }
+
     console.log("Special period updated", { periodId: args.periodId, name });
 
     return { periodId: args.periodId };
@@ -664,6 +676,11 @@ export const remove = mutation({
 
     // Delete period
     await ctx.db.delete(periodId);
+
+    // Fermeture supprimée : les ouvertures qui la chevauchaient reprennent ces jours
+    if (period.applyRules.status === "closed") {
+      await reapplyOverlappingOpenings(ctx, period.restaurantId, period.startDate, period.endDate);
+    }
 
     console.log("Special period removed", { 
       periodId, 
@@ -737,6 +754,27 @@ export const regenerateAllSlots = mutation({
           totalModified += result.slotsModified;
         }
       }
+    }
+
+    // Réapplique ensuite les fermetures : elles reprennent la main sur les
+    // créneaux qu'une ouverture aurait modifiés avant elles
+    const closures = await ctx.db
+      .query("specialPeriods")
+      .withIndex("by_restaurant_type", (q) =>
+        q.eq("restaurantId", restaurantId).eq("type", "closure")
+      )
+      .collect();
+    for (const closure of closures) {
+      if (closure.endDate < today || closure.applyRules.status !== "closed") continue;
+      const result = await generateOverrides(
+        ctx,
+        restaurantId,
+        closure._id,
+        closure.startDate,
+        closure.endDate,
+        closure.applyRules as ExtendedApplyRules
+      );
+      totalModified += result.slotsModified;
     }
 
     console.log("Regenerated slots for all exceptional opening periods", {
@@ -851,13 +889,37 @@ async function generateOverrides(
         }
 
         // Check if ANY period override exists for this slot
-        const existingPeriodOverride = await ctx.db
+        let existingPeriodOverride = await ctx.db
           .query("slotOverrides")
           .withIndex("by_restaurant_slotKey", (q: any) =>
             q.eq("restaurantId", restaurantId).eq("slotKey", slot.slotKey)
           )
           .filter((q: any) => q.eq(q.field("origin"), "period"))
           .first();
+
+        // Une fermeture est toujours prioritaire : elle remplace l'override
+        // posé par une ouverture sur ce créneau
+        if (
+          applyRules.status === "closed" &&
+          existingPeriodOverride &&
+          existingPeriodOverride.specialPeriodId !== periodId
+        ) {
+          const otherPeriodOverrides = await ctx.db
+            .query("slotOverrides")
+            .withIndex("by_restaurant_slotKey", (q: any) =>
+              q.eq("restaurantId", restaurantId).eq("slotKey", slot.slotKey)
+            )
+            .filter((q: any) => q.eq(q.field("origin"), "period"))
+            .collect();
+          existingPeriodOverride = null;
+          for (const other of otherPeriodOverrides) {
+            if (other.specialPeriodId === periodId) {
+              existingPeriodOverride = other;
+            } else {
+              await ctx.db.delete(other._id);
+            }
+          }
+        }
 
         if (existingPeriodOverride) {
           if (existingPeriodOverride.specialPeriodId === periodId) {
@@ -911,13 +973,16 @@ async function generateExceptionalOpeningSlots(
   let slotsCreated = 0;
   let slotsModified = 0;
 
+  // Fermeture prioritaire : aucun créneau n'est ouvert sur un service fermé
+  const closures = await loadClosureCoverage(ctx, restaurantId, startDate, endDate);
+
   // Iterate through date range
   for (const dateKey of dateRange(startDate, endDate)) {
     const date = parseDateKey(dateKey);
     const weekday = getISOWeekday(date);
 
     // Process lunch slots
-    if (applyRules.lunchSlots && applyRules.lunchSlots.length > 0) {
+    if (applyRules.lunchSlots && applyRules.lunchSlots.length > 0 && !isClosedBy(closures, dateKey, "lunch")) {
       const lunchActiveDays = applyRules.lunchActiveDays ?? applyRules.activeDays;
       if (lunchActiveDays.includes(weekday)) {
         for (const slotConfig of applyRules.lunchSlots) {
@@ -990,7 +1055,7 @@ async function generateExceptionalOpeningSlots(
     }
 
     // Process dinner slots
-    if (applyRules.dinnerSlots && applyRules.dinnerSlots.length > 0) {
+    if (applyRules.dinnerSlots && applyRules.dinnerSlots.length > 0 && !isClosedBy(closures, dateKey, "dinner")) {
       const dinnerActiveDays = applyRules.dinnerActiveDays ?? applyRules.activeDays;
       if (dinnerActiveDays.includes(weekday)) {
         for (const slotConfig of applyRules.dinnerSlots) {
@@ -1065,6 +1130,33 @@ async function generateExceptionalOpeningSlots(
 
   console.log("Exceptional opening slots generated", { periodId, startDate, endDate, slotsCreated, slotsModified });
   return { slotsCreated, slotsModified };
+}
+
+/**
+ * Réapplique les ouvertures exceptionnelles qui chevauchent [startDate, endDate],
+ * après la modification ou la suppression d'une fermeture.
+ * Idempotent : crée les créneaux manquants et met à jour les overrides de chaque ouverture,
+ * en sautant toujours les jours encore fermés.
+ */
+async function reapplyOverlappingOpenings(
+  ctx: any,
+  restaurantId: Id<"restaurants">,
+  startDate: string,
+  endDate: string
+): Promise<void> {
+  const openings = await ctx.db
+    .query("specialPeriods")
+    .withIndex("by_restaurant_type", (q: any) =>
+      q.eq("restaurantId", restaurantId).eq("type", "event")
+    )
+    .collect();
+
+  for (const opening of openings) {
+    if (opening.endDate < startDate || opening.startDate > endDate) continue;
+    const rules = opening.applyRules as ExtendedApplyRules;
+    if (rules.status !== "modified" || !(rules.lunchSlots || rules.dinnerSlots)) continue;
+    await generateExceptionalOpeningSlots(ctx, restaurantId, opening._id, opening.startDate, opening.endDate, rules);
+  }
 }
 
 /**
