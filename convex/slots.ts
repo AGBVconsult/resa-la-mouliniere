@@ -613,14 +613,27 @@ export const listByDate = query({
       }
     }
 
+    // Taille de groupe effective, champ par champ : MANUAL > PERIOD > slot
+    // (même cascade que la validation des réservations).
+    const maxGroupSizeBySlotKey = new Map<string, number | null>();
+    for (const override of [...periodOverrides, ...manualOverrides]) {
+      if (slotKeys.has(override.slotKey) && override.patch.maxGroupSize !== undefined) {
+        maxGroupSizeBySlotKey.set(override.slotKey, override.patch.maxGroupSize);
+      }
+    }
+
     // Apply overrides to slots
     const effectiveSlots = allSlots.map((slot) => {
       const override = overridesMap.get(slot.slotKey);
-      if (!override) return slot;
+      const maxGroupSize = maxGroupSizeBySlotKey.has(slot.slotKey)
+        ? (maxGroupSizeBySlotKey.get(slot.slotKey) ?? null)
+        : slot.maxGroupSize;
+      if (!override) return { ...slot, maxGroupSize };
       return {
         ...slot,
         isOpen: override.isOpen ?? slot.isOpen,
         capacity: override.capacity ?? slot.capacity,
+        maxGroupSize,
       };
     });
 
@@ -756,6 +769,8 @@ export const batchUpdateSlots = mutation({
         slotId: v.id("slots"),
         isOpen: v.optional(v.boolean()),
         capacity: v.optional(v.number()),
+        /** null = groupe libre (aucune limite de taille). */
+        maxGroupSize: v.optional(v.union(v.number(), v.null())),
       })
     ),
   },
@@ -770,12 +785,18 @@ export const batchUpdateSlots = mutation({
       if (!slot) continue;
 
       // Build the override patch
-      const overridePatch: { isOpen?: boolean; capacity?: number } = {};
+      const overridePatch: { isOpen?: boolean; capacity?: number; maxGroupSize?: number | null } = {};
       if (update.isOpen !== undefined) {
         overridePatch.isOpen = update.isOpen;
       }
       if (update.capacity !== undefined && update.capacity >= 0) {
         overridePatch.capacity = update.capacity;
+      }
+      if (update.maxGroupSize !== undefined) {
+        if (update.maxGroupSize !== null && (!Number.isInteger(update.maxGroupSize) || update.maxGroupSize < 1)) {
+          throw Errors.INVALID_INPUT("maxGroupSize", "Doit être un entier >= 1 ou null");
+        }
+        overridePatch.maxGroupSize = update.maxGroupSize;
       }
 
       if (Object.keys(overridePatch).length === 0) continue;

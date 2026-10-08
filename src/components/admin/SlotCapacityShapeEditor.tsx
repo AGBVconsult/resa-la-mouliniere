@@ -18,7 +18,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Minus, Plus, X, AlertTriangle, Settings } from "lucide-react";
+import { Loader2, Minus, Plus, X, AlertTriangle, type LucideProps } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type CapacityBucketDto = { maxPartySize: number; quantity: number };
@@ -37,6 +37,28 @@ export type CapacityShapeSummaryDto = {
 // valeurs, ce ne sont que des raccourcis UI.
 const DEFAULT_BUCKET_SIZES = [2, 4, 6, 8];
 
+/** Table vue de dessus avec une chaise de chaque côté (même trait que lucide). */
+function TableIcon({ size = 24, className, strokeWidth = 1.8 }: Pick<LucideProps, "size" | "className" | "strokeWidth">) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+      <path d="M2.5 10v4M21.5 10v4" />
+    </svg>
+  );
+}
+
 interface SlotCapacityShapeButtonProps {
   capacityShape: CapacityShapeSummaryDto;
   /** true si l'éditeur est ouvert sous la ligne du créneau. */
@@ -49,7 +71,7 @@ interface SlotCapacityShapeButtonProps {
 }
 
 /**
- * Roue crantée affichée sur la ligne du créneau : active / ouvre la typologie.
+ * Bouton « table » affiché sur la ligne du créneau : active / ouvre la typologie.
  * - désactivée (§34) : icône grise ;
  * - active (§38) : icône verte, résumé « 1×4 · 2×2 » en info-bulle ;
  * - à revoir (§39) : icône orange avec pastille d'alerte.
@@ -100,7 +122,7 @@ export function SlotCapacityShapeButton({
           isDisabled && "border-slate-100 text-slate-300"
         )}
       >
-        <Settings size={15} className={cn(large && "lg:h-[19px] lg:w-[19px]")} />
+        <TableIcon size={16} className={cn(large && "lg:h-5 lg:w-5")} />
         {needsReview && (
           <AlertTriangle
             size={10}
