@@ -41,12 +41,16 @@ export function DeletePeriodPopup({ period, onClose, onDeleted }: DeletePeriodPo
 
   return (
     <>
-      <div className="fixed inset-0 backdrop-blur-[2px] bg-black/40 z-[210]" onClick={onClose} />
+      <div
+        className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      >
       <div
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="delete-period-title"
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[440px] max-w-[calc(100vw-2rem)] bg-white rounded-3xl shadow-2xl z-[211] animate-in fade-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[440px] bg-white rounded-3xl shadow-2xl animate-in fade-in zoom-in-95 duration-200"
       >
         <div className="px-6 pt-6 flex flex-col gap-3">
           <span className="w-11 h-11 rounded-full bg-[#F5E0DF] text-[#A33A3A] flex items-center justify-center">
@@ -79,6 +83,7 @@ export function DeletePeriodPopup({ period, onClose, onDeleted }: DeletePeriodPo
             Supprimer
           </button>
         </div>
+      </div>
       </div>
     </>
   );
