@@ -6,14 +6,14 @@ import { api } from "../../../../../convex/_generated/api";
 import { AlertTriangle, Check, DoorClosed, Loader2, Moon, Plus, Sun, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
-import { DEFAULT_LIMITED_GROUP_SIZE } from "@/lib/utils/slot-day-settings";
 import {
-  CoverChip,
-  CoverPanel,
-  GroupSizeChip,
-  GroupSizePanel,
+  GroupSizeRow,
+  SlotMeta,
+  SlotOptionsButton,
+  SlotSlider,
+  SLOT_POPOVER_ATTR,
   useCloseOnOutsidePointer,
-} from "@/components/admin/SlotChips";
+} from "@/components/admin/SlotRowControls";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { daysBetween, formatDate, type Period, type PeriodKind } from "../periodUtils";
@@ -300,13 +300,11 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () =
 
 function ServiceCard({ service, config, onChange }: { service: Service; config: ServiceConfig; onChange: (c: ServiceConfig) => void }) {
   const [newTime, setNewTime] = useState<string | null>(null);
-  // Un seul réglage ouvert à la fois : places ou taille de groupe d'un créneau.
-  const [openPanel, setOpenPanel] = useState<{ time: string; kind: "covers" | "group" } | null>(null);
-  const closePanel = useCallback(() => setOpenPanel(null), []);
-  // Toucher n'importe où ailleurs que dans une puce ou un panneau ferme le panneau ouvert.
-  useCloseOnOutsidePointer(openPanel !== null, closePanel);
-  const togglePanel = (time: string, kind: "covers" | "group") =>
-    setOpenPanel((current) => (current?.time === time && current.kind === kind ? null : { time, kind }));
+  // Un seul créneau a ses options (taille de groupe) ouvertes à la fois.
+  const [optionsTime, setOptionsTime] = useState<string | null>(null);
+  const closeOptions = useCallback(() => setOptionsTime(null), []);
+  // Toucher n'importe où ailleurs que dans le créneau ouvert ferme ses options.
+  useCloseOnOutsidePointer(optionsTime !== null, closeOptions);
   const label = service === "lunch" ? "Midi" : "Soir";
   const Icon = service === "lunch" ? Sun : Moon;
 
@@ -367,75 +365,56 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
         <div className="bg-white rounded-2xl overflow-hidden divide-y divide-[#F3F3F3]">
           {config.slots.length === 0 && <p className="py-4 text-center text-sm text-[#8A8A8A]">Aucun créneau</p>}
           {config.slots.map((slot, index) => (
-            // Même ligne que « Réglages du jour » : heure · places · groupe · interrupteur · ×.
-            <div key={slot.timeKey} className={cn("px-3 transition-colors", !slot.isActive && "bg-slate-100/50")}>
-              {/* Grille : heure | puce places | puce groupe | — | interrupteur · ×.
-                  Chaque réglage s'ouvre en 2e rangée, sur toute la largeur du créneau. */}
-              <div className="grid grid-cols-[auto_auto_auto_minmax(0,1fr)_auto_auto] items-center gap-x-1.5">
-                <div className="flex h-[52px] items-center min-w-[46px] lg:min-w-[52px]">
-                  <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
-                </div>
-                <CoverChip
-                  available={slot.capacity}
+            // Même ligne que « Réglages du jour » : heure · curseur · x places · options · interrupteur · ⋯.
+            <div
+              key={slot.timeKey}
+              {...(optionsTime === slot.timeKey ? { [SLOT_POPOVER_ATTR]: "" } : {})}
+              className={cn("px-3 transition-colors", !slot.isActive && "bg-slate-100/50")}
+            >
+              <div className="flex h-[54px] items-center gap-3">
+                <span className="w-[46px] shrink-0 text-base font-extrabold tabular-nums text-slate-800">{slot.timeKey}</span>
+                <SlotSlider
+                  value={slot.capacity}
                   reservedCovers={0}
-                  isOpen={openPanel?.time === slot.timeKey && openPanel.kind === "covers"}
-                  onClick={() => togglePanel(slot.timeKey, "covers")}
-                  disabled={!slot.isActive}
+                  min={MIN_CAPACITY}
+                  max={MAX_CAPACITY}
+                  isOpen={slot.isActive}
+                  onChange={(capacity) => updateSlot(index, { capacity })}
+                  unit="places"
+                  ariaLabel={`Capacité du créneau ${slot.timeKey}`}
                 />
-                <GroupSizeChip
-                  value={slot.maxGroupSize}
-                  isOpen={openPanel?.time === slot.timeKey && openPanel.kind === "group"}
-                  onClick={() => {
-                    // Ouvrir la puce d'un créneau en groupe libre propose d'emblée max 6.
-                    const isOpening = !(openPanel?.time === slot.timeKey && openPanel.kind === "group");
-                    if (slot.maxGroupSize === null && isOpening) {
-                      updateSlot(index, { maxGroupSize: DEFAULT_LIMITED_GROUP_SIZE });
-                    }
-                    togglePanel(slot.timeKey, "group");
-                  }}
-                  disabled={!slot.isActive}
+                <SlotMeta maxGroupSize={slot.maxGroupSize} />
+                <Switch
+                  checked={slot.isActive}
+                  onCheckedChange={() => updateSlot(index, { isActive: !slot.isActive })}
+                  aria-label={`Créneau ${slot.timeKey} actif`}
+                  className="shrink-0"
                 />
-                <span />
-                <div className="flex h-11 items-center">
-                  <Switch
-                    checked={slot.isActive}
-                    onCheckedChange={() => updateSlot(index, { isActive: !slot.isActive })}
-                    aria-label={`Créneau ${slot.timeKey} actif`}
-                    className="origin-right scale-75 lg:scale-90"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onChange({ ...config, slots: config.slots.filter((_, i) => i !== index) })}
-                  aria-label={`Supprimer le créneau ${slot.timeKey}`}
-                  className="w-8 h-11 shrink-0 rounded-full flex items-center justify-center text-[#8A8A8A] hover:text-red-600 transition-colors"
-                >
-                  <X size={16} />
-                </button>
-
-                {slot.isActive && openPanel?.time === slot.timeKey && openPanel.kind === "covers" && (
-                  <div className="col-span-full">
-                    <CoverPanel
-                      value={slot.capacity}
-                      originalValue={slot.capacity}
-                      min={MIN_CAPACITY}
-                      max={MAX_CAPACITY}
-                      noun="place"
-                      onChange={(capacity) => updateSlot(index, { capacity })}
-                      onClose={closePanel}
-                    />
-                  </div>
-                )}
-                {slot.isActive && openPanel?.time === slot.timeKey && openPanel.kind === "group" && (
-                  <div className="col-span-full">
-                    <GroupSizePanel
-                      value={slot.maxGroupSize}
-                      onChange={(maxGroupSize) => updateSlot(index, { maxGroupSize })}
-                      onClose={closePanel}
-                    />
-                  </div>
-                )}
+                <SlotOptionsButton
+                  isOpen={optionsTime === slot.timeKey}
+                  onClick={() => setOptionsTime((current) => (current === slot.timeKey ? null : slot.timeKey))}
+                  label={`Options du créneau ${slot.timeKey}`}
+                />
               </div>
+              {optionsTime === slot.timeKey && (
+                <div className="space-y-2 pb-3">
+                  <GroupSizeRow value={slot.maxGroupSize} onChange={(maxGroupSize) => updateSlot(index, { maxGroupSize })} />
+                  {/* Supprimer est rare : il vit dans les options plutôt que sur chaque ligne. */}
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onChange({ ...config, slots: config.slots.filter((_, i) => i !== index) });
+                        setOptionsTime(null);
+                      }}
+                      className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                      Supprimer le créneau {slot.timeKey}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

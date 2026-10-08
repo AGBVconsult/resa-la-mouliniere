@@ -15,18 +15,17 @@ import {
   capacityFromRemainingCovers,
   isSlotModified,
   buildSlotUpdate,
-  DEFAULT_LIMITED_GROUP_SIZE,
   type SlotState,
 } from "@/lib/utils/slot-day-settings";
 import {
-  CoverChip,
-  CoverPanel,
-  GroupSizeChip,
-  GroupSizePanel,
-  TablesChip,
+  GroupSizeRow,
+  SlotMeta,
+  SlotOptionsButton,
+  SlotSlider,
+  COVER_SLIDER_MAX,
   SLOT_POPOVER_ATTR,
   useCloseOnOutsidePointer,
-} from "@/components/admin/SlotChips";
+} from "@/components/admin/SlotRowControls";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 import {
   SlotCapacityShapeEditor,
@@ -326,15 +325,11 @@ function ServiceSection({
   onConfirmAddSlot,
 }: ServiceSectionProps) {
   const rawSlotById = new Map(rawSlots.map((s) => [s._id, s]));
-  // Un seul panneau ouvert à la fois par service : taille de groupe ou tables restantes.
-  const [openPanel, setOpenPanel] = useState<{ slotId: Id<"slots">; kind: "covers" | "group" | "tables" } | null>(null);
-  const closePanel = useCallback(() => setOpenPanel(null), []);
-  // Toucher n'importe où ailleurs que dans une puce ou un panneau ferme le panneau ouvert.
-  useCloseOnOutsidePointer(openPanel !== null, closePanel);
-  const togglePanel = (slotId: Id<"slots">, kind: "covers" | "group" | "tables") =>
-    setOpenPanel((current) => (current?.slotId === slotId && current.kind === kind ? null : { slotId, kind }));
-  const isPanelOpen = (slotId: Id<"slots">, kind: "covers" | "group" | "tables") =>
-    openPanel?.slotId === slotId && openPanel.kind === kind;
+  // Un seul créneau a ses options (groupe, tables) ouvertes à la fois par service.
+  const [optionsSlotId, setOptionsSlotId] = useState<Id<"slots"> | null>(null);
+  const closeOptions = useCallback(() => setOptionsSlotId(null), []);
+  // Toucher n'importe où ailleurs que dans le créneau ouvert ferme ses options.
+  useCloseOnOutsidePointer(optionsSlotId !== null, closeOptions);
   return (
     <div className="bg-slate-50 rounded-3xl overflow-hidden">
       {/* Service Header */}
@@ -412,96 +407,52 @@ function ServiceSection({
             return (
               <div
                 key={slot._id}
-                className={cn(
-                  "flex flex-col gap-1 px-3 transition-colors",
-                  slot.isOpen ? "bg-transparent" : "bg-slate-100/50"
-                )}
+                {...(optionsSlotId === slot._id ? { [SLOT_POPOVER_ATTR]: "" } : {})}
+                className={cn("px-3 transition-colors", slot.isOpen ? "bg-transparent" : "bg-slate-100/50")}
               >
-                {/* Grille : heure | puce dispo | puce groupe | puce tables | — | interrupteur.
-                    Chaque réglage s'ouvre en 2e rangée, sur toute la largeur du créneau. */}
-                <div className="grid grid-cols-[auto_auto_auto_auto_minmax(0,1fr)_auto] items-center gap-x-1.5">
-                  <div className="flex h-[52px] items-center min-w-[46px] lg:min-w-[52px]">
-                    <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
-                  </div>
-
-                  <CoverChip
-                    available={toRemainingCovers(slot.capacity, reservedCovers)}
+                {/* heure · curseur · x dispo · options · interrupteur · ⋯ */}
+                <div className="flex h-[54px] items-center gap-3">
+                  <span className="w-[46px] shrink-0 text-base font-extrabold tabular-nums text-slate-800">{slot.timeKey}</span>
+                  <SlotSlider
+                    value={toRemainingCovers(slot.capacity, reservedCovers)}
                     reservedCovers={reservedCovers}
-                    isOpen={isPanelOpen(slot._id, "covers")}
-                    onClick={() => togglePanel(slot._id, "covers")}
-                    disabled={!slot.isOpen}
-                    isModified={slot.capacity !== slot.originalCapacity}
+                    min={0}
+                    max={COVER_SLIDER_MAX}
+                    isOpen={slot.isOpen}
+                    onChange={(remaining) =>
+                      onCapacityChange(slot._id, capacityFromRemainingCovers(remaining, reservedCovers))
+                    }
+                    unit="dispo"
+                    ariaLabel={`Places disponibles à ${slot.timeKey}`}
                   />
-
-                  <GroupSizeChip
-                    value={slot.maxGroupSize}
-                    isOpen={isPanelOpen(slot._id, "group")}
-                    onClick={() => {
-                      // Ouvrir la puce d'un créneau en groupe libre propose d'emblée max 6.
-                      if (slot.maxGroupSize === null && !isPanelOpen(slot._id, "group")) {
-                        onMaxGroupSizeChange(slot._id, DEFAULT_LIMITED_GROUP_SIZE);
-                      }
-                      togglePanel(slot._id, "group");
-                    }}
-                    disabled={!slot.isOpen}
-                    isModified={slot.maxGroupSize !== slot.originalMaxGroupSize}
+                  <SlotMeta maxGroupSize={slot.maxGroupSize} capacityShape={rawSlot?.capacityShape} />
+                  <Switch
+                    checked={slot.isOpen}
+                    onCheckedChange={(open) => onSlotToggle(slot._id, open)}
+                    aria-label={`${slot.isOpen ? "Fermer" : "Ouvrir"} le créneau ${slot.timeKey}`}
+                    className="shrink-0"
                   />
+                  <SlotOptionsButton
+                    isOpen={optionsSlotId === slot._id}
+                    onClick={() => setOptionsSlotId((current) => (current === slot._id ? null : slot._id))}
+                    label={`Options du créneau ${slot.timeKey}`}
+                  />
+                </div>
 
-                  {rawSlot ? (
-                    <TablesChip
-                      capacityShape={rawSlot.capacityShape}
-                      isOpen={isPanelOpen(slot._id, "tables")}
-                      onClick={() => togglePanel(slot._id, "tables")}
-                      disabled={!slot.isOpen}
-                    />
-                  ) : (
-                    <span />
-                  )}
-
-                  <span />
-                  <div className="flex h-11 items-center">
-                    <Switch
-                      checked={slot.isOpen}
-                      onCheckedChange={(open) => onSlotToggle(slot._id, open)}
-                      className="origin-right scale-75 lg:scale-90"
-                    />
-                  </div>
-
-                  {slot.isOpen && isPanelOpen(slot._id, "covers") && (
-                    <div className="col-span-full">
-                      <CoverPanel
-                        value={toRemainingCovers(slot.capacity, reservedCovers)}
-                        originalValue={toRemainingCovers(slot.originalCapacity, reservedCovers)}
-                        onChange={(remaining) =>
-                          onCapacityChange(slot._id, capacityFromRemainingCovers(remaining, reservedCovers))
-                        }
-                        onClose={closePanel}
-                      />
-                    </div>
-                  )}
-
-                  {slot.isOpen && isPanelOpen(slot._id, "group") && (
-                    <div className="col-span-full">
-                      <GroupSizePanel
-                        value={slot.maxGroupSize}
-                        onChange={(size) => onMaxGroupSizeChange(slot._id, size)}
-                        onClose={closePanel}
-                      />
-                    </div>
-                  )}
-
-                  {rawSlot && isPanelOpen(slot._id, "tables") && (
-                    <div className="col-span-full mb-2.5" {...{ [SLOT_POPOVER_ATTR]: "" }}>
+                {optionsSlotId === slot._id && (
+                  <div className="space-y-2 pb-3">
+                    <GroupSizeRow value={slot.maxGroupSize} onChange={(size) => onMaxGroupSizeChange(slot._id, size)} />
+                    {rawSlot && (
                       <SlotCapacityShapeEditor
                         slotId={slot._id}
                         remainingCapacity={rawSlot.remainingCapacity}
                         capacityShape={rawSlot.capacityShape}
-                        onClose={closePanel}
-                        large
+                        onClose={closeOptions}
+                        inline
                       />
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })
