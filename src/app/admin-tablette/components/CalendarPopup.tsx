@@ -24,14 +24,14 @@ type ServiceDay = { isOpen: boolean; covers: number; capacityEffective: number }
 
 /** Bande d'un service : couleur douce selon le remplissage. Service fermé : pas de bande. */
 function ServiceBand({ label, service }: { label: string; service: ServiceDay }) {
-  if (!service.isOpen) return <div aria-hidden className="h-[22px]" />;
+  if (!service.isOpen) return <div aria-hidden className="h-[20px]" />;
   const tone =
     service.covers === 0
       ? // Ouvert mais aucun couvert réservé : teinte ardoise claire, distincte du vert
         { bg: "bg-[#EDF1F7]", text: "text-[#64748B]" }
       : BRUME_GAUGE_SOFT[getGaugeLevel(service.covers, service.capacityEffective)];
   return (
-    <div className={cn("h-[22px] rounded-md px-2 flex items-center justify-between text-[11px] tabular-nums", tone.bg, tone.text)}>
+    <div className={cn("h-[20px] rounded-md px-2 flex items-center justify-between text-[11px] tabular-nums", tone.bg, tone.text)}>
       <span className="font-medium opacity-80">{label}</span>
       <span>
         <span className="font-bold">{service.covers}</span>
@@ -269,8 +269,8 @@ export function CalendarPopup({
                     )}
 
                     {/* Numéro, badge du jour, total de couverts (à droite) */}
-                    <div className="relative flex items-center gap-1.5 min-h-[22px]">
-                      <span className={cn("text-[15px] font-bold tabular-nums", isPast ? "text-[#A5A5A5]" : "text-[#2D2D2D]")}>{day}</span>
+                    <div className="relative flex items-center gap-1.5 min-h-[20px]">
+                      <span className={cn("text-[13px] font-bold tabular-nums", isPast ? "text-[#A5A5A5]" : "text-[#2D2D2D]")}>{day}</span>
                       {isToday && (
                         <span className="text-[10px] font-semibold bg-[#3884FF] text-white px-2 py-0.5 rounded-full">Auj.</span>
                       )}
