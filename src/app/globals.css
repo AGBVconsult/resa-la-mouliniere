@@ -752,9 +752,9 @@
 .slot-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
-  margin-top: -8px;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
   border-radius: 9999px;
   background: var(--slot-range-color);
   border: none;
@@ -763,8 +763,8 @@
 .slot-range::-moz-range-track { height: 4px; border-radius: 9999px; background: #e2e8f0; }
 .slot-range::-moz-range-progress { height: 4px; border-radius: 9999px; background: var(--slot-range-color); }
 .slot-range::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 9999px;
   background: var(--slot-range-color);
   border: none;
