@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { NavPill } from "./NavPill";
-import { Loader2, CalendarDays, Users, DoorOpen } from "lucide-react";
-import { BRUME_GAUGE_SOFT, getGaugeLevel } from "@/lib/constants/brume";
+import { Loader2, CalendarDays, Users, DoorOpen, Clock } from "lucide-react";
+import { BRUME_GAUGE_SOFT, STATUS_TONES, getGaugeLevel } from "@/lib/constants/brume";
 import { cn } from "@/lib/utils";
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -239,6 +239,7 @@ export function CalendarPopup({
                 const dayCovers = dayData
                   ? (dayData.lunch.isOpen ? dayData.lunch.covers || 0 : 0) + (dayData.dinner.isOpen ? dayData.dinner.covers || 0 : 0)
                   : 0;
+                const hasPending = !!dayData && dayData.lunch.pendingCount + dayData.dinner.pendingCount > 0;
 
                 return (
                   <div
@@ -270,6 +271,9 @@ export function CalendarPopup({
                     {/* Numéro, badge du jour, total de couverts (à droite) */}
                     <div className="relative flex items-center gap-1.5 min-h-[22px]">
                       <span className={cn("text-[15px] font-bold tabular-nums", isPast ? "text-[#A5A5A5]" : "text-[#2D2D2D]")}>{day}</span>
+                      {hasPending && (
+                        <Clock size={13} strokeWidth={2} aria-label="Validation en attente" className={STATUS_TONES.pending.iconColor} />
+                      )}
                       {isToday && (
                         <span className="text-[10px] font-semibold bg-[#3884FF] text-white px-2 py-0.5 rounded-full">Auj.</span>
                       )}
