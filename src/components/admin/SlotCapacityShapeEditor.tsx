@@ -277,12 +277,12 @@ export function SlotCapacityShapeEditor({
               <div
                 key={bucket.maxPartySize}
                 className={cn(
-                  "flex h-9 min-w-0 flex-1 items-center justify-between rounded-[10px] pl-2 pr-0.5 text-xs font-bold",
+                  "flex h-8 min-w-0 flex-1 items-center justify-between rounded-full pl-3 pr-1 text-xs font-bold",
                   bucket.quantity > 0
                     ? needsReview && !hasChanges
                       ? "bg-amber-100 text-amber-700"
                       : "bg-green-100 text-green-700"
-                    : "bg-slate-100 text-slate-500"
+                    : "bg-[#EFEFEF] text-[#6E6E6E]"
                 )}
               >
                 <span className="whitespace-nowrap">{bucket.maxPartySize} p.</span>
@@ -292,7 +292,7 @@ export function SlotCapacityShapeEditor({
                     onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity - 1)}
                     disabled={bucket.quantity <= 0}
                     aria-label={`Retirer une table de ${bucket.maxPartySize}`}
-                    className="flex h-[34px] w-[22px] items-center justify-center text-slate-700 touch-manipulation disabled:text-slate-300"
+                    className="flex h-8 w-[22px] items-center justify-center text-slate-700 touch-manipulation disabled:text-slate-300"
                   >
                     <Minus size={13} strokeWidth={2.4} />
                   </button>
@@ -301,7 +301,7 @@ export function SlotCapacityShapeEditor({
                     type="button"
                     onClick={() => setQuantity(bucket.maxPartySize, bucket.quantity + 1)}
                     aria-label={`Ajouter une table de ${bucket.maxPartySize}`}
-                    className="flex h-[34px] w-[22px] items-center justify-center text-slate-700 touch-manipulation"
+                    className="flex h-8 w-[22px] items-center justify-center text-slate-700 touch-manipulation"
                   >
                     <Plus size={13} strokeWidth={2.4} />
                   </button>

@@ -17,6 +17,8 @@ interface SegmentedControlProps<T extends string> {
   size?: "md" | "sm";
   ariaLabel?: string;
   className?: string;
+  /** Les choix se partagent toute la largeur du rail. */
+  fill?: boolean;
 }
 
 /**
@@ -30,6 +32,7 @@ export function SegmentedControl<T extends string>({
   size = "md",
   ariaLabel,
   className,
+  fill,
 }: SegmentedControlProps<T>) {
   const buttonRefs = useRef<Partial<Record<T, HTMLButtonElement | null>>>({});
   const [thumb, setThumb] = useState<{ left: number; width: number } | null>(null);
@@ -43,6 +46,20 @@ export function SegmentedControl<T extends string>({
     // Les polices peuvent finir de charger après le premier rendu
     document.fonts?.ready.then(update);
   }, [value, options]);
+
+  // En mode `fill`, la largeur des choix suit celle du rail : on recale la pastille.
+  useLayoutEffect(() => {
+    if (!fill) return;
+    const btn = buttonRefs.current[value];
+    const rail = btn?.parentElement;
+    if (!rail || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      const current = buttonRefs.current[value];
+      if (current) setThumb({ left: current.offsetLeft, width: current.offsetWidth });
+    });
+    observer.observe(rail);
+    return () => observer.disconnect();
+  }, [fill, value]);
 
   return (
     <div
@@ -74,6 +91,7 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             className={cn(
               "relative z-10 flex h-full items-center justify-center gap-1.5 rounded-full px-[18px] text-sm transition-colors duration-200 active:scale-[0.98]",
+              fill && "flex-1 px-2",
               isActive ? "text-[#0C0C0C]" : "text-[#6E6E6E] hover:text-[#2D2D2D]"
             )}
           >

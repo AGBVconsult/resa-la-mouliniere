@@ -9,6 +9,7 @@
 import { useEffect, type CSSProperties } from "react";
 import { AlertTriangle, MoreHorizontal, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SegmentedControl } from "@/components/admin/SegmentedControl";
 import { BRUME_GAUGE, getGaugeLevel, type GaugeLevel } from "@/lib/constants/brume";
 import type { CapacityShapeSummaryDto } from "@/components/admin/SlotCapacityShapeEditor";
 
@@ -186,22 +187,19 @@ export function GroupSizeRow({ value, onChange }: { value: number | null; onChan
   return (
     <div className="flex items-center gap-2.5">
       <span className="w-[54px] shrink-0 text-[12.5px] font-bold text-slate-600">Groupe</span>
-      <div role="group" aria-label="Taille de groupe maximale" className="flex flex-1 gap-0.5 rounded-[10px] bg-slate-100 p-[3px]">
-        {choices.map((choice) => (
-          <button
-            key={choice ?? "libre"}
-            type="button"
-            onClick={() => onChange(choice)}
-            aria-pressed={value === choice}
-            className={cn(
-              "h-[30px] flex-1 rounded-lg text-[13px] font-bold tabular-nums touch-manipulation transition-colors",
-              value === choice ? "bg-white text-[#2F5B86] shadow-[0_1px_3px_rgba(15,23,42,0.14)]" : "text-slate-600"
-            )}
-          >
-            {choice === null ? "libre" : choice}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        ariaLabel="Taille de groupe maximale"
+        size="sm"
+        fill
+        className="flex-1"
+        value={value === null ? "libre" : String(value)}
+        onChange={(next) => onChange(next === "libre" ? null : Number(next))}
+        options={choices.map((choice) => ({
+          value: choice === null ? "libre" : String(choice),
+          label: <span className="font-semibold tabular-nums">{choice === null ? "libre" : choice}</span>,
+          ariaLabel: choice === null ? "Groupe libre" : `${choice} personnes maximum`,
+        }))}
+      />
     </div>
   );
 }
