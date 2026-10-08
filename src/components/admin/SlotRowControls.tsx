@@ -1,13 +1,14 @@
 "use client";
 
 /**
- * Contrôles d'une ligne de créneau (tablette) : curseur de places aux couleurs de
- * la jauge du bandeau des réservations, résumé des options et choix de la taille
+ * Contrôles d'une ligne de créneau (tablette) : jauge et stepper des places aux
+ * couleurs du bandeau des réservations, résumé des options et choix de la taille
  * de groupe. Partagé par `admin-tablette/DaySettingsPopup` et l'éditeur de période.
  */
 
-import { useEffect, type CSSProperties } from "react";
-import { AlertTriangle, MoreHorizontal, UsersRound } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { AlertTriangle, Minus, MoreHorizontal, Plus, UsersRound } from "lucide-react";
+import { triggerHaptic } from "@/lib/utils/haptics";
 import { cn } from "@/lib/utils";
 import { SegmentedControl } from "@/components/admin/SegmentedControl";
 import { BRUME_GAUGE, getGaugeLevel, type GaugeLevel } from "@/lib/constants/brume";
@@ -32,10 +33,7 @@ export function useCloseOnOutsidePointer(isOpen: boolean, onClose: () => void) {
   }, [isOpen, onClose]);
 }
 
-// ── Curseur ─────────────────────────────────────────────────────
-
-/** Borne haute du curseur des places disponibles (élargie si la valeur la dépasse). */
-export const COVER_SLIDER_MAX = 30;
+// ── Jauge et stepper des places ─────────────────────────────────
 
 /** Libellé sur fond clair, même teinte que la barre (vert, jaune, orange, rouge). */
 const LEVEL_TEXT: Record<GaugeLevel, string> = {
@@ -45,12 +43,17 @@ const LEVEL_TEXT: Record<GaugeLevel, string> = {
   full: "text-red-600",
 };
 
+const HOLD_DELAY_MS = 400;
+const REPEAT_START_MS = 150;
+const REPEAT_MIN_MS = 50;
+
 /**
- * Curseur des places + libellé « x dispo » (ou « x places » dans une période).
- * La piste fine et le rond plein prennent la couleur de la jauge du bandeau ;
- * tout passe en gris quand le créneau est fermé.
+ * Comme le bandeau du service dans la liste des réservations :
+ * barre de remplissage · « x dispo » | − +.
+ * La barre montre les couverts réservés sur la capacité, à la couleur de la jauge ;
+ * appui long sur − ou + = répétition accélérée. Tout passe en gris quand le créneau est fermé.
  */
-export function SlotSlider({
+export function SlotCoverStepper({
   value,
   reservedCovers,
   min,
@@ -58,46 +61,105 @@ export function SlotSlider({
   isOpen,
   onChange,
   unit,
+  showBar = true,
   ariaLabel,
 }: {
   value: number;
-  /** Couverts réservés : avec `value`, ils déterminent la couleur (0 dans une période). */
+  /** Couverts réservés : avec `value`, ils déterminent la barre et la couleur (0 dans une période). */
   reservedCovers: number;
   min: number;
   max: number;
-  /** Créneau ouvert (sinon curseur grisé et libellé « fermé »). */
+  /** Créneau ouvert (sinon tout est grisé et le libellé indique « fermé »). */
   isOpen: boolean;
   onChange: (value: number) => void;
   /** « dispo » (réglages du jour) ou « places » (période). */
   unit: "dispo" | "places";
+  /** Masquée dans une période, où il n'y a pas encore de réservations. */
+  showBar?: boolean;
   ariaLabel: string;
 }) {
-  const level: GaugeLevel = value <= 0 ? "full" : getGaugeLevel(reservedCovers, value + reservedCovers);
-  const upper = Math.max(max, value);
-  const percent = ((Math.min(upper, Math.max(min, value)) - min) / (upper - min)) * 100;
+  const capacity = value + reservedCovers;
+  const level: GaugeLevel = value <= 0 ? "full" : getGaugeLevel(reservedCovers, capacity);
+  const fill = capacity > 0 ? Math.min(1, reservedCovers / capacity) : 1;
   const text = !isOpen ? "fermé" : unit === "places" ? `${value} places` : value > 0 ? `${value} dispo` : "complet";
-  const style = {
-    "--slot-range-color": isOpen ? BRUME_GAUGE[level].bar : "#CBD5E1",
-    "--slot-range-percent": `${percent}%`,
-  } as CSSProperties;
+
+  // Références à jour pour la répétition de l'appui long (évite les closures périmées).
+  const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    valueRef.current = value;
+    onChangeRef.current = onChange;
+  }, [value, onChange]);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stopRepeat = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
+  };
+  useEffect(() => stopRepeat, []);
+  useEffect(() => {
+    if (!isOpen) stopRepeat();
+  }, [isOpen]);
+
+  const step = (delta: number) => {
+    const next = Math.min(max, Math.max(min, valueRef.current + delta));
+    if (next === valueRef.current) return false;
+    valueRef.current = next;
+    onChangeRef.current(next);
+    triggerHaptic("tick");
+    return true;
+  };
+  const startRepeat = (delta: number) => {
+    stopRepeat();
+    if (!step(delta)) return;
+    let interval = REPEAT_START_MS;
+    const tick = () => {
+      if (!step(delta)) return stopRepeat();
+      interval = Math.max(REPEAT_MIN_MS, interval * 0.85);
+      timerRef.current = setTimeout(tick, interval);
+    };
+    timerRef.current = setTimeout(tick, HOLD_DELAY_MS);
+  };
+
+  const renderButton = (delta: number) => {
+    const disabled = !isOpen || (delta < 0 ? value <= min : value >= max);
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        aria-label={`${delta < 0 ? "Retirer" : "Ajouter"} une place — ${ariaLabel}`}
+        onPointerDown={(e) => {
+          if (e.button !== 0) return;
+          e.preventDefault();
+          e.currentTarget.setPointerCapture?.(e.pointerId);
+          startRepeat(delta);
+        }}
+        onPointerUp={stopRepeat}
+        onPointerCancel={stopRepeat}
+        onLostPointerCapture={stopRepeat}
+        // Clavier uniquement (detail === 0) : la souris et le tactile passent par onPointerDown.
+        onClick={(e) => {
+          if (e.detail === 0) step(delta);
+        }}
+        onContextMenu={(e) => e.preventDefault()}
+        className="flex h-11 w-10 shrink-0 items-center justify-center rounded-full text-slate-700 touch-manipulation transition-colors active:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:text-slate-300"
+      >
+        {delta < 0 ? <Minus size={20} strokeWidth={2.2} /> : <Plus size={20} strokeWidth={2.2} />}
+      </button>
+    );
+  };
+
   return (
-    <>
-      <input
-        type="range"
-        min={min}
-        max={upper}
-        step={1}
-        value={value}
-        disabled={!isOpen}
-        onChange={(e) => onChange(Number(e.target.value))}
-        aria-label={ariaLabel}
-        aria-valuetext={text}
-        // Largeur plafonnée (220 px) et marges de part et d'autre : le curseur reste court
-        // même sur grand écran ; l'espace restant va avant les options (voir les lignes).
-        className="slot-range mx-3 min-w-[120px] max-w-[220px] flex-1"
-        style={style}
-      />
+    <div className="flex items-center select-none">
+      {showBar && (
+        <span aria-hidden className="mx-2 h-1 w-16 shrink-0 overflow-hidden rounded-full bg-slate-200">
+          <span
+            className="block h-full rounded-full transition-[width] duration-200"
+            style={{ width: `${fill * 100}%`, backgroundColor: isOpen ? BRUME_GAUGE[level].bar : "#CBD5E1" }}
+          />
+        </span>
+      )}
       <span
+        aria-live="polite"
         className={cn(
           "w-[74px] shrink-0 whitespace-nowrap text-[15px] font-semibold tabular-nums",
           isOpen ? LEVEL_TEXT[level] : "text-slate-400"
@@ -105,7 +167,10 @@ export function SlotSlider({
       >
         {text}
       </span>
-    </>
+      <span aria-hidden className="mx-1.5 h-5 w-px bg-slate-200" />
+      {renderButton(-1)}
+      {renderButton(1)}
+    </div>
   );
 }
 
@@ -122,7 +187,7 @@ function TableIcon() {
 }
 
 /**
- * Largeur fixe, même vide : tous les curseurs gardent la même longueur.
+ * Largeur fixe, même vide : les colonnes restent alignées d'une ligne à l'autre.
  * Groupe limité en bleu, tables actives en vert, à revoir en orange.
  */
 export function SlotMeta({
