@@ -408,8 +408,9 @@ function ServiceSection({
                   slot.isOpen ? "bg-transparent" : "bg-slate-100/50"
                 )}
               >
-                {/* Si la place manque, les options passent à la ligne au lieu de chevaucher le stepper. */}
-                <div className="flex flex-wrap items-start gap-x-1.5">
+                {/* Grille : heure | stepper | séparateur | puce groupe | tables | interrupteur.
+                    Le panneau « taille de groupe » occupe la 2e rangée, aligné sous la puce. */}
+                <div className="grid grid-cols-[auto_auto_auto_minmax(auto,1fr)_auto_auto] items-center gap-x-1.5">
                   <div className="flex h-11 items-center min-w-[46px] lg:min-w-[52px]">
                     <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
                   </div>
@@ -428,8 +429,8 @@ function ServiceSection({
                     />
                   </div>
 
-                  <div className="flex h-11 shrink-0 items-center gap-1.5">
-                    <span aria-hidden className="h-5 w-px bg-slate-200" />
+                  <span aria-hidden className="h-5 w-px bg-slate-200" />
+                  <div className="flex h-11 items-center justify-self-start">
                     <GroupSizeChip
                       value={slot.maxGroupSize}
                       isOpen={isPanelOpen(slot._id, "group")}
@@ -445,7 +446,7 @@ function ServiceSection({
                     />
                   </div>
 
-                  <div className="ml-auto flex h-11 shrink-0 items-center gap-1">
+                  <div className="flex h-11 items-center gap-1">
                     <span aria-hidden className="mr-0.5 h-5 w-px bg-slate-200" />
                     {rawSlot && (
                       <SlotCapacityShapeButton
@@ -463,15 +464,17 @@ function ServiceSection({
                       className="origin-right scale-75 lg:scale-90"
                     />
                   </div>
-                </div>
 
-                {slot.isOpen && isPanelOpen(slot._id, "group") && (
-                  <GroupSizePanel
-                    value={slot.maxGroupSize}
-                    onChange={(size) => onMaxGroupSizeChange(slot._id, size)}
-                    onClose={() => setOpenPanel(null)}
-                  />
-                )}
+                  {slot.isOpen && isPanelOpen(slot._id, "group") && (
+                    <div className="col-start-4 col-end-[-1]">
+                      <GroupSizePanel
+                        value={slot.maxGroupSize}
+                        onChange={(size) => onMaxGroupSizeChange(slot._id, size)}
+                        onClose={() => setOpenPanel(null)}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 {rawSlot && isPanelOpen(slot._id, "tables") && (
                   <SlotCapacityShapeEditor

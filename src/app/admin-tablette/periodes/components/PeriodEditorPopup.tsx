@@ -359,7 +359,9 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
           {config.slots.map((slot, index) => (
             // Même ligne que « Réglages du jour » : heure · x dispo | − + | groupe | interrupteur · ×.
             <div key={slot.timeKey} className={cn("px-3 transition-colors", !slot.isActive && "bg-slate-100/50")}>
-              <div className="flex flex-wrap items-center gap-x-1.5">
+              {/* Grille : heure | stepper | séparateur | puce groupe | interrupteur · ×.
+                  Le panneau « taille de groupe » occupe la 2e rangée, aligné sous la puce. */}
+              <div className="grid grid-cols-[auto_auto_auto_minmax(auto,1fr)_auto] items-center gap-x-1.5">
                 <div className="flex h-11 items-center min-w-[46px] lg:min-w-[52px]">
                   <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
                 </div>
@@ -375,8 +377,8 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                     max={MAX_CAPACITY}
                   />
                 </div>
-                <div className="flex h-11 shrink-0 items-center gap-1.5">
-                  <span aria-hidden className="h-5 w-px bg-slate-200" />
+                <span aria-hidden className="h-5 w-px bg-slate-200" />
+                <div className="flex h-11 items-center justify-self-start">
                   <GroupSizeChip
                     value={slot.maxGroupSize}
                     isOpen={openGroupTime === slot.timeKey}
@@ -390,7 +392,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                     disabled={!slot.isActive}
                   />
                 </div>
-                <div className="ml-auto flex h-11 shrink-0 items-center gap-1">
+                <div className="flex h-11 items-center gap-1">
                   <span aria-hidden className="mr-0.5 h-5 w-px bg-slate-200" />
                   <div className="flex h-11 items-center">
                     <Switch
@@ -409,14 +411,16 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                     <X size={16} />
                   </button>
                 </div>
+                {slot.isActive && openGroupTime === slot.timeKey && (
+                  <div className="col-start-4 col-end-[-1]">
+                    <GroupSizePanel
+                      value={slot.maxGroupSize}
+                      onChange={(maxGroupSize) => updateSlot(index, { maxGroupSize })}
+                      onClose={() => setOpenGroupTime(null)}
+                    />
+                  </div>
+                )}
               </div>
-              {slot.isActive && openGroupTime === slot.timeKey && (
-                <GroupSizePanel
-                  value={slot.maxGroupSize}
-                  onChange={(maxGroupSize) => updateSlot(index, { maxGroupSize })}
-                  onClose={() => setOpenGroupTime(null)}
-                />
-              )}
             </div>
           ))}
         </div>

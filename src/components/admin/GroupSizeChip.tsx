@@ -56,7 +56,7 @@ export function GroupSizeChip({
 }
 
 /**
- * Panneau déployé sous la ligne : curseur de 1 à 20, « libre » en bout de course.
+ * Panneau déployé sous la puce (il occupe la largeur que lui donne le parent) : curseur de 1 à 20, « libre » en bout de course.
  * Une valeur existante au-delà de 20 reste affichée telle quelle tant qu'on ne touche pas au curseur.
  */
 export function GroupSizePanel({
@@ -73,7 +73,7 @@ export function GroupSizePanel({
     <div
       role="dialog"
       aria-label="Taille de groupe"
-      className="ml-auto mb-2.5 grid w-[310px] max-w-full gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_40px_rgba(15,23,42,0.18)]"
+      className="mb-2.5 grid w-full gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_40px_rgba(15,23,42,0.18)]"
     >
       <div className="flex items-center justify-between text-[13px] font-extrabold text-slate-900">
         <span>{value === null ? "Groupe libre" : `Max ${value} personnes`}</span>
