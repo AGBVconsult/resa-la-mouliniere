@@ -114,9 +114,7 @@ export default function TabletPeriodesPage() {
                 className="inline-flex items-center gap-1.5 min-h-6 px-2 py-0.5 rounded-lg bg-[#FFF1E3] text-xs font-medium text-[#9A4A0F]"
               >
                 <AlertTriangle size={13} strokeWidth={1.75} className="shrink-0" />
-                {kind === "ouverture"
-                  ? `Fermé du ${formatShortDate(from)} au ${formatShortDate(to)} : « ${other.name} » est prioritaire`
-                  : `Prioritaire sur « ${other.name} » du ${formatShortDate(from)} au ${formatShortDate(to)}`}
+                {`Chevauche « ${other.name} » du ${formatShortDate(from)} au ${formatShortDate(to)} : modifiez les dates`}
               </span>
             ))}
           </div>

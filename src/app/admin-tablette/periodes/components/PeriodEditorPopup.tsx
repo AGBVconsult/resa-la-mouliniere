@@ -226,7 +226,7 @@ export function PeriodEditorPopup({ kind, period, onClose, onDelete }: PeriodEdi
               <span>
                 Le restaurant sera fermé midi et soir
                 {startDate && endDate ? ` du ${formatDate(startDate)} au ${formatDate(endDate)}` : " sur toute la période"}.
-                Cette fermeture est prioritaire sur les ouvertures exceptionnelles qui la chevauchent.
+                Elle ne peut pas chevaucher une autre période.
               </span>
             </div>
           )}

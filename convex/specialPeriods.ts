@@ -9,6 +9,7 @@ import { Id } from "./_generated/dataModel";
 import { requireRole } from "./lib/rbac";
 import { Errors } from "./lib/errors";
 import { isClosedBy, loadClosureCoverage } from "./lib/closures";
+import { findOverlappingPeriod } from "./lib/periodOverlap";
 
 // Types
 type Service = "lunch" | "dinner";
@@ -415,20 +416,15 @@ export const create = mutation({
 
     const restaurantId = restaurants[0]._id;
 
-    // Check for same-type overlap
+    // Aucun chevauchement autorisé entre deux périodes, quel que soit leur type
     const existingPeriods = await ctx.db
       .query("specialPeriods")
-      .withIndex("by_restaurant_type", (q) =>
-        q.eq("restaurantId", restaurantId).eq("type", args.type)
-      )
+      .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
       .collect();
 
-    for (const existing of existingPeriods) {
-      // Check overlap: !(endDate < existing.startDate || startDate > existing.endDate)
-      const overlaps = !(args.endDate < existing.startDate || args.startDate > existing.endDate);
-      if (overlaps) {
-        throw Errors.SAME_TYPE_OVERLAP(existing._id, existing.name);
-      }
+    const overlapping = findOverlappingPeriod(existingPeriods, args.startDate, args.endDate);
+    if (overlapping) {
+      throw Errors.SAME_TYPE_OVERLAP(overlapping._id, overlapping.name);
     }
 
     const now = Date.now();
@@ -577,20 +573,15 @@ export const update = mutation({
     // Validate applyRules
     validateApplyRules(applyRules);
 
-    // Check for same-type overlap (excluding self)
+    // Aucun chevauchement autorisé entre deux périodes, quel que soit leur type (hors elle-même)
     const existingPeriods = await ctx.db
       .query("specialPeriods")
-      .withIndex("by_restaurant_type", (q) =>
-        q.eq("restaurantId", period.restaurantId).eq("type", period.type)
-      )
+      .withIndex("by_restaurant", (q) => q.eq("restaurantId", period.restaurantId))
       .collect();
 
-    for (const existing of existingPeriods) {
-      if (existing._id === args.periodId) continue;
-      const overlaps = !(endDate < existing.startDate || startDate > existing.endDate);
-      if (overlaps) {
-        throw Errors.SAME_TYPE_OVERLAP(existing._id, existing.name);
-      }
+    const overlapping = findOverlappingPeriod(existingPeriods, startDate, endDate, args.periodId);
+    if (overlapping) {
+      throw Errors.SAME_TYPE_OVERLAP(overlapping._id, overlapping.name);
     }
 
     const now = Date.now();

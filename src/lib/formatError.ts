@@ -58,7 +58,10 @@ const ERROR_MESSAGES: Record<string, string | ((meta?: Record<string, unknown>) 
   "error.reservationNotFound": "Réservation non trouvée",
 
   // Periods
-  "error.sameTypeOverlap": "Une période du même type existe déjà pour ces dates",
+  "error.sameTypeOverlap": (meta) =>
+    meta?.existingPeriodName
+      ? `Ces dates chevauchent la période « ${meta.existingPeriodName} ». Deux périodes ne peuvent pas se chevaucher.`
+      : "Ces dates chevauchent une autre période. Deux périodes ne peuvent pas se chevaucher.",
 
   // Generic
   "error.notFound": "Élément non trouvé",
