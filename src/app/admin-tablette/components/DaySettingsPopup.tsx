@@ -410,8 +410,8 @@ function ServiceSection({
                 {...(optionsSlotId === slot._id ? { [SLOT_POPOVER_ATTR]: "" } : {})}
                 className={cn("px-3 transition-colors", slot.isOpen ? "bg-transparent" : "bg-slate-100/50")}
               >
-                {/* heure · barre · x dispo | − + · options · interrupteur · ⋯ */}
-                <div className="flex h-11 items-center gap-3">
+                {/* heure · barre · x dispo | − + · options · ⋯ · interrupteur */}
+                <div className="flex h-11 items-center gap-2">
                   <span className="w-[46px] shrink-0 text-base font-extrabold tabular-nums text-slate-800">{slot.timeKey}</span>
                   <SlotCoverStepper
                     value={toRemainingCovers(slot.capacity, reservedCovers)}
@@ -427,16 +427,16 @@ function ServiceSection({
                   />
                   <span aria-hidden className="flex-1" />
                   <SlotMeta maxGroupSize={slot.maxGroupSize} capacityShape={rawSlot?.capacityShape} />
+                  <SlotOptionsButton
+                    isOpen={optionsSlotId === slot._id}
+                    onClick={() => setOptionsSlotId((current) => (current === slot._id ? null : slot._id))}
+                    label={`Options du créneau ${slot.timeKey}`}
+                  />
                   <Switch
                     checked={slot.isOpen}
                     onCheckedChange={(open) => onSlotToggle(slot._id, open)}
                     aria-label={`${slot.isOpen ? "Fermer" : "Ouvrir"} le créneau ${slot.timeKey}`}
                     className="shrink-0"
-                  />
-                  <SlotOptionsButton
-                    isOpen={optionsSlotId === slot._id}
-                    onClick={() => setOptionsSlotId((current) => (current === slot._id ? null : slot._id))}
-                    label={`Options du créneau ${slot.timeKey}`}
                   />
                 </div>
 
