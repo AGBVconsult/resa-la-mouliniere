@@ -8,11 +8,15 @@
  *
  * - boutons −/+ ronds (zone tactile de 36×44 px), pas de 1 ;
  * - appui long = répétition accélérée.
+ *
+ * `layout="inline"` reprend l'en-tête de créneau de la liste des réservations :
+ * « x dispo » coloré selon le remplissage, séparateur, puis −/+ sans bordure.
  */
 
 import { useEffect, useRef } from "react";
 import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BRUME_GAUGE, getGaugeLevel } from "@/lib/constants/brume";
 import { triggerHaptic } from "@/lib/utils/haptics";
 import {
   clampRemainingCovers,
@@ -40,6 +44,8 @@ interface CoverStepperProps {
    * sans dépasser la zone tactile de 44 px de haut.
    */
   large?: boolean;
+  /** `stepper` : − valeur + (défaut) ; `inline` : « x dispo » | − + (style en-tête de créneau). */
+  layout?: "stepper" | "inline";
 }
 
 export function CoverStepper({
@@ -50,6 +56,7 @@ export function CoverStepper({
   isModified,
   valueClassName,
   large,
+  layout = "stepper",
 }: CoverStepperProps) {
 
   // Références à jour pour la répétition de l'appui long (évite les closures périmées).
@@ -124,6 +131,17 @@ export function CoverStepper({
 
   const renderStepButton = (delta: number) => {
     const isDisabled = isStepDisabled(delta);
+    if (layout === "inline") {
+      return (
+        <button
+          {...stepButtonProps(delta)}
+          aria-label={delta < 0 ? "Retirer un couvert" : "Ajouter un couvert"}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-700 touch-manipulation transition-colors active:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:text-slate-300"
+        >
+          {delta < 0 ? <Minus size={20} strokeWidth={2.2} /> : <Plus size={20} strokeWidth={2.2} />}
+        </button>
+      );
+    }
     return (
       <button
         {...stepButtonProps(delta)}
@@ -153,6 +171,35 @@ export function CoverStepper({
     );
   };
 
+  const modifiedDot = isModified && (
+    <span
+      className="absolute -right-0.5 -top-1 h-1.5 w-1.5 rounded-full bg-emerald-500"
+      aria-label="Modifié, non enregistré"
+    />
+  );
+
+  if (layout === "inline") {
+    const gauge = BRUME_GAUGE[getGaugeLevel(reservedCovers, value + reservedCovers)];
+    return (
+      <div
+        className={cn("flex items-center select-none", disabled && "opacity-50")}
+        title={reservedCovers > 0 ? `${reservedCovers} réservé${reservedCovers > 1 ? "s" : ""}` : undefined}
+      >
+        <span
+          className={cn("relative min-w-[5.5rem] tabular-nums", valueClassName)}
+          style={{ color: gauge.ink }}
+          aria-live="polite"
+        >
+          {value > 0 ? `${value} dispo` : "complet"}
+          {modifiedDot}
+        </span>
+        <span aria-hidden className="mr-1.5 h-5 w-px bg-slate-200" />
+        {renderStepButton(-1)}
+        {renderStepButton(1)}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn("flex items-center select-none", disabled && "opacity-50")}
@@ -170,12 +217,7 @@ export function CoverStepper({
         aria-live="polite"
       >
         {value}
-        {isModified && (
-          <span
-            className="absolute -right-0.5 -top-1 h-1.5 w-1.5 rounded-full bg-emerald-500"
-            aria-label="Modifié, non enregistré"
-          />
-        )}
+        {modifiedDot}
       </span>
       {renderStepButton(1)}
     </div>
