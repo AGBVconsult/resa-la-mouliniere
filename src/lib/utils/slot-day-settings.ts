@@ -8,6 +8,8 @@ export interface SlotFromServer<TId extends string = string> {
   timeKey: string;
   isOpen: boolean;
   capacity: number;
+  /** Taille de groupe maximale (null = groupe libre). */
+  maxGroupSize?: number | null;
 }
 
 export interface SlotState<TId extends string = string> {
@@ -17,6 +19,9 @@ export interface SlotState<TId extends string = string> {
   capacity: number;
   originalIsOpen: boolean;
   originalCapacity: number;
+  /** Taille de groupe maximale (null = groupe libre). */
+  maxGroupSize: number | null;
+  originalMaxGroupSize: number | null;
 }
 
 /**
@@ -45,6 +50,8 @@ export function mergeSlotStates<TId extends string>(
         capacity: slot.capacity,
         originalIsOpen: slot.isOpen,
         originalCapacity: slot.capacity,
+        maxGroupSize: slot.maxGroupSize ?? null,
+        originalMaxGroupSize: slot.maxGroupSize ?? null,
       };
     }
 
@@ -53,8 +60,42 @@ export function mergeSlotStates<TId extends string>(
       timeKey: slot.timeKey,
       originalIsOpen: slot.isOpen,
       originalCapacity: slot.capacity,
+      originalMaxGroupSize: slot.maxGroupSize ?? null,
     };
   });
+}
+
+/** Le créneau a-t-il une modification locale non enregistrée ? */
+export function isSlotModified(slot: SlotState<string>): boolean {
+  return (
+    slot.isOpen !== slot.originalIsOpen ||
+    slot.capacity !== slot.originalCapacity ||
+    slot.maxGroupSize !== slot.originalMaxGroupSize
+  );
+}
+
+/**
+ * Mise à jour à envoyer à `slots.batchUpdateSlots` : uniquement les champs modifiés.
+ * Réenvoyer une capacité inchangée ferait passer une typologie active « à revoir »
+ * (PRD-013 §31).
+ */
+export function buildSlotUpdate<TId extends string>(slot: SlotState<TId>) {
+  return {
+    slotId: slot._id,
+    ...(slot.isOpen !== slot.originalIsOpen ? { isOpen: slot.isOpen } : {}),
+    ...(slot.capacity !== slot.originalCapacity ? { capacity: slot.capacity } : {}),
+    ...(slot.maxGroupSize !== slot.originalMaxGroupSize ? { maxGroupSize: slot.maxGroupSize } : {}),
+  };
+}
+
+/** Taille de groupe proposée quand on limite un créneau en « groupe libre ». */
+export const DEFAULT_LIMITED_GROUP_SIZE = 15;
+/** Bornes de la taille de groupe maximale réglable sur un créneau. */
+export const MIN_GROUP_SIZE = 1;
+export const MAX_GROUP_SIZE = 50;
+
+export function clampGroupSize(value: number): number {
+  return Math.min(MAX_GROUP_SIZE, Math.max(MIN_GROUP_SIZE, Math.round(value)));
 }
 
 /**

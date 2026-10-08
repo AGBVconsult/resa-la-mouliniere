@@ -5,6 +5,9 @@ import {
   capacityFromRemainingCovers,
   clampRemainingCovers,
   coverLevel,
+  isSlotModified,
+  buildSlotUpdate,
+  clampGroupSize,
   type SlotState,
 } from "../src/lib/utils/slot-day-settings";
 
@@ -29,6 +32,8 @@ const local = (
   capacity,
   originalIsOpen,
   originalCapacity,
+  maxGroupSize: null,
+  originalMaxGroupSize: null,
 });
 
 describe("mergeSlotStates", () => {
@@ -43,8 +48,19 @@ describe("mergeSlotStates", () => {
         capacity: 50,
         originalIsOpen: true,
         originalCapacity: 50,
+        maxGroupSize: null,
+        originalMaxGroupSize: null,
       },
     ]);
+  });
+
+  it("reprend la taille de groupe du serveur et conserve la modification locale", () => {
+    const [init] = mergeSlotStates([{ ...server("a", "19:00", true, 50), maxGroupSize: 15 }], []);
+    expect(init).toMatchObject({ maxGroupSize: 15, originalMaxGroupSize: 15 });
+
+    const edited = { ...init, maxGroupSize: null };
+    const [merged] = mergeSlotStates([{ ...server("a", "19:00", true, 50), maxGroupSize: 8 }], [edited]);
+    expect(merged).toMatchObject({ maxGroupSize: null, originalMaxGroupSize: 8 });
   });
 
   it("fait apparaître un créneau ajouté sans perdre les modifications en cours", () => {
@@ -81,6 +97,26 @@ describe("mergeSlotStates", () => {
       originalIsOpen: false,
       originalCapacity: 20,
     });
+  });
+});
+
+describe("modifications d'un créneau", () => {
+  it("détecte un changement de taille de groupe", () => {
+    const slot = local("a", "19:00", true, 50);
+    expect(isSlotModified(slot)).toBe(false);
+    expect(isSlotModified({ ...slot, maxGroupSize: 6 })).toBe(true);
+  });
+
+  it("n'envoie que les champs modifiés", () => {
+    const slot = { ...local("a", "19:00", true, 50), maxGroupSize: 6, originalMaxGroupSize: null };
+    expect(buildSlotUpdate(slot)).toEqual({ slotId: "a", maxGroupSize: 6 });
+    expect(buildSlotUpdate({ ...slot, maxGroupSize: null, capacity: 40 })).toEqual({ slotId: "a", capacity: 40 });
+  });
+
+  it("borne la taille de groupe entre 1 et 50", () => {
+    expect(clampGroupSize(0)).toBe(1);
+    expect(clampGroupSize(51)).toBe(50);
+    expect(clampGroupSize(6)).toBe(6);
   });
 });
 

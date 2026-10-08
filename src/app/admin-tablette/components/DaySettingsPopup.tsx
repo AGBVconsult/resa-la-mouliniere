@@ -6,13 +6,19 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { X, Loader2, Clock, Users, Plus } from "lucide-react";
+import { X, Loader2, Clock, Users, UsersRound, Plus, Minus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
   mergeSlotStates,
   toRemainingCovers,
   capacityFromRemainingCovers,
+  isSlotModified,
+  buildSlotUpdate,
+  clampGroupSize,
+  DEFAULT_LIMITED_GROUP_SIZE,
+  MIN_GROUP_SIZE,
+  MAX_GROUP_SIZE,
   type SlotState,
 } from "@/lib/utils/slot-day-settings";
 import { CoverStepper } from "@/components/admin/CoverStepper";
@@ -72,10 +78,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
   }, [dinnerSlots]);
 
   const changeCount = useMemo(
-    () =>
-      [...lunchSlots, ...dinnerSlots].filter(
-        (s) => s.isOpen !== s.originalIsOpen || s.capacity !== s.originalCapacity
-      ).length,
+    () => [...lunchSlots, ...dinnerSlots].filter(isSlotModified).length,
     [lunchSlots, dinnerSlots]
   );
 
@@ -134,6 +137,17 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
     }
   };
 
+  const handleMaxGroupSizeChange = (
+    service: "lunch" | "dinner",
+    slotId: Id<"slots">,
+    maxGroupSize: number | null
+  ) => {
+    const update = (prev: DaySlotState[]) =>
+      prev.map((s) => (s._id === slotId ? { ...s, maxGroupSize } : s));
+    if (service === "lunch") setLunchSlots(update);
+    else setDinnerSlots(update);
+  };
+
   const handleAddSlot = async (service: "lunch" | "dinner") => {
     if (!newSlotTime || !/^\d{2}:\d{2}$/.test(newSlotTime)) {
       return;
@@ -158,15 +172,8 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
     setIsSaving(true);
     try {
       const allSlots = [...lunchSlots, ...dinnerSlots];
-      const updates = allSlots
-        .filter((s) => s.isOpen !== s.originalIsOpen || s.capacity !== s.originalCapacity)
-        // N'envoyer que ce qui a changé : réenvoyer la capacité inchangée
-        // ferait passer une typologie active « à revoir » (PRD-013 §31).
-        .map((s) => ({
-          slotId: s._id,
-          ...(s.isOpen !== s.originalIsOpen ? { isOpen: s.isOpen } : {}),
-          ...(s.capacity !== s.originalCapacity ? { capacity: s.capacity } : {}),
-        }));
+      // N'envoyer que ce qui a changé (voir buildSlotUpdate).
+      const updates = allSlots.filter(isSlotModified).map(buildSlotUpdate);
 
       if (updates.length > 0) {
         await batchUpdateSlots({ updates });
@@ -222,6 +229,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
               rawSlots={slotsData.lunch}
               onSlotToggle={(id, open) => handleSlotToggle("lunch", id, open)}
               onCapacityChange={(id, cap) => handleCapacityChange("lunch", id, cap)}
+              onMaxGroupSizeChange={(id, size) => handleMaxGroupSizeChange("lunch", id, size)}
               isAddingSlot={isAddingSlot === "lunch"}
               onStartAddSlot={() => setIsAddingSlot("lunch")}
               onCancelAddSlot={() => setIsAddingSlot(null)}
@@ -241,6 +249,7 @@ export function DaySettingsPopup({ dateKey, onClose }: DaySettingsPopupProps) {
               rawSlots={slotsData.dinner}
               onSlotToggle={(id, open) => handleSlotToggle("dinner", id, open)}
               onCapacityChange={(id, cap) => handleCapacityChange("dinner", id, cap)}
+              onMaxGroupSizeChange={(id, size) => handleMaxGroupSizeChange("dinner", id, size)}
               isAddingSlot={isAddingSlot === "dinner"}
               onStartAddSlot={() => setIsAddingSlot("dinner")}
               onCancelAddSlot={() => setIsAddingSlot(null)}
@@ -282,6 +291,7 @@ interface ServiceSectionProps {
   rawSlots: RawSlot[];
   onSlotToggle: (id: Id<"slots">, open: boolean) => void;
   onCapacityChange: (id: Id<"slots">, capacity: number) => void;
+  onMaxGroupSizeChange: (id: Id<"slots">, maxGroupSize: number | null) => void;
   isAddingSlot: boolean;
   onStartAddSlot: () => void;
   onCancelAddSlot: () => void;
@@ -301,6 +311,7 @@ function ServiceSection({
   rawSlots,
   onSlotToggle,
   onCapacityChange,
+  onMaxGroupSizeChange,
   isAddingSlot,
   onStartAddSlot,
   onCancelAddSlot,
@@ -414,7 +425,13 @@ function ServiceSection({
                     />
                   </div>
 
-                  <div className="flex h-11 flex-1 min-w-0 items-center justify-end">
+                  <div className="flex h-11 flex-1 min-w-0 items-center justify-end gap-1.5">
+                    <GroupSizeChip
+                      value={slot.maxGroupSize}
+                      onChange={(size) => onMaxGroupSizeChange(slot._id, size)}
+                      disabled={!slot.isOpen}
+                      isModified={slot.maxGroupSize !== slot.originalMaxGroupSize}
+                    />
                     {rawSlot && (
                       <SlotCapacityShapeButton
                         capacityShape={rawSlot.capacityShape}
@@ -450,6 +467,73 @@ function ServiceSection({
           })
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Puce « groupe libre » / « max N » d'un créneau, même dessin que l'éditeur de période.
+ * Un toucher bascule entre groupe libre et limité ; − + règlent la taille une fois limitée.
+ */
+function GroupSizeChip({
+  value,
+  onChange,
+  disabled,
+  isModified,
+}: {
+  value: number | null;
+  onChange: (maxGroupSize: number | null) => void;
+  disabled?: boolean;
+  isModified?: boolean;
+}) {
+  const isLimited = value !== null;
+  return (
+    <div
+      className={cn(
+        "relative flex h-8 shrink-0 items-center rounded-full text-xs font-medium lg:h-9 lg:text-sm",
+        isLimited ? "bg-[#DEE7F0] text-[#2F5B86]" : "bg-[#F2F2F2] text-[#6E6E6E]",
+        disabled && "opacity-40"
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onChange(isLimited ? null : DEFAULT_LIMITED_GROUP_SIZE)}
+        disabled={disabled}
+        aria-pressed={isLimited}
+        aria-label={isLimited ? `Groupe limité à ${value} : rendre libre` : "Groupe libre : limiter la taille"}
+        className="flex h-full items-center gap-1 whitespace-nowrap rounded-full px-2.5 touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+      >
+        <UsersRound size={14} strokeWidth={1.75} />
+        <span className="tabular-nums">{isLimited ? `max ${value}` : "groupe libre"}</span>
+      </button>
+      {isLimited && (
+        <>
+          <button
+            type="button"
+            onClick={() => onChange(clampGroupSize(value - 1))}
+            disabled={disabled || value <= MIN_GROUP_SIZE}
+            aria-label="Réduire la taille de groupe maximale"
+            className="flex h-full w-7 items-center justify-center touch-manipulation disabled:opacity-40"
+          >
+            <Minus size={14} strokeWidth={2.2} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange(clampGroupSize(value + 1))}
+            disabled={disabled || value >= MAX_GROUP_SIZE}
+            aria-label="Augmenter la taille de groupe maximale"
+            className="flex h-full w-7 items-center justify-center pr-1 touch-manipulation disabled:opacity-40"
+          >
+            <Plus size={14} strokeWidth={2.2} />
+          </button>
+        </>
+      )}
+      {isModified && (
+        <span
+          className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500"
+          aria-label="Modifié, non enregistré"
+        />
+      )}
     </div>
   );
 }
