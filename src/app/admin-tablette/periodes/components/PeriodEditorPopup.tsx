@@ -7,7 +7,7 @@ import { AlertTriangle, Check, DoorClosed, Loader2, Moon, Plus, Sun, Trash2, X }
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { CoverStepper } from "@/components/admin/CoverStepper";
-import { GroupSizeChip } from "@/components/admin/GroupSizeChip";
+import { GroupSizeChip, GroupSizePanel } from "@/components/admin/GroupSizeChip";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { daysBetween, formatDate, type Period, type PeriodKind } from "../periodUtils";
@@ -294,6 +294,8 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () =
 
 function ServiceCard({ service, config, onChange }: { service: Service; config: ServiceConfig; onChange: (c: ServiceConfig) => void }) {
   const [newTime, setNewTime] = useState<string | null>(null);
+  // Créneau dont le panneau « taille de groupe » est ouvert (un seul à la fois).
+  const [openGroupTime, setOpenGroupTime] = useState<string | null>(null);
   const label = service === "lunch" ? "Midi" : "Soir";
   const Icon = service === "lunch" ? Sun : Moon;
 
@@ -354,49 +356,60 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
         <div className="bg-white rounded-2xl overflow-hidden divide-y divide-[#F3F3F3]">
           {config.slots.length === 0 && <p className="py-4 text-center text-sm text-[#8A8A8A]">Aucun créneau</p>}
           {config.slots.map((slot, index) => (
-            // Même ligne que « Réglages du jour » : heure · x dispo · − + · groupe · interrupteur.
-            <div
-              key={slot.timeKey}
-              className={cn("flex flex-wrap items-center gap-x-1.5 px-3 transition-colors", !slot.isActive && "bg-slate-100/50")}
-            >
-              <div className="flex h-11 items-center min-w-[46px] lg:min-w-[52px]">
-                <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
-              </div>
-              <div className="shrink-0">
-                <CoverStepper
-                  value={slot.capacity}
-                  reservedCovers={0}
-                  onChange={(capacity) => updateSlot(index, { capacity })}
-                  disabled={!slot.isActive}
-                  valueClassName="text-sm font-bold lg:text-base"
-                  layout="inline"
-                  min={MIN_CAPACITY}
-                  max={MAX_CAPACITY}
-                />
-              </div>
-              <div className="ml-auto flex h-11 shrink-0 items-center gap-1">
-                <GroupSizeChip
-                  value={slot.maxGroupSize}
-                  onChange={(maxGroupSize) => updateSlot(index, { maxGroupSize })}
-                  disabled={!slot.isActive}
-                />
-                <div className="flex h-11 items-center">
-                  <Switch
-                    checked={slot.isActive}
-                    onCheckedChange={() => updateSlot(index, { isActive: !slot.isActive })}
-                    aria-label={`Créneau ${slot.timeKey} actif`}
-                    className="origin-right scale-75 lg:scale-90"
+            // Même ligne que « Réglages du jour » : heure · x dispo | − + | groupe | interrupteur · ×.
+            <div key={slot.timeKey} className={cn("px-3 transition-colors", !slot.isActive && "bg-slate-100/50")}>
+              <div className="flex flex-wrap items-center gap-x-1.5">
+                <div className="flex h-11 items-center min-w-[46px] lg:min-w-[52px]">
+                  <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
+                </div>
+                <div className="shrink-0">
+                  <CoverStepper
+                    value={slot.capacity}
+                    reservedCovers={0}
+                    onChange={(capacity) => updateSlot(index, { capacity })}
+                    disabled={!slot.isActive}
+                    valueClassName="text-sm font-bold lg:text-base"
+                    layout="inline"
+                    min={MIN_CAPACITY}
+                    max={MAX_CAPACITY}
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onChange({ ...config, slots: config.slots.filter((_, i) => i !== index) })}
-                  aria-label={`Supprimer le créneau ${slot.timeKey}`}
-                  className="w-8 h-11 shrink-0 rounded-full flex items-center justify-center text-[#8A8A8A] hover:text-red-600 transition-colors"
-                >
-                  <X size={16} />
-                </button>
+                <div className="flex h-11 shrink-0 items-center gap-1.5">
+                  <span aria-hidden className="h-5 w-px bg-slate-200" />
+                  <GroupSizeChip
+                    value={slot.maxGroupSize}
+                    isOpen={openGroupTime === slot.timeKey}
+                    onClick={() => setOpenGroupTime((current) => (current === slot.timeKey ? null : slot.timeKey))}
+                    disabled={!slot.isActive}
+                  />
+                </div>
+                <div className="ml-auto flex h-11 shrink-0 items-center gap-1">
+                  <span aria-hidden className="mr-0.5 h-5 w-px bg-slate-200" />
+                  <div className="flex h-11 items-center">
+                    <Switch
+                      checked={slot.isActive}
+                      onCheckedChange={() => updateSlot(index, { isActive: !slot.isActive })}
+                      aria-label={`Créneau ${slot.timeKey} actif`}
+                      className="origin-right scale-75 lg:scale-90"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onChange({ ...config, slots: config.slots.filter((_, i) => i !== index) })}
+                    aria-label={`Supprimer le créneau ${slot.timeKey}`}
+                    className="w-8 h-11 shrink-0 rounded-full flex items-center justify-center text-[#8A8A8A] hover:text-red-600 transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
               </div>
+              {slot.isActive && openGroupTime === slot.timeKey && (
+                <GroupSizePanel
+                  value={slot.maxGroupSize}
+                  onChange={(maxGroupSize) => updateSlot(index, { maxGroupSize })}
+                  onClose={() => setOpenGroupTime(null)}
+                />
+              )}
             </div>
           ))}
         </div>

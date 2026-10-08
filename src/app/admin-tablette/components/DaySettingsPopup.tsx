@@ -18,7 +18,7 @@ import {
   type SlotState,
 } from "@/lib/utils/slot-day-settings";
 import { CoverStepper } from "@/components/admin/CoverStepper";
-import { GroupSizeChip } from "@/components/admin/GroupSizeChip";
+import { GroupSizeChip, GroupSizePanel } from "@/components/admin/GroupSizeChip";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 import {
   SlotCapacityShapeButton,
@@ -319,8 +319,12 @@ function ServiceSection({
   onConfirmAddSlot,
 }: ServiceSectionProps) {
   const rawSlotById = new Map(rawSlots.map((s) => [s._id, s]));
-  // Un seul éditeur de typologie ouvert à la fois par service.
-  const [openShapeSlotId, setOpenShapeSlotId] = useState<Id<"slots"> | null>(null);
+  // Un seul panneau ouvert à la fois par service : taille de groupe ou tables restantes.
+  const [openPanel, setOpenPanel] = useState<{ slotId: Id<"slots">; kind: "group" | "tables" } | null>(null);
+  const togglePanel = (slotId: Id<"slots">, kind: "group" | "tables") =>
+    setOpenPanel((current) => (current?.slotId === slotId && current.kind === kind ? null : { slotId, kind }));
+  const isPanelOpen = (slotId: Id<"slots">, kind: "group" | "tables") =>
+    openPanel?.slotId === slotId && openPanel.kind === kind;
   return (
     <div className="bg-slate-50 rounded-3xl overflow-hidden">
       {/* Service Header */}
@@ -423,20 +427,24 @@ function ServiceSection({
                     />
                   </div>
 
-                  <div className="ml-auto flex h-11 shrink-0 items-center gap-1">
+                  <div className="flex h-11 shrink-0 items-center gap-1.5">
+                    <span aria-hidden className="h-5 w-px bg-slate-200" />
                     <GroupSizeChip
                       value={slot.maxGroupSize}
-                      onChange={(size) => onMaxGroupSizeChange(slot._id, size)}
+                      isOpen={isPanelOpen(slot._id, "group")}
+                      onClick={() => togglePanel(slot._id, "group")}
                       disabled={!slot.isOpen}
                       isModified={slot.maxGroupSize !== slot.originalMaxGroupSize}
                     />
+                  </div>
+
+                  <div className="ml-auto flex h-11 shrink-0 items-center gap-1">
+                    <span aria-hidden className="mr-0.5 h-5 w-px bg-slate-200" />
                     {rawSlot && (
                       <SlotCapacityShapeButton
                         capacityShape={rawSlot.capacityShape}
-                        isOpen={openShapeSlotId === slot._id}
-                        onClick={() =>
-                          setOpenShapeSlotId((current) => (current === slot._id ? null : slot._id))
-                        }
+                        isOpen={isPanelOpen(slot._id, "tables")}
+                        onClick={() => togglePanel(slot._id, "tables")}
                         disabled={!slot.isOpen}
                       />
                     )}
@@ -450,12 +458,20 @@ function ServiceSection({
                   </div>
                 </div>
 
-                {rawSlot && openShapeSlotId === slot._id && (
+                {slot.isOpen && isPanelOpen(slot._id, "group") && (
+                  <GroupSizePanel
+                    value={slot.maxGroupSize}
+                    onChange={(size) => onMaxGroupSizeChange(slot._id, size)}
+                    onClose={() => setOpenPanel(null)}
+                  />
+                )}
+
+                {rawSlot && isPanelOpen(slot._id, "tables") && (
                   <SlotCapacityShapeEditor
                     slotId={slot._id}
                     remainingCapacity={rawSlot.remainingCapacity}
                     capacityShape={rawSlot.capacityShape}
-                    onClose={() => setOpenShapeSlotId(null)}
+                    onClose={() => setOpenPanel(null)}
                     large
                   />
                 )}
