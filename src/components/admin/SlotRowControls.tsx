@@ -141,7 +141,7 @@ export function SlotCoverStepper({
           if (e.detail === 0) step(delta);
         }}
         onContextMenu={(e) => e.preventDefault()}
-        className="flex h-11 w-10 shrink-0 items-center justify-center rounded-full text-slate-700 touch-manipulation transition-colors active:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:text-slate-300"
+        className="flex h-11 w-9 shrink-0 items-center justify-center rounded-full text-slate-700 touch-manipulation transition-colors active:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:text-slate-300"
       >
         {delta < 0 ? <Minus size={20} strokeWidth={2.2} /> : <Plus size={20} strokeWidth={2.2} />}
       </button>
@@ -201,7 +201,7 @@ export function SlotMeta({
   const isActive = (capacityShape?.enabled ?? false) || needsReview;
   const tables = isActive ? (capacityShape?.buckets ?? []).reduce((sum, b) => sum + b.quantity, 0) : 0;
   return (
-    <span className="flex w-[58px] shrink-0 items-center justify-end gap-1.5 text-xs font-bold tabular-nums">
+    <span className="flex w-[52px] shrink-0 items-center justify-end gap-1 text-xs font-bold tabular-nums">
       {maxGroupSize !== null && (
         <span className="flex items-center gap-0.5 text-[#2F5B86]" title={`Groupe de ${maxGroupSize} maximum`}>
           <UsersRound size={14} strokeWidth={1.8} aria-hidden />
@@ -231,7 +231,7 @@ export function SlotOptionsButton({ isOpen, onClick, label }: { isOpen: boolean;
       aria-label={label}
       {...{ [SLOT_POPOVER_ATTR]: "" }}
       className={cn(
-        "flex h-11 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 touch-manipulation transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
+        "flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 touch-manipulation transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
         isOpen && "bg-slate-100 text-slate-900"
       )}
     >
