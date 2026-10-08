@@ -407,7 +407,8 @@ function ServiceSection({
                 )}
               >
                 {/* Grille : heure | puce dispo | puce groupe | puce tables | — | interrupteur.
-                    Chaque réglage s'ouvre en 2e rangée, à partir de la colonne de sa puce. */}
+                    Chaque réglage s'ouvre en 2e rangée, à partir de la colonne de sa puce ;
+                    les tables restantes occupent toute la largeur. */}
                 <div className="grid grid-cols-[auto_auto_auto_auto_minmax(0,1fr)_auto] items-center gap-x-1.5">
                   <div className="flex h-[52px] items-center min-w-[46px] lg:min-w-[52px]">
                     <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
@@ -480,7 +481,7 @@ function ServiceSection({
                   )}
 
                   {rawSlot && isPanelOpen(slot._id, "tables") && (
-                    <div className="col-start-4 col-end-[-1] mb-2.5">
+                    <div className="col-span-full mb-2.5">
                       <SlotCapacityShapeEditor
                         slotId={slot._id}
                         remainingCapacity={rawSlot.remainingCapacity}
