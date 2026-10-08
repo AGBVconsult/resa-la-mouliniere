@@ -18,11 +18,9 @@ import {
   DEFAULT_LIMITED_GROUP_SIZE,
   type SlotState,
 } from "@/lib/utils/slot-day-settings";
-import { CoverStepper } from "@/components/admin/CoverStepper";
-import { GroupSizeChip, GroupSizePanel } from "@/components/admin/GroupSizeChip";
+import { CoverChip, CoverPanel, GroupSizeChip, GroupSizePanel, TablesChip } from "@/components/admin/SlotChips";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 import {
-  SlotCapacityShapeButton,
   SlotCapacityShapeEditor,
   type CapacityShapeSummaryDto,
 } from "@/components/admin/SlotCapacityShapeEditor";
@@ -321,10 +319,10 @@ function ServiceSection({
 }: ServiceSectionProps) {
   const rawSlotById = new Map(rawSlots.map((s) => [s._id, s]));
   // Un seul panneau ouvert à la fois par service : taille de groupe ou tables restantes.
-  const [openPanel, setOpenPanel] = useState<{ slotId: Id<"slots">; kind: "group" | "tables" } | null>(null);
-  const togglePanel = (slotId: Id<"slots">, kind: "group" | "tables") =>
+  const [openPanel, setOpenPanel] = useState<{ slotId: Id<"slots">; kind: "covers" | "group" | "tables" } | null>(null);
+  const togglePanel = (slotId: Id<"slots">, kind: "covers" | "group" | "tables") =>
     setOpenPanel((current) => (current?.slotId === slotId && current.kind === kind ? null : { slotId, kind }));
-  const isPanelOpen = (slotId: Id<"slots">, kind: "group" | "tables") =>
+  const isPanelOpen = (slotId: Id<"slots">, kind: "covers" | "group" | "tables") =>
     openPanel?.slotId === slotId && openPanel.kind === kind;
   return (
     <div className="bg-slate-50 rounded-3xl overflow-hidden">
@@ -408,55 +406,48 @@ function ServiceSection({
                   slot.isOpen ? "bg-transparent" : "bg-slate-100/50"
                 )}
               >
-                {/* Grille : heure | stepper | séparateur | puce groupe | tables | interrupteur.
-                    Le panneau « taille de groupe » occupe la 2e rangée, aligné sous la puce. */}
-                <div className="grid grid-cols-[auto_auto_auto_minmax(auto,1fr)_auto_auto] items-center gap-x-1.5">
-                  <div className="flex h-11 items-center min-w-[46px] lg:min-w-[52px]">
+                {/* Grille : heure | puce dispo | puce groupe | puce tables | — | interrupteur.
+                    Chaque réglage s'ouvre en 2e rangée, à partir de la colonne de sa puce. */}
+                <div className="grid grid-cols-[auto_auto_auto_auto_minmax(0,1fr)_auto] items-center gap-x-1.5">
+                  <div className="flex h-[52px] items-center min-w-[46px] lg:min-w-[52px]">
                     <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
                   </div>
 
-                  <div className="shrink-0">
-                    <CoverStepper
-                      value={toRemainingCovers(slot.capacity, reservedCovers)}
-                      reservedCovers={reservedCovers}
-                      onChange={(remaining) =>
-                        onCapacityChange(slot._id, capacityFromRemainingCovers(remaining, reservedCovers))
+                  <CoverChip
+                    available={toRemainingCovers(slot.capacity, reservedCovers)}
+                    reservedCovers={reservedCovers}
+                    isOpen={isPanelOpen(slot._id, "covers")}
+                    onClick={() => togglePanel(slot._id, "covers")}
+                    disabled={!slot.isOpen}
+                    isModified={slot.capacity !== slot.originalCapacity}
+                  />
+
+                  <GroupSizeChip
+                    value={slot.maxGroupSize}
+                    isOpen={isPanelOpen(slot._id, "group")}
+                    onClick={() => {
+                      // Ouvrir la puce d'un créneau en groupe libre propose d'emblée max 6.
+                      if (slot.maxGroupSize === null && !isPanelOpen(slot._id, "group")) {
+                        onMaxGroupSizeChange(slot._id, DEFAULT_LIMITED_GROUP_SIZE);
                       }
-                      disabled={!slot.isOpen}
-                      isModified={slot.capacity !== slot.originalCapacity}
-                      valueClassName="text-sm font-bold lg:text-base"
-                      layout="inline"
-                    />
-                  </div>
+                      togglePanel(slot._id, "group");
+                    }}
+                    disabled={!slot.isOpen}
+                    isModified={slot.maxGroupSize !== slot.originalMaxGroupSize}
+                  />
 
-                  <span aria-hidden className="h-5 w-px bg-slate-200" />
-                  <div className="flex h-11 items-center justify-self-start">
-                    <GroupSizeChip
-                      value={slot.maxGroupSize}
-                      isOpen={isPanelOpen(slot._id, "group")}
-                      onClick={() => {
-                        // Ouvrir la puce d'un créneau en groupe libre propose d'emblée max 6.
-                        if (slot.maxGroupSize === null && !isPanelOpen(slot._id, "group")) {
-                          onMaxGroupSizeChange(slot._id, DEFAULT_LIMITED_GROUP_SIZE);
-                        }
-                        togglePanel(slot._id, "group");
-                      }}
+                  {rawSlot ? (
+                    <TablesChip
+                      capacityShape={rawSlot.capacityShape}
+                      isOpen={isPanelOpen(slot._id, "tables")}
+                      onClick={() => togglePanel(slot._id, "tables")}
                       disabled={!slot.isOpen}
-                      isModified={slot.maxGroupSize !== slot.originalMaxGroupSize}
                     />
-                  </div>
+                  ) : (
+                    <span />
+                  )}
 
-                  <div className="flex h-11 items-center gap-1">
-                    <span aria-hidden className="mr-0.5 h-5 w-px bg-slate-200" />
-                    {rawSlot && (
-                      <SlotCapacityShapeButton
-                        capacityShape={rawSlot.capacityShape}
-                        isOpen={isPanelOpen(slot._id, "tables")}
-                        onClick={() => togglePanel(slot._id, "tables")}
-                        disabled={!slot.isOpen}
-                      />
-                    )}
-                  </div>
+                  <span />
                   <div className="flex h-11 items-center">
                     <Switch
                       checked={slot.isOpen}
@@ -465,8 +456,21 @@ function ServiceSection({
                     />
                   </div>
 
+                  {slot.isOpen && isPanelOpen(slot._id, "covers") && (
+                    <div className="col-start-2 col-end-[-1]">
+                      <CoverPanel
+                        value={toRemainingCovers(slot.capacity, reservedCovers)}
+                        originalValue={toRemainingCovers(slot.originalCapacity, reservedCovers)}
+                        onChange={(remaining) =>
+                          onCapacityChange(slot._id, capacityFromRemainingCovers(remaining, reservedCovers))
+                        }
+                        onClose={() => setOpenPanel(null)}
+                      />
+                    </div>
+                  )}
+
                   {slot.isOpen && isPanelOpen(slot._id, "group") && (
-                    <div className="col-start-4 col-end-[-1]">
+                    <div className="col-start-3 col-end-[-1]">
                       <GroupSizePanel
                         value={slot.maxGroupSize}
                         onChange={(size) => onMaxGroupSizeChange(slot._id, size)}
@@ -474,17 +478,19 @@ function ServiceSection({
                       />
                     </div>
                   )}
-                </div>
 
-                {rawSlot && isPanelOpen(slot._id, "tables") && (
-                  <SlotCapacityShapeEditor
-                    slotId={slot._id}
-                    remainingCapacity={rawSlot.remainingCapacity}
-                    capacityShape={rawSlot.capacityShape}
-                    onClose={() => setOpenPanel(null)}
-                    large
-                  />
-                )}
+                  {rawSlot && isPanelOpen(slot._id, "tables") && (
+                    <div className="col-start-4 col-end-[-1] mb-2.5">
+                      <SlotCapacityShapeEditor
+                        slotId={slot._id}
+                        remainingCapacity={rawSlot.remainingCapacity}
+                        capacityShape={rawSlot.capacityShape}
+                        onClose={() => setOpenPanel(null)}
+                        large
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })

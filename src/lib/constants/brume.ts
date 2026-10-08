@@ -27,14 +27,13 @@ export type GaugeLevel = "low" | "medium" | "high" | "full";
 
 /**
  * Jauge de remplissage d'un créneau : la couleur suit le taux de remplissage.
- * `bar` colore la barre, `text` le libellé « x dispo » (plus clair, lisible sur le bandeau foncé),
- * `ink` le même libellé sur fond clair (modales de réglage).
+ * `bar` colore la barre, `text` le libellé « x dispo » (plus clair, lisible sur le bandeau foncé).
  */
-export const BRUME_GAUGE: Record<GaugeLevel, { bar: string; text: string; ink: string }> = {
-  low: { bar: "#22C55E", text: "#86EFAC", ink: "#16A34A" }, // < 50 % : vert
-  medium: { bar: "#FACC15", text: "#FDE68A", ink: "#CA8A04" }, // 50–79 % : jaune
-  high: { bar: "#F97316", text: "#FDBA74", ink: "#EA580C" }, // 80–99 % : orange
-  full: { bar: "#EF4444", text: "#FCA5A5", ink: "#DC2626" }, // complet : rouge
+export const BRUME_GAUGE: Record<GaugeLevel, { bar: string; text: string }> = {
+  low: { bar: "#22C55E", text: "#86EFAC" }, // < 50 % : vert
+  medium: { bar: "#FACC15", text: "#FDE68A" }, // 50–79 % : jaune
+  high: { bar: "#F97316", text: "#FDBA74" }, // 80–99 % : orange
+  full: { bar: "#EF4444", text: "#FCA5A5" }, // complet : rouge
 };
 
 export function getGaugeLevel(covers: number, capacity: number): GaugeLevel {
