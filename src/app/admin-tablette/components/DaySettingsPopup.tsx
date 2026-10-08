@@ -396,9 +396,8 @@ function ServiceSection({
                 )}
               >
                 <div className="flex items-start gap-2">
-                  <div className="flex h-11 items-center gap-1.5 text-slate-600 min-w-[60px] lg:min-w-[76px]">
-                    <Clock size={14} className="lg:h-[18px] lg:w-[18px]" />
-                    <span className="font-mono text-xs font-medium lg:text-base">{slot.timeKey}</span>
+                  <div className="flex h-11 items-center min-w-[52px] lg:min-w-[64px]">
+                    <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
                   </div>
 
                   <div className="shrink-0">
@@ -410,8 +409,8 @@ function ServiceSection({
                       }
                       disabled={!slot.isOpen}
                       isModified={slot.capacity !== slot.originalCapacity}
-                      valueClassName="font-mono text-xs font-medium text-slate-600 lg:text-base"
-                      large
+                      valueClassName="text-sm font-bold lg:text-base"
+                      layout="inline"
                     />
                   </div>
 
