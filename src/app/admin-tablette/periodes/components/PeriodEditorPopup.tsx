@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { AlertTriangle, Check, DoorClosed, Loader2, Minus, Moon, Plus, Sun, Trash2, UsersRound, X } from "lucide-react";
+import { AlertTriangle, Check, DoorClosed, Loader2, Moon, Plus, Sun, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LIMITED_GROUP_SIZE } from "@/lib/utils/slot-day-settings";
+import { Switch } from "@/components/ui/switch";
+import { CoverStepper } from "@/components/admin/CoverStepper";
+import { GroupSizeChip } from "@/components/admin/GroupSizeChip";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { daysBetween, formatDate, type Period, type PeriodKind } from "../periodUtils";
@@ -164,7 +166,7 @@ export function PeriodEditorPopup({ kind, period, onClose, onDelete }: PeriodEdi
     <>
       {/* Centrage par flex : un translate serait écrasé par l'animation d'entrée */}
       <div
-        className="fixed inset-0 z-[200] flex items-center justify-center p-4 pt-[calc(1rem+env(safe-area-inset-top))] bg-black/40 backdrop-blur-[2px]"
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 pt-[calc(1rem+env(safe-area-inset-top))] md:p-6 md:pt-[calc(1.5rem+env(safe-area-inset-top))] bg-black/40 backdrop-blur-[2px]"
         onClick={onClose}
       >
       <div
@@ -174,7 +176,8 @@ export function PeriodEditorPopup({ kind, period, onClose, onDelete }: PeriodEdi
         onClick={(e) => e.stopPropagation()}
         className={cn(
           "w-full max-h-full bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200",
-          isOuverture ? "max-w-[1000px]" : "max-w-[560px]"
+          // Ouverture : même marge de chaque côté de l'écran que « Réglages du jour ».
+          isOuverture ? "md:h-full" : "max-w-[560px]"
         )}
       >
         <div className="flex items-center justify-between px-5 py-3.5 shrink-0">
@@ -351,72 +354,49 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
         <div className="bg-white rounded-2xl overflow-hidden divide-y divide-[#F3F3F3]">
           {config.slots.length === 0 && <p className="py-4 text-center text-sm text-[#8A8A8A]">Aucun créneau</p>}
           {config.slots.map((slot, index) => (
-            <div key={slot.timeKey} className="flex items-center gap-1.5 px-2 py-1">
-              <span className={cn("w-12 shrink-0 text-[15px] font-semibold tabular-nums", !slot.isActive && "opacity-40")}>{slot.timeKey}</span>
-              <div className={cn("flex items-center h-8 shrink-0 rounded-full bg-[#F2F2F2]", !slot.isActive && "opacity-40")}>
+            // Même ligne que « Réglages du jour » : heure · x dispo · − + · groupe · interrupteur.
+            <div
+              key={slot.timeKey}
+              className={cn("flex flex-wrap items-center gap-x-1.5 px-3 transition-colors", !slot.isActive && "bg-slate-100/50")}
+            >
+              <div className="flex h-11 items-center min-w-[46px] lg:min-w-[52px]">
+                <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
+              </div>
+              <div className="shrink-0">
+                <CoverStepper
+                  value={slot.capacity}
+                  reservedCovers={0}
+                  onChange={(capacity) => updateSlot(index, { capacity })}
+                  disabled={!slot.isActive}
+                  valueClassName="text-sm font-bold lg:text-base"
+                  layout="inline"
+                  min={MIN_CAPACITY}
+                  max={MAX_CAPACITY}
+                />
+              </div>
+              <div className="ml-auto flex h-11 shrink-0 items-center gap-1">
+                <GroupSizeChip
+                  value={slot.maxGroupSize}
+                  onChange={(maxGroupSize) => updateSlot(index, { maxGroupSize })}
+                  disabled={!slot.isActive}
+                />
+                <div className="flex h-11 items-center">
+                  <Switch
+                    checked={slot.isActive}
+                    onCheckedChange={() => updateSlot(index, { isActive: !slot.isActive })}
+                    aria-label={`Créneau ${slot.timeKey} actif`}
+                    className="origin-right scale-75 lg:scale-90"
+                  />
+                </div>
                 <button
                   type="button"
-                  onClick={() => updateSlot(index, { capacity: Math.max(MIN_CAPACITY, slot.capacity - 1) })}
-                  disabled={slot.capacity <= MIN_CAPACITY}
-                  aria-label={`Retirer une place à ${slot.timeKey}`}
-                  className="w-8 h-8 flex items-center justify-center text-[#464646] disabled:opacity-40"
+                  onClick={() => onChange({ ...config, slots: config.slots.filter((_, i) => i !== index) })}
+                  aria-label={`Supprimer le créneau ${slot.timeKey}`}
+                  className="w-8 h-11 shrink-0 rounded-full flex items-center justify-center text-[#8A8A8A] hover:text-red-600 transition-colors"
                 >
-                  <Minus size={16} strokeWidth={2.2} />
-                </button>
-                <span className="min-w-[26px] text-center text-[15px] font-semibold tabular-nums">{slot.capacity}</span>
-                <button
-                  type="button"
-                  onClick={() => updateSlot(index, { capacity: Math.min(MAX_CAPACITY, slot.capacity + 1) })}
-                  disabled={slot.capacity >= MAX_CAPACITY}
-                  aria-label={`Ajouter une place à ${slot.timeKey}`}
-                  className="w-8 h-8 flex items-center justify-center text-[#464646] disabled:opacity-40"
-                >
-                  <Plus size={16} strokeWidth={2.2} />
+                  <X size={16} />
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => updateSlot(index, { maxGroupSize: slot.maxGroupSize === null ? DEFAULT_LIMITED_GROUP_SIZE : null })}
-                aria-pressed={slot.maxGroupSize !== null}
-                className={cn(
-                  "h-7 px-2 flex items-center gap-1 rounded-full text-xs font-medium whitespace-nowrap",
-                  slot.maxGroupSize !== null ? "bg-[#DEE7F0] text-[#2F5B86]" : "bg-[#F2F2F2] text-[#6E6E6E]",
-                  !slot.isActive && "opacity-40"
-                )}
-              >
-                <UsersRound size={13} strokeWidth={1.75} />
-                {slot.maxGroupSize !== null ? `max ${slot.maxGroupSize}` : "groupe libre"}
-              </button>
-              {slot.maxGroupSize !== null && (
-                <div className={cn("flex items-center h-7 shrink-0 rounded-full bg-[#F2F2F2]", !slot.isActive && "opacity-40")}>
-                  <button
-                    type="button"
-                    onClick={() => updateSlot(index, { maxGroupSize: Math.max(1, (slot.maxGroupSize ?? 1) - 1) })}
-                    aria-label="Réduire la taille de groupe maximale"
-                    className="w-6 h-7 flex items-center justify-center text-[#464646]"
-                  >
-                    <Minus size={14} strokeWidth={2.2} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updateSlot(index, { maxGroupSize: Math.min(50, (slot.maxGroupSize ?? 0) + 1) })}
-                    aria-label="Augmenter la taille de groupe maximale"
-                    className="w-6 h-7 flex items-center justify-center text-[#464646]"
-                  >
-                    <Plus size={14} strokeWidth={2.2} />
-                  </button>
-                </div>
-              )}
-              <span className="flex-1" />
-              <Toggle checked={slot.isActive} onChange={() => updateSlot(index, { isActive: !slot.isActive })} label={`Créneau ${slot.timeKey} actif`} />
-              <button
-                type="button"
-                onClick={() => onChange({ ...config, slots: config.slots.filter((_, i) => i !== index) })}
-                aria-label={`Supprimer le créneau ${slot.timeKey}`}
-                className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[#8A8A8A] hover:bg-red-50 hover:text-red-600 transition-colors"
-              >
-                <X size={16} />
-              </button>
             </div>
           ))}
         </div>
