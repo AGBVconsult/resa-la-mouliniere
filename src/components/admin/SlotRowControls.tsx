@@ -91,7 +91,9 @@ export function SlotSlider({
         onChange={(e) => onChange(Number(e.target.value))}
         aria-label={ariaLabel}
         aria-valuetext={text}
-        className="slot-range min-w-0 flex-1"
+        // Largeur plafonnée (220 px) et marges de part et d'autre : le curseur reste court
+        // même sur grand écran ; l'espace restant va avant les options (voir les lignes).
+        className="slot-range mx-3 min-w-[120px] max-w-[220px] flex-1"
         style={style}
       />
       <span
