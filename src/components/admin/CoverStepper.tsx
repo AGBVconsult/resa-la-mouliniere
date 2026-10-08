@@ -8,15 +8,11 @@
  *
  * - boutons −/+ ronds (zone tactile de 36×44 px), pas de 1 ;
  * - appui long = répétition accélérée.
- *
- * `layout="inline"` reprend l'en-tête de créneau de la liste des réservations :
- * « x dispo » coloré selon le remplissage, séparateur, puis −/+ sans bordure.
  */
 
 import { useEffect, useRef } from "react";
 import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BRUME_GAUGE, getGaugeLevel } from "@/lib/constants/brume";
 import { triggerHaptic } from "@/lib/utils/haptics";
 import {
   clampRemainingCovers,
@@ -44,11 +40,6 @@ interface CoverStepperProps {
    * sans dépasser la zone tactile de 44 px de haut.
    */
   large?: boolean;
-  /** `stepper` : − valeur + (défaut) ; `inline` : « x dispo » | − + (style en-tête de créneau). */
-  layout?: "stepper" | "inline";
-  /** Bornes de saisie (défaut : 0 à MAX_REMAINING_COVERS). */
-  min?: number;
-  max?: number;
 }
 
 export function CoverStepper({
@@ -59,9 +50,6 @@ export function CoverStepper({
   isModified,
   valueClassName,
   large,
-  layout = "stepper",
-  min = 0,
-  max = MAX_REMAINING_COVERS,
 }: CoverStepperProps) {
 
   // Références à jour pour la répétition de l'appui long (évite les closures périmées).
@@ -87,7 +75,7 @@ export function CoverStepper({
   }, [disabled]);
 
   const step = (delta: number): boolean => {
-    const next = Math.max(min, clampRemainingCovers(valueRef.current + delta, max));
+    const next = clampRemainingCovers(valueRef.current + delta);
     if (next === valueRef.current) return false;
     valueRef.current = next;
     onChangeRef.current(next);
@@ -111,7 +99,7 @@ export function CoverStepper({
   };
 
   const isStepDisabled = (delta: number) =>
-    disabled || (delta < 0 ? value <= min : value >= max);
+    disabled || (delta < 0 ? value <= 0 : value >= MAX_REMAINING_COVERS);
 
   const stepButtonProps = (delta: number) => ({
     type: "button" as const,
@@ -136,17 +124,6 @@ export function CoverStepper({
 
   const renderStepButton = (delta: number) => {
     const isDisabled = isStepDisabled(delta);
-    if (layout === "inline") {
-      return (
-        <button
-          {...stepButtonProps(delta)}
-          aria-label={delta < 0 ? "Retirer un couvert" : "Ajouter un couvert"}
-          className="flex h-11 w-9 shrink-0 items-center justify-center rounded-full text-slate-700 touch-manipulation transition-colors active:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:text-slate-300"
-        >
-          {delta < 0 ? <Minus size={20} strokeWidth={2.2} /> : <Plus size={20} strokeWidth={2.2} />}
-        </button>
-      );
-    }
     return (
       <button
         {...stepButtonProps(delta)}
@@ -176,35 +153,6 @@ export function CoverStepper({
     );
   };
 
-  const modifiedDot = isModified && (
-    <span
-      className="absolute -right-0.5 -top-1 h-1.5 w-1.5 rounded-full bg-emerald-500"
-      aria-label="Modifié, non enregistré"
-    />
-  );
-
-  if (layout === "inline") {
-    const gauge = BRUME_GAUGE[getGaugeLevel(reservedCovers, value + reservedCovers)];
-    return (
-      <div
-        className={cn("flex items-center select-none", disabled && "opacity-50")}
-        title={reservedCovers > 0 ? `${reservedCovers} réservé${reservedCovers > 1 ? "s" : ""}` : undefined}
-      >
-        <span
-          className={cn("relative min-w-[4.5rem] tabular-nums lg:min-w-[4.75rem]", valueClassName)}
-          style={{ color: gauge.ink }}
-          aria-live="polite"
-        >
-          {value > 0 ? `${value} dispo` : "complet"}
-          {modifiedDot}
-        </span>
-        <span aria-hidden className="mr-0.5 h-5 w-px bg-slate-200" />
-        {renderStepButton(-1)}
-        {renderStepButton(1)}
-      </div>
-    );
-  }
-
   return (
     <div
       className={cn("flex items-center select-none", disabled && "opacity-50")}
@@ -222,7 +170,12 @@ export function CoverStepper({
         aria-live="polite"
       >
         {value}
-        {modifiedDot}
+        {isModified && (
+          <span
+            className="absolute -right-0.5 -top-1 h-1.5 w-1.5 rounded-full bg-emerald-500"
+            aria-label="Modifié, non enregistré"
+          />
+        )}
       </span>
       {renderStepButton(1)}
     </div>
