@@ -176,9 +176,9 @@ export function SlotOptionsButton({ isOpen, onClick, label }: { isOpen: boolean;
 
 // ── Taille de groupe ────────────────────────────────────────────
 
-const GROUP_CHOICES: (number | null)[] = [null, 2, 4, 6, 8, 10, 12];
+const GROUP_CHOICES: (number | null)[] = [null, 2, 4, 6, 8];
 
-/** Ligne « Groupe » : un toucher sur libre, 2, 4… 12. Une autre valeur existante s'ajoute à la liste. */
+/** Ligne « Groupe » : un toucher sur libre, 2, 4, 6 ou 8. Une autre valeur existante s'ajoute à la liste. */
 export function GroupSizeRow({ value, onChange }: { value: number | null; onChange: (maxGroupSize: number | null) => void }) {
   const choices = value === null || GROUP_CHOICES.includes(value)
     ? GROUP_CHOICES
