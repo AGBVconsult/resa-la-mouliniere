@@ -5,6 +5,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { AlertTriangle, Check, DoorClosed, Loader2, Minus, Moon, Plus, Sun, Trash2, UsersRound, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DEFAULT_LIMITED_GROUP_SIZE } from "@/lib/utils/slot-day-settings";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { daysBetween, formatDate, type Period, type PeriodKind } from "../periodUtils";
@@ -375,7 +376,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
               </div>
               <button
                 type="button"
-                onClick={() => updateSlot(index, { maxGroupSize: slot.maxGroupSize === null ? 4 : null })}
+                onClick={() => updateSlot(index, { maxGroupSize: slot.maxGroupSize === null ? DEFAULT_LIMITED_GROUP_SIZE : null })}
                 aria-pressed={slot.maxGroupSize !== null}
                 className={cn(
                   "h-7 px-2 flex items-center gap-1 rounded-full text-xs font-medium whitespace-nowrap",
@@ -384,7 +385,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                 )}
               >
                 <UsersRound size={13} strokeWidth={1.75} />
-                {slot.maxGroupSize !== null ? `max ${slot.maxGroupSize}` : "groupe libre"}
+                {slot.maxGroupSize !== null ? `max ${slot.maxGroupSize}` : "libre"}
               </button>
               {slot.maxGroupSize !== null && (
                 <div className={cn("flex items-center h-7 shrink-0 rounded-full bg-[#F2F2F2]", !slot.isActive && "opacity-40")}>

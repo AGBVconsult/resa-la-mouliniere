@@ -56,7 +56,7 @@ export function AddSlotDialog({ service, existingTimes }: AddSlotDialogProps) {
             capacity,
             isActive: true,
             largeTableAllowed: false,
-            maxGroupSize: 15,
+            maxGroupSize: null,
           },
         });
         // Sync slots with template changes

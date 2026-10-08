@@ -136,7 +136,7 @@ export function CoverStepper({
         <button
           {...stepButtonProps(delta)}
           aria-label={delta < 0 ? "Retirer un couvert" : "Ajouter un couvert"}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-700 touch-manipulation transition-colors active:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:text-slate-300"
+          className="flex h-11 w-9 shrink-0 items-center justify-center rounded-full text-slate-700 touch-manipulation transition-colors active:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:text-slate-300"
         >
           {delta < 0 ? <Minus size={20} strokeWidth={2.2} /> : <Plus size={20} strokeWidth={2.2} />}
         </button>
@@ -186,14 +186,14 @@ export function CoverStepper({
         title={reservedCovers > 0 ? `${reservedCovers} réservé${reservedCovers > 1 ? "s" : ""}` : undefined}
       >
         <span
-          className={cn("relative min-w-[5.5rem] tabular-nums", valueClassName)}
+          className={cn("relative min-w-[4.5rem] tabular-nums lg:min-w-[4.75rem]", valueClassName)}
           style={{ color: gauge.ink }}
           aria-live="polite"
         >
           {value > 0 ? `${value} dispo` : "complet"}
           {modifiedDot}
         </span>
-        <span aria-hidden className="mr-1.5 h-5 w-px bg-slate-200" />
+        <span aria-hidden className="mr-0.5 h-5 w-px bg-slate-200" />
         {renderStepButton(-1)}
         {renderStepButton(1)}
       </div>

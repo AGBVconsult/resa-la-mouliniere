@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
+import { DEFAULT_LIMITED_GROUP_SIZE } from "@/lib/utils/slot-day-settings";
 import { Clock, Users, Trash2, UserX } from "lucide-react";
 import { EditableCapacity } from "./EditableCapacity";
 import { DeleteSlotDialog } from "./DeleteSlotDialog";
@@ -56,7 +57,7 @@ export function SlotRow({ service, slot, openDays }: SlotRowProps) {
   };
 
   const handleToggleLimit = async () => {
-    const newMaxGroupSize = isLimited ? null : 4;
+    const newMaxGroupSize = isLimited ? null : DEFAULT_LIMITED_GROUP_SIZE;
     for (const dayOfWeek of openDays) {
       await updateSlot({
         dayOfWeek,
@@ -125,7 +126,7 @@ export function SlotRow({ service, slot, openDays }: SlotRowProps) {
                 type="number"
                 min={1}
                 max={50}
-                value={slot.maxGroupSize ?? 4}
+                value={slot.maxGroupSize ?? DEFAULT_LIMITED_GROUP_SIZE}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
                   e.stopPropagation();

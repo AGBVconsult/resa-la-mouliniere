@@ -10,6 +10,7 @@ import { requireRole } from "./lib/rbac";
 import { getSlotOverridesForDateRange } from "./lib/slotOverrides";
 import { Errors } from "./lib/errors";
 import { makeSlotKey } from "../spec/contracts.generated";
+import { getTodayDateKey } from "./lib/dateUtils";
 
 // Types
 type Service = "lunch" | "dinner";
@@ -24,15 +25,15 @@ interface TemplateSlot {
 
 // Default slots
 const DEFAULT_LUNCH_SLOTS: TemplateSlot[] = [
-  { timeKey: "12:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
-  { timeKey: "12:30", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
-  { timeKey: "13:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
+  { timeKey: "12:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
+  { timeKey: "12:30", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
+  { timeKey: "13:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
 ];
 
 const DEFAULT_DINNER_SLOTS: TemplateSlot[] = [
-  { timeKey: "18:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
-  { timeKey: "18:30", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
-  { timeKey: "19:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
+  { timeKey: "18:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
+  { timeKey: "18:30", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
+  { timeKey: "19:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
 ];
 
 // Helpers
@@ -441,7 +442,7 @@ export const addSlot = mutation({
       capacity: args.slot.capacity,
       isActive: args.slot.isActive ?? true,
       largeTableAllowed: args.slot.largeTableAllowed ?? false,
-      maxGroupSize: args.slot.maxGroupSize ?? 15,
+      maxGroupSize: args.slot.maxGroupSize ?? null,
     };
 
     let templateId: Id<"weeklyTemplates">;
@@ -1258,3 +1259,54 @@ function getISOWeekday(date: Date): number {
   const day = date.getDay();
   return day === 0 ? 7 : day;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// MIGRATION: resetGroupSizesToFree (ponctuelle)
+// Les créneaux sont désormais en « groupe libre » par défaut. Repasse à null
+// la taille de groupe des modèles hebdomadaires et des créneaux à partir
+// d'aujourd'hui (les créneaux passés ne sont pas touchés).
+//   npx convex run weeklyTemplates:resetGroupSizesToFree '{"dryRun":true}'
+//   npx convex run weeklyTemplates:resetGroupSizesToFree '{"dryRun":false}'
+// ═══════════════════════════════════════════════════════════════
+
+export const resetGroupSizesToFree = internalMutation({
+  args: { dryRun: v.boolean() },
+  handler: async (ctx, { dryRun }) => {
+    const now = Date.now();
+    let templateSlots = 0;
+    let slots = 0;
+
+    for (const restaurant of await ctx.db.query("restaurants").collect()) {
+      const templates = await ctx.db
+        .query("weeklyTemplates")
+        .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
+        .collect();
+      for (const template of templates) {
+        const limited = template.slots.filter((s) => s.maxGroupSize !== null).length;
+        if (limited === 0) continue;
+        templateSlots += limited;
+        if (!dryRun) {
+          await ctx.db.patch(template._id, {
+            slots: template.slots.map((s) => ({ ...s, maxGroupSize: null })),
+            updatedAt: now,
+          });
+        }
+      }
+
+      const todayKey = getTodayDateKey(restaurant.timezone);
+      const futureSlots = await ctx.db
+        .query("slots")
+        .withIndex("by_restaurant_date_service", (q) =>
+          q.eq("restaurantId", restaurant._id).gte("dateKey", todayKey)
+        )
+        .collect();
+      for (const slot of futureSlots) {
+        if (slot.maxGroupSize === null) continue;
+        slots++;
+        if (!dryRun) await ctx.db.patch(slot._id, { maxGroupSize: null, updatedAt: now });
+      }
+    }
+
+    return { dryRun, templateSlots, slots };
+  },
+});

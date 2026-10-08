@@ -347,15 +347,15 @@ export const seedWeeklyTemplates = internalMutation({
     // Soir : Vendredi, Samedi, Dimanche → 18:00, 18:30, 19:00
     // Capacité : 8 personnes par créneau
     const lunchSlots = [
-      { timeKey: "12:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
-      { timeKey: "12:30", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
-      { timeKey: "13:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
+      { timeKey: "12:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
+      { timeKey: "12:30", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
+      { timeKey: "13:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
     ];
 
     const dinnerSlots = [
-      { timeKey: "18:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
-      { timeKey: "18:30", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
-      { timeKey: "19:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: 15 },
+      { timeKey: "18:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
+      { timeKey: "18:30", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
+      { timeKey: "19:00", capacity: 8, isActive: true, largeTableAllowed: false, maxGroupSize: null },
     ];
 
     // La Moulinière schedule:

@@ -406,8 +406,9 @@ function ServiceSection({
                   slot.isOpen ? "bg-transparent" : "bg-slate-100/50"
                 )}
               >
-                <div className="flex items-start gap-2">
-                  <div className="flex h-11 items-center min-w-[52px] lg:min-w-[64px]">
+                {/* Si la place manque, les options passent à la ligne au lieu de chevaucher le stepper. */}
+                <div className="flex flex-wrap items-start gap-x-1.5">
+                  <div className="flex h-11 items-center min-w-[46px] lg:min-w-[52px]">
                     <span className="text-sm font-extrabold tabular-nums text-slate-800 lg:text-base">{slot.timeKey}</span>
                   </div>
 
@@ -425,7 +426,7 @@ function ServiceSection({
                     />
                   </div>
 
-                  <div className="flex h-11 flex-1 min-w-0 items-center justify-end gap-1.5">
+                  <div className="ml-auto flex h-11 shrink-0 items-center gap-1">
                     <GroupSizeChip
                       value={slot.maxGroupSize}
                       onChange={(size) => onMaxGroupSizeChange(slot._id, size)}
@@ -440,7 +441,6 @@ function ServiceSection({
                           setOpenShapeSlotId((current) => (current === slot._id ? null : slot._id))
                         }
                         disabled={!slot.isOpen}
-                        large
                       />
                     )}
                   </div>
@@ -490,7 +490,7 @@ function GroupSizeChip({
   return (
     <div
       className={cn(
-        "relative flex h-8 shrink-0 items-center rounded-full text-xs font-medium lg:h-9 lg:text-sm",
+        "relative flex h-8 shrink-0 items-center rounded-full text-xs font-medium lg:text-sm",
         isLimited ? "bg-[#DEE7F0] text-[#2F5B86]" : "bg-[#F2F2F2] text-[#6E6E6E]",
         disabled && "opacity-40"
       )}
@@ -501,10 +501,11 @@ function GroupSizeChip({
         disabled={disabled}
         aria-pressed={isLimited}
         aria-label={isLimited ? `Groupe limité à ${value} : rendre libre` : "Groupe libre : limiter la taille"}
-        className="flex h-full items-center gap-1 whitespace-nowrap rounded-full px-2.5 touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        title={isLimited ? `Groupe de ${value} personnes maximum` : "Groupe libre"}
+        className="flex h-full items-center gap-1 whitespace-nowrap rounded-full px-2 touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
       >
         <UsersRound size={14} strokeWidth={1.75} />
-        <span className="tabular-nums">{isLimited ? `max ${value}` : "groupe libre"}</span>
+        <span className="tabular-nums">{isLimited ? `max ${value}` : "libre"}</span>
       </button>
       {isLimited && (
         <>
@@ -513,7 +514,7 @@ function GroupSizeChip({
             onClick={() => onChange(clampGroupSize(value - 1))}
             disabled={disabled || value <= MIN_GROUP_SIZE}
             aria-label="Réduire la taille de groupe maximale"
-            className="flex h-full w-7 items-center justify-center touch-manipulation disabled:opacity-40"
+            className="flex h-full w-6 items-center justify-center touch-manipulation disabled:opacity-40"
           >
             <Minus size={14} strokeWidth={2.2} />
           </button>
@@ -522,7 +523,7 @@ function GroupSizeChip({
             onClick={() => onChange(clampGroupSize(value + 1))}
             disabled={disabled || value >= MAX_GROUP_SIZE}
             aria-label="Augmenter la taille de groupe maximale"
-            className="flex h-full w-7 items-center justify-center pr-1 touch-manipulation disabled:opacity-40"
+            className="flex h-full w-6 items-center justify-center pr-1 touch-manipulation disabled:opacity-40"
           >
             <Plus size={14} strokeWidth={2.2} />
           </button>
