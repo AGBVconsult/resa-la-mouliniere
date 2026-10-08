@@ -271,14 +271,14 @@ export function CalendarPopup({
                     {/* Numéro, badge du jour, total de couverts (à droite) */}
                     <div className="relative flex items-center gap-1.5 min-h-[22px]">
                       <span className={cn("text-[15px] font-bold tabular-nums", isPast ? "text-[#A5A5A5]" : "text-[#2D2D2D]")}>{day}</span>
-                      {hasPending && (
-                        <Clock size={13} strokeWidth={2} aria-label="Validation en attente" className={STATUS_TONES.pending.iconColor} />
-                      )}
                       {isToday && (
                         <span className="text-[10px] font-semibold bg-[#3884FF] text-white px-2 py-0.5 rounded-full">Auj.</span>
                       )}
                       {dayData && !isClosed && (
                         <span className={cn("ml-auto flex items-center gap-1 text-[13px] font-medium tabular-nums", isPast ? "text-[#A5A5A5]" : "text-[#464646]")}>
+                          {hasPending && (
+                            <Clock size={13} strokeWidth={2} aria-label="Validation en attente" className={cn("mr-1", STATUS_TONES.pending.iconColor)} />
+                          )}
                           <Users size={13} strokeWidth={1.75} className={isPast ? "text-[#B5B5B5]" : "text-[#6E6E6E]"} />
                           {dayCovers}
                         </span>
