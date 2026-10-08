@@ -58,11 +58,13 @@ export interface PeriodOverlap {
   to: string;
 }
 
-/** Chevauchements entre une ouverture et une fermeture (la fermeture est prioritaire). */
+/**
+ * Chevauchements avec d'autres périodes. Le serveur les refuse désormais ;
+ * ils ne concernent que des périodes créées avant cette règle, à corriger.
+ */
 export function overlapsOf(period: Period, all: Period[]): PeriodOverlap[] {
-  const kind = kindOf(period);
   return all
-    .filter((o) => o._id !== period._id && kindOf(o) !== kind)
+    .filter((o) => o._id !== period._id)
     .filter((o) => !(period.endDate < o.startDate || period.startDate > o.endDate))
     .map((o) => ({
       other: o,
