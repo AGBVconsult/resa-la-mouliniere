@@ -161,7 +161,7 @@ export function SlotCoverStepper({
       <span
         aria-live="polite"
         className={cn(
-          "w-[74px] shrink-0 whitespace-nowrap text-[15px] font-semibold tabular-nums",
+          "w-[68px] shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums",
           isOpen ? LEVEL_TEXT[level] : "text-slate-400"
         )}
       >
