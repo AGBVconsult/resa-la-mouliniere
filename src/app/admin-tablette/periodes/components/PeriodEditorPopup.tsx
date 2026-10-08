@@ -371,7 +371,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
               {...(optionsTime === slot.timeKey ? { [SLOT_POPOVER_ATTR]: "" } : {})}
               className={cn("px-3 transition-colors", !slot.isActive && "bg-slate-100/50")}
             >
-              <div className="flex h-[54px] items-center gap-3">
+              <div className="flex h-11 items-center gap-3">
                 <span className="w-[46px] shrink-0 text-base font-extrabold tabular-nums text-slate-800">{slot.timeKey}</span>
                 <SlotSlider
                   value={slot.capacity}
