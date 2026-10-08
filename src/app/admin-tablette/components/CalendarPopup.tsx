@@ -206,8 +206,8 @@ export function CalendarPopup({
       </header>
 
       {/* Calendrier compact, centré : cases de hauteur fixe (pas étirées sur tout l'écran) */}
-      {/* Marge identique et réduite sur les 4 côtés (16 px) : maximise la hauteur des cases (mois sur 6 lignes, iPad mini) */}
-      <div className="flex-1 min-h-0 flex flex-col p-4">
+      {/* Marge identique sur les 4 côtés de la carte : 38 px = 16 px + ligne des jours (16 px) + 6 px */}
+      <div className="flex-1 min-h-0 flex flex-col pt-4 px-[38px] pb-[38px]">
         {/* Jours de la semaine : au-dessus de la carte, sans fond */}
         <div className="grid grid-cols-7 shrink-0 pb-1.5">
           {DAYS_OF_WEEK.map((d, i) => (
