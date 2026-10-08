@@ -15,6 +15,7 @@ import {
   capacityFromRemainingCovers,
   isSlotModified,
   buildSlotUpdate,
+  DEFAULT_LIMITED_GROUP_SIZE,
   type SlotState,
 } from "@/lib/utils/slot-day-settings";
 import { CoverStepper } from "@/components/admin/CoverStepper";
@@ -432,7 +433,13 @@ function ServiceSection({
                     <GroupSizeChip
                       value={slot.maxGroupSize}
                       isOpen={isPanelOpen(slot._id, "group")}
-                      onClick={() => togglePanel(slot._id, "group")}
+                      onClick={() => {
+                        // Ouvrir la puce d'un créneau en groupe libre propose d'emblée max 6.
+                        if (slot.maxGroupSize === null && !isPanelOpen(slot._id, "group")) {
+                          onMaxGroupSizeChange(slot._id, DEFAULT_LIMITED_GROUP_SIZE);
+                        }
+                        togglePanel(slot._id, "group");
+                      }}
                       disabled={!slot.isOpen}
                       isModified={slot.maxGroupSize !== slot.originalMaxGroupSize}
                     />
