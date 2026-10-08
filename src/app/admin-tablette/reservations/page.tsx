@@ -1074,7 +1074,7 @@ export default function TabletReservationsPage() {
       ) : (
       <>
       {/* Header */}
-      <header className="relative flex items-center py-12 px-8 border-b border-[#E5E5E5] bg-white">
+      <header className="relative flex items-center pt-12 pb-11 px-8 border-b border-[#E5E5E5] bg-white">
         {/* Left: Date navigation */}
         <NavPill
           label={formatDateLabel()}
