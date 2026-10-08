@@ -398,7 +398,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                 />
               </div>
               {optionsTime === slot.timeKey && (
-                <div className="space-y-2 pb-3">
+                <div className="space-y-3 pt-2 pb-4">
                   <GroupSizeRow value={slot.maxGroupSize} onChange={(maxGroupSize) => updateSlot(index, { maxGroupSize })} />
                   {/* Supprimer est rare : il vit dans les options plutôt que sur chaque ligne. */}
                   <div className="flex justify-end">
