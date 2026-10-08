@@ -32,7 +32,8 @@ const DATE_KEY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const DEFAULT_LUNCH_TIMES = ["12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30"];
 const DEFAULT_DINNER_TIMES = ["18:30", "18:45", "19:00", "19:15", "19:30", "19:45", "20:00", "20:15", "20:30", "20:45", "21:00"];
 const DEFAULT_CAPACITY = 50;
-const DEFAULT_MAX_GROUP_SIZE = 15;
+// Groupe libre par défaut : aucune limite de taille tant que l'admin n'en fixe pas.
+const DEFAULT_MAX_GROUP_SIZE: number | null = null;
 
 // ═══════════════════════════════════════════════════════════════
 // HELPERS

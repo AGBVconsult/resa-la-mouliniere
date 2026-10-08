@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { DEFAULT_LIMITED_GROUP_SIZE } from "@/lib/utils/slot-day-settings";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +35,7 @@ export function SlotSettingsDialog({
   // Toggle ON = limitation active (maxGroupSize défini)
   // Toggle OFF = pas de limitation (maxGroupSize = null)
   const [isLimited, setIsLimited] = useState(initialMaxGroupSize !== null);
-  const [maxGroupSize, setMaxGroupSize] = useState<number>(initialMaxGroupSize ?? 4);
+  const [maxGroupSize, setMaxGroupSize] = useState<number>(initialMaxGroupSize ?? DEFAULT_LIMITED_GROUP_SIZE);
   const [isLoading, setIsLoading] = useState(false);
 
   const updateSlot = useMutation(api.weeklyTemplates.updateSlot);
@@ -44,7 +45,7 @@ export function SlotSettingsDialog({
   useEffect(() => {
     if (isOpen) {
       setIsLimited(initialMaxGroupSize !== null);
-      setMaxGroupSize(initialMaxGroupSize ?? 4);
+      setMaxGroupSize(initialMaxGroupSize ?? DEFAULT_LIMITED_GROUP_SIZE);
     }
   }, [isOpen, initialMaxGroupSize]);
 
