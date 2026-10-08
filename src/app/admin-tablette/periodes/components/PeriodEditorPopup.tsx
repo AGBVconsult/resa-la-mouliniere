@@ -365,7 +365,7 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
         <div className="bg-white rounded-2xl overflow-hidden divide-y divide-[#F3F3F3]">
           {config.slots.length === 0 && <p className="py-4 text-center text-sm text-[#8A8A8A]">Aucun créneau</p>}
           {config.slots.map((slot, index) => (
-            // Même ligne que « Réglages du jour » : heure · x places | − + · options · ⋯ · interrupteur.
+            // Même ligne que « Réglages du jour » : heure · x places | − + · options · interrupteur · ⋯.
             <div
               key={slot.timeKey}
               {...(optionsTime === slot.timeKey ? { [SLOT_POPOVER_ATTR]: "" } : {})}
@@ -386,16 +386,16 @@ function ServiceCard({ service, config, onChange }: { service: Service; config: 
                 />
                 <span aria-hidden className="flex-1" />
                 <SlotMeta maxGroupSize={slot.maxGroupSize} />
-                <SlotOptionsButton
-                  isOpen={optionsTime === slot.timeKey}
-                  onClick={() => setOptionsTime((current) => (current === slot.timeKey ? null : slot.timeKey))}
-                  label={`Options du créneau ${slot.timeKey}`}
-                />
                 <Switch
                   checked={slot.isActive}
                   onCheckedChange={() => updateSlot(index, { isActive: !slot.isActive })}
                   aria-label={`Créneau ${slot.timeKey} actif`}
                   className="shrink-0"
+                />
+                <SlotOptionsButton
+                  isOpen={optionsTime === slot.timeKey}
+                  onClick={() => setOptionsTime((current) => (current === slot.timeKey ? null : slot.timeKey))}
+                  label={`Options du créneau ${slot.timeKey}`}
                 />
               </div>
               {optionsTime === slot.timeKey && (
