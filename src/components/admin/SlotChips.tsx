@@ -8,12 +8,34 @@
  * Partagé par `admin-tablette/DaySettingsPopup` et l'éditeur de période.
  */
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { AlertTriangle, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGaugeLevel, type GaugeLevel } from "@/lib/constants/brume";
 import { MIN_GROUP_SIZE } from "@/lib/utils/slot-day-settings";
 import type { CapacityShapeSummaryDto } from "@/components/admin/SlotCapacityShapeEditor";
+
+// ── Fermeture au toucher extérieur ──────────────────────────────
+
+/** Attribut posé sur les puces et les panneaux : un toucher dedans ne ferme pas le panneau. */
+export const SLOT_POPOVER_ATTR = "data-slot-popover";
+
+/**
+ * Ferme le panneau ouvert dès qu'on touche ailleurs que dans un panneau ou une puce
+ * (toucher une autre puce bascule directement sur son panneau).
+ */
+export function useCloseOnOutsidePointer(isOpen: boolean, onClose: () => void) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (target?.closest(`[${SLOT_POPOVER_ATTR}]`)) return;
+      onClose();
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isOpen, onClose]);
+}
 
 // ── Puce de base ────────────────────────────────────────────────
 
@@ -44,6 +66,7 @@ function Chip({
       disabled={disabled}
       aria-expanded={isOpen}
       aria-label={label}
+      {...{ [SLOT_POPOVER_ATTR]: "" }}
       className={cn(CHIP_BASE, className, isOpen && "shadow-[inset_0_0_0_2px_currentColor]")}
     >
       {children}
@@ -227,6 +250,7 @@ export function SliderPanel({
     <div
       role="dialog"
       aria-label={label}
+      {...{ [SLOT_POPOVER_ATTR]: "" }}
       className="mb-2.5 grid w-full gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_40px_rgba(15,23,42,0.18)]"
     >
       <div className="flex items-center justify-between text-[13px] font-extrabold text-slate-900">
