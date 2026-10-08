@@ -169,7 +169,7 @@ export function CalendarPopup({
   return (
     <div className="flex flex-col h-full w-full bg-[#F6F6F6] animate-in fade-in duration-200">
       {/* Header : mêmes dimensions que celui de la vue du jour (mois à gauche, stats au centre, actions à droite) */}
-      <header className="relative flex items-center pt-12 pb-11 px-8 border-b border-[#E5E5E5] bg-white shrink-0">
+      <header className="relative flex items-center pt-12 pb-10 px-8 border-b border-[#E5E5E5] bg-white shrink-0">
         <NavPill
           label={<span>{monthLabel} <span className="font-normal text-[#6E6E6E]">{currentYear}</span></span>}
           onPrevious={goToPreviousMonth}
@@ -206,10 +206,10 @@ export function CalendarPopup({
       </header>
 
       {/* Calendrier compact, centré : cases de hauteur fixe (pas étirées sur tout l'écran) */}
-      {/* Marge de 20 px sur les 4 côtés ; en haut (header → bordure de la carte), la ligne des jours occupe ces 20 px */}
-      <div className="flex-1 min-h-0 flex flex-col px-5 pb-5">
+      {/* Marge de 25 px sur les 4 côtés ; en haut (header → bordure de la carte), la ligne des jours occupe ces 25 px */}
+      <div className="flex-1 min-h-0 flex flex-col px-[25px] pb-[25px]">
         {/* Jours de la semaine : au-dessus de la carte, sans fond */}
-        <div className="grid grid-cols-7 items-center h-5 shrink-0">
+        <div className="grid grid-cols-7 items-center h-[25px] shrink-0">
           {DAYS_OF_WEEK.map((d, i) => (
             <div key={`weekday-${i}`} className="text-xs font-semibold text-[#6E6E6E] text-center">
               {d}
