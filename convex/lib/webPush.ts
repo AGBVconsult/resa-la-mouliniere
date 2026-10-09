@@ -3,13 +3,16 @@
  * (Sending itself lives in convex/notifications.ts, Node runtime.)
  */
 
-export type AdminPushType = "pending_reservation" | "cancellation" | "modification";
+export type AdminPushType =
+  | "new_reservation"
+  | "pending_reservation"
+  | "modification"
+  | "cancellation";
 
 export interface AdminPushPayload {
   title: string;
   body: string;
   url: string;
-  tag: string;
 }
 
 // Push services of Safari/iOS, Chrome/Android, Firefox and Edge.
@@ -50,16 +53,16 @@ export function isExpiredSubscriptionStatus(statusCode: number | undefined): boo
 export function buildAdminPushPayload(
   type: AdminPushType,
   reservation: {
-    reservationId: string;
     name: string;
     partySize: number;
     dateKey: string;
     service: "lunch" | "dinner";
     timeKey: string;
+    status: string;
     note?: string | null;
   }
 ): AdminPushPayload {
-  const { reservationId, name, partySize, dateKey, service, timeKey, note } = reservation;
+  const { name, partySize, dateKey, service, timeKey, status, note } = reservation;
 
   // Format date as DD/MM
   const [, month, day] = dateKey.split("-");
@@ -67,21 +70,23 @@ export function buildAdminPushPayload(
   const summary = `${name} — ${partySize} pers.\n${dateFormatted} à ${timeKey}`;
 
   const url = `/admin-mobile/reservations?date=${dateKey}&service=${service}`;
-  const tag = `${type}:${reservationId}`;
+  const withNote = `${summary}${note ? `\n${note}` : ""}`;
 
   switch (type) {
+    case "new_reservation":
+      return { title: "Nouvelle réservation", body: withNote, url };
+
     case "pending_reservation":
-      return {
-        title: "Réservation en attente",
-        body: `${summary}${note ? `\n${note}` : ""}`,
-        url,
-        tag,
-      };
+      return { title: "Réservation en attente", body: withNote, url };
 
     case "cancellation":
-      return { title: "Annulation", body: summary, url, tag };
+      return { title: "Annulation", body: summary, url };
 
     case "modification":
-      return { title: "Modification", body: summary, url, tag };
+      return {
+        title: status === "pending" ? "Modification à valider" : "Modification",
+        body: withNote,
+        url,
+      };
   }
 }

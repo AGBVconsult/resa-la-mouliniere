@@ -38,12 +38,12 @@ describe("isExpiredSubscriptionStatus", () => {
 
 describe("buildAdminPushPayload", () => {
   const reservation = {
-    reservationId: "res123",
     name: "Jean Dupont",
     partySize: 4,
     dateKey: "2026-10-12",
     service: "dinner" as const,
     timeKey: "19:30",
+    status: "pending",
     note: "Allergie noix",
   };
 
@@ -52,7 +52,6 @@ describe("buildAdminPushPayload", () => {
       title: "Réservation en attente",
       body: "Jean Dupont — 4 pers.\n12/10 à 19:30\nAllergie noix",
       url: "/admin-mobile/reservations?date=2026-10-12&service=dinner",
-      tag: "pending_reservation:res123",
     });
   });
 
@@ -61,8 +60,22 @@ describe("buildAdminPushPayload", () => {
     expect(payload.body).toBe("Jean Dupont — 4 pers.\n12/10 à 19:30");
   });
 
-  test("cancellation and modification titles", () => {
-    expect(buildAdminPushPayload("cancellation", reservation).title).toBe("Annulation");
-    expect(buildAdminPushPayload("modification", reservation).title).toBe("Modification");
+  test("auto-confirmed reservation is announced as a new reservation", () => {
+    const payload = buildAdminPushPayload("new_reservation", { ...reservation, status: "confirmed" });
+    expect(payload.title).toBe("Nouvelle réservation");
+    expect(payload.body).toBe("Jean Dupont — 4 pers.\n12/10 à 19:30\nAllergie noix");
+  });
+
+  test("modification title flags when validation is needed", () => {
+    expect(buildAdminPushPayload("modification", reservation).title).toBe("Modification à valider");
+    expect(
+      buildAdminPushPayload("modification", { ...reservation, status: "confirmed" }).title
+    ).toBe("Modification");
+  });
+
+  test("cancellation omits the note", () => {
+    const payload = buildAdminPushPayload("cancellation", reservation);
+    expect(payload.title).toBe("Annulation");
+    expect(payload.body).toBe("Jean Dupont — 4 pers.\n12/10 à 19:30");
   });
 });

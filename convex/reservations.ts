@@ -594,13 +594,13 @@ export const _create = internalMutation({
         });
         console.log("Admin email notification enqueued", { reservationId });
       }
-
-      // Push notification (Web Push)
-      await ctx.scheduler.runAfter(0, internal.notifications.sendAdminPushNotification, {
-        type: "pending_reservation",
-        reservationId,
-      });
     }
+
+    // Admin push notification (Web Push) for every online reservation
+    await ctx.scheduler.runAfter(0, internal.notifications.sendAdminPushNotification, {
+      type: status === "pending" ? "pending_reservation" : "new_reservation",
+      reservationId,
+    });
 
     return {
       reservationId,
@@ -658,6 +658,11 @@ export const _cancel = internalMutation({
         scheduledTime: reservation.timeKey,
         performedBy: "client",
         createdAt: now,
+      });
+
+      await ctx.scheduler.runAfter(0, internal.notifications.sendAdminPushNotification, {
+        type: "cancellation",
+        reservationId,
       });
     }
 
@@ -1173,6 +1178,12 @@ export const _update = internalMutation({
         },
       },
       createdAt: args.now,
+    });
+
+    // Admin push notification (Web Push)
+    await ctx.scheduler.runAfter(0, internal.notifications.sendAdminPushNotification, {
+      type: "modification",
+      reservationId: args.reservationId,
     });
 
     // Enqueue confirmation email

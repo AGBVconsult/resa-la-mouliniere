@@ -20,9 +20,10 @@ import { buildAdminPushPayload, isExpiredSubscriptionStatus } from "./lib/webPus
 export const sendAdminPushNotification = internalAction({
   args: {
     type: v.union(
+      v.literal("new_reservation"),
       v.literal("pending_reservation"),
-      v.literal("cancellation"),
-      v.literal("modification")
+      v.literal("modification"),
+      v.literal("cancellation")
     ),
     reservationId: v.id("reservations"),
   },
@@ -56,12 +57,12 @@ export const sendAdminPushNotification = internalAction({
 
     const payload = JSON.stringify(
       buildAdminPushPayload(args.type, {
-        reservationId: reservation._id,
         name: `${reservation.firstName} ${reservation.lastName}`,
         partySize: reservation.partySize,
         dateKey: reservation.dateKey,
         service: reservation.service,
         timeKey: reservation.timeKey,
+        status: reservation.status,
         note: reservation.note,
       })
     );
