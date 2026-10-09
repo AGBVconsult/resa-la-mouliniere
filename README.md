@@ -38,3 +38,12 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 Every merge to `main` triggers a Vercel deployment whose Build Command is `npx convex deploy --cmd 'npm run build'`. This pushes the Convex functions/schema to the `accomplished-lemur-852` production deployment before building the Next.js app, so the backend and frontend stay in sync. The `CONVEX_DEPLOY_KEY` environment variable (Production scope, Vercel project settings) is required for this step.
 
 If a merge to `main` does not show up as a Production deployment in Vercel (missed GitHub webhook), redeploy from the Vercel dashboard (Deployments → latest Production → ⋯ → Redeploy, or Create Deployment on `main`) or merge any new commit to `main`.
+
+## Admin push notifications (Web Push)
+
+New pending reservations trigger a Web Push notification to every device subscribed from the mobile admin app (`/admin-mobile/activity` → Notifications → Activer). On iPhone the app must be added to the Home Screen (iOS 16.4+). Requires these environment variables on the Convex deployment (Dashboard → Settings → Environment Variables):
+
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` — generate with `npx web-push generate-vapid-keys`
+- `VAPID_SUBJECT` — contact URI, e.g. `mailto:info@example.com`
+
+Changing the keys invalidates existing subscriptions: re-enable notifications on each device.

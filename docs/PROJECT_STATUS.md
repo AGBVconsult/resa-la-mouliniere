@@ -40,7 +40,7 @@ Système de réservation en ligne pour Restaurant La Moulinière. Widget client 
 | Plan de salle API | ✅ | getTableStates, assign, checkAssignment |
 | Tables CRUD | ✅ | list, create, update, delete, updatePosition |
 | Email review J+1 | ✅ | Cron `enqueueReviewEmails` à 10h |
-| Notification admin pending | ✅ | Email + Push Pushover |
+| Notification admin pending | ✅ | Email + Web Push (PWA mobile) |
 | dailyFinalize | ✅ | Cron à 3h (noshow + completed auto) |
 | Shadow Learning | ✅ | Phase 2 active (prédictions ML) |
 
