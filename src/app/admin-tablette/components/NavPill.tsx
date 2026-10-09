@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useRef, type MouseEvent, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 
 interface NavPillProps {
@@ -15,25 +15,47 @@ interface NavPillProps {
   reset?: { label: string; ariaLabel: string; onClick: () => void };
 }
 
+/** Délai après un chevron pendant lequel un appui sur la pastille est ignoré (doigt qui ripe en enchaînant les jours) */
+const MISFIRE_GUARD_MS = 600;
+
+/**
+ * Zone tactile des chevrons agrandie sans changer le visuel : pseudo-élément transparent
+ * qui déborde de 10 px en hauteur et mord de 14 px sur les bords arrondis de la pastille.
+ */
+const chevronClass =
+  "relative z-10 w-[34px] h-full flex items-center justify-center text-[#6E6E6E] hover:text-[#0C0C0C] transition-colors active:scale-95 before:absolute before:-inset-y-2.5";
+
 /**
  * Navigateur précédent / suivant au style des sélecteurs : rail gris clair de 36 px,
  * libellé dans une pastille blanche de 40 px qui déborde du rail.
  */
 export function NavPill({ label, onPrevious, onNext, previousLabel, nextLabel, onLabelClick, reset }: NavPillProps) {
+  const lastStepAt = useRef(-Infinity);
+
+  const step = (action: () => void) => (event: MouseEvent) => {
+    lastStepAt.current = event.timeStamp;
+    action();
+  };
+
+  const handleLabelClick = (event: MouseEvent) => {
+    if (event.timeStamp - lastStepAt.current < MISFIRE_GUARD_MS) return;
+    onLabelClick?.();
+  };
+
   return (
     <div className="flex items-center h-9 px-1 rounded-full bg-[#EFEFEF]">
       <button
         type="button"
-        onClick={onPrevious}
+        onClick={step(onPrevious)}
         aria-label={previousLabel}
-        className="w-[34px] h-full flex items-center justify-center text-[#6E6E6E] hover:text-[#0C0C0C] transition-colors active:scale-95"
+        className={`${chevronClass} before:-left-4 before:-right-4`}
       >
         <ChevronLeft size={18} strokeWidth={1.75} />
       </button>
 
       <button
         type="button"
-        onClick={onLabelClick}
+        onClick={handleLabelClick}
         disabled={!onLabelClick}
         className="h-10 -my-0.5 mx-0.5 min-w-[112px] px-5 flex items-center justify-center rounded-full bg-white border border-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.08),0_6px_16px_-6px_rgba(0,0,0,0.25)] text-sm font-medium text-[#0C0C0C] whitespace-nowrap disabled:cursor-default"
       >
@@ -42,9 +64,9 @@ export function NavPill({ label, onPrevious, onNext, previousLabel, nextLabel, o
 
       <button
         type="button"
-        onClick={onNext}
+        onClick={step(onNext)}
         aria-label={nextLabel}
-        className="w-[34px] h-full flex items-center justify-center text-[#6E6E6E] hover:text-[#0C0C0C] transition-colors active:scale-95"
+        className={`${chevronClass} before:-left-4 before:-right-1`}
       >
         <ChevronRight size={18} strokeWidth={1.75} />
       </button>
