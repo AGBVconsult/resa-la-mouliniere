@@ -47,6 +47,8 @@ export function isExpiredSubscriptionStatus(statusCode: number | undefined): boo
   return statusCode === 404 || statusCode === 410;
 }
 
+export const NOTE_ICON = "📝";
+
 const WEEKDAYS = ["Dim", "Lun", "Mar", "Merc", "Jeu", "Vend", "Sam"];
 
 /**
@@ -90,23 +92,24 @@ export function buildAdminPushPayload(
   const { dateKey, service, status, note } = reservation;
 
   const line = formatReservationLine(reservation);
-  const withNote = `${line}${note?.trim() ? `\n${note.trim()}` : ""}`;
+  // The note itself is not shown, only an icon flagging that there is one
+  const body = note?.trim() ? `${line} | ${NOTE_ICON}` : line;
   const url = `/admin-mobile/reservations?date=${dateKey}&service=${service}`;
 
   switch (type) {
     case "new_reservation":
-      return { title: "Nouvelle réservation", body: withNote, url };
+      return { title: "Nouvelle réservation", body, url };
 
     case "pending_reservation":
-      return { title: "Réservation en attente", body: withNote, url };
+      return { title: "Réservation en attente", body, url };
 
     case "cancellation":
-      return { title: "Annulation", body: line, url };
+      return { title: "Annulation", body, url };
 
     case "modification":
       return {
         title: status === "pending" ? "Modification à valider" : "Modification",
-        body: withNote,
+        body,
         url,
       };
   }
