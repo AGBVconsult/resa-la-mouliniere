@@ -20,7 +20,8 @@ const MISFIRE_GUARD_MS = 600;
 
 /**
  * Zone tactile des chevrons agrandie sans changer le visuel : pseudo-élément transparent
- * qui déborde de 10 px en hauteur et mord de 14 px sur les bords arrondis de la pastille.
+ * qui déborde de 10 px en hauteur et mord sur les bords arrondis de la pastille
+ * (18 px à gauche, 22 px à droite : « jour suivant » est l'action la plus fréquente).
  */
 const chevronClass =
   "relative z-10 w-[34px] h-full flex items-center justify-center text-[#6E6E6E] hover:text-[#0C0C0C] transition-colors active:scale-95 before:absolute before:-inset-y-2.5";
@@ -48,7 +49,7 @@ export function NavPill({ label, onPrevious, onNext, previousLabel, nextLabel, o
         type="button"
         onClick={step(onPrevious)}
         aria-label={previousLabel}
-        className={`${chevronClass} before:-left-4 before:-right-4`}
+        className={`${chevronClass} before:-left-4 before:-right-5`}
       >
         <ChevronLeft size={18} strokeWidth={1.75} />
       </button>
@@ -66,7 +67,8 @@ export function NavPill({ label, onPrevious, onNext, previousLabel, nextLabel, o
         type="button"
         onClick={step(onNext)}
         aria-label={nextLabel}
-        className={`${chevronClass} before:-left-4 before:-right-1`}
+        // Vers l'extérieur : jusqu'au séparateur si « Auj. » est affiché, sinon dans la marge
+        className={`${chevronClass} before:-left-6 ${reset ? "before:-right-1.5" : "before:-right-4"}`}
       >
         <ChevronRight size={18} strokeWidth={1.75} />
       </button>
