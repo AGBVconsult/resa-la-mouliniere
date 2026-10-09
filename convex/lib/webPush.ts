@@ -75,6 +75,7 @@ export function formatReservationLine(reservation: {
 
 /**
  * Build notification content based on event type.
+ * Title emoji: 🟢 new, 🟠 needs validation, 🔵 modification, 🔴 cancellation.
  */
 export function buildAdminPushPayload(
   type: AdminPushType,
@@ -98,17 +99,17 @@ export function buildAdminPushPayload(
 
   switch (type) {
     case "new_reservation":
-      return { title: "Nouvelle réservation", body, url };
+      return { title: "🟢 Nouvelle réservation", body, url };
 
     case "pending_reservation":
-      return { title: "Réservation en attente", body, url };
+      return { title: "🟠 Réservation en attente", body, url };
 
     case "cancellation":
-      return { title: "Annulation", body, url };
+      return { title: "🔴 Annulation", body, url };
 
     case "modification":
       return {
-        title: status === "pending" ? "Modification à valider" : "Modification",
+        title: status === "pending" ? "🟠 Modification à valider" : "🔵 Modification",
         body,
         url,
       };
