@@ -14,12 +14,14 @@ interface FloatingSaveBarProps {
   visible: boolean;
   /** Nombre d'éléments modifiés, affiché à gauche des boutons. */
   changeCount: number;
+  /** Remplace le libellé « x créneaux modifiés ». */
+  label?: string;
   isSaving?: boolean;
   onCancel: () => void;
   onSave: () => void;
 }
 
-export function FloatingSaveBar({ visible, changeCount, isSaving, onCancel, onSave }: FloatingSaveBarProps) {
+export function FloatingSaveBar({ visible, changeCount, label, isSaving, onCancel, onSave }: FloatingSaveBarProps) {
   return (
     <div
       inert={!visible}
@@ -32,7 +34,7 @@ export function FloatingSaveBar({ visible, changeCount, isSaving, onCancel, onSa
       )}
     >
       <span className={cn(styles.label, "whitespace-nowrap text-sm")}>
-        {changeCount} créneau{changeCount > 1 ? "x" : ""} modifié{changeCount > 1 ? "s" : ""}
+        {label ?? `${changeCount} créneau${changeCount > 1 ? "x" : ""} modifié${changeCount > 1 ? "s" : ""}`}
       </span>
       <button
         type="button"
