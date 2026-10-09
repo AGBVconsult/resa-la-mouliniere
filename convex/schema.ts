@@ -86,10 +86,10 @@ export default defineSchema({
     resendFromEmail: v.string(),
     resendFromName: v.string(),
     adminNotificationEmail: v.optional(v.string()), // Email to receive admin notifications (pending reservations)
-    // Pushover push notifications
-    pushoverUserKey: v.optional(v.string()),    // User Key from pushover.net
-    pushoverApiToken: v.optional(v.string()),   // API Token from app
-    pushoverEnabled: v.optional(v.boolean()),   // Toggle on/off
+    // Obsolète (remplacé par Web Push, table pushSubscriptions) — conservé pour les données existantes
+    pushoverUserKey: v.optional(v.string()),
+    pushoverApiToken: v.optional(v.string()),
+    pushoverEnabled: v.optional(v.boolean()),
     maxPartySizeWidget: v.number(),
     manageTokenExpireBeforeSlotMs: v.number(),
     rateLimit: v.object({ windowMs: v.number(), maxRequests: v.number() }),
@@ -103,6 +103,15 @@ export default defineSchema({
     // Kill-switch for funnel analytics (toggle without redeploy)
     funnelAnalyticsEnabled: v.optional(v.boolean()),
   }).index("by_restaurantId", ["restaurantId"]),
+
+  // Abonnements Web Push des appareils admin (PWA mobile)
+  pushSubscriptions: defineTable({
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    userAgent: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_endpoint", ["endpoint"]),
 
   slots: defineTable({
     restaurantId: v.id("restaurants"),

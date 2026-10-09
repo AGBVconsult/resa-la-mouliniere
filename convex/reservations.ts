@@ -595,7 +595,7 @@ export const _create = internalMutation({
         console.log("Admin email notification enqueued", { reservationId });
       }
 
-      // Push notification (Pushover)
+      // Push notification (Web Push)
       await ctx.scheduler.runAfter(0, internal.notifications.sendAdminPushNotification, {
         type: "pending_reservation",
         reservationId,

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { PushNotificationToggle } from "../components/PushNotificationToggle";
 
 type EventType = "created" | "status_change" | "table_assignment" | "updated";
 type Status = "pending" | "confirmed" | "seated" | "completed" | "noshow" | "cancelled" | "refused" | "incident";
@@ -153,6 +154,8 @@ export default function ActivityPage() {
           <h1 className="text-lg font-bold text-slate-900">Activité</h1>
         </div>
       </header>
+
+      <PushNotificationToggle />
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 py-3">

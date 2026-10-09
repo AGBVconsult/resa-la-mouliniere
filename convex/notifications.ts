@@ -1,12 +1,17 @@
+"use node";
+
 /**
  * Push notifications for admin alerts.
- * Uses Pushover API for instant iPhone notifications.
+ * Uses standard Web Push (VAPID) to reach the admin mobile PWA — no third-party app.
+ *
+ * Required Convex env vars: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (mailto:…).
  */
 
+import webpush from "web-push";
 import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { sendPushNotification } from "./lib/pushover";
+import { buildAdminPushPayload, isExpiredSubscriptionStatus } from "./lib/webPush";
 
 /**
  * Send admin push notification for reservation events.
@@ -22,101 +27,73 @@ export const sendAdminPushNotification = internalAction({
     reservationId: v.id("reservations"),
   },
   handler: async (ctx, args) => {
-    // 1. Get settings with Pushover credentials
-    const settings = await ctx.runMutation(internal.settings.getSecretsInternal);
-    
-    if (!settings?.pushoverEnabled || !settings.pushoverUserKey || !settings.pushoverApiToken) {
-      console.log("[Pushover] Disabled or not configured");
-      return { sent: false, reason: "disabled" };
+    // 1. VAPID configuration
+    const publicKey = process.env.VAPID_PUBLIC_KEY;
+    const privateKey = process.env.VAPID_PRIVATE_KEY;
+    const subject = process.env.VAPID_SUBJECT;
+
+    if (!publicKey || !privateKey || !subject) {
+      console.log("[WebPush] Not configured (VAPID_* env vars missing)");
+      return { sent: 0, reason: "not_configured" };
     }
 
-    // 2. Get reservation details
+    // 2. Subscribed devices
+    const subscriptions = await ctx.runQuery(internal.pushSubscriptions.listInternal);
+    if (subscriptions.length === 0) {
+      console.log("[WebPush] No subscribed device");
+      return { sent: 0, reason: "no_subscription" };
+    }
+
+    // 3. Reservation details
     const reservation = await ctx.runQuery(internal.reservations._getById, {
       reservationId: args.reservationId,
     });
 
     if (!reservation) {
-      console.error("[Pushover] Reservation not found:", args.reservationId);
-      return { sent: false, reason: "reservation_not_found" };
+      console.error("[WebPush] Reservation not found:", args.reservationId);
+      return { sent: 0, reason: "reservation_not_found" };
     }
 
-    // 3. Build notification content based on type
-    const { title, message, sound } = buildNotificationContent(args.type, {
-      name: `${reservation.firstName} ${reservation.lastName}`,
-      partySize: reservation.partySize,
-      dateKey: reservation.dateKey,
-      timeKey: reservation.timeKey,
-      note: reservation.note,
-    });
-
-    // 4. Build admin URL
-    const adminUrl = `${settings.appUrl}/admin/reservations?date=${reservation.dateKey}`;
-
-    // 5. Send push notification
-    const result = await sendPushNotification(
-      {
-        userKey: settings.pushoverUserKey,
-        apiToken: settings.pushoverApiToken,
-      },
-      {
-        title,
-        message,
-        url: adminUrl,
-        url_title: "Voir dans l'admin",
-        priority: 1,  // High - bypass "Do Not Disturb"
-        sound,
-      }
+    const payload = JSON.stringify(
+      buildAdminPushPayload(args.type, {
+        reservationId: reservation._id,
+        name: `${reservation.firstName} ${reservation.lastName}`,
+        partySize: reservation.partySize,
+        dateKey: reservation.dateKey,
+        service: reservation.service,
+        timeKey: reservation.timeKey,
+        note: reservation.note,
+      })
     );
 
-    if (result.success) {
-      console.log(`[Pushover] ✓ Notification sent: ${args.type}`);
-    } else {
-      console.error(`[Pushover] ✗ Failed: ${result.error}`);
+    // 4. Send to every device
+    let sent = 0;
+    for (const sub of subscriptions) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          payload,
+          {
+            vapidDetails: { subject, publicKey, privateKey },
+            TTL: 60 * 60, // 1h: a stale alert is useless
+            urgency: "high",
+          }
+        );
+        sent++;
+      } catch (error) {
+        const statusCode = (error as { statusCode?: number }).statusCode;
+        if (isExpiredSubscriptionStatus(statusCode)) {
+          console.log("[WebPush] Subscription expired, removing");
+          await ctx.runMutation(internal.pushSubscriptions.removeExpiredInternal, {
+            endpoint: sub.endpoint,
+          });
+        } else {
+          console.error(`[WebPush] ✗ Failed (${statusCode ?? "?"}):`, error);
+        }
+      }
     }
 
-    return { sent: result.success, error: result.error };
+    console.log(`[WebPush] ✓ ${args.type}: ${sent}/${subscriptions.length} sent`);
+    return { sent };
   },
 });
-
-/**
- * Build notification content based on event type.
- */
-function buildNotificationContent(
-  type: "pending_reservation" | "cancellation" | "modification",
-  reservation: {
-    name: string;
-    partySize: number;
-    dateKey: string;
-    timeKey: string;
-    note?: string | null;
-  }
-): { title: string; message: string; sound: string } {
-  const { name, partySize, dateKey, timeKey, note } = reservation;
-  
-  // Format date as DD/MM
-  const [, month, day] = dateKey.split("-");
-  const dateFormatted = `${day}/${month}`;
-
-  switch (type) {
-    case "pending_reservation":
-      return {
-        title: "Réservation en attente",
-        message: `${name} — ${partySize} pers.\n${dateFormatted} à ${timeKey}${note ? `\n${note}` : ""}`,
-        sound: "cashregister",
-      };
-
-    case "cancellation":
-      return {
-        title: "Annulation",
-        message: `${name} — ${partySize} pers.\n${dateFormatted} à ${timeKey}`,
-        sound: "falling",
-      };
-
-    case "modification":
-      return {
-        title: "Modification",
-        message: `${name} — ${partySize} pers.\n${dateFormatted} à ${timeKey}`,
-        sound: "bike",
-      };
-  }
-}
