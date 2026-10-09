@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   buildAdminPushPayload,
+  formatReservationLine,
   isAllowedPushEndpoint,
   isExpiredSubscriptionStatus,
 } from "../convex/lib/webPush";
@@ -36,9 +37,38 @@ describe("isExpiredSubscriptionStatus", () => {
   });
 });
 
+describe("formatReservationLine", () => {
+  test("weekday, date, time, party size, initial + last name", () => {
+    expect(
+      formatReservationLine({
+        firstName: "Benjamin",
+        lastName: "Vantilcke",
+        partySize: 2,
+        dateKey: "2026-10-09",
+        timeKey: "12:15",
+      })
+    ).toBe("Vend 09/10 | 12:15 | 2pers. | B. Vantilcke");
+  });
+
+  test("every weekday abbreviation", () => {
+    const days = ["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09", "2026-10-10", "2026-10-11"];
+    const line = (dateKey: string) =>
+      formatReservationLine({ firstName: "a", lastName: "B", partySize: 1, dateKey, timeKey: "19:00" });
+    expect(days.map((d) => line(d).split(" ")[0])).toEqual(["Lun", "Mar", "Merc", "Jeu", "Vend", "Sam", "Dim"]);
+    expect(line("2026-10-05")).toBe("Lun 05/10 | 19:00 | 1pers. | A. B");
+  });
+
+  test("missing first name keeps only the last name", () => {
+    expect(
+      formatReservationLine({ firstName: " ", lastName: "Dupont", partySize: 6, dateKey: "2026-12-31", timeKey: "20:00" })
+    ).toBe("Jeu 31/12 | 20:00 | 6pers. | Dupont");
+  });
+});
+
 describe("buildAdminPushPayload", () => {
   const reservation = {
-    name: "Jean Dupont",
+    firstName: "Jean",
+    lastName: "Dupont",
     partySize: 4,
     dateKey: "2026-10-12",
     service: "dinner" as const,
@@ -47,23 +77,18 @@ describe("buildAdminPushPayload", () => {
     note: "Allergie noix",
   };
 
-  test("pending reservation includes the note and links to the mobile day view", () => {
+  test("pending reservation: line + note, links to the mobile day view", () => {
     expect(buildAdminPushPayload("pending_reservation", reservation)).toEqual({
       title: "Réservation en attente",
-      body: "Jean Dupont — 4 pers.\n12/10 à 19:30\nAllergie noix",
+      body: "Lun 12/10 | 19:30 | 4pers. | J. Dupont\nAllergie noix",
       url: "/admin-mobile/reservations?date=2026-10-12&service=dinner",
     });
   });
 
-  test("pending reservation without note has no trailing line", () => {
-    const payload = buildAdminPushPayload("pending_reservation", { ...reservation, note: null });
-    expect(payload.body).toBe("Jean Dupont — 4 pers.\n12/10 à 19:30");
-  });
-
-  test("auto-confirmed reservation is announced as a new reservation", () => {
-    const payload = buildAdminPushPayload("new_reservation", { ...reservation, status: "confirmed" });
+  test("no note, no second line", () => {
+    const payload = buildAdminPushPayload("new_reservation", { ...reservation, note: null, status: "confirmed" });
     expect(payload.title).toBe("Nouvelle réservation");
-    expect(payload.body).toBe("Jean Dupont — 4 pers.\n12/10 à 19:30\nAllergie noix");
+    expect(payload.body).toBe("Lun 12/10 | 19:30 | 4pers. | J. Dupont");
   });
 
   test("modification title flags when validation is needed", () => {
@@ -76,6 +101,6 @@ describe("buildAdminPushPayload", () => {
   test("cancellation omits the note", () => {
     const payload = buildAdminPushPayload("cancellation", reservation);
     expect(payload.title).toBe("Annulation");
-    expect(payload.body).toBe("Jean Dupont — 4 pers.\n12/10 à 19:30");
+    expect(payload.body).toBe("Lun 12/10 | 19:30 | 4pers. | J. Dupont");
   });
 });

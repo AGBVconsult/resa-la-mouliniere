@@ -57,7 +57,8 @@ export const sendAdminPushNotification = internalAction({
 
     const payload = JSON.stringify(
       buildAdminPushPayload(args.type, {
-        name: `${reservation.firstName} ${reservation.lastName}`,
+        firstName: reservation.firstName,
+        lastName: reservation.lastName,
         partySize: reservation.partySize,
         dateKey: reservation.dateKey,
         service: reservation.service,
