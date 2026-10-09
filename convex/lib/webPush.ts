@@ -47,13 +47,38 @@ export function isExpiredSubscriptionStatus(statusCode: number | undefined): boo
   return statusCode === 404 || statusCode === 410;
 }
 
+const WEEKDAYS = ["Dim", "Lun", "Mar", "Merc", "Jeu", "Vend", "Sam"];
+
+/**
+ * "Vend 09/10 | 12:15 | 2pers. | B. Vantilcke"
+ */
+export function formatReservationLine(reservation: {
+  firstName: string;
+  lastName: string;
+  partySize: number;
+  dateKey: string;
+  timeKey: string;
+}): string {
+  const { firstName, lastName, partySize, dateKey, timeKey } = reservation;
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+  const dd = String(day).padStart(2, "0");
+  const mm = String(month).padStart(2, "0");
+
+  const initial = firstName.trim().charAt(0).toUpperCase();
+  const name = initial ? `${initial}. ${lastName.trim()}` : lastName.trim();
+
+  return `${weekday} ${dd}/${mm} | ${timeKey} | ${partySize}pers. | ${name}`;
+}
+
 /**
  * Build notification content based on event type.
  */
 export function buildAdminPushPayload(
   type: AdminPushType,
   reservation: {
-    name: string;
+    firstName: string;
+    lastName: string;
     partySize: number;
     dateKey: string;
     service: "lunch" | "dinner";
@@ -62,15 +87,11 @@ export function buildAdminPushPayload(
     note?: string | null;
   }
 ): AdminPushPayload {
-  const { name, partySize, dateKey, service, timeKey, status, note } = reservation;
+  const { dateKey, service, status, note } = reservation;
 
-  // Format date as DD/MM
-  const [, month, day] = dateKey.split("-");
-  const dateFormatted = `${day}/${month}`;
-  const summary = `${name} — ${partySize} pers.\n${dateFormatted} à ${timeKey}`;
-
+  const line = formatReservationLine(reservation);
+  const withNote = `${line}${note?.trim() ? `\n${note.trim()}` : ""}`;
   const url = `/admin-mobile/reservations?date=${dateKey}&service=${service}`;
-  const withNote = `${summary}${note ? `\n${note}` : ""}`;
 
   switch (type) {
     case "new_reservation":
@@ -80,7 +101,7 @@ export function buildAdminPushPayload(
       return { title: "Réservation en attente", body: withNote, url };
 
     case "cancellation":
-      return { title: "Annulation", body: summary, url };
+      return { title: "Annulation", body: line, url };
 
     case "modification":
       return {
