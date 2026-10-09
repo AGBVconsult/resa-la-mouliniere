@@ -1246,6 +1246,7 @@ export default function TabletReservationsPage() {
             setShowClientSearch(true);
           }}
           onToggleFloorPlan={() => setShowFloorPlan((v) => !v)}
+          onOpenSlots={() => router.push("/admin-tablette/creneaux")}
           onOpenPeriods={() => router.push("/admin-tablette/periodes")}
           onClose={() => setShowMenu(false)}
         />
