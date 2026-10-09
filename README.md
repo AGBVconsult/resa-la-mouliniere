@@ -41,7 +41,7 @@ If a merge to `main` does not show up as a Production deployment in Vercel (miss
 
 ## Admin push notifications (Web Push)
 
-New pending reservations trigger a Web Push notification to every device subscribed from the mobile admin app (`/admin-mobile/activity` → Notifications → Activer). On iPhone the app must be added to the Home Screen (iOS 16.4+). Requires these environment variables on the Convex deployment (Dashboard → Settings → Environment Variables):
+Every online reservation (new, pending validation), client modification and client cancellation triggers a Web Push notification to every device subscribed from the mobile admin app (`/admin-mobile/activity` → Notifications → Activer). On iPhone the app must be added to the Home Screen (iOS 16.4+). Requires these environment variables on the Convex deployment (Dashboard → Settings → Environment Variables):
 
 - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` — generate with `npx web-push generate-vapid-keys`
 - `VAPID_SUBJECT` — contact URI, e.g. `mailto:info@example.com`
