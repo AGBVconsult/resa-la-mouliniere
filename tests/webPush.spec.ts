@@ -77,15 +77,18 @@ describe("buildAdminPushPayload", () => {
     note: "Allergie noix",
   };
 
-  test("pending reservation: line + note, links to the mobile day view", () => {
+  test("pending reservation: note flagged by an icon, links to the mobile day view", () => {
     expect(buildAdminPushPayload("pending_reservation", reservation)).toEqual({
       title: "Réservation en attente",
-      body: "Lun 12/10 | 19:30 | 4pers. | J. Dupont\nAllergie noix",
+      body: "Lun 12/10 | 19:30 | 4pers. | J. Dupont | 📝",
       url: "/admin-mobile/reservations?date=2026-10-12&service=dinner",
     });
   });
 
-  test("no note, no second line", () => {
+  test("no note (or blank note), no icon", () => {
+    expect(buildAdminPushPayload("new_reservation", { ...reservation, note: "  " }).body).toBe(
+      "Lun 12/10 | 19:30 | 4pers. | J. Dupont"
+    );
     const payload = buildAdminPushPayload("new_reservation", { ...reservation, note: null, status: "confirmed" });
     expect(payload.title).toBe("Nouvelle réservation");
     expect(payload.body).toBe("Lun 12/10 | 19:30 | 4pers. | J. Dupont");
@@ -98,9 +101,9 @@ describe("buildAdminPushPayload", () => {
     ).toBe("Modification");
   });
 
-  test("cancellation omits the note", () => {
+  test("cancellation never shows the note text", () => {
     const payload = buildAdminPushPayload("cancellation", reservation);
     expect(payload.title).toBe("Annulation");
-    expect(payload.body).toBe("Lun 12/10 | 19:30 | 4pers. | J. Dupont");
+    expect(payload.body).toBe("Lun 12/10 | 19:30 | 4pers. | J. Dupont | 📝");
   });
 });
