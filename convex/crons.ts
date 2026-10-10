@@ -136,4 +136,13 @@ crons.cron(
   {}
 );
 
+// Google Business Profile reminders (3 days before special periods start/end).
+// Runs hourly (DST-safe); the handler only sends at 09:00 local time.
+crons.hourly(
+  "gbp-period-reminders",
+  { minuteUTC: 0 },
+  internal.notifications.sendGbpPeriodReminders,
+  {}
+);
+
 export default crons;

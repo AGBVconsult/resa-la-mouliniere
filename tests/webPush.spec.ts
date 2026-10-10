@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  addDaysToDateKey,
   buildAdminPushPayload,
+  buildGbpReminderPayload,
+  selectGbpReminders,
   formatReservationLine,
   isAllowedPushEndpoint,
   isExpiredSubscriptionStatus,
@@ -124,5 +127,39 @@ describe("buildAdminPushPayload", () => {
     const payload = buildAdminPushPayload("cancellation", reservation);
     expect(payload.title).toBe("Annulation 🚫");
     expect(payload.body).toBe("Lun 12 Oct | 19:30 | 4pers. | J. Dupont | 💬");
+  });
+});
+
+describe("Google Business Profile reminders", () => {
+  const vacances = { name: "Vacances", status: "closed" as const, startDate: "2026-10-20", endDate: "2026-11-02" };
+  const event = { name: "Soirée jazz", status: "modified" as const, startDate: "2026-10-30", endDate: "2026-10-30" };
+
+  test("addDaysToDateKey crosses months and years", () => {
+    expect(addDaysToDateKey("2026-10-30", 3)).toBe("2026-11-02");
+    expect(addDaysToDateKey("2026-12-30", 3)).toBe("2027-01-02");
+    expect(addDaysToDateKey("2026-03-27", 3)).toBe("2026-03-30"); // DST change
+  });
+
+  test("reminds 3 days before start and 3 days before end", () => {
+    expect(selectGbpReminders([vacances, event], "2026-10-17")).toEqual([{ kind: "start", period: vacances }]);
+    expect(selectGbpReminders([vacances, event], "2026-10-30")).toEqual([{ kind: "end", period: vacances }]);
+    expect(selectGbpReminders([vacances, event], "2026-10-18")).toEqual([]);
+  });
+
+  test("single-day period: one reminder showing a single date", () => {
+    const reminders = selectGbpReminders([event], "2026-10-27");
+    expect(reminders.map((r) => r.kind)).toEqual(["start"]);
+    expect(buildGbpReminderPayload(reminders[0]).body).toBe("Début dans 3j | Soirée jazz | Horaires modifiés | Vend 30 Oct");
+  });
+
+  test("payload texts", () => {
+    expect(buildGbpReminderPayload({ kind: "start", period: vacances })).toEqual({
+      title: "Fiche Google à mettre à jour 📍",
+      body: "Début dans 3j | Vacances | Fermé | Mar 20 Oct → Lun 2 Nov",
+      url: "/admin-mobile/fiche-google",
+    });
+    expect(buildGbpReminderPayload({ kind: "end", period: vacances }).body).toBe(
+      "Fin dans 3j | Vacances | Horaires habituels dès Mar 3 Nov"
+    );
   });
 });
