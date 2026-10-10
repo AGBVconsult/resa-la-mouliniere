@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { BRUME_GAUGE, BRUME_GAUGE_SOFT, STATUS_TONES, getGaugeLevel } from "@/lib/constants/brume";
 import { getValidTransitions } from "../../../../convex/lib/stateMachine";
 import { NAV_CLEARANCE } from "../components/MobileLayoutClient";
+import { EmptyServiceState } from "../../admin-tablette/components/EmptyServiceState";
 import { DaySettingsPopup } from "../../admin-tablette/components/DaySettingsPopup";
 
 interface Reservation {
@@ -424,7 +425,7 @@ export default function MobileReservationsPage() {
         })}
 
         {active.length === 0 && (
-          <p className="px-4 py-8 text-center text-sm text-[#8E8E8E]">Aucune réservation</p>
+          <EmptyServiceState service={service} date={selectedDate} isToday={isToday} slots={slotsData?.[service]} />
         )}
 
         {out.length > 0 && (
