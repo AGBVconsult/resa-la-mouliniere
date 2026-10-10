@@ -397,8 +397,8 @@ export default function MobileReservationsPage() {
           const gauge = BRUME_GAUGE[level];
 
           return (
-            <div key={time}>
-              <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-[3px] bg-[#EDEDED] text-[#2D2D2D] text-[13px] font-extrabold">
+            <div key={time} className="pt-4">
+              <div className="sticky top-0 z-10 mb-2 flex items-center gap-3 px-4 py-[3px] bg-[#EDEDED] text-[#2D2D2D] text-[13px] font-extrabold">
                 <span>{time}</span>
                 {capacity > 0 && (
                   <>
@@ -429,8 +429,8 @@ export default function MobileReservationsPage() {
         )}
 
         {out.length > 0 && (
-          <div className="border-t-2 border-slate-200">
-            <div className="flex items-center gap-3 px-4 py-1.5 bg-slate-100 border-b border-slate-200">
+          <div className="mt-4 border-t-2 border-slate-200">
+            <div className="mb-2 flex items-center gap-3 px-4 py-1.5 bg-slate-100 border-b border-slate-200">
               <span className="flex items-center gap-1.5 text-slate-500">
                 <X size={12} strokeWidth={2} />
                 <span className="font-semibold text-[11px]">Annulations / No-show</span>
@@ -448,7 +448,7 @@ export default function MobileReservationsPage() {
 
   return (
     <div className="flex flex-col h-full bg-white animate-in fade-in duration-300">
-      <header className="px-4 pt-2 pb-5 flex flex-col gap-3 border-b border-[#E5E5E5]">
+      <header className="px-4 pt-2 pb-8 flex flex-col gap-3 border-b border-[#E5E5E5]">
         <div className="flex items-center">
           <div className="relative flex-1 min-w-0">
             <h1 className="text-[26px] leading-9 font-bold tracking-[-0.5px] whitespace-nowrap truncate pointer-events-none">
