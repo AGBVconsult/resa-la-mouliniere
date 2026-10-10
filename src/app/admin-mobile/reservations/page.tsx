@@ -19,12 +19,17 @@ import {
   SlidersHorizontal,
   Sun,
   Moon,
+  MoreHorizontal,
+  Ghost,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { getFlag } from "@/lib/getFlag";
 import { cn } from "@/lib/utils";
-import { BRUME_GAUGE, getGaugeLevel } from "@/lib/constants/brume";
+import { BRUME_GAUGE, BRUME_GAUGE_SOFT, STATUS_TONES, getGaugeLevel } from "@/lib/constants/brume";
+import { getValidTransitions } from "../../../../convex/lib/stateMachine";
 import { NAV_CLEARANCE } from "../components/MobileLayoutClient";
 import { DaySettingsPopup } from "../../admin-tablette/components/DaySettingsPopup";
 
@@ -80,6 +85,18 @@ const STATUS_STRIPE: Record<string, { color: string; label: string }> = {
   incident: { color: "#3E4C5A", label: "Incident" },
 };
 
+/** Menu « … » d'une réservation : seuls les statuts permis par la machine à états sont proposés */
+const MENU_ACTIONS: { status: ReservationStatus; label: string; icon: typeof Ghost; tone: { bg: string; iconColor: string } }[] = [
+  { status: "noshow", label: "No-show", icon: Ghost, tone: STATUS_TONES.noshow },
+  { status: "cancelled", label: "Annulé", icon: XCircle, tone: STATUS_TONES.cancelled },
+  { status: "incident", label: "Incident", icon: AlertTriangle, tone: STATUS_TONES.incident },
+];
+
+function getMenuActions(status: string) {
+  const allowed = getValidTransitions(status as ReservationStatus);
+  return MENU_ACTIONS.filter((a) => a.status !== status && allowed.includes(a.status));
+}
+
 const OPTION_LABELS: Record<string, string> = {
   stroller: "Poussette",
   highChair: "Chaise haute",
@@ -115,6 +132,7 @@ export default function MobileReservationsPage() {
 
   const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
   const [validatingId, setValidatingId] = useState<Id<"reservations"> | null>(null);
+  const [menuFor, setMenuFor] = useState<Reservation | null>(null);
   const [showDaySettings, setShowDaySettings] = useState(false);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
@@ -182,6 +200,19 @@ export default function MobileReservationsPage() {
     [updateReservation, toast]
   );
 
+  const handleStatusChange = useCallback(
+    async (res: Reservation, status: ReservationStatus, label: string) => {
+      setMenuFor(null);
+      try {
+        await updateReservation({ reservationId: res._id, expectedVersion: res.version, status });
+        toast.success(`${res.lastName} : ${label}`);
+      } catch (error) {
+        toast.error(formatConvexError(error, "Erreur lors de la mise à jour"));
+      }
+    },
+    [updateReservation, toast]
+  );
+
   const getTableName = (res: Reservation) => {
     const tableId = res.primaryTableId || res.tableIds[0];
     if (!tableId || !tablesData) return null;
@@ -201,7 +232,8 @@ export default function MobileReservationsPage() {
     const stripeKey = res.status === "confirmed" && tableName ? "assigned" : res.status;
     const stripe = STATUS_STRIPE[stripeKey] ?? { color: "#E5E5E5", label: res.status };
     const isExpanded = expandedId === res._id;
-    const isNew = (res.totalVisits ?? 0) === 0;
+    const visits = res.totalVisits ?? 0;
+    const hasMenu = getMenuActions(res.status).length > 0;
 
     return (
       <div key={res._id}>
@@ -237,9 +269,14 @@ export default function MobileReservationsPage() {
               <span className={isOut ? "" : "text-slate-500"}>{res.firstName}</span>{" "}
               <span className={cn("font-semibold", !isOut && "text-[#0C0C0C]")}>{res.lastName}</span>
             </span>
-            {isNew && !isOut && (
-              <span className="shrink-0 h-4 px-[5px] rounded-full inline-flex items-center text-[9px] font-semibold text-white bg-emerald-500">
-                New
+            {!isOut && (
+              <span
+                className={cn(
+                  "shrink-0 h-4 min-w-4 px-[5px] rounded-full inline-flex items-center justify-center text-[9px] font-semibold text-white",
+                  visits === 0 ? "bg-[#3F8F6F]" : "bg-[#3884FF]"
+                )}
+              >
+                {visits === 0 ? "New" : visits}
               </span>
             )}
             <OutcomeIndicator reservation={res} size={14} />
@@ -261,15 +298,20 @@ export default function MobileReservationsPage() {
             </button>
           ) : isOut ? (
             <span className="text-xs shrink-0">{stripe.label}</span>
-          ) : (
-            <span
-              className={cn(
-                "min-w-[32px] h-6 px-1.5 rounded-md bg-[#F6F6F6] flex items-center justify-center text-sm font-bold shrink-0",
-                tableName ? "text-[#2D2D2D]" : "text-[#A3A3A3]"
-              )}
+          ) : null}
+          {hasMenu && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuFor(res);
+              }}
+              aria-label={`Changer le statut de ${res.lastName}`}
+              aria-haspopup="dialog"
+              className="w-8 h-8 -mr-2 flex items-center justify-center rounded-full text-[#8E8E8E] active:bg-black/5 shrink-0"
             >
-              {tableName ?? "–"}
-            </span>
+              <MoreHorizontal size={18} />
+            </button>
           )}
         </div>
 
@@ -348,21 +390,22 @@ export default function MobileReservationsPage() {
           const covers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
           const capacity = slots.find((s) => s.timeKey === time)?.capacity ?? 0;
           const available = Math.max(0, capacity - covers);
-          const gauge = BRUME_GAUGE[getGaugeLevel(covers, capacity)];
+          const level = getGaugeLevel(covers, capacity);
+          const gauge = BRUME_GAUGE[level];
 
           return (
             <div key={time}>
-              <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-[3px] bg-[#5E5E5E] text-white text-[13px] font-extrabold">
+              <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-[3px] bg-[#EDEDED] text-[#2D2D2D] text-[13px] font-extrabold">
                 <span>{time}</span>
                 {capacity > 0 && (
                   <>
-                    <div className="w-14 h-[3px] rounded-full bg-white/20 overflow-hidden">
+                    <div className="w-14 h-[3px] rounded-full bg-black/10 overflow-hidden">
                       <div
                         className="h-full rounded-full"
                         style={{ width: `${Math.min(1, covers / capacity) * 100}%`, backgroundColor: gauge.bar }}
                       />
                     </div>
-                    <span className="text-xs font-bold" style={{ color: gauge.text }}>
+                    <span className={cn("text-xs font-bold", BRUME_GAUGE_SOFT[level].text)}>
                       {available > 0 ? `${available} dispo` : "complet"}
                     </span>
                   </>
@@ -475,6 +518,43 @@ export default function MobileReservationsPage() {
         </div>
       ) : (
         <div className={cn("flex-1 overflow-y-auto", NAV_CLEARANCE)}>{services.map(renderService)}</div>
+      )}
+
+      {menuFor && (
+        <div className="fixed inset-0 z-[300] flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] animate-in fade-in duration-200" onClick={() => setMenuFor(null)} />
+          <div
+            role="dialog"
+            aria-label={`Statut de ${menuFor.firstName} ${menuFor.lastName}`}
+            className="relative m-3 mb-[calc(0.75rem+env(safe-area-inset-bottom))] flex flex-col gap-2 animate-in slide-in-from-bottom-4 fade-in duration-200"
+          >
+            <div className="bg-white rounded-3xl p-2 flex flex-col">
+              <p className="px-3 pt-2 pb-2 text-sm text-center text-[#6E6E6E]">
+                {menuFor.firstName} <span className="font-semibold text-[#0C0C0C]">{menuFor.lastName}</span> · {menuFor.timeKey} · {menuFor.partySize} pers.
+              </p>
+              {getMenuActions(menuFor.status).map(({ status, label, icon: Icon, tone }) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => handleStatusChange(menuFor, status, label)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-2xl active:bg-[#F6F6F6]"
+                >
+                  <span className={cn("w-9 h-9 rounded-xl flex items-center justify-center", tone.bg)}>
+                    <Icon size={18} strokeWidth={2} className={tone.iconColor} />
+                  </span>
+                  <span className="text-[15px] font-semibold">{label}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setMenuFor(null)}
+              className="h-12 rounded-3xl bg-white text-[15px] font-semibold text-[#3884FF]"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
       )}
 
       {showDaySettings && (
