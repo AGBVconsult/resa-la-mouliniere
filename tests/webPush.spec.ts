@@ -79,8 +79,8 @@ describe("buildAdminPushPayload", () => {
 
   test("pending reservation: note flagged by an icon, links to the mobile day view", () => {
     expect(buildAdminPushPayload("pending_reservation", reservation)).toEqual({
-      title: "Réservation en attente ⏳",
-      body: "Lun 12/10 | 19:30 | 4pers. | J. Dupont | 📝",
+      title: "Réservation en attente ⌛",
+      body: "Lun 12/10 | 19:30 | 4pers. | J. Dupont | 💬",
       url: "/admin-mobile/reservations?date=2026-10-12&service=dinner",
     });
   });
@@ -95,15 +95,15 @@ describe("buildAdminPushPayload", () => {
   });
 
   test("modification title flags when validation is needed", () => {
-    expect(buildAdminPushPayload("modification", reservation).title).toBe("Modification à valider ⏳");
+    expect(buildAdminPushPayload("modification", reservation).title).toBe("Modification à valider ⌛");
     expect(
       buildAdminPushPayload("modification", { ...reservation, status: "confirmed" }).title
-    ).toBe("Modification 🔄");
+    ).toBe("Modification 🔀");
   });
 
   test("cancellation never shows the note text", () => {
     const payload = buildAdminPushPayload("cancellation", reservation);
-    expect(payload.title).toBe("Annulation ❌");
-    expect(payload.body).toBe("Lun 12/10 | 19:30 | 4pers. | J. Dupont | 📝");
+    expect(payload.title).toBe("Annulation 🚫");
+    expect(payload.body).toBe("Lun 12/10 | 19:30 | 4pers. | J. Dupont | 💬");
   });
 });
