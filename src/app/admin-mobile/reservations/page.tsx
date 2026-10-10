@@ -2,34 +2,30 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePaginatedQuery, useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { OutcomeIndicator } from "@/components/admin/OutcomeIndicator";
+import { SegmentedControl } from "@/components/admin/SegmentedControl";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { ReservationStatus } from "../../../../spec/contracts.generated";
 import {
   ChevronLeft,
   ChevronRight,
-  Users,
-  UsersRound,
   MessageSquare,
-  MoreHorizontal,
-  Phone,
-  Mail,
   Loader2,
-  Settings,
-  CalendarCheck,
+  RotateCcw,
+  SlidersHorizontal,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatConvexError } from "@/lib/formatError";
 import { getFlag } from "@/lib/getFlag";
-import { SegmentedBar } from "../components/SegmentedBar";
-import { StatusPill } from "../components/StatusPill";
-import { ActionPopup } from "../components/ActionPopup";
+import { cn } from "@/lib/utils";
+import { BRUME_GAUGE, getGaugeLevel } from "@/lib/constants/brume";
 import { DaySettingsPopup } from "../../admin-tablette/components/DaySettingsPopup";
-import { isCreatedDuringService } from "@/lib/utils/service-window";
 
 interface Reservation {
   _id: Id<"reservations">;
@@ -55,14 +51,45 @@ interface Reservation {
   totalVisits?: number;
   lastNoShowDateKey?: string | null;
   lastIncidentDateKey?: string | null;
-  createdAt?: number;
-  acknowledgedAt?: number;
 }
 
-// Visit badge styles - New: 0 (vert) | Autres: bleu foncé + texte blanc
-function getVisitBadgeStyle(visits: number): { classes: string; fontWeight: string } {
-  if (visits === 0) return { classes: "bg-emerald-500 text-white", fontWeight: "font-semibold" }; // New (vert)
-  return { classes: "bg-blue-600 text-white", fontWeight: "font-semibold" }; // Autres (bleu foncé)
+interface Slot {
+  timeKey: string;
+  capacity: number;
+  isOpen: boolean;
+}
+
+type Service = "lunch" | "dinner";
+type ServiceView = "total" | Service;
+
+/** Réservations sorties du service : regroupées en bas de liste, barrées */
+const OUT_STATUSES = ["cancelled", "noshow"];
+
+/** Trait de statut en début de ligne (confirmé + table = « table assignée ») */
+const STATUS_STRIPE: Record<string, { color: string; label: string }> = {
+  pending: { color: "#E9A271", label: "En attente" },
+  confirmed: { color: "#D4A72C", label: "Confirmé, sans table" },
+  assigned: { color: "#6C9BD0", label: "Table assignée" },
+  cardPlaced: { color: "#3F6F9E", label: "Carton placé" },
+  seated: { color: "#4F9A6B", label: "Installé" },
+  completed: { color: "#C4C4C4", label: "Terminé" },
+  noshow: { color: "#C98AA6", label: "No-show" },
+  cancelled: { color: "#E5B4B4", label: "Annulé" },
+  refused: { color: "#BDB6AE", label: "Refusé" },
+  incident: { color: "#3E4C5A", label: "Incident" },
+};
+
+const OPTION_LABELS: Record<string, string> = {
+  stroller: "Poussette",
+  highChair: "Chaise haute",
+  wheelchair: "PMR",
+  dogAccess: "Chien",
+};
+
+function countCovers(reservations: Reservation[] | undefined) {
+  return (reservations ?? [])
+    .filter((r) => !OUT_STATUSES.includes(r.status))
+    .reduce((sum, r) => sum + r.partySize, 0);
 }
 
 export default function MobileReservationsPage() {
@@ -77,18 +104,20 @@ export default function MobileReservationsPage() {
     return new Date();
   });
 
-  const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
-  const [openPopupId, setOpenPopupId] = useState<Id<"reservations"> | null>(null);
-  const [showDaySettings, setShowDaySettings] = useState(false);
-  const [selectedService, setSelectedService] = useState<"lunch" | "dinner">(() => {
+  const [selectedService, setSelectedService] = useState<ServiceView>(() => {
     const serviceParam = searchParams.get("service");
-    if (serviceParam === "lunch" || serviceParam === "dinner") {
+    if (serviceParam === "lunch" || serviceParam === "dinner" || serviceParam === "total") {
       return serviceParam;
     }
     return "lunch";
   });
 
+  const [expandedId, setExpandedId] = useState<Id<"reservations"> | null>(null);
+  const [validatingId, setValidatingId] = useState<Id<"reservations"> | null>(null);
+  const [showDaySettings, setShowDaySettings] = useState(false);
+
   const dateKey = format(selectedDate, "yyyy-MM-dd");
+  const isToday = format(new Date(), "yyyy-MM-dd") === dateKey;
 
   // Ensure slots are synced from weekly templates for the selected date
   const ensureSlots = useMutation(api.weeklyTemplates.ensureSlotsForDate);
@@ -115,355 +144,325 @@ export default function MobileReservationsPage() {
 
   const updateReservation = useMutation(api.admin.updateReservation);
 
-  const lunchPercent = useMemo(() => {
-    if (!slotsData?.lunch) return 0;
-    const totalCapacity = slotsData.lunch.reduce((sum, s) => sum + (s.isOpen ? s.capacity : 0), 0);
-    const totalCovers = (lunchReservations as Reservation[])?.reduce((sum, r) => 
-      ["confirmed", "seated", "arrived", "pending"].includes(r.status) ? sum + r.partySize : sum, 0) || 0;
-    return totalCapacity > 0 ? Math.min((totalCovers / totalCapacity) * 100, 100) : 0;
-  }, [slotsData, lunchReservations]);
-
-  const { dinnerCovers, dinnerCapacity } = useMemo(() => {
-    if (!slotsData?.dinner) return { dinnerCovers: 0, dinnerCapacity: 0 };
-    const totalCapacity = slotsData.dinner.reduce((sum, s) => sum + (s.isOpen ? s.capacity : 0), 0);
-    const totalCovers = (dinnerReservations as Reservation[])?.reduce((sum, r) => 
-      ["confirmed", "seated", "arrived", "pending"].includes(r.status) ? sum + r.partySize : sum, 0) || 0;
-    return { dinnerCovers: totalCovers, dinnerCapacity: totalCapacity };
-  }, [slotsData, dinnerReservations]);
-
-  const { lunchCovers, lunchCapacity } = useMemo(() => {
-    if (!slotsData?.lunch) return { lunchCovers: 0, lunchCapacity: 0 };
-    const totalCapacity = slotsData.lunch.reduce((sum, s) => sum + (s.isOpen ? s.capacity : 0), 0);
-    const totalCovers = (lunchReservations as Reservation[])?.reduce((sum, r) => 
-      ["confirmed", "seated", "arrived", "pending"].includes(r.status) ? sum + r.partySize : sum, 0) || 0;
-    return { lunchCovers: totalCovers, lunchCapacity: totalCapacity };
-  }, [slotsData, lunchReservations]);
-
-  const goToPreviousDay = () => {
-    const prev = new Date(selectedDate);
-    prev.setDate(prev.getDate() - 1);
-    setSelectedDate(prev);
-    setExpandedId(null);
-    setOpenPopupId(null);
+  const reservationsByService: Record<Service, Reservation[]> = {
+    lunch: (lunchReservations as Reservation[]) ?? [],
+    dinner: (dinnerReservations as Reservation[]) ?? [],
   };
 
-  const goToNextDay = () => {
-    const next = new Date(selectedDate);
-    next.setDate(next.getDate() + 1);
-    setSelectedDate(next);
-    setExpandedId(null);
-    setOpenPopupId(null);
-  };
+  const lunchCovers = useMemo(() => countCovers(lunchReservations as Reservation[]), [lunchReservations]);
+  const dinnerCovers = useMemo(() => countCovers(dinnerReservations as Reservation[]), [dinnerReservations]);
 
-  const goToToday = () => {
-    setSelectedDate(new Date());
+  const changeDate = (date: Date) => {
+    setSelectedDate(date);
     setExpandedId(null);
-    setOpenPopupId(null);
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dateValue = e.target.value;
-    if (!dateValue) return;
-    setSelectedDate(parseISO(dateValue));
-    setExpandedId(null);
-    setOpenPopupId(null);
+    if (!e.target.value) return;
+    changeDate(parseISO(e.target.value));
   };
 
-  const toggleExpand = (id: Id<"reservations">) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
-
-  const togglePopup = (e: React.MouseEvent, id: Id<"reservations">) => {
-    e.stopPropagation();
-    setOpenPopupId(openPopupId === id ? null : id);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = () => setOpenPopupId(null);
-    window.addEventListener("click", handleClickOutside);
-    return () => window.removeEventListener("click", handleClickOutside);
-  }, []);
-
-  const handleStatusChange = useCallback(
-    async (id: Id<"reservations">, status: ReservationStatus, version: number) => {
+  const handleValidate = useCallback(
+    async (res: Reservation) => {
+      setValidatingId(res._id);
       try {
         await updateReservation({
-          reservationId: id,
-          expectedVersion: version,
-          status,
+          reservationId: res._id,
+          expectedVersion: res.version,
+          status: "confirmed" as ReservationStatus,
         });
-        toast.success("Statut mis à jour");
+        toast.success("Réservation validée");
       } catch (error) {
-        toast.error(formatConvexError(error, "Erreur lors de la mise à jour"));
+        toast.error(formatConvexError(error, "Erreur lors de la validation"));
+      } finally {
+        setValidatingId(null);
       }
     },
     [updateReservation, toast]
   );
 
-  const getTableName = (reservation: Reservation) => {
-    if (!tablesData) return "-";
-    const tableId = reservation.primaryTableId || reservation.tableIds[0];
-    if (!tableId) return "-";
-    const table = tablesData.find((t) => t._id === tableId);
-    return table?.name || "-";
+  const getTableName = (res: Reservation) => {
+    const tableId = res.primaryTableId || res.tableIds[0];
+    if (!tableId || !tablesData) return null;
+    return tablesData.find((t) => t._id === tableId)?.name ?? null;
   };
 
-  const formatDateLabel = () => {
-    const day = format(selectedDate, "d", { locale: fr });
-    const month = format(selectedDate, "MMMM", { locale: fr });
-    const year = format(selectedDate, "yyyy");
-    return (
-      <>
-        {day} {month.charAt(0).toUpperCase() + month.slice(1)}{" "}
-        <span className="text-slate-300 font-light">{year}</span>
-      </>
-    );
-  };
+  const dayName = format(selectedDate, "EEEE", { locale: fr });
+  const dayLabel = format(selectedDate, "d MMM", { locale: fr });
 
   const isLoading = lunchStatus === "LoadingFirstPage" || dinnerStatus === "LoadingFirstPage";
+  const services: Service[] = selectedService === "total" ? ["lunch", "dinner"] : [selectedService];
 
-  const renderReservationRow = (res: Reservation) => {
+  const renderRow = (res: Reservation) => {
+    const isPending = res.status === "pending";
+    const isOut = OUT_STATUSES.includes(res.status);
+    const tableName = getTableName(res);
+    const stripeKey = res.status === "confirmed" && tableName ? "assigned" : res.status;
+    const stripe = STATUS_STRIPE[stripeKey] ?? { color: "#E5E5E5", label: res.status };
     const isExpanded = expandedId === res._id;
-    const slotTimeKeys = slotsData?.[res.service]?.map((s: { timeKey: string }) => s.timeKey);
-    const isAddedDuringService = isCreatedDuringService(res, slotTimeKeys);
+    const isNew = (res.totalVisits ?? 0) === 0;
 
     return (
-      <div key={res._id} className="flex flex-col">
+      <div key={res._id}>
         <div
-          onClick={() => toggleExpand(res._id)}
-          className={`group flex items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${
-            isAddedDuringService
-              ? "bg-violet-50 hover:bg-violet-100/60 border-l-4 border-l-violet-300"
-              : isExpanded ? "bg-slate-50/50 hover:bg-slate-50/30" : "hover:bg-slate-50/30"
-          }`}
-          title={isAddedDuringService ? "Réservation enregistrée pendant le service" : undefined}
+          role="button"
+          tabIndex={0}
+          aria-expanded={isExpanded}
+          onClick={() => setExpandedId(isExpanded ? null : res._id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setExpandedId(isExpanded ? null : res._id);
+            }
+          }}
+          className={cn(
+            "flex items-center gap-2.5 h-[46px] px-4 border-b border-[#EFEFEF] cursor-pointer",
+            isPending ? "bg-[#FBF4EE]" : isExpanded ? "bg-[#FAFAFA]" : "bg-white",
+            isOut && "text-[#A3A3A3]"
+          )}
         >
-          <StatusPill status={res.status} />
-
-          <span className="w-11 text-xs font-mono text-slate-500 font-medium shrink-0 tracking-tighter uppercase">
-            {res.timeKey}
+          <span
+            role="img"
+            aria-label={stripe.label}
+            className="w-1 h-[26px] rounded-full shrink-0"
+            style={{ backgroundColor: stripe.color }}
+          />
+          <span className={cn("w-5 text-right text-base font-bold shrink-0", isOut && "line-through")}>
+            {res.partySize}
           </span>
-
-          <div className="flex items-center gap-1 w-8 shrink-0">
-            <Users size={14} className="text-slate-400" strokeWidth={1.5} />
-            <span className="text-sm font-bold text-slate-800">{res.partySize}</span>
-          </div>
-
           <span className="text-sm shrink-0">{getFlag(res.phone, res.language)}</span>
-
-          {/* Name + Badge Hist surélevé */}
-          {(() => {
-            const visits = res.totalVisits ?? 0;
-            const visitBadge = getVisitBadgeStyle(visits);
-            return (
-              <div className="flex-1 flex items-start gap-1 truncate">
-                <span
-                  className={`text-sm font-semibold ${
-                    res.status === "cancelled" || res.status === "noshow"
-                      ? "text-slate-300 line-through"
-                      : "text-slate-700"
-                  }`}
-                >
-                  {res.lastName} {res.firstName.charAt(0).toUpperCase()}.
-                </span>
-                <span className={`px-1 py-0.5 text-[8px] rounded-full -mt-0.5 ${visitBadge.classes} ${visitBadge.fontWeight}`}>
-                  {visits === 0 ? "NEW" : visits}
-                </span>
-                {/* No-show / incident : cette réservation ou la précédente du client */}
-                <OutcomeIndicator reservation={res} size={14} className="mt-0.5" />
-              </div>
-            );
-          })()}
-
-          <div className="flex items-center gap-3 shrink-0 relative">
-            {res.note && (
-              <div className="p-1.5 bg-amber-50 rounded-full">
-                <MessageSquare size={12} className="text-amber-500" strokeWidth={2.5} />
-              </div>
+          <span className="flex-1 min-w-0 flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
+            <span className={cn("text-[15px] truncate", isOut && "line-through")}>
+              <span className={isOut ? "" : "text-slate-500"}>{res.firstName}</span>{" "}
+              <span className={cn("font-semibold", !isOut && "text-[#0C0C0C]")}>{res.lastName}</span>
+            </span>
+            {isNew && !isOut && (
+              <span className="shrink-0 h-4 px-[5px] rounded-full inline-flex items-center text-[9px] font-semibold text-white bg-emerald-500">
+                New
+              </span>
             )}
-
+            <OutcomeIndicator reservation={res} size={14} />
+          </span>
+          {res.note && (
+            <MessageSquare size={15} strokeWidth={2} className="text-amber-700 shrink-0" aria-label="Note" />
+          )}
+          {isPending ? (
             <button
-              onClick={(e) => togglePopup(e, res._id)}
-              className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleValidate(res);
+              }}
+              disabled={validatingId === res._id}
+              className="h-[30px] px-3 rounded-full bg-[#3884FF] text-white text-[13px] font-semibold shrink-0 active:scale-95 transition-transform disabled:opacity-60"
             >
-              <MoreHorizontal size={18} />
+              {validatingId === res._id ? <Loader2 size={14} className="animate-spin" /> : "Valider"}
             </button>
-
-            {openPopupId === res._id && (
-              <ActionPopup
-                status={res.status}
-                onAction={(action, nextStatus) => {
-                  if (action === "status" && nextStatus) {
-                    handleStatusChange(res._id, nextStatus, res.version);
-                  }
-                }}
-                onClose={() => setOpenPopupId(null)}
-              />
-            )}
-          </div>
+          ) : isOut ? (
+            <span className="text-xs shrink-0">{stripe.label}</span>
+          ) : (
+            <span
+              className={cn(
+                "min-w-[34px] h-[26px] px-1.5 rounded-lg bg-[#F6F6F6] flex items-center justify-center text-sm font-bold shrink-0",
+                tableName ? "text-[#2D2D2D]" : "text-[#A3A3A3]"
+              )}
+            >
+              {tableName ?? "–"}
+            </span>
+          )}
         </div>
 
         {isExpanded && (
-          <div className="px-4 pb-4 pt-3 bg-slate-50/50 border-b border-slate-100/50 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex flex-col gap-3">
-              {/* Nom - Prénom */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nom</span>
-                  <span className="text-xs font-bold text-slate-700">{res.lastName}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Prénom</span>
-                  <span className="text-xs font-bold text-slate-700">{res.firstName}</span>
-                </div>
-              </div>
-
-              {/* Téléphone - Email */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Téléphone</span>
-                  <a href={`tel:${res.phone}`} className="text-xs font-bold text-slate-600 underline decoration-slate-200">
-                    {res.phone}
-                  </a>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Email</span>
-                  <a href={`mailto:${res.email}`} className="text-xs font-bold text-slate-600 underline decoration-slate-200 truncate">
-                    {res.email}
-                  </a>
-                </div>
-              </div>
-
-              {/* Couverts - Table */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Couverts</span>
-                  <span className="text-xs font-bold text-slate-700">
-                    {res.adults} ad.{res.childrenCount > 0 && ` + ${res.childrenCount} enf.`}{res.babyCount > 0 && ` + ${res.babyCount} bb`}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Table</span>
-                  <span className="text-xs font-bold text-slate-700">{getTableName(res)}</span>
-                </div>
-              </div>
-
-              {/* Heure - Source */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Heure</span>
-                  <span className="text-xs font-bold text-slate-700">{res.timeKey}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Source</span>
-                  <span className="text-xs font-bold text-slate-700 capitalize">{res.source}</span>
-                </div>
-              </div>
-
-              {/* Options */}
-              {res.options && res.options.length > 0 && (
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Options</span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {res.options.map((opt) => (
-                      <span key={opt} className="text-[10px] px-2 py-0.5 bg-slate-100 rounded-full text-slate-600">
-                        {opt === "stroller" && "Poussette"}
-                        {opt === "highChair" && "Chaise haute"}
-                        {opt === "wheelchair" && "PMR"}
-                        {opt === "dogAccess" && "Chien"}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Notes */}
-              {res.note && (
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Notes</span>
-                  <div className="p-2 bg-white rounded-xl border border-slate-100 text-xs text-slate-600 italic leading-relaxed mt-1">
-                    {res.note}
-                  </div>
-                </div>
-              )}
+          <div className="px-4 py-3 bg-[#FAFAFA] border-b border-[#EFEFEF] grid grid-cols-2 gap-x-4 gap-y-2 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex flex-col">
+              <span className="text-xs text-[#6E6E6E]">Heure</span>
+              <span className="font-medium">{res.timeKey}</span>
             </div>
+            <div className="flex flex-col">
+              <span className="text-xs text-[#6E6E6E]">Couverts</span>
+              <span className="font-medium">
+                {res.adults} ad.{res.childrenCount > 0 && ` + ${res.childrenCount} enf.`}
+                {res.babyCount > 0 && ` + ${res.babyCount} bb`}
+              </span>
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs text-[#6E6E6E]">Téléphone</span>
+              <a href={`tel:${res.phone}`} className="font-medium text-[#3884FF] truncate">{res.phone}</a>
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs text-[#6E6E6E]">E-mail</span>
+              <a href={`mailto:${res.email}`} className="font-medium text-[#3884FF] truncate">{res.email}</a>
+            </div>
+            {res.options && res.options.length > 0 && (
+              <div className="col-span-2 flex flex-wrap gap-1.5">
+                {res.options.map((opt) => (
+                  <span key={opt} className="text-xs px-2 py-0.5 bg-[#EFEFEF] rounded-full text-[#464646]">
+                    {OPTION_LABELS[opt] ?? opt}
+                  </span>
+                ))}
+              </div>
+            )}
+            {res.note && (
+              <p className="col-span-2 px-3 py-2 rounded-xl bg-[#F4EBCF] text-[#6B4E0C] leading-snug">{res.note}</p>
+            )}
           </div>
         )}
       </div>
     );
   };
 
+  const renderService = (service: Service) => {
+    const reservations = reservationsByService[service]
+      .slice()
+      .sort((a, b) => a.timeKey.localeCompare(b.timeKey));
+    const active = reservations.filter((r) => !OUT_STATUSES.includes(r.status));
+    const out = reservations.filter((r) => OUT_STATUSES.includes(r.status));
+    const slots = (slotsData?.[service] ?? []) as Slot[];
+    const serviceCapacity = slots.reduce((sum, s) => sum + (s.isOpen ? s.capacity : 0), 0);
+    const serviceCovers = service === "lunch" ? lunchCovers : dinnerCovers;
+
+    const groups = active.reduce<Record<string, Reservation[]>>((acc, res) => {
+      (acc[res.timeKey] ??= []).push(res);
+      return acc;
+    }, {});
+
+    return (
+      <section key={service}>
+        {selectedService === "total" && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-[#F6F6F6] border-b border-[#E5E5E5]">
+            {service === "lunch" ? (
+              <Sun size={16} strokeWidth={1.5} className="text-[#D9A441]" />
+            ) : (
+              <Moon size={16} strokeWidth={1.5} className="text-[#6E6E6E]" />
+            )}
+            <span className="font-bold">{service === "lunch" ? "Midi" : "Soir"}</span>
+            <span className="text-sm text-[#6E6E6E]">
+              {serviceCovers} couverts{serviceCapacity > 0 && ` / ${serviceCapacity}`}
+            </span>
+          </div>
+        )}
+
+        {Object.keys(groups).sort().map((time) => {
+          const groupReservations = groups[time];
+          const covers = groupReservations.reduce((sum, r) => sum + r.partySize, 0);
+          const capacity = slots.find((s) => s.timeKey === time)?.capacity ?? 0;
+          const available = Math.max(0, capacity - covers);
+          const gauge = BRUME_GAUGE[getGaugeLevel(covers, capacity)];
+
+          return (
+            <div key={time}>
+              <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-[5px] bg-[#5E5E5E] text-white">
+                <span className="font-extrabold text-sm">{time}</span>
+                {capacity > 0 && (
+                  <>
+                    <div className="w-14 h-[3px] rounded-full bg-white/20 overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${Math.min(1, covers / capacity) * 100}%`, backgroundColor: gauge.bar }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold" style={{ color: gauge.text }}>
+                      {available > 0 ? `${available} dispo` : "complet"}
+                    </span>
+                  </>
+                )}
+                <span className="ml-auto text-sm font-extrabold">
+                  {covers}
+                  {capacity > 0 && ` / ${capacity}`}
+                </span>
+              </div>
+              {groupReservations.map(renderRow)}
+            </div>
+          );
+        })}
+
+        {active.length === 0 && (
+          <p className="px-4 py-8 text-center text-sm text-[#8E8E8E]">Aucune réservation</p>
+        )}
+
+        {out.length > 0 && out.map(renderRow)}
+      </section>
+    );
+  };
+
   return (
-    <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
-      <header className="px-4 pt-6 pb-4">
-        <div className="flex justify-between items-center w-full">
-          <div className="relative cursor-pointer group">
-            <h2 className="text-xl font-bold text-slate-800 group-hover:text-slate-600 transition-colors pointer-events-none">
-              {formatDateLabel()}
-            </h2>
+    <div className="flex flex-col h-full bg-white animate-in fade-in duration-300">
+      <header className="px-4 pt-4 pb-3.5 flex flex-col gap-2.5 border-b border-[#E5E5E5]">
+        <div className="flex items-center">
+          <div className="relative flex-1 min-w-0">
+            <h1 className="text-[30px] leading-10 font-bold tracking-[-0.5px] whitespace-nowrap truncate pointer-events-none">
+              <span className="capitalize">{dayName}</span>{" "}
+              <span className="font-normal text-[#8E8E8E]">{dayLabel}</span>
+            </h1>
             <input
               type="date"
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              aria-label="Choisir une date"
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
               value={dateKey}
               onChange={handleDateChange}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={goToToday}
-              className="p-2.5 text-slate-500 hover:text-slate-900 border border-slate-200 rounded-full transition-all"
-              title="Aujourd'hui"
-            >
-              <CalendarCheck size={18} strokeWidth={1.5} />
-            </button>
-            <div className="flex bg-slate-50 rounded-full p-1 border border-slate-200">
+          {!isToday && (
+            <>
               <button
-                onClick={goToPreviousDay}
-                className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
+                type="button"
+                onClick={() => changeDate(new Date())}
+                aria-label="Revenir à aujourd'hui"
+                className="h-11 flex items-center gap-1 text-[15px] font-medium text-[#3884FF] active:scale-95 transition-transform"
               >
-                <ChevronLeft size={18} />
+                <RotateCcw size={15} strokeWidth={2} />
+                Auj.
               </button>
-              <button
-                onClick={goToNextDay}
-                className="p-1.5 text-slate-500 hover:text-slate-900 transition-colors rounded-full"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
+              <span aria-hidden className="w-px h-[18px] bg-black/10 ml-2 mr-0.5" />
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => changeDate(subDays(selectedDate, 1))}
+            aria-label="Jour précédent"
+            className="w-9 h-11 flex items-center justify-center text-[#3884FF] active:scale-95 transition-transform"
+          >
+            <ChevronLeft size={22} strokeWidth={2} />
+          </button>
+          <button
+            type="button"
+            onClick={() => changeDate(addDays(selectedDate, 1))}
+            aria-label="Jour suivant"
+            className="w-9 h-11 -mr-2 flex items-center justify-center text-[#3884FF] active:scale-95 transition-transform"
+          >
+            <ChevronRight size={22} strokeWidth={2} />
+          </button>
         </div>
 
-        {/* Service Switch + Settings */}
-        <div className="flex items-center gap-3 mt-4">
-          <div className="flex-1 flex bg-white rounded-full p-1 border border-slate-200">
-            <button
-              onClick={() => setSelectedService("lunch")}
-              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${
-                selectedService === "lunch"
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              Déjeuner
-            </button>
-            <button
-              onClick={() => setSelectedService("dinner")}
-              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${
-                selectedService === "dinner"
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              Dîner
-            </button>
-          </div>
+        <div className="flex items-center gap-2">
+          <SegmentedControl
+            ariaLabel="Service"
+            fill
+            className="flex-1"
+            value={selectedService}
+            onChange={setSelectedService}
+            options={[
+              { value: "total" as const, covers: lunchCovers + dinnerCovers, label: "Total" },
+              { value: "lunch" as const, covers: lunchCovers, label: "Midi" },
+              { value: "dinner" as const, covers: dinnerCovers, label: "Soir" },
+            ].map(({ value, covers, label }) => ({
+              value,
+              ariaLabel: `${label} : ${covers} couverts`,
+              label: (
+                <>
+                  <span>{label}</span>
+                  <span className="font-bold">{covers}</span>
+                </>
+              ),
+            }))}
+          />
           <button
+            type="button"
             onClick={() => setShowDaySettings(true)}
-            className="p-2.5 bg-white rounded-full border border-slate-200 text-slate-400 hover:text-slate-700 transition-colors"
             aria-label="Gérer les créneaux du jour"
-            title="Gérer les créneaux du jour"
+            className="w-11 h-11 flex items-center justify-center text-[#3884FF] active:scale-95 transition-transform"
           >
-            <Settings size={18} strokeWidth={2} />
+            <SlidersHorizontal size={24} strokeWidth={1.75} />
           </button>
         </div>
       </header>
@@ -473,68 +472,11 @@ export default function MobileReservationsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto">
-          {selectedService === "lunch" ? (
-            <div className="mb-4">
-              <div
-                className="px-4 py-2.5 flex justify-between items-center border-y border-slate-100/50"
-                style={{ backgroundColor: "#F8F6F1" }}
-              >
-                <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">
-                  Service de Midi
-                </h3>
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <UsersRound size={14} strokeWidth={2.5} />
-                  <span className="text-[11px] font-bold">{lunchCovers}/{lunchCapacity}</span>
-                </div>
-              </div>
-              <div className="divide-y divide-slate-50/50">
-                {(lunchReservations as Reservation[])
-                  ?.slice()
-                  .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
-                  .map(renderReservationRow)}
-                {(!lunchReservations || lunchReservations.length === 0) && (
-                  <div className="px-4 py-8 text-center text-sm text-slate-400">
-                    Aucune réservation
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="mb-4">
-              <div
-                className="px-4 py-2.5 flex justify-between items-center border-y border-slate-100/50"
-                style={{ backgroundColor: "#F8F6F1" }}
-              >
-                <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">
-                  Service du Soir
-                </h3>
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <UsersRound size={14} strokeWidth={2.5} />
-                  <span className="text-[11px] font-bold">{dinnerCovers}/{dinnerCapacity}</span>
-                </div>
-              </div>
-              <div className="divide-y divide-slate-50/50">
-                {(dinnerReservations as Reservation[])
-                  ?.slice()
-                  .sort((a, b) => a.timeKey.localeCompare(b.timeKey))
-                  .map(renderReservationRow)}
-                {(!dinnerReservations || dinnerReservations.length === 0) && (
-                  <div className="px-4 py-8 text-center text-sm text-slate-400">
-                    Aucune réservation
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        <div className="flex-1 overflow-y-auto">{services.map(renderService)}</div>
       )}
 
       {showDaySettings && (
-        <DaySettingsPopup
-          dateKey={dateKey}
-          onClose={() => setShowDaySettings(false)}
-        />
+        <DaySettingsPopup dateKey={dateKey} onClose={() => setShowDaySettings(false)} />
       )}
     </div>
   );
