@@ -11,7 +11,7 @@ interface MobileLayoutClientProps {
 }
 
 /** Marge basse des zones qui défilent : le contenu passe sous la navigation flottante */
-export const NAV_CLEARANCE = "pb-[calc(4.5rem+env(safe-area-inset-bottom))]";
+export const NAV_CLEARANCE = "pb-[calc(5rem+env(safe-area-inset-bottom))]";
 
 const NAV_ITEMS = [
   { id: "planning", label: "Planning", icon: CalendarDays, href: "/admin-mobile" },
@@ -42,7 +42,7 @@ export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
 
           {/* Navigation : capsule flottante, le contenu défile dessous */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] z-[200]">
-            <nav className="pointer-events-auto flex h-12 p-1 rounded-full bg-white/75 backdrop-blur-xl backdrop-saturate-150 border border-black/[0.06] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.3)]">
+            <nav className="pointer-events-auto flex h-[54px] p-1 rounded-full bg-white/75 backdrop-blur-xl backdrop-saturate-150 border border-black/[0.06] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.3)]">
               {NAV_ITEMS.map((item) => {
                 const isActive = activeTab === item.id;
                 const Icon = item.icon;
@@ -57,7 +57,7 @@ export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
                       isActive ? "bg-[#EEF4FF] text-[#3884FF] font-semibold" : "text-[#6E6E6E] hover:text-[#2D2D2D]"
                     )}
                   >
-                    <Icon size={18} strokeWidth={isActive ? 2 : 1.75} />
+                    <Icon size={20} strokeWidth={isActive ? 2 : 1.75} />
                     {item.label}
                   </button>
                 );
