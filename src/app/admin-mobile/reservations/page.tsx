@@ -216,7 +216,7 @@ export default function MobileReservationsPage() {
             }
           }}
           className={cn(
-            "flex items-center gap-2.5 h-[46px] px-4 border-b border-[#EFEFEF] cursor-pointer",
+            "flex items-center gap-2.5 h-9 px-4 cursor-pointer",
             isPending ? "bg-[#FBF4EE]" : isExpanded ? "bg-[#FAFAFA]" : "bg-white",
             isOut && "text-[#A3A3A3]"
           )}
@@ -224,7 +224,7 @@ export default function MobileReservationsPage() {
           <span
             role="img"
             aria-label={stripe.label}
-            className="w-1 h-[26px] rounded-full shrink-0"
+            className="w-1 h-5 rounded-full shrink-0"
             style={{ backgroundColor: stripe.color }}
           />
           <span className={cn("w-5 text-right text-base font-bold shrink-0", isOut && "line-through")}>
@@ -254,7 +254,7 @@ export default function MobileReservationsPage() {
                 handleValidate(res);
               }}
               disabled={validatingId === res._id}
-              className="h-[30px] px-3 rounded-full bg-[#3884FF] text-white text-[13px] font-semibold shrink-0 active:scale-95 transition-transform disabled:opacity-60"
+              className="h-[26px] px-3 rounded-full bg-[#3884FF] text-white text-[13px] font-semibold shrink-0 active:scale-95 transition-transform disabled:opacity-60"
             >
               {validatingId === res._id ? <Loader2 size={14} className="animate-spin" /> : "Valider"}
             </button>
@@ -263,7 +263,7 @@ export default function MobileReservationsPage() {
           ) : (
             <span
               className={cn(
-                "min-w-[34px] h-[26px] px-1.5 rounded-lg bg-[#F6F6F6] flex items-center justify-center text-sm font-bold shrink-0",
+                "min-w-[32px] h-6 px-1.5 rounded-md bg-[#F6F6F6] flex items-center justify-center text-sm font-bold shrink-0",
                 tableName ? "text-[#2D2D2D]" : "text-[#A3A3A3]"
               )}
             >
@@ -273,7 +273,7 @@ export default function MobileReservationsPage() {
         </div>
 
         {isExpanded && (
-          <div className="px-4 py-3 bg-[#FAFAFA] border-b border-[#EFEFEF] grid grid-cols-2 gap-x-4 gap-y-2 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="px-4 py-3 bg-[#FAFAFA] grid grid-cols-2 gap-x-4 gap-y-2 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="flex flex-col">
               <span className="text-xs text-[#6E6E6E]">Heure</span>
               <span className="font-medium">{res.timeKey}</span>
@@ -387,10 +387,10 @@ export default function MobileReservationsPage() {
 
   return (
     <div className="flex flex-col h-full bg-white animate-in fade-in duration-300">
-      <header className="px-4 pt-4 pb-3.5 flex flex-col gap-2.5 border-b border-[#E5E5E5]">
+      <header className="px-4 pt-1 pb-2.5 flex flex-col gap-1.5 border-b border-[#E5E5E5]">
         <div className="flex items-center">
           <div className="relative flex-1 min-w-0">
-            <h1 className="text-[30px] leading-10 font-bold tracking-[-0.5px] whitespace-nowrap truncate pointer-events-none">
+            <h1 className="text-[26px] leading-9 font-bold tracking-[-0.5px] whitespace-nowrap truncate pointer-events-none">
               <span className="capitalize">{dayName}</span>{" "}
               <span className="font-normal text-[#8E8E8E]">{dayLabel}</span>
             </h1>
@@ -408,7 +408,7 @@ export default function MobileReservationsPage() {
                 type="button"
                 onClick={() => changeDate(new Date())}
                 aria-label="Revenir à aujourd'hui"
-                className="h-11 flex items-center gap-1 text-[15px] font-medium text-[#3884FF] active:scale-95 transition-transform"
+                className="h-9 flex items-center gap-1 text-[15px] font-medium text-[#3884FF] active:scale-95 transition-transform"
               >
                 <RotateCcw size={15} strokeWidth={2} />
                 Auj.
@@ -420,7 +420,7 @@ export default function MobileReservationsPage() {
             type="button"
             onClick={() => changeDate(subDays(selectedDate, 1))}
             aria-label="Jour précédent"
-            className="w-9 h-11 flex items-center justify-center text-[#3884FF] active:scale-95 transition-transform"
+            className="w-9 h-9 flex items-center justify-center text-[#3884FF] active:scale-95 transition-transform"
           >
             <ChevronLeft size={22} strokeWidth={2} />
           </button>
@@ -428,7 +428,7 @@ export default function MobileReservationsPage() {
             type="button"
             onClick={() => changeDate(addDays(selectedDate, 1))}
             aria-label="Jour suivant"
-            className="w-9 h-11 -mr-2 flex items-center justify-center text-[#3884FF] active:scale-95 transition-transform"
+            className="w-9 h-9 -mr-2 flex items-center justify-center text-[#3884FF] active:scale-95 transition-transform"
           >
             <ChevronRight size={22} strokeWidth={2} />
           </button>
@@ -437,6 +437,7 @@ export default function MobileReservationsPage() {
         <div className="flex items-center gap-2">
           <SegmentedControl
             ariaLabel="Service"
+            size="sm"
             fill
             className="flex-1"
             value={selectedService}
@@ -460,9 +461,9 @@ export default function MobileReservationsPage() {
             type="button"
             onClick={() => setShowDaySettings(true)}
             aria-label="Gérer les créneaux du jour"
-            className="w-11 h-11 flex items-center justify-center text-[#3884FF] active:scale-95 transition-transform"
+            className="w-9 h-9 -mr-1 flex items-center justify-center text-[#3884FF] active:scale-95 transition-transform"
           >
-            <SlidersHorizontal size={24} strokeWidth={1.75} />
+            <SlidersHorizontal size={22} strokeWidth={1.75} />
           </button>
         </div>
       </header>
