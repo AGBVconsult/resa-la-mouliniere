@@ -71,6 +71,12 @@ describe("formatReservationLine", () => {
     expect(months).toEqual(["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"]);
   });
 
+  test("today shows Auj. instead of the date", () => {
+    const reservation = { firstName: "Benjamin", lastName: "Vantilcke", partySize: 2, dateKey: "2026-10-10", timeKey: "19:00" };
+    expect(formatReservationLine(reservation, "2026-10-10")).toBe("Auj. | 19:00 | 2pers. | B. Vantilcke");
+    expect(formatReservationLine(reservation, "2026-10-09")).toBe("Sam 10 Oct | 19:00 | 2pers. | B. Vantilcke");
+  });
+
   test("missing first name keeps only the last name", () => {
     expect(
       formatReservationLine({ firstName: " ", lastName: "Dupont", partySize: 6, dateKey: "2026-12-31", timeKey: "20:00" })
