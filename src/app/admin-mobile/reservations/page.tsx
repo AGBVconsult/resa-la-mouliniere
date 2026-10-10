@@ -25,6 +25,7 @@ import { formatConvexError } from "@/lib/formatError";
 import { getFlag } from "@/lib/getFlag";
 import { cn } from "@/lib/utils";
 import { BRUME_GAUGE, getGaugeLevel } from "@/lib/constants/brume";
+import { NAV_CLEARANCE } from "../components/MobileLayoutClient";
 import { DaySettingsPopup } from "../../admin-tablette/components/DaySettingsPopup";
 
 interface Reservation {
@@ -351,8 +352,8 @@ export default function MobileReservationsPage() {
 
           return (
             <div key={time}>
-              <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-[5px] bg-[#5E5E5E] text-white">
-                <span className="font-extrabold text-sm">{time}</span>
+              <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-[3px] bg-[#5E5E5E] text-white text-[13px] font-extrabold">
+                <span>{time}</span>
                 {capacity > 0 && (
                   <>
                     <div className="w-14 h-[3px] rounded-full bg-white/20 overflow-hidden">
@@ -366,7 +367,7 @@ export default function MobileReservationsPage() {
                     </span>
                   </>
                 )}
-                <span className="ml-auto text-sm font-extrabold">
+                <span className="ml-auto">
                   {covers}
                   {capacity > 0 && ` / ${capacity}`}
                 </span>
@@ -387,7 +388,7 @@ export default function MobileReservationsPage() {
 
   return (
     <div className="flex flex-col h-full bg-white animate-in fade-in duration-300">
-      <header className="px-4 pt-1 pb-2.5 flex flex-col gap-1.5 border-b border-[#E5E5E5]">
+      <header className="px-4 pt-2 pb-5 flex flex-col gap-3 border-b border-[#E5E5E5]">
         <div className="flex items-center">
           <div className="relative flex-1 min-w-0">
             <h1 className="text-[26px] leading-9 font-bold tracking-[-0.5px] whitespace-nowrap truncate pointer-events-none">
@@ -473,7 +474,7 @@ export default function MobileReservationsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto">{services.map(renderService)}</div>
+        <div className={cn("flex-1 overflow-y-auto", NAV_CLEARANCE)}>{services.map(renderService)}</div>
       )}
 
       {showDaySettings && (

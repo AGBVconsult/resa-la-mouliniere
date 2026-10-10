@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { MapPin, ExternalLink, Loader2 } from "lucide-react";
 import { formatDateLabel } from "../../../../convex/lib/webPush";
+import { NAV_CLEARANCE } from "../components/MobileLayoutClient";
 
 const TIMEZONE = "Europe/Brussels";
 
@@ -47,7 +48,7 @@ export default function FicheGooglePage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className={`flex-1 overflow-y-auto px-4 pt-4 space-y-4 ${NAV_CLEARANCE}`}>
         <div className="space-y-2">
           <a
             href={GOOGLE_MAPS_APP_URL}

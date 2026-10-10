@@ -10,6 +10,9 @@ interface MobileLayoutClientProps {
   children: ReactNode;
 }
 
+/** Marge basse des zones qui défilent : le contenu passe sous la navigation flottante */
+export const NAV_CLEARANCE = "pb-[calc(6rem+env(safe-area-inset-bottom))]";
+
 const NAV_ITEMS = [
   { id: "planning", label: "Planning", icon: CalendarDays, href: "/admin-mobile" },
   { id: "reservations", label: "Résas", icon: ListChecks, href: "/admin-mobile/reservations" },
@@ -31,15 +34,15 @@ export function MobileLayoutClient({ children }: MobileLayoutClientProps) {
   return (
     <ToastProvider>
       <div className="min-h-screen bg-[#F6F6F6] flex flex-col font-tablet tabular-nums antialiased text-[#0C0C0C]">
-        <div className="w-full max-w-3xl mx-auto bg-white flex flex-col h-[100dvh] md:h-[85vh] md:my-auto md:rounded-[2.5rem] md:shadow-[0_20px_50px_rgba(0,0,0,0.05)] md:border md:border-slate-100 overflow-hidden">
+        <div className="w-full max-w-3xl mx-auto bg-white relative flex flex-col h-[100dvh] md:h-[85vh] md:my-auto md:rounded-[2.5rem] md:shadow-[0_20px_50px_rgba(0,0,0,0.05)] md:border md:border-slate-100 overflow-hidden">
           {/* Content - padding top for safe area (status bar) */}
           <div className="flex-1 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)]">
             {children}
           </div>
 
-          {/* Navigation : capsule flottante, sous le contenu (rien ne défile dessous) */}
-          <div className="shrink-0 px-4 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-white z-[200]">
-            <nav className="flex h-[58px] p-1 rounded-full bg-white border border-black/[0.06] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.3)]">
+          {/* Navigation : capsule flottante, le contenu défile dessous */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] z-[200]">
+            <nav className="pointer-events-auto flex h-[58px] p-1 rounded-full bg-white/75 backdrop-blur-xl backdrop-saturate-150 border border-black/[0.06] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.3)]">
               {NAV_ITEMS.map((item) => {
                 const isActive = activeTab === item.id;
                 const Icon = item.icon;

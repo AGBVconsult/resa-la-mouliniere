@@ -14,6 +14,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PushNotificationToggle } from "../components/PushNotificationToggle";
+import { NAV_CLEARANCE } from "../components/MobileLayoutClient";
 
 type EventType = "created" | "status_change" | "table_assignment" | "updated";
 type Status = "pending" | "confirmed" | "seated" | "completed" | "noshow" | "cancelled" | "refused" | "incident";
@@ -158,7 +159,7 @@ export default function ActivityPage() {
       <PushNotificationToggle />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 py-3">
+      <div className={`flex-1 overflow-y-auto px-4 pt-3 ${NAV_CLEARANCE}`}>
         {activity === undefined ? (
           <div className="flex items-center justify-center h-40">
             <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
