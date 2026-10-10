@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { BellRing, BellOff, Loader2 } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 
@@ -63,10 +63,12 @@ export function PushNotificationToggle() {
   const vapidPublicKey = useQuery(api.pushSubscriptions.getVapidPublicKey);
   const subscribe = useMutation(api.pushSubscriptions.subscribe);
   const unsubscribe = useMutation(api.pushSubscriptions.unsubscribe);
+  const sendTest = useAction(api.notifications.sendTestNotification);
 
   const [state, setState] = useState<State>("loading");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [testInfo, setTestInfo] = useState<string | null>(null);
 
   // Detect current state (and re-sync an existing subscription with the server)
   useEffect(() => {
@@ -153,6 +155,27 @@ export function PushNotificationToggle() {
     }
   };
 
+  const test = async () => {
+    setBusy(true);
+    setError(null);
+    setTestInfo(null);
+    try {
+      const result = await sendTest({});
+      setTestInfo(
+        result.sent > 0
+          ? "Notification de test envoyée."
+          : result.reason === "not_configured"
+            ? "Notifications non configurées sur le serveur."
+            : "Aucun appareil abonné."
+      );
+    } catch (err) {
+      console.error("[Push] Test failed:", err);
+      setError("Échec de l'envoi du test. Réessayez.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (state === "loading") return null;
 
   const hint: Partial<Record<State, string>> = {
@@ -194,6 +217,16 @@ export function PushNotificationToggle() {
           </button>
         )}
       </div>
+      {isOn && (
+        <button
+          onClick={test}
+          disabled={busy}
+          className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-50"
+        >
+          Envoyer une notification de test
+        </button>
+      )}
+      {testInfo && <p className="mt-1.5 text-xs text-emerald-700">{testInfo}</p>}
       {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
     </div>
   );

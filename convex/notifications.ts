@@ -8,7 +8,7 @@
  */
 
 import webpush from "web-push";
-import { internalAction, type ActionCtx } from "./_generated/server";
+import { action, internalAction, type ActionCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import {
@@ -17,6 +17,7 @@ import {
   isExpiredSubscriptionStatus,
   selectGbpReminders,
   type AdminPushPayload,
+  type GbpReminderPeriod,
 } from "./lib/webPush";
 import { getTodayDateKey } from "./lib/dateUtils";
 
@@ -146,5 +147,29 @@ export const sendGbpPeriodReminders = internalAction({
       await sendToAllDevices(ctx, buildGbpReminderPayload(reminder), 12 * 60 * 60);
     }
     return { reminders: reminders.length };
+  },
+});
+
+/**
+ * Test button (mobile app): sends a "Fiche Google" reminder right away,
+ * built on the next upcoming special period (or a sample one).
+ */
+export const sendTestNotification = action({
+  args: {},
+  handler: async (ctx): Promise<SendResult> => {
+    const data = await ctx.runQuery(internal.pushSubscriptions.getGbpReminderPeriodsInternal);
+    const today = data ? getTodayDateKey(data.timezone) : new Date().toISOString().slice(0, 10);
+    const next = data?.periods
+      .filter((p) => p.endDate >= today)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
+    const period: GbpReminderPeriod = next ?? {
+      name: "Exemple",
+      status: "closed",
+      startDate: today,
+      endDate: today,
+    };
+
+    const payload = buildGbpReminderPayload({ kind: "start", period });
+    return await sendToAllDevices(ctx, { ...payload, title: `[Test] ${payload.title}` }, 60 * 60);
   },
 });
