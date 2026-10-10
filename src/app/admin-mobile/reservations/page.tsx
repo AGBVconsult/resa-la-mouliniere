@@ -20,6 +20,8 @@ import {
   Sun,
   Moon,
   MoreHorizontal,
+  UsersRound,
+  X,
   Ghost,
   XCircle,
   AlertTriangle,
@@ -250,8 +252,7 @@ export default function MobileReservationsPage() {
           }}
           className={cn(
             "flex items-center gap-2.5 h-9 px-4 cursor-pointer",
-            isPending ? "bg-[#FBF4EE]" : isExpanded ? "bg-[#FAFAFA]" : "bg-white",
-            isOut && "text-[#A3A3A3]"
+            isPending ? "bg-[#FBF4EE]" : isExpanded ? "bg-[#FAFAFA]" : "bg-white"
           )}
         >
           <span
@@ -260,12 +261,13 @@ export default function MobileReservationsPage() {
             className="w-1 h-5 rounded-full shrink-0"
             style={{ backgroundColor: stripe.color }}
           />
-          <span className={cn("w-5 text-right text-base font-bold shrink-0", isOut && "line-through")}>
-            {res.partySize}
+          <span className="w-8 flex items-center gap-0.5 shrink-0 text-sm font-semibold">
+            <UsersRound size={13} strokeWidth={2} className="text-[#94A3B8]" />
+            <span className={cn(isOut && "line-through")}>{res.partySize}</span>
           </span>
           <span className="text-sm shrink-0">{getFlag(res.phone, res.language)}</span>
           <span className="flex-1 min-w-0 flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
-            <span className={cn("text-[15px] truncate", isOut && "line-through")}>
+            <span className={cn("text-sm truncate", isOut && "line-through")}>
               <span className={isOut ? "" : "text-slate-500"}>{res.firstName}</span>{" "}
               <span className={cn("font-semibold", !isOut && "text-[#0C0C0C]")}>{res.lastName}</span>
             </span>
@@ -410,7 +412,8 @@ export default function MobileReservationsPage() {
                     </span>
                   </>
                 )}
-                <span className="ml-auto">
+                <span className="ml-auto flex items-center gap-1.5">
+                  <UsersRound size={14} strokeWidth={2.25} />
                   {covers}
                   {capacity > 0 && ` / ${capacity}`}
                 </span>
@@ -424,7 +427,20 @@ export default function MobileReservationsPage() {
           <p className="px-4 py-8 text-center text-sm text-[#8E8E8E]">Aucune réservation</p>
         )}
 
-        {out.length > 0 && out.map(renderRow)}
+        {out.length > 0 && (
+          <div className="border-t-2 border-slate-200">
+            <div className="flex items-center gap-3 px-4 py-1.5 bg-slate-100 border-b border-slate-200">
+              <span className="flex items-center gap-1.5 text-slate-500">
+                <X size={12} strokeWidth={2} />
+                <span className="font-semibold text-[11px]">Annulations / No-show</span>
+              </span>
+              <span className="text-slate-400 text-[10px]">
+                • {out.length} résa{out.length > 1 ? "s" : ""}
+              </span>
+            </div>
+            <div className="opacity-60">{out.map(renderRow)}</div>
+          </div>
+        )}
       </section>
     );
   };
