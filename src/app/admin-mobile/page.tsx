@@ -6,6 +6,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { ChevronLeft, ChevronRight, Loader2, CalendarDays, Users, DoorOpen } from "lucide-react";
 import { SegmentedBar } from "./components/SegmentedBar";
+import { NAV_CLEARANCE } from "./components/MobileLayoutClient";
 
 const DAYS_OF_WEEK = ["L", "M", "M", "J", "V", "S", "D"];
 const TIMEZONE = "Europe/Brussels";
@@ -109,7 +110,7 @@ export default function MobilePlanningPage() {
   }
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in duration-500 py-8">
+    <div className={`flex flex-col h-full animate-in fade-in duration-500 pt-8 ${NAV_CLEARANCE}`}>
       {/* Header */}
       <header className="px-6 py-4">
         <div className="flex justify-between items-center">
