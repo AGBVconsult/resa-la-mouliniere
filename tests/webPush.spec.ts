@@ -47,7 +47,7 @@ describe("formatReservationLine", () => {
         dateKey: "2026-10-09",
         timeKey: "12:15",
       })
-    ).toBe("Vend 09/10 | 12:15 | 2pers. | B. Vantilcke");
+    ).toBe("Vend 9 Oct | 12:15 | 2pers. | B. Vantilcke");
   });
 
   test("every weekday abbreviation", () => {
@@ -55,13 +55,26 @@ describe("formatReservationLine", () => {
     const line = (dateKey: string) =>
       formatReservationLine({ firstName: "a", lastName: "B", partySize: 1, dateKey, timeKey: "19:00" });
     expect(days.map((d) => line(d).split(" ")[0])).toEqual(["Lun", "Mar", "Merc", "Jeu", "Vend", "Sam", "Dim"]);
-    expect(line("2026-10-05")).toBe("Lun 05/10 | 19:00 | 1pers. | A. B");
+    expect(line("2026-10-05")).toBe("Lun 5 Oct | 19:00 | 1pers. | A. B");
+  });
+
+  test("every month abbreviation", () => {
+    const months = Array.from({ length: 12 }, (_, i) =>
+      formatReservationLine({
+        firstName: "a",
+        lastName: "B",
+        partySize: 1,
+        dateKey: `2026-${String(i + 1).padStart(2, "0")}-15`,
+        timeKey: "19:00",
+      }).split(" | ")[0].split(" ")[2]
+    );
+    expect(months).toEqual(["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"]);
   });
 
   test("missing first name keeps only the last name", () => {
     expect(
       formatReservationLine({ firstName: " ", lastName: "Dupont", partySize: 6, dateKey: "2026-12-31", timeKey: "20:00" })
-    ).toBe("Jeu 31/12 | 20:00 | 6pers. | Dupont");
+    ).toBe("Jeu 31 Déc | 20:00 | 6pers. | Dupont");
   });
 });
 
@@ -80,18 +93,18 @@ describe("buildAdminPushPayload", () => {
   test("pending reservation: note flagged by an icon, links to the mobile day view", () => {
     expect(buildAdminPushPayload("pending_reservation", reservation)).toEqual({
       title: "Réservation en attente ⌛",
-      body: "Lun 12/10 | 19:30 | 4pers. | J. Dupont | 💬",
+      body: "Lun 12 Oct | 19:30 | 4pers. | J. Dupont | 💬",
       url: "/admin-mobile/reservations?date=2026-10-12&service=dinner",
     });
   });
 
   test("no note (or blank note), no icon", () => {
     expect(buildAdminPushPayload("new_reservation", { ...reservation, note: "  " }).body).toBe(
-      "Lun 12/10 | 19:30 | 4pers. | J. Dupont"
+      "Lun 12 Oct | 19:30 | 4pers. | J. Dupont"
     );
     const payload = buildAdminPushPayload("new_reservation", { ...reservation, note: null, status: "confirmed" });
     expect(payload.title).toBe("Nouvelle réservation ✅");
-    expect(payload.body).toBe("Lun 12/10 | 19:30 | 4pers. | J. Dupont");
+    expect(payload.body).toBe("Lun 12 Oct | 19:30 | 4pers. | J. Dupont");
   });
 
   test("modification title flags when validation is needed", () => {
@@ -104,6 +117,6 @@ describe("buildAdminPushPayload", () => {
   test("cancellation never shows the note text", () => {
     const payload = buildAdminPushPayload("cancellation", reservation);
     expect(payload.title).toBe("Annulation 🚫");
-    expect(payload.body).toBe("Lun 12/10 | 19:30 | 4pers. | J. Dupont | 💬");
+    expect(payload.body).toBe("Lun 12 Oct | 19:30 | 4pers. | J. Dupont | 💬");
   });
 });

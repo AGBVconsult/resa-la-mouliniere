@@ -50,9 +50,10 @@ export function isExpiredSubscriptionStatus(statusCode: number | undefined): boo
 export const NOTE_ICON = "💬";
 
 const WEEKDAYS = ["Dim", "Lun", "Mar", "Merc", "Jeu", "Vend", "Sam"];
+const MONTHS = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
 /**
- * "Vend 09/10 | 12:15 | 2pers. | B. Vantilcke"
+ * "Vend 9 Oct | 12:15 | 2pers. | B. Vantilcke"
  */
 export function formatReservationLine(reservation: {
   firstName: string;
@@ -64,13 +65,11 @@ export function formatReservationLine(reservation: {
   const { firstName, lastName, partySize, dateKey, timeKey } = reservation;
   const [year, month, day] = dateKey.split("-").map(Number);
   const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
-  const dd = String(day).padStart(2, "0");
-  const mm = String(month).padStart(2, "0");
 
   const initial = firstName.trim().charAt(0).toUpperCase();
   const name = initial ? `${initial}. ${lastName.trim()}` : lastName.trim();
 
-  return `${weekday} ${dd}/${mm} | ${timeKey} | ${partySize}pers. | ${name}`;
+  return `${weekday} ${day} ${MONTHS[month - 1]} | ${timeKey} | ${partySize}pers. | ${name}`;
 }
 
 /**
