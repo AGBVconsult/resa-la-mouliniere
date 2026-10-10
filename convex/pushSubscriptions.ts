@@ -118,3 +118,34 @@ export const getRestaurantTimezoneInternal = internalQuery({
     return restaurant?.timezone ?? null;
   },
 });
+
+/**
+ * Special periods of the active restaurant, for Google Business Profile reminders.
+ */
+export const getGbpReminderPeriodsInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const restaurant = await ctx.db
+      .query("restaurants")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .first();
+    if (!restaurant) return null;
+
+    const periods = await ctx.db
+      .query("specialPeriods")
+      .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
+      .collect();
+
+    return {
+      timezone: restaurant.timezone,
+      periods: periods
+        .filter((p) => !p.deletedAt)
+        .map((p) => ({
+          name: p.name,
+          status: p.applyRules.status,
+          startDate: p.startDate,
+          endDate: p.endDate,
+        })),
+    };
+  },
+});
