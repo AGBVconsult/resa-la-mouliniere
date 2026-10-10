@@ -110,3 +110,11 @@ export const removeExpiredInternal = internalMutation({
     }
   },
 });
+
+export const getRestaurantTimezoneInternal = internalQuery({
+  args: { restaurantId: v.id("restaurants") },
+  handler: async (ctx, args) => {
+    const restaurant = await ctx.db.get(args.restaurantId);
+    return restaurant?.timezone ?? null;
+  },
+});

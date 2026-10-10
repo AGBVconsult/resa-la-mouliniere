@@ -12,6 +12,7 @@ import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { buildAdminPushPayload, isExpiredSubscriptionStatus } from "./lib/webPush";
+import { getTodayDateKey } from "./lib/dateUtils";
 
 /**
  * Send admin push notification for reservation events.
@@ -55,6 +56,11 @@ export const sendAdminPushNotification = internalAction({
       return { sent: 0, reason: "reservation_not_found" };
     }
 
+    const timezone = await ctx.runQuery(internal.pushSubscriptions.getRestaurantTimezoneInternal, {
+      restaurantId: reservation.restaurantId,
+    });
+    const todayDateKey = timezone ? getTodayDateKey(timezone) : undefined;
+
     const payload = JSON.stringify(
       buildAdminPushPayload(args.type, {
         firstName: reservation.firstName,
@@ -65,7 +71,7 @@ export const sendAdminPushNotification = internalAction({
         timeKey: reservation.timeKey,
         status: reservation.status,
         note: reservation.note,
-      })
+      }, todayDateKey)
     );
 
     // 4. Send to every device

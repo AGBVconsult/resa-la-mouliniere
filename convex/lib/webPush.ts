@@ -53,23 +53,27 @@ const WEEKDAYS = ["Dim", "Lun", "Mar", "Merc", "Jeu", "Vend", "Sam"];
 const MONTHS = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
 /**
- * "Vend 9 Oct | 12:15 | 2pers. | B. Vantilcke"
+ * "Vend 9 Oct | 12:15 | 2pers. | B. Vantilcke" — "Auj." instead of the date for today.
  */
-export function formatReservationLine(reservation: {
-  firstName: string;
-  lastName: string;
-  partySize: number;
-  dateKey: string;
-  timeKey: string;
-}): string {
+export function formatReservationLine(
+  reservation: {
+    firstName: string;
+    lastName: string;
+    partySize: number;
+    dateKey: string;
+    timeKey: string;
+  },
+  todayDateKey?: string
+): string {
   const { firstName, lastName, partySize, dateKey, timeKey } = reservation;
   const [year, month, day] = dateKey.split("-").map(Number);
   const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+  const date = dateKey === todayDateKey ? "Auj." : `${weekday} ${day} ${MONTHS[month - 1]}`;
 
   const initial = firstName.trim().charAt(0).toUpperCase();
   const name = initial ? `${initial}. ${lastName.trim()}` : lastName.trim();
 
-  return `${weekday} ${day} ${MONTHS[month - 1]} | ${timeKey} | ${partySize}pers. | ${name}`;
+  return `${date} | ${timeKey} | ${partySize}pers. | ${name}`;
 }
 
 /**
@@ -87,11 +91,12 @@ export function buildAdminPushPayload(
     timeKey: string;
     status: string;
     note?: string | null;
-  }
+  },
+  todayDateKey?: string
 ): AdminPushPayload {
   const { dateKey, service, status, note } = reservation;
 
-  const line = formatReservationLine(reservation);
+  const line = formatReservationLine(reservation, todayDateKey);
   // The note itself is not shown, only an icon flagging that there is one
   const body = note?.trim() ? `${line} | ${NOTE_ICON}` : line;
   const url = `/admin-mobile/reservations?date=${dateKey}&service=${service}`;
