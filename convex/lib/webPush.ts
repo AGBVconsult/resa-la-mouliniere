@@ -47,7 +47,7 @@ export function isExpiredSubscriptionStatus(statusCode: number | undefined): boo
   return statusCode === 404 || statusCode === 410;
 }
 
-export const NOTE_ICON = "📝";
+export const NOTE_ICON = "💬";
 
 const WEEKDAYS = ["Dim", "Lun", "Mar", "Merc", "Jeu", "Vend", "Sam"];
 
@@ -75,7 +75,7 @@ export function formatReservationLine(reservation: {
 
 /**
  * Build notification content based on event type.
- * Title ends with an icon: ✅ new, ⏳ needs validation, 🔄 modification, ❌ cancellation.
+ * Title ends with an icon: ✅ new, ⌛ needs validation, 🔀 modification, 🚫 cancellation.
  */
 export function buildAdminPushPayload(
   type: AdminPushType,
@@ -102,14 +102,14 @@ export function buildAdminPushPayload(
       return { title: "Nouvelle réservation ✅", body, url };
 
     case "pending_reservation":
-      return { title: "Réservation en attente ⏳", body, url };
+      return { title: "Réservation en attente ⌛", body, url };
 
     case "cancellation":
-      return { title: "Annulation ❌", body, url };
+      return { title: "Annulation 🚫", body, url };
 
     case "modification":
       return {
-        title: status === "pending" ? "Modification à valider ⏳" : "Modification 🔄",
+        title: status === "pending" ? "Modification à valider ⌛" : "Modification 🔀",
         body,
         url,
       };
